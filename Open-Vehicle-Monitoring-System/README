@@ -1,0 +1,136 @@
+Open Vehicle Monitoring System
+
+Why?
+
+We are a group of enthusiasts who want an interface to be able to talk to our cars remotely, perhaps
+add on-car displays (such as heads-up speed), and we want to have fun doing it.
+
+What is it?
+
+The Open Vehicle Monitoring System is three things:
+
+1] A low-cost module that fits in the car. It is powered by the car, talks to the car on the CAN bus,
+   and uses the GSM cellular network to talk to its user.
+
+2] A server. The car module can be configured to either talk to the server (via UDP/IP or TCP/IP over
+   the Internet) or the user directly (via SMS).
+
+3] A cellphone App. This talks to the server (via TCP/IP HTTP protocol) to retrieve messages from the
+   car and issue instructions.
+
+Part [1] is all that is required. You can use a cellphone and SMS messages to talk to the App. It
+requires a SMS messaging plan on the SIM card in the GSM modem in the car.
+
+Parts [2] and [3] provide a much more seamless and powerful experience, but are optional.
+They requires a small data plan on the SIM card in the GSM modem in the car.
+
+Even if you choose [2]+[3], you can still use [1] as well (for initial setup as well as ongoing on-demand).
+
+The Car Module
+
+The car module is the hard part. We require an extremely reliable and low-power module to fit in the car.
+While it is relatively simple for a hobbyist to create one of these, the hard part is making a common
+platform that a group of hobbyists can get behind, and to make it very high quality. Home-soldered
+connections and US$100k electric cars don't go well together.
+
+What we've done is take the foundational work done by fuzzy logic and others, to build a base platform module.
+We've then negotiated with factories in China (we live just over the border in Hong Kong) to get this
+professionally built.
+
+The module plugs into the car DIAG port, which provides both power and a CAN bus connection that the module
+can transmit/receive messages on.
+
+The platform itself is based on a PIC18F2680 processor and SIMCOM GSM module. Factory built and assembled,
+but based on an open source extendable architecture. You can either buy these modules pre-built, or build
+your own. Any profits on the sale of hardware will got to charity.
+
+The SIMCOM GSM module has the ability to send/receive SMS messages, as well as a built-in IP stack for
+GPRS communication. It allows the module to talk both communication protocols with very little PIC software
+required. We decided to use these modules (rather than USB modems) for reliability reasons, as well as
+the SIMCOM built-in support for IP protocol.
+
+The final version re-works the CPU+CAN board to be rectangular and fit as a plug-in piggy-back on the
+SIMCOM module we've sourced. We've also re-worked the board layout to separate the CAN bus across a
+cicuit-board divide (to keep the CAN signals very simple and physically separated from the rest of the
+components). In the final version, we also extend the unused I/O pins of the CPU out on expansion pins
+(to allow for such things as in-vehicle displays). It all fits in a small case, is extremely low power,
+and has two LEDs for diagnostics and a windscreen / rear window stick-on GSM antenna for optimal
+reception. Overall, the design is very elegant and extremely robust.
+
+The in-car module can be configured to just be a passive listener on the CAN bus, but can also be an
+active participant and transmit control messages onto the bus. It can even just relay CAN bus messages
+over the Internet to the Server/App. It is very flexible and has enough RAM and ROM to do some interesting things.
+
+Users can either follow the schematics to build their own compatible boards, or buy them pre-made from us.
+We expect to be able to charge just US$99+shipping for pre-assembled in-car modules (the CPU+CAN controller
+module, SIMCOM GSM module, car DIAG cable, housing box and GSM antenna). This is a non-profit endeavor,
+with any profits inadvertently made being donated to charity.
+
+The Server
+
+The server is a simple open source server which talks two protocols - one to the car and the other to
+the cellphone App.
+
+The car protocol is built on UDP using encrypted communication packets. Two passwords are used - one to
+talk to the server and the other to talk to the App.
+
+If the car module wants to send a message to the server, it uses the first password. Once the server
+receives the message, it can decrypt and act on the instruction contained. Communications of this type
+are used for network registration and PUSH notification messages to Apple/Android phones, or other alerts.
+
+If the car module wants to send a message to the user, it uses the second password. The server has no
+ability to decrypt such messages, so merely passes them on to the cellphone App transparently. The
+cellphone App itself decrypts and acts on the message. In this way, as only the car module and cellphone
+App have the password, the server has no way to spy/eavesdrop on these messages. Communications of this
+type are used for such things as car GPS location updates.
+
+The server also includes a web interface for basic functions such as setting the password, registering
+the car and checking status.
+
+The CellPhone App
+
+The API to the car and the server is open and will be published. Anyone can write to it, and we hope they will.
+
+Initially, we intend to release a standard iPhone and Android App, but anyone is welcome to follow the API
+and write their own.
+
+Open Source
+
+The entire project will be open source - from the hardware schematics to the APIs to the car and server firmware.
+We will be loading up what we have onto github within the coming few weeks.
+
+The purpose of this project is to get the community of Tesla, and other, tinkerers to be able to expand the
+project. We can't do it all, and there is so much to do. What we are doing is providing an affordable and
+flexible base that the community can work on and extend.
+
+Everything is open, and APIs are public. Other car modules can talk to the server, and other Apps can show the
+status and control the car. This will be a foundation that will hope others will interface to and and build upon.
+
+When will it be ready?
+
+We have been working hard on this for the past couple of months. Initial prototypes have been made and tested;
+and we are very happy with the choice of factory and their work. The hardware design is now being finalized and
+we will soon be ready to start the first production run. If there is sufficient interest, final hardware will
+be available within the next two-to-three weeks. If we can't get sufficient interest, we'll just build it for
+ourselves and not worry about the larger community.
+
+How does it compare to the Tesla Tattler?
+
+The Tattler will be an off-the-shelf product offering a purely-SMS controlled solution to controlling roadster
+charging (as well as other such functions). It is built on some fairly sophisticated hardware and requires no
+user 'tinkering' to get it working. From our understanding, you just plug it in and play. It connects to the
+car in the same way as OVMS, but the cellular modem is very different.
+
+This project is as an open-source extensible framework based on SMS and UDP/IP control, for enthusiasts.
+It is designed to be controlled by SMS, websites and/or cellphone Apps.
+
+Thanks
+
+So many people to thank. W.Petefish for sourcing the car connector, Fuzzylogic for the original hardware and
+software design and demonstration of it working, Scott451 for figuring out many of the Roadster CAN bus
+messages, and many others for showing that this kind of thing can work in the real world.
+
+Please help us by answering the survey, so we can gauge interest. Any questions? Ask away...
+
+Thanks,
+markwj and foxium.
