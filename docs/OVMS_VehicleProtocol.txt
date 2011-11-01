@@ -1,0 +1,72 @@
+Roadster Charge Monitor Protocol
+
+UDP/IP protocol
+Car <-> Server
+
+  <message> ::= <magic> <version> <protection> <vehicleid> <space> {<protectionkey> <space>} <servermsg> { <appmsg> }
+
+  <magic> ::= MP
+  <version> ::= 1 byte version number - this protocol is 0x30
+  <protection> ::= 1 byte protection scheme - 0x30 is none, 0x31 is RC4
+  <vehicleid> ::= N byte vehicle identifier
+  <protectionkey> ::= N byte protection key (used for protection scheme 0x30 only)
+  <space> ::= ' ' (ascii 0x20)
+
+  <servermsg> ::= <servertocarmsg> | <cartoservermsg>
+  <servertocarmsg> ::- "S" <payload>
+  <cartoservermsg> ::= "C" <payload>
+
+  <appmsg> ::= "A" <payload>
+
+  <payload> ::= <code> <data>
+  <code> ::= 1 byte instruction code
+  <data> ::= N bytes data (dependent on instruction code)
+
+The <servermsg> is encrypted with the car-server key.
+The <appmsg> is encrypted with the car-app key.
+The car can send <cartoserver> and <appmsg> types.
+The server can send <servertocar> type.
+If the high bit of the code is 1, then an acknowledgement is required.
+
+The following message payload codes and data are supported:
+
+0x41 PING
+Sent <cartoserver> or <servertocar> to check connectivity.
+
+0x42 ACK
+Sent <servertocar> or <cartoserver> to acknowledge a message that requests acknowledgement.
+<data> is 1 byte code of the message being acknowledged.
+
+0x43 PUSH NOTIFICATION
+Sent <appmsg> to ask the server to push a notification to the App.
+<data> is 1 byte alert type followed by N bytes of textual message.
+
+0x44/0x64 CAN SUBSCRIPTION
+Sent <servertocar> to request transmission of CAN bus messages to the App.
+<data> is 2 byte CAN bus ID optionally followed by 1 byte D0 to match.
+
+0x45/0x65 CAN CANCEL SUBSCRIPTION
+Sent <servertocar> to request cancellation of CAN bus messages to the App.
+<data> is 2 byte CAN bus ID optionally followed by 1 byte D0 to match.
+
+0x46 CAN DATA
+Sent <cartoserver> to forward a message found on the can bus.
+
+0x47/0x67 VEHICLE LOCATION
+Sent <servertocar>, <cartoserver> or <appmsg> to request/indicate the last known vehicle location.
+<data> is:
+  N bytes latitude, longitude in textual format
+(for <cartoserver> or <appmsg>)
+
+0x48 CHARGE STATE
+Sent <servertocar>, <cartoserver> or <appmsg> to request/indicate the last known charge state.
+<data> is comma-separated list of:
+  SOC
+  Units ("M" for miles, "K" for kilometers)
+  Line voltage
+  Charge current
+  Charge state (charging, topoff, done, preparingtocharge, stopped)
+  Charge mode (standard, storage, range, performance)
+  Ideal range
+  Estimated range.
+(for <cartoserver> or <appmsg>)
