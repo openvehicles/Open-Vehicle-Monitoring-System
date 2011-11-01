@@ -1,0 +1,42 @@
+Open Vehicle Monitoring System
+
+The Car Module
+
+The car module is the hard part. We require an extremely reliable and low-power module to fit in the car.
+While it is relatively simple for a hobbyist to create one of these, the hard part is making a common
+platform that a group of hobbyists can get behind, and to make it very high quality. Home-soldered
+connections and US$100k electric cars don't go well together.
+
+What we've done is take the foundational work done by fuzzy logic and others, to build a base platform module.
+We've then negotiated with factories in China (we live just over the border in Hong Kong) to get this
+professionally built.
+
+The module plugs into the car DIAG port, which provides both power and a CAN bus connection that the module
+can transmit/receive messages on.
+
+The platform itself is based on a PIC18F2680 processor and SIMCOM GSM module. Factory built and assembled,
+but based on an open source extendable architecture. You can either buy these modules pre-built, or build
+your own. Any profits on the sale of hardware will got to charity.
+
+The SIMCOM GSM module has the ability to send/receive SMS messages, as well as a built-in IP stack for
+GPRS communication. It allows the module to talk both communication protocols with very little PIC software
+required. We decided to use these modules (rather than USB modems) for reliability reasons, as well as
+the SIMCOM built-in support for IP protocol.
+
+The final version re-works the CPU+CAN board to be rectangular and fit as a plug-in piggy-back on the
+SIMCOM module we've sourced. We've also re-worked the board layout to separate the CAN bus across a
+cicuit-board divide (to keep the CAN signals very simple and physically separated from the rest of the
+components). In the final version, we also extend the unused I/O pins of the CPU out on expansion pins
+(to allow for such things as in-vehicle displays). It all fits in a small case, is extremely low power,
+and has two LEDs for diagnostics and a windscreen / rear window stick-on GSM antenna for optimal
+reception. Overall, the design is very elegant and extremely robust.
+
+The in-car module can be configured to just be a passive listener on the CAN bus, but can also be an
+active participant and transmit control messages onto the bus. It can even just relay CAN bus messages
+over the Internet to the Server/App. It is very flexible and has enough RAM and ROM to do some interesting things.
+
+Users can either follow the schematics to build their own compatible boards, or buy them pre-made from us.
+We expect to be able to charge just US$99+shipping for pre-assembled in-car modules (the CPU+CAN controller
+module, SIMCOM GSM module, car DIAG cable, housing box and GSM antenna). This is a non-profit endeavor,
+with any profits inadvertently made being donated to charity.
+
