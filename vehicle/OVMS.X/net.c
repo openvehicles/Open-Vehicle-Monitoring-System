@@ -326,6 +326,13 @@ void net_msg_gps(void)
 void net_notify_status(void)
   {
   // Emit an unsolicited notification showing current status
+  char *p,*q;
+  p = par_get(PARAM_NOTIFIES);
+  if (strstrrampgm("SMS",p) != NULL)
+    {
+    q = par_get(PARAM_REGPHONE);
+    net_sms_stat(q);
+    }
   }
 
 void net_sms_in(void)
