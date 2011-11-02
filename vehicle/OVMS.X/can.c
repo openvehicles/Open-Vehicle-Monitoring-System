@@ -102,6 +102,7 @@ void can_poll(void)
       car_chargecurrent = can_databuffer[1];
       break;
     case 0x89: // Charging Voltage / Iavailable
+      car_speed = can_databuffer[1];     // speed in miles/hour
       car_linevoltage = can_databuffer[2]
                         + ((unsigned int) can_databuffer[3] << 8);
       break;
@@ -125,6 +126,14 @@ void can_poll(void)
         }
       car_charging = (can_databuffer[1] >> 4) & 0x01; //Charging status
       car_doors = can_databuffer[1]; // Doors
+                                     // bit0 left door opened
+                                     // bit1 right door opened
+                                     // bit2 charge door opened
+                                     // bit4 charging 
+      break;
+    case 0xA4: // 7 VIN bytes i.e. "SFZRE2B"
+    case 0xA5: // 7 VIN bytes i.e. "39A3000"
+    case 0xA6: // 3 VIN bytes i.e. "359"
       break;
     }
   }

@@ -9,7 +9,7 @@ Car <-> Server
   <version> ::= 1 byte version number - this protocol is 0x30
   <protection> ::= 1 byte protection scheme - 0x30 is none, 0x31 is RC4
   <vehicleid> ::= N byte vehicle identifier
-  <protectionkey> ::= N byte protection key (used for protection scheme 0x30 only)
+  <protectionkey> ::= N byte protection key (used for protection scheme 0x31 only)
   <space> ::= ' ' (ascii 0x20)
 
   <servermsg> ::= <servertocarmsg> | <cartoservermsg>
