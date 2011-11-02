@@ -47,6 +47,7 @@ extern unsigned char car_chargemode; // 0=standard, 1=storage, 3=range, 4=perfor
 extern unsigned char car_charging; // 1=yes/0=no
 extern unsigned char car_stopped; // 1=yes,0=no
 extern unsigned char car_doors; //
+extern unsigned char car_speed; // speed in miles/hour
 extern unsigned char car_SOC; // State of Charge in %
 extern unsigned int car_idealrange; // Ideal Range in miles
 extern unsigned int car_estrange; // Estimated Range

@@ -66,6 +66,7 @@ unsigned char car_chargemode = 0; // 0=standard, 1=storage, 3=range, 4=performan
 unsigned char car_charging = 0; // 1=yes/0=no
 unsigned char car_stopped = 0; // 1=yes,0=no
 unsigned char car_doors = 0; //
+unsigned char car_speed = 0; // speed in miles/hour
 unsigned char car_SOC = 0; // State of Charge in %
 unsigned int car_idealrange = 0; // Ideal Range in miles
 unsigned int car_estrange = 0; // Estimated Range
