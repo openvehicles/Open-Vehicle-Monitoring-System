@@ -1,72 +1,144 @@
 VDS Can bus Messages
- Originally Posted by tomsax  
-The iPhone part is easy. I'd do it myself if there was a way to talk to the car.
 
-I already have an app on the store that lets you control a robot over WiFi. It's just a client for a bit of specialized hardware that lets FTC students control their VEX robot controller over WiFi. If we had the equivalent gizmo for our cars, using either WiFi or SMS, this problem would be solved.
-Actually, talking to the car is easy. I've analyzed many of the VDS messages on the CAN bus. The problem is providing a connection to the Internet/SMS. If you use the iPhone, then you have to leave it with the car and you'd need another phone/iphone to receive the status. 
-
-I'm currently using a $300 HP 1050 netbook with a built in EVDO/UMTS data card and a usb to canbus adapter. 
-I run a small VC++ app on the HP netbook that listens to the VDS CANbus and sends UDP message to my web server. The webserver updates a status page that is always available. It's one way, so I do not send commands to the car, I just monitor the status of the car. I have perl script to send email/sms, but I have not added it to my server yet. I'm working on a better/simpler way to do this, but this was my first hack at it. 
-
-So here's some info to get you started. You can access the VDS CAN bus via a connector at the back of the VDS. The red wire is CAN_H and the blue wire is CAN_L. (It's a standard TYCO connector, so you can get the male/female and build a Y-cable.)
-
-Status messages to the VDS are sent on CAN ID # 0x100. The first byte (B1) is a sub_message index. The bitrate is 1Mbps. A simplification of the messages you need and their interpretation is as follows:
+Status messages to the VDS are sent on CAN ID # 0x100. The first byte (B1) is a sub_message index. The bitrate is 1Mbps.
+A simplification of the messages you need and their interpretation is as follows:
 
 Bytes are numbered B1 to B8 not B0-B7
 bits are numbered bit0 to bit7
 Byte pairs are in little endian order (e.g B4*256+B3)
 
-Charger V1.5
-B1=0x95
-B2=State (1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging)
-B3=Sub State (2=scheduled start, 3=by request, 7=connect power cable, 9=xxMinutes-yyKWHrs,)
-B5=Mode (0=standard, 1=storage,3=range,4=performance)
-B8=Charging KWhrs (see sub state 9)
+	Charger V1.5
 
-Charger settings
-B1=0x88
-B7=Charge limit
-B2=Charging current
-B3 & B4 Charge duration in minutes (see charger V1.5 sub state 9)
+		B1=0x95
+		B2=State 			(1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging)
+		B3=Sub State 		(2=scheduled start, 3=by request, 7=connect power cable, 9=xxMinutes-yyKWHrs,)
+		B4=0x64 ??
+		B5=Mode 2008 		(0=standard, 1=storage,3=range,4=performance)
+		B6=Mode 2010 roadster (0x= standard, 1x=storage,3x=range,4x=performance)
+		B7=0x16	??
+		B8=Total KWhrs Charged
 
-Charger interface
-B1=0x89
-B3&B4= Vline
-B6=Iavailable(from pilot PWM)
+	Charger settings
+		B1=0x88
+		B2=Charging current
+		B3=Charge duration in minutes LSB
+		B4=Charge duration in minutes MSB
+		B5=0xFF
+		B6=0xFF
+		B7=Charge limit
 
-Doors
-B1=0x96
-bit2 of B2 = Charge port (open=1/closed=0)
-bit3 of B2 = Pilot present (true=1/false=0)
-bit4 of B2 = Charging (true=1/false=0)
+		
+	Charger interface
+		B1=0x89
+		B2=Car speed in miles/hour
+		B3=Vline LSB
+		B4=Vline MSB
+		B5=0x12-0x16 ?? 
+		B6=Iavailable(from pilot PWM)
+	
+		
+	Doors
+		B1=0x96
+		B2=	
+			bit0 = Left Door (open=1/closed=0)
+			bit1 = Right Door (open=1/closed=0)
+			bit2 = Charge port (open=1/closed=0)
+			bit3 = Pilot present (true=1/false=0) (always 1 on my 2.5)
+			bit4 = Charging (true=1/false=0)
+			bit5 = always 1
+			bit6 = Hand brake applied (true=1/false=0)
+			bit7 = Car ON (true=1/false=0)
+			
+		B3=
+			bit3 = Trunk (open=1/closed=0)
+			bit2 = Bonnet (open=1/closed=0) 
+			
+		B4=
+			bit1 = cooling pump (on=1/off=0)
+			
+		B5=0x21 /0xA1
+		B6=0x18 pump starting 0x38 pump running
+		
+	Range
+		B1=0x80
+		B2=State of charge
+		B3=Ideal range LSB
+		B4=Ideal range MSB
+		B5=??
+		B6=??
+		B7=Estimated range LSB
+		B8=Estimated range MSB
 
-Range
-B1=0x80
-B2= Adjusted state of charge
-B3&B4= Ideal range
-B7&B8= Estimated range
+	Time
+		B1=0x81
+		B2=0x00
+		B3=0x00
+		B4=0x00
+		B5=Utime GMT LSB
+		B6=Utime GMT 
+		B7=Utime GMT 
+		B8=Utime GMT MSB
 
+	GPS_latitude
+		B1=0x83
+		B2=0x03 ??
+		B3=0x00
+		B4=0x00
+		B5=Latitude LSB
+		B6=Latitude 
+		B5=Latitude 
+		B5=Latitude MSB
+
+		
+	GPS_longitude
+		B1=0x84
+		B2=0x03 ??
+		B3=0x00
+		B4=0x00
+		B5=Longitude LSB
+		B6=Longitude 
+		B5=Longitude 
+		B5=Longitude MSB
+		
+	
+	VIN	
+		B1=0xA4				(uses 3 CAN sub ID's)
+		B2=VIN 1st character
+		|
+		B8=VIN 7th character
+		
+		B1=0xA5				(uses 3 CAN sub ID's)
+		B2=VIN 8th character
+		|
+		B8=VIN 14th character
+		
+		B1=0xA6				(uses 3 CAN sub ID's)
+		B2=VIN 15th character
+		|
+		B4=VIN 17th character
+
+		
+	
+	
+		
 messages from the VDS are sent on CAN ID # 0x102.
 
-Set Charge mode
-B1=0x5
-B2=0x19
-B5=Mode (0=standard, 1=storage,3=range,4=performance)
+	Set Charge mode
+		B1=0x5 ??
+		B2=0x19
+		B5=Mode (0=standard, 1=storage,3=range,4=performance)
 
-Start/Stop charge
-B1=0x05
-B2=0x03
-B3=0x00
-B4=0x00
-B5=(Stop=0x00, Start=0x01)
-B6=0x00
-B7=0x00
-B8=0x00
+	Start/Stop charge
+		B1=0x05
+		B2=0x03
+		B3=0x00
+		B4=0x00
+		B5=(Stop=0x00, Start=0x01)
+		B6=0x00
+		B7=0x00
+		B8=0x00
 
+Thanks to scott451 for figuring out most of the above information.
 
-HVAC sits on the battery (ESS) can bus. So I don't think it will be possible to control it without a separate connection to the ESS can bus.
-
--Scott
-
-Disclaimer: My CAN bus interpretation could be wrong. I don't work for Tesla nor have any friends that do. I'm just passionate about Tesla's products and understanding how they work. The data is the result of my own analysis of my 2008 roadster. CAN bus messages on the 2010 are slightly different (e.g V2.0 charge mode is on B6 bits 7-4 not B5 and the UTC start time offset is in minutes).
-
+Any additions/corrections are welcome
+-mstegen
