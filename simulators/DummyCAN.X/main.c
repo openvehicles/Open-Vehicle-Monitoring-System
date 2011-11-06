@@ -64,8 +64,20 @@
 void Init_Micro(void);
 void Init_CAN(void);
 void IO_CanWrite(void);
+void Delay1KTCYx(unsigned char);
 
-unsigned char state;
+#define DATA_COUNT 7
+unsigned char state, field;
+unsigned char DummyData[DATA_COUNT * 8]
+        = {
+    0x80, 0x35, 0x80, 0, 0, 0, 0x68, 0, // state of charge/SOC%/IdealL/IdealH///EstL/EstH
+    0x83, 0, 0, 0, 0xFF, 0x48, 0xCC, 0x09, // longitude (HK)
+    0x84, 0, 0, 0, 0x9C, 0x65, 0x2C, 0x32, // latitube (HK)
+    0x88, 0x46, 0, 0, 0, 0, 0, 0, //current
+    0x89, 0, 0xDC, 0, 0, 0, 0, 0, //voltage
+    0x95, 0x01, 0, 0, 0, 0x00, 0, 0, // charge state/mode
+    0x96, 0x10, 0, 0, 0, 0, 0, 0 // charging/doors, charging yes/no
+};
 
 // Delay of 1ms calculation
 // Cycles = (TimeDelay * Fosc) / 4
@@ -117,57 +129,15 @@ void IO_CanWrite() {
     TXB0SIDL = 0b00000000; // Setup Filter and Mask so that only CAN ID 0x100 will be accepted
     TXB0SIDH = 0b00100000; // Set Filter to 0x100
 
-    switch (state) {
-        case 0:
-            TXB0D0 = 0x80; // state of charge flag
-            TXB0D1 = 0x35; // SOC%
-            TXB0D2 = 0x80; // Ideal Range L
-            TXB0D3 = 0; // Ideal Range H
-            TXB0D4 = 0;
-            TXB0D5 = 0;
-            TXB0D6 = 0x68; // Est Range L
-            TXB0D7 = 0; // Est Range H
-            break;
-        case 1:
-            TXB0D0 = 0x88; // Charging Current flag
-            TXB0D1 = 0x46; // current
-            TXB0D2 = 0;
-            TXB0D3 = 0;
-            TXB0D4 = 0;
-            TXB0D5 = 0;
-            TXB0D6 = 0;
-            TXB0D7 = 0;
-            break;
-        case 2:
-            TXB0D0 = 0x89; // Charging Voltage flag
-            TXB0D1 = 0;
-            TXB0D2 = 0xDC; // voltage
-            TXB0D3 = 0;
-            TXB0D4 = 0;
-            TXB0D5 = 0;
-            TXB0D6 = 0;
-            TXB0D7 = 0;
-            break;
-        case 3:
-            TXB0D0 = 0x95; // Charging Mode flag
-            TXB0D1 = 0x01; // charge state
-            TXB0D2 = 0;
-            TXB0D3 = 0;
-            TXB0D4 = 0;
-            TXB0D5 = 0x00; // charge mode
-            TXB0D6 = 0;
-            TXB0D7 = 0;
-            break;
-        default:
-            TXB0D0 = 0x96; // Charging/doors flag
-            TXB0D1 = 0x10; //charging yes/no (charging)
-            TXB0D2 = 0;
-            TXB0D3 = 0;
-            TXB0D4 = 0;
-            TXB0D5 = 0;
-            TXB0D6 = 0;
-            TXB0D7 = 0;
-    }
+    field = 0;
+    TXB0D0 = DummyData[(state * 8) + field++];
+    TXB0D1 = DummyData[(state * 8) + field++];
+    TXB0D2 = DummyData[(state * 8) + field++];
+    TXB0D3 = DummyData[(state * 8) + field++];
+    TXB0D4 = DummyData[(state * 8) + field++];
+    TXB0D5 = DummyData[(state * 8) + field++];
+    TXB0D6 = DummyData[(state * 8) + field++];
+    TXB0D7 = DummyData[(state * 8) + field++];
 
     TXB0DLC = 0b00001000; // data length (8)
     TXB0CON = 0b00001000; // mark for transmission
@@ -190,12 +160,25 @@ void main() {
     /**********************main Loop*******************************/
     while (1) {
         IO_CanWrite();
-        if (state++ > 4) state = 0;
+        if (state++ > DATA_COUNT) state = 0;
 
-        PORTCbits.RC4 ^= 1;
-        delay_ms(500);
-        PORTCbits.RC4 ^= 1;
-        delay_ms(500);
+        // pause and blink before sending next frame
+        if (COMSTATbits.TXBO || COMSTATbits.TXBP) {
+            // canbus not connected
+            PORTCbits.RC4 = 0;
+            delay_ms(1000);
+        }
+        else if (TXB0CONbits.TXREQ)
+        {
+            // previous message still in buffer
+            PORTCbits.RC4 = 1;
+            delay_ms(500);
+        } else {
+            PORTCbits.RC4 ^= 1;
+            delay_ms(100);
+            PORTCbits.RC4 ^= 1;
+            delay_ms(300);
+        }
     }
 
 } //end main
