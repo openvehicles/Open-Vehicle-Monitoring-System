@@ -123,8 +123,8 @@ LINE: while(<>)
         }
       elsif ($d[0] eq '9C')
         {
-        $msg .= 'Odometer??';
-        $msg .= " (trip?? ".sprintf("%0.1f",hex($d[3].$d[2])/10)."miles)";
+        $msg .= 'Trip->VDS';
+        $msg .= " (trip ".sprintf("%0.1f",hex($d[3].$d[2])/10)."miles)";
         }
       elsif ($d[0] eq 'A4')
         {
