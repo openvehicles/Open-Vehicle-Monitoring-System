@@ -162,6 +162,8 @@ void main() {
         IO_CanWrite();
         if (state++ > DATA_COUNT) state = 0;
 
+        delay_ms(100); // wait for sending message
+        
         // pause and blink before sending next frame
         if (COMSTATbits.TXBO || COMSTATbits.TXBP) {
             // canbus not connected
@@ -172,12 +174,11 @@ void main() {
         {
             // previous message still in buffer
             PORTCbits.RC4 = 1;
-            delay_ms(500);
+            delay_ms(200);
         } else {
             PORTCbits.RC4 ^= 1;
             delay_ms(100);
             PORTCbits.RC4 ^= 1;
-            delay_ms(300);
         }
     }
 
