@@ -1,38 +1,36 @@
-#!/usr/bin/perl
-
-#    Project:       Open Vehicle Monitor System
-#    Date:          6 November 2011
-#
-#    Changes:
-#    1.0  Initial release
-#
-#    (C) 2011  Sonny Chen
-#
-# Based on information and analysis provided by Scott451, Michael Stegen,
-# and others at the Tesla Motors Club forums, as well as personal analysis
-# of the CAN bus on a 2011 Tesla Roadster.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
-# This script turns a regulator OVMS car module into a car simulator by transmitting 
-# dummy data over CAN bus. The purpose of the script is to ease debugging while
-# working on the OVMS code away from a car.
+//    Project:       Open Vehicle Monitor System
+//    Date:          6 November 2011
+//
+//    Changes:
+//    1.0  Initial release
+//
+//    (C) 2011  Sonny Chen
+//
+// Based on information and analysis provided by Scott451, Michael Stegen,
+// and others at the Tesla Motors Club forums, as well as personal analysis
+// of the CAN bus on a 2011 Tesla Roadster.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+//
+// This script turns a regulator OVMS car module into a car simulator by transmitting
+// dummy data over CAN bus. The purpose of the script is to ease debugging while
+// working on the OVMS code away from a car.
 
 #include "p18f2680.h"
 //#include <stdio.h>
