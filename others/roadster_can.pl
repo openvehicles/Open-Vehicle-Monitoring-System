@@ -121,6 +121,13 @@ LINE: while(<>)
         $msg .= " (charging: ".((hex($d[1])&0x10)?"true":"false").")";       # Charging (true=1/false=0)
         $msg .= " (bits ".$d[1].")";            # bit2=Charge port (open=1/closed=0), bit3=Pilot present (true=1/false=0), bit4=Charging (true=1/false=0)
         }
+      elsif ($d[0] eq '97')
+        {
+        $msg .= "Odometer";
+        my $miles = sprintf("%0.1f",hex($d[6].$d[5].$d[4])/10);
+        my $km = sprintf("%0.1f",$miles*1.609344);
+        $msg .= " (miles: ".$miles." km: ".$km.")";
+        }
       elsif ($d[0] eq '9C')
         {
         $msg .= 'Trip->VDS';
@@ -183,7 +190,10 @@ LINE: while(<>)
       $msgt = '402??';
       if ($d[0] eq 'FA')
         {
-        $msg .= "Odometer??";
+        $msg .= "Odometer";
+        my $miles = sprintf("%0.1f",hex($d[5].$d[4].$d[3])/10);
+        my $km = sprintf("%0.1f",$miles*1.609344);
+        $msg .= " (miles: ".$miles." km: ".$km.")";
         $msg .= " (trip ".sprintf("%0.1f",hex($d[7].$d[6])/10)."miles)";
         }
       else
