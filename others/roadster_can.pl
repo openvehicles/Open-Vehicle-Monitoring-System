@@ -133,6 +133,11 @@ LINE: while(<>)
         $msg .= 'Trip->VDS';
         $msg .= " (trip ".sprintf("%0.1f",hex($d[3].$d[2])/10)."miles)";
         }
+      elsif ($d[0] eq 'A3')
+        {
+        $msg .= "TEMPS";
+        $msg .= " (".sprintf("%3d %3d %3d",hex($d[1]),hex($d[2]),hex($d[6])).")";
+        }
       elsif ($d[0] eq 'A4')
         {
         $msg .= 'VIN1';
@@ -184,6 +189,14 @@ LINE: while(<>)
         {
         $msg .="(message from VDS ".$d[0].")";
         }
+      }
+    elsif ($id eq '344')
+      {
+      $msgt = "TPMS??";
+      $msg = "TPMS";
+      $msg .= " (".sprintf("%3d %3d %3d %3d %3d %3d %3d %3d",
+                   hex($d[0]),hex($d[1]),hex($d[2]),hex($d[3]),hex($d[4]),hex($d[5]),hex($d[6]),hex($d[7]))
+                  .")";
       }
     elsif ($id eq '402')
       {
