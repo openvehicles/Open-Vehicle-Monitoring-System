@@ -136,7 +136,9 @@ LINE: while(<>)
       elsif ($d[0] eq 'A3')
         {
         $msg .= "TEMPS";
-        $msg .= " (".sprintf("%3d %3d %3d",hex($d[1]),hex($d[2]),hex($d[6])).")";
+        $msg .= " (Tpem ".hex($d[1]).")" if ($d[1] ne '00');
+        $msg .= " (Tmotor ".hex($d[2]).")" if ($d[2] ne '00');
+        $msg .= " (Tbattery ".hex($d[6]).")" if ($d[6] ne '00');
         }
       elsif ($d[0] eq 'A4')
         {
@@ -185,6 +187,14 @@ LINE: while(<>)
         $msg .= "Start/stop charge";
         $msg .= " (st/st ".hex($d[4]).")";           # Stop=0x00, Start=0x01
         }
+      elsif (($d[0] eq '0E')&&($d[1] eq '04'))
+        {
+        $msg .= "Car locked";
+        }
+      elsif (($d[0] eq '0E')&&($d[1] eq '05'))
+        {
+        $msg .= "Car unlocked";
+        }
       else
         {
         $msg .="(message from VDS ".$d[0].")";
@@ -192,11 +202,14 @@ LINE: while(<>)
       }
     elsif ($id eq '344')
       {
-      $msgt = "TPMS??";
+      $msgt = "---";
       $msg = "TPMS";
-      $msg .= " (".sprintf("%3d %3d %3d %3d %3d %3d %3d %3d",
-                   hex($d[0]),hex($d[1]),hex($d[2]),hex($d[3]),hex($d[4]),hex($d[5]),hex($d[6]),hex($d[7]))
-                  .")";
+      my @vals;
+      push (@vals,sprintf('f-l %dpsi,%dC',hex($d[0])/2.755,hex($d[1])-40)) if ($d[0] ne '00');
+      push (@vals,sprintf('f-r %dpsi,%dC',hex($d[2])/2.755,hex($d[3])-40)) if ($d[2] ne '00');
+      push (@vals,sprintf('r-l %dpsi,%dC',hex($d[4])/2.755,hex($d[5])-40)) if ($d[4] ne '00');
+      push (@vals,sprintf('r-r %dpsi,%dC',hex($d[6])/2.755,hex($d[7])-40)) if ($d[6] ne '00');
+      $msg .= " (".join(' ',@vals).")";
       }
     elsif ($id eq '402')
       {
@@ -215,6 +228,13 @@ LINE: while(<>)
         }
       }
     # Output the result
+    my @vals;
+    foreach (0 .. 7) { push @vals,(defined $d[$_])?$d[$_]:"  "; }
+    printf "%15s %3s %s   %6s %s\n",$time,$id,join(' ',@vals),$msgt,$msg;
+    }
+  elsif ($type eq 'TD11')
+    {
+    $msg = "PING: TD11 transmit";
     my @vals;
     foreach (0 .. 7) { push @vals,(defined $d[$_])?$d[$_]:"  "; }
     printf "%15s %3s %s   %6s %s\n",$time,$id,join(' ',@vals),$msgt,$msg;
