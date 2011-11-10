@@ -177,14 +177,14 @@ void UARTIntISR(void);
 
 #define mSetUARTBaud(iBaudRate)\
 		do{\
-			##define SPBRG_V11  (UART_CLOCK_FREQ / UARTINTC_BAUDRATE)\
-			##define SPBRG_V21  SPBRG_V11/16\
-			##define SPBRG_VAL  (SPBRG_V21 - 1)\
-			##if (SPBRG_VAL > 255)\
-			  ##error Calculated SPBRG value is out of range\
-			##elif (SPBRG_VAL < 10)\
-			  ##error Calculated SPBRG value is out of range\
-			##endif\
+			\#define SPBRG_V11  (UART_CLOCK_FREQ / UARTINTC_BAUDRATE)\
+			\#define SPBRG_V21  SPBRG_V11/16\
+			\#define SPBRG_VAL  (SPBRG_V21 - 1)\
+			\#if (SPBRG_VAL > 255)\
+			  \#error Calculated SPBRG value is out of range\
+			\#elif (SPBRG_VAL < 10)\
+			  \#error Calculated SPBRG value is out of range\
+			\#endif\
 			RCSTAbits.SPEN = 0;\
 			SPBRG = iBaudRate;\
 			RCSTAbits.SPEN = 1;\
