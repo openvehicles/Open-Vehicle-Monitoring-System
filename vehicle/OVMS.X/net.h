@@ -9,7 +9,7 @@
 ;    (C) 2011  Mark Webb-Johnson
 ;    (C) 2011  Sonny Chen @ EPRO/DX
 ;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
+; Permission isa hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
 ; in the Software without restriction, including without limitation the rights
 ; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -33,6 +33,21 @@
 
 #define NET_BUF_MAX 100
 #define NET_TEL_MAX 20
+
+// STATES
+#define NET_STATE_START      0x01  // Initialise and get ready to go
+#define NET_STATE_RESET      0x02  // Reset and re-initialise the network
+#define NET_STATE_DOINIT     0x10  // Initialise the GSM network
+#define NET_STATE_READY      0x20  // READY and handling calls
+#define NET_STATE_COPS       0x21  // GSM COPS carrier selection
+#define NET_STATE_SMSIN      0x30  // Wait for SMS message text
+#define NET_STATE_DONETINIT  0x40  // Initalise the GPRS network
+
+extern char net_scratchpad[100];
+
+void net_puts_rom(static const rom char *data);
+void net_puts_ram(const char *data);
+void net_putc_ram(const char data);
 
 void net_initialise(void);
 void net_poll(void);

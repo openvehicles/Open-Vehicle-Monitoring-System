@@ -9,7 +9,13 @@
       <itemPath>UARTIntC.def</itemPath>
       <itemPath>UARTIntC.h</itemPath>
       <itemPath>can.h</itemPath>
+      <itemPath>crypt_base64.h</itemPath>
+      <itemPath>crypt_hmac.h</itemPath>
+      <itemPath>crypt_md5.h</itemPath>
+      <itemPath>crypt_rc4.h</itemPath>
       <itemPath>net.h</itemPath>
+      <itemPath>net_msg.h</itemPath>
+      <itemPath>net_sms.h</itemPath>
       <itemPath>ovms.def</itemPath>
       <itemPath>ovms.h</itemPath>
       <itemPath>params.h</itemPath>
@@ -22,6 +28,7 @@
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
                    projectFiles="true">
+      <itemPath>/Applications/microchip/mplabx/mpasmx/LKR/18f2680_g.lkr</itemPath>
     </logicalFolder>
     <logicalFolder name="ObjectFiles"
                    displayName="Object Files"
@@ -32,7 +39,13 @@
                    projectFiles="true">
       <itemPath>UARTIntC.c</itemPath>
       <itemPath>can.c</itemPath>
+      <itemPath>crypt_base64.c</itemPath>
+      <itemPath>crypt_hmac.c</itemPath>
+      <itemPath>crypt_md5.c</itemPath>
+      <itemPath>crypt_rc4.c</itemPath>
       <itemPath>net.c</itemPath>
+      <itemPath>net_msg.c</itemPath>
+      <itemPath>net_sms.c</itemPath>
       <itemPath>ovms.c</itemPath>
       <itemPath>params.c</itemPath>
       <itemPath>utils.c</itemPath>
@@ -53,7 +66,7 @@
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>C18</languageToolchain>
         <languageToolchainVersion>3.40</languageToolchainVersion>
-        <platform>3</platform>
+        <platform>4</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
@@ -62,6 +75,30 @@
         </linkerTool>
       </compileType>
       <C18>
+        <property key="storage-class" value="sca"/>
+        <property key="enable-opa" value="false"/>
+        <property key="enable-all-optimizations" value="true"/>
+        <property key="preprocessor-macros" value=""/>
+        <property key="default-char-unsigned" value="true"/>
+        <property key="optimization-master" value="Enable all"/>
+        <property key="code-model" value="mS"/>
+        <property key="warning-level" value="2"/>
+        <property key="extra-include-directories" value=""/>
+        <property key="enable-ow" value="true"/>
+        <property key="verbose" value="false"/>
+        <property key="enable-ou" value="false"/>
+        <property key="enable-ot" value="false"/>
+        <property key="enable-os" value="true"/>
+        <property key="data-model" value="Oa-"/>
+        <property key="enable-or" value="false"/>
+        <property key="enable-op" value="false"/>
+        <property key="enable-on" value="true"/>
+        <property key="enable-om" value="true"/>
+        <property key="procedural-abstraction-passes" value="0"/>
+        <property key="enable-multi-bank-stack-model" value="false"/>
+        <property key="enable-int-promotion" value="false"/>
+        <property key="enable-od" value="false"/>
+        <property key="enable-ob" value="false"/>
       </C18>
       <C18-AS>
       </C18-AS>
