@@ -32,15 +32,8 @@
 #include <usart.h>
 #include <string.h>
 #include "ovms.h"
-
-// STATES
-#define NET_STATE_START      0x01  // Initialise and get ready to go
-#define NET_STATE_RESET      0x02  // Reset and re-initialise the network
-#define NET_STATE_DOINIT     0x10  // Initialise the GSM network
-#define NET_STATE_READY      0x20  // READY and handling calls
-#define NET_STATE_COPS       0x21  // GSM COPS carrier selection
-#define NET_STATE_SMSIN      0x30  // Wait for SMS message text
-#define NET_STATE_DONETINIT  0x40  // Initalise the GPRS network
+#include "net_sms.h"
+#include "net_msg.h"
 
 // NET data
 #pragma udata
@@ -53,27 +46,18 @@ unsigned int  net_granular_tick = 0;
 unsigned int  net_watchdog = 0;
 unsigned char net_buf_pos = 0;
 char net_caller[NET_TEL_MAX] = {0};
-char net_scratchpad[32];
+char net_scratchpad[100];
 
 #pragma udata NETBUF
 char net_buf[NET_BUF_MAX];
 #pragma udata
 
 // ROM Constants
-#define NET_INIT_MAX 7
-#define NET_NETINIT_MAX 7
-rom char NET_INIT[NET_INIT_MAX][13]
-  = {"AT\r","AT+CPIN?\r","AT+CREG=1\r","AT+CLIP=1\r",
-     "AT+CMGF=1\r","AT+CNMI=2,2\r","AT+CSDH=0\r"};
+rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0\r";
 rom char NET_CIPSTATUS[] = "AT+CIPSTATUS\r";
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_CREG[] = "AT+CREG?\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
-rom char NET_MSG_DENIED[] = "Permission denied";
-rom char NET_MSG_REGISTERED[] = "Your phone has been registered as the owner.";
-rom char NET_MSG_PASSWORD[] = "Your password has been changed.";
-rom char NET_MSG_PARAMS[] = "System parameters have been set.";
-rom char NET_MSG_GOOGLEMAPS[] = "Car location:\rhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
 
 // Interrupt Service Routine
 void low_isr(void);
@@ -137,190 +121,11 @@ void net_puts_ram(const char *data)
     } while (*++data);
   }
 
-void net_send_sms_start(char* number)
+void net_putc_ram(const char data)
   {
-  net_puts_rom("AT+CMGS=\"");
-  net_puts_ram(number);
-  net_puts_rom("\"\r\n");
-  delay100(2);
-  }
-
-void net_send_sms_rom(char* number, static const rom char* message)
-  {
-  net_send_sms_start(number);
-  net_puts_rom(message);
-  net_puts_rom("\x1a");
-  }
-
-void net_sms_params(char* number)
-  {
-  unsigned char k;
-  char *p;
-
-  net_send_sms_start(number);
-  net_puts_rom("Params:");
-  for (k=0;k<PARAM_MAX;k++)
-    {
-    sprintf(net_scratchpad, (rom far char*)" %u:", k);
-    net_puts_ram(net_scratchpad);
-    net_puts_ram(par_get(k));
-    }
-  net_puts_rom("\x1a");
-  }
-
-void net_sms_gps(char* number)
-  {
-  net_send_sms_start(number);
-  net_puts_rom(NET_MSG_GOOGLEMAPS);
-  format_latlon(car_latitude,net_scratchpad);
-  net_puts_ram(net_scratchpad);
-  net_puts_rom(",");
-  format_latlon(car_longitude,net_scratchpad);
-  net_puts_ram(net_scratchpad);
-  net_puts_rom("\x1a");
-  }
-
-void net_sms_stat(char* number)
-  {
-  char *p;
-
-  net_send_sms_start(number);
-
-  switch (car_chargemode)
-    {
-    case 0x00:
-      net_puts_rom("Standard - "); // Charge Mode Standard
-      break;
-    case 0x01:
-      net_puts_rom("Storage - "); // Storage
-      break;
-    case 0x03:
-      net_puts_rom("Range - "); // Range
-      break;
-    case 0x04:
-      net_puts_rom("Performance - "); // Performance
-    }
-  switch (car_chargestate)
-    {
-    case 0x01:
-      net_puts_rom("Charging"); // Charge State Charging
-      break;
-    case 0x02:
-      net_puts_rom("Charging, Topping off"); // Topping off
-      break;
-    case 0x04:
-      net_puts_rom("Charging Done"); // Done
-      break;
-    default:
-      net_puts_rom("Charging Stopped"); // Stopped
-    }
-
-  net_puts_rom("\rIdeal Range: "); // Ideal Range
-  p = par_get(PARAM_MILESKM);
-  if (*p == 'M') // Kmh or Miles
-    sprintf(net_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
-  else
-    sprintf(net_scratchpad, (rom far char*)"%u Km", (unsigned int) ((float) car_idealrange * 1.609)); // Kmh
-  net_puts_ram(net_scratchpad);
-
-  net_puts_rom("\rSOC: ");
-  sprintf(net_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
-  net_puts_ram(net_scratchpad);
-  net_puts_rom("\x1a");
-  }
-
-// Start to send a net msg
-void net_msg_start(void)
-  {
-  delay100(5);
-  net_puts_rom("AT+CIPSEND\r");
-  delay100(2);
-  }
-
-// Finish sending a net msg
-void net_msg_send(void)
-  {
-  net_puts_rom("\x1a");
-  }
-
-// Register to the NET OVMS server
-void net_msg_register(void)
-  {
-  net_puts_rom("MP00");
-  net_puts_ram(par_get(PARAM_MYID));
-  net_puts_rom(" ");
-  net_puts_ram(par_get(PARAM_NETPASS1));
-  net_puts_rom(" CA\r\n");
-  }
-
-void net_msg_stat(void)
-  {
-  char *p;
-
-  net_puts_rom("MP00");
-  net_puts_ram(par_get(PARAM_MYID));
-  net_puts_rom(" ");
-  net_puts_ram(par_get(PARAM_NETPASS1));
-  net_puts_rom(" CH");
-  p = par_get(PARAM_MILESKM);
-  sprintf(net_scratchpad,(rom far char*)"%d,%s,%d,%d,",car_SOC,p,car_linevoltage,car_chargecurrent);
-  net_puts_ram(net_scratchpad);
-  switch (car_chargestate)
-    {
-    case 0x01:
-      net_puts_rom("charging,"); // Charge State Charging
-      break;
-    case 0x02:
-      net_puts_rom("topoff,"); // Topping off
-      break;
-    case 0x04:
-      net_puts_rom("done,"); // Done
-      break;
-    default:
-      net_puts_rom("stopped,"); // Stopped
-    }
-  switch (car_chargemode)
-    {
-    case 0x00:
-      net_puts_rom("standard,"); // Charge Mode Standard
-      break;
-    case 0x01:
-      net_puts_rom("storage,"); // Storage
-      break;
-    case 0x03:
-      net_puts_rom("range,"); // Range
-      break;
-    case 0x04:
-      net_puts_rom("performance,"); // Performance
-    }
-  if (*p == 'M') // Kmh or Miles
-    sprintf(net_scratchpad, (rom far char*)"%u,", car_idealrange);
-  else
-    sprintf(net_scratchpad, (rom far char*)"%u,", (unsigned int) ((float) car_idealrange * 1.609));
-  net_puts_ram(net_scratchpad);
-  if (*p == 'M') // Kmh or Miles
-    sprintf(net_scratchpad, (rom far char*)"%u", car_estrange);
-  else
-    sprintf(net_scratchpad, (rom far char*)"%u", (unsigned int) ((float) car_estrange * 1.609));
-  net_puts_ram(net_scratchpad);
-  net_puts_rom("\r\n");
-  }
-
-void net_msg_gps(void)
-  {
-  char *p;
-
-  net_puts_rom("MP00");
-  net_puts_ram(par_get(PARAM_MYID));
-  net_puts_rom(" ");
-  net_puts_ram(par_get(PARAM_REGPASS));
-  net_puts_rom(" CG");
-  format_latlon(car_latitude,net_scratchpad);
-  net_puts_ram(net_scratchpad);
-  net_puts_rom(",");
-  format_latlon(car_longitude,net_scratchpad);
-  net_puts_ram(net_scratchpad);
-  net_puts_rom("\r\n");
+  /* Send one character */
+  while (vUARTIntStatus.UARTIntTxBufferFull);
+  UARTIntPutChar(data);
   }
 
 void net_notify_status(void)
@@ -328,118 +133,11 @@ void net_notify_status(void)
   // Emit an unsolicited notification showing current status
   char *p,*q;
   p = par_get(PARAM_NOTIFIES);
-  if (strstrrampgm("SMS",p) != NULL)
+  if (strstrrampgm(p,(char const rom far*)"SMS") != NULL)
     {
     q = par_get(PARAM_REGPHONE);
     net_sms_stat(q);
     }
-  }
-
-void net_sms_in(void)
-  {
-  // The net_buf contains an SMS command
-  // and net_caller contains the caller telephone number
-  char *p;
-
-  // Convert SMS command (first word) to upper-case
-  for (p=net_buf; ((*p!=0)&&(*p!=' ')); p++)
-  	if ((*p > 0x60) && (*p < 0x7b)) *p=*p-0x20;
-
-  // Command parsing...
-  if (memcmppgm2ram(net_buf, (char const rom far*)"REGISTER ", 9) == 0)
-    { // Register phone
-    p = par_get(PARAM_REGPASS);
-    if (strncmp(p,net_buf+9,strlen(p))==0)
-      {
-      par_set(PARAM_REGPHONE, net_caller);
-      net_send_sms_rom(net_caller,NET_MSG_REGISTERED);
-      }
-    else
-      net_send_sms_rom(net_caller,NET_MSG_DENIED);
-    }
-  else if (memcmppgm2ram(net_buf, (char const rom far*)"PASS ", 5) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,net_caller,strlen(p)) == 0)
-      {
-      par_set(PARAM_REGPASS, net_buf+5);
-      net_send_sms_rom(net_caller,NET_MSG_PASSWORD);
-      }
-    else
-      net_send_sms_rom(net_caller,NET_MSG_DENIED);
-    }
-  else if (memcmppgm2ram(net_buf, (char const rom far*)"GPS ", 4) == 0)
-    {
-    p = par_get(PARAM_REGPASS);
-    if (strncmp(p,net_buf+4,strlen(p))==0)
-      net_sms_gps(net_caller);
-    else
-      net_send_sms_rom(net_caller,NET_MSG_DENIED);
-    }
-  else if (memcmppgm2ram(net_buf, (char const rom far*)"GPS", 3) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,net_caller,strlen(p)) == 0)
-      net_sms_gps(net_caller);
-    else
-      net_send_sms_rom(net_caller,NET_MSG_DENIED);
-    }
-  else if (memcmppgm2ram(net_buf, (char const rom far*)"STAT ", 5) == 0)
-    {
-    p = par_get(PARAM_REGPASS);
-    if (strncmp(p,net_buf+5,strlen(p))==0)
-      net_sms_stat(net_caller);
-    else
-      net_send_sms_rom(net_caller,NET_MSG_DENIED);
-    }
-  else if (memcmppgm2ram(net_buf, (char const rom far*)"STAT", 4) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,net_caller,strlen(p)) == 0)
-      net_sms_stat(net_caller);
-    else
-      net_send_sms_rom(net_caller,NET_MSG_DENIED);
-    }
-  else if (memcmppgm2ram(net_buf, (char const rom far*)"PARAMS?", 7) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,net_caller,strlen(p)) == 0)
-      net_sms_params(net_caller);
-    else
-      net_send_sms_rom(net_caller,NET_MSG_DENIED);
-    }
-  else if (memcmppgm2ram(net_buf, (char const rom far*)"PARAMS ", 7) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,net_caller,strlen(p)) == 0)
-      {
-      unsigned char d = PARAM_MILESKM;
-      unsigned char x = 7;
-      unsigned char y = x;
-      while ((y<=(net_buf_pos+1))&&(d < PARAM_MAX))
-        {
-        if ((net_buf[y] == ' ')||(net_buf[y] == '\0'))
-          {
-          net_buf[y] = '\0';
-          if ((net_buf[x]=='-')&&(net_buf[x+1]=='\0'))
-            net_buf[x] = '\0'; // Special case '-' is empty value
-          par_set(d++, net_buf+x);
-          x=++y;
-          }
-        else
-          y++;
-        }
-      net_send_sms_rom(net_caller,NET_MSG_PARAMS);
-      net_state_enter(NET_STATE_RESET);
-      }
-    else
-      net_send_sms_rom(net_caller,NET_MSG_DENIED);
-    }
-  }
-
-// Receive a NET msg from the OVMS server
-void net_msg_in(char* msg)
-  {
   }
 
 void net_state_enter(unsigned char newstate)
@@ -454,16 +152,16 @@ void net_state_enter(unsigned char newstate)
       net_timeout_ticks = 10;
       net_state_vchar = 1;
       led_act(net_state_vchar);
+      net_msg_init();
       break;
     case NET_STATE_RESET:
       net_timeout_goto = 0;
       break;
     case NET_STATE_DOINIT:
       net_timeout_goto = NET_STATE_RESET;
-      net_timeout_ticks = 60;
+      net_timeout_ticks = 10;
       led_act(0);
-      net_state_vchar = 0;
-      net_puts_rom(NET_INIT[net_state_vchar]);
+      net_puts_rom(NET_INIT);
       break;
     case NET_STATE_DONETINIT:
       p = par_get(PARAM_GPRSAPN);
@@ -473,6 +171,7 @@ void net_state_enter(unsigned char newstate)
         net_timeout_ticks = 60;
         led_act(0);
         net_state_vchar = 0;
+        delay100(2);
         net_puts_rom("AT+CIPSHUT\r");
         break;
         }
@@ -491,6 +190,7 @@ void net_state_enter(unsigned char newstate)
       delay100(2);
       net_timeout_goto = NET_STATE_RESET;
       net_timeout_ticks = 120;
+      net_msg_disconnected();
       net_puts_rom(NET_COPS);
       break;
     case NET_STATE_SMSIN:
@@ -507,18 +207,16 @@ void net_state_activity()
     case NET_STATE_DOINIT:
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         {
-        net_buf_pos = 0;
-        if (++net_state_vchar < NET_INIT_MAX)
-          {
-          delay100(1);
-          net_puts_rom(NET_INIT[net_state_vchar]);
-          net_timeout_ticks = 60;
-          }
-        else
-          net_state_enter(NET_STATE_COPS);
+        net_state_enter(NET_STATE_COPS);
         }
       else // Discard the input
         net_buf_pos = 0;
+      break;
+    case NET_STATE_COPS:
+      if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
+        net_state_enter(NET_STATE_DONETINIT); // COPS reconnect was OK
+      else if ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R'))
+        net_state_enter(NET_STATE_RESET); // Reset the entire async
       break;
     case NET_STATE_DONETINIT:
       if ((net_buf_pos >= 2)&&
@@ -615,6 +313,16 @@ void net_state_activity()
           }
         net_state_enter(NET_STATE_SMSIN);
         }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT OK", 10) == 0)
+        {
+        if (net_link == 0)
+          {
+          net_msg_start();
+          net_msg_register();
+          net_msg_send();
+          }
+        net_link = 1;
+        }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"STATE: ", 7) == 0)
         { // Incoming CIPSTATUS
         if (memcmppgm2ram(net_buf, (char const rom far*)"STATE: CONNECT OK", 17) == 0)
@@ -623,8 +331,6 @@ void net_state_activity()
             {
             net_msg_start();
             net_msg_register();
-            net_msg_stat();
-            net_msg_gps();
             net_msg_send();
             }
           net_link = 1;
@@ -642,18 +348,12 @@ void net_state_activity()
       else if (memcmppgm2ram(net_buf, (char const rom far*)"+IPD,", 5) == 0)
         { // Incoming TCP/IP NET message
         unsigned char x = 5;
-        while ((net_buf[x++] != ':') && (x < net_buf_pos)); // Search for start of Phone number
+        while ((net_buf[x++] != ':') && (x < net_buf_pos)); // Search for start of data
         net_msg_in(net_buf+x);
         }
       break;
-    case NET_STATE_COPS:
-      if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
-        net_state_enter(NET_STATE_DONETINIT); // COPS reconnect was OK
-      else if ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R'))
-        net_state_enter(NET_STATE_RESET); // Reset the entire async
-      break;
     case NET_STATE_SMSIN:
-      net_sms_in();
+      net_sms_in(net_caller,net_buf,net_buf_pos);
       net_state_enter(NET_STATE_READY);
       break;
     }
@@ -709,10 +409,10 @@ void net_state_ticker600(void)
     case NET_STATE_READY:
       if (net_link==1)
         {
-        net_msg_start();
-        net_msg_stat();
-        net_msg_gps();
-        net_msg_send();
+//        net_msg_start();
+//        net_msg_stat();
+//        net_msg_gps();
+//        net_msg_send();
         }
       break;
     }
