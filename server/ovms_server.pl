@@ -99,13 +99,14 @@ sub io_line
       { $servertoken .= substr($b64tab,rand(64),1); }
     $serverhmac = Digest::HMAC->new($vrec->{'carpass'}, "Digest::MD5");
     $serverhmac->add($servertoken);
-    my $serverdigest = $serverhmac->b64digest();
+    my $serverdigest = encode_base64($serverhmac->digest(),'');
 
     # Calculate the shared session key
     $serverhmac = Digest::HMAC->new($vrec->{'carpass'}, "Digest::MD5");
-    $serverhmac->add($servertoken);
-    $serverhmac->add($clienttoken);
+    my $sessionkey = $servertoken . $clienttoken;
+    $serverhmac->add($sessionkey);
     my $serverkey = $serverhmac->digest;
+    AE::log info => "#$fn $vehicleid crypt session key $sessionkey (".unpack("H*",$serverkey).")";
     my $txcipher = Crypt::RC4::XS->new($serverkey);
     $txcipher->RC4(chr(0) x 1024);  # Prime with 1KB of zeros
     my $rxcipher = Crypt::RC4::XS->new($serverkey);
@@ -184,7 +185,7 @@ sub io_login
       &io_tx($afn, $conns{$afn}{'handle'}, 'Z', '1');
       }
     # And notify the car itself
-    &io_tx($fn, $hdl, 'Z', $appcount);
+    #&io_tx($fn, $hdl, 'Z', $appcount);
     }
   }
 
