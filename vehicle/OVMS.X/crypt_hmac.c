@@ -36,8 +36,10 @@
 #include "crypt_md5.h"
 #include "crypt_hmac.h"
 
+#pragma udata
 unsigned char k_ipad[64];
 unsigned char k_opad[64];
+MD5_CTX context;
 
 /**
  * Perform HMAC-MD5
@@ -45,7 +47,6 @@ unsigned char k_opad[64];
 void hmac_md5(const unsigned char *msg, int length, const unsigned char *key,
               int key_len, unsigned char *digest)
   {
-  MD5_CTX context;
   int i;
 
   memset(k_ipad, 0, sizeof k_ipad);

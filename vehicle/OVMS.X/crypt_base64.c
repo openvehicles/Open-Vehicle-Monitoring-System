@@ -49,6 +49,9 @@ const rom unsigned char cb64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 // Translation Table to decode (created by author)
 rom unsigned char cd64[]="|$$$}rstuvwxyz{$$$$$$$>?@ABCDEFGHIJKLMNOPQRSTUVW$$$$$$XYZ[\\]^_`abcdefghijklmnopq";
 
+#pragma udata
+unsigned char in[4], out[4];
+
 void encodeblock( unsigned char in[3], unsigned char out[4], int len )
   {
   out[0] = cb64[ in[0] >> 2 ];
@@ -59,7 +62,6 @@ void encodeblock( unsigned char in[3], unsigned char out[4], int len )
 
 void base64encode(BYTE *inputData, WORD inputLen, BYTE *outputData)
   {
-  unsigned char in[3], out[4];
   int len = 0;
   int k;
   for (k=0;k<inputLen;k++)
@@ -84,7 +86,6 @@ void base64encode(BYTE *inputData, WORD inputLen, BYTE *outputData)
 
 void base64encodesend(BYTE *inputData, WORD inputLen)
   {
-  unsigned char in[3], out[4];
   int len = 0;
   int k;
   for (k=0;k<inputLen;k++)
@@ -115,7 +116,7 @@ void decodeblock( unsigned char in[4], unsigned char out[3] )
 
 int base64decode(BYTE *inputData, BYTE *outputData)
   {
-  unsigned char in[4], out[3], v;
+  unsigned char v;
   int i, len;
   int written = 0;
 
