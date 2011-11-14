@@ -189,12 +189,12 @@ void net_msg_gps(void)
 void net_msg_server_welcome(char *msg)
   {
   // The server has sent a welcome (token <space> base64digest)
-  char *d,*x,*p;
+  char *d,*p;
   int k;
 
   for (d=msg;(*d != 0)&&(*d != ' ');d++) ;
   if (*d != ' ') return;
-  *d = 0; x = d+1;
+  *d++ = 0;
 
   // At this point, <msg> is token, and <x> is base64digest
   // (both null-terminated)
@@ -204,15 +204,15 @@ void net_msg_server_welcome(char *msg)
     return; // Server is using our token!
 
   // Validate server token
-  base64decode(x, net_msg_scratchpad); // Decode server digest to scratchpad
   p = par_get(PARAM_NETPASS1);
   hmac_md5(msg, strlen(msg), p, strlen(p), digest);
-  if (memcmp((const far void*)digest, (const far void*)net_msg_scratchpad, MD5_SIZE)!=0)
+  base64encode(digest, MD5_SIZE, net_scratchpad);
+  if (strcmp(d,net_scratchpad)!=0)
     return; // Invalid server digest
 
   // Ok, at this point, our token is ok
-  strcpy(net_scratchpad,token);
-  strcat(net_scratchpad,msg);
+  strcpy(net_scratchpad,msg);
+  strcat(net_scratchpad,token);
   hmac_md5(net_scratchpad,strlen(net_scratchpad),p,strlen(p),digest);
 
   // Setup, and prime the rx and tx cryptos
@@ -249,9 +249,9 @@ void net_msg_in(char* msg)
   // Ok, we've got an encrypted message waiting for work.
   k = base64decode(msg,net_scratchpad);
   RC4_crypt(&rx_crypto1, &rx_crypto2, net_scratchpad, k);
-  if (memcmppgm2ram(net_scratchpad, (char const rom far*)"MP-0 S", 6) == 0)
+  if (memcmppgm2ram(net_scratchpad, (char const rom far*)"MP-0 ", 5) == 0)
     {
-    msg = net_scratchpad+6;
+    msg = net_scratchpad+5;
     switch (*msg)
       {
       case 'A': // PING
@@ -261,10 +261,13 @@ void net_msg_in(char* msg)
         net_msg_send();
         break;
       case 'Z': // PEER connection
-        net_msg_start();
-        net_msg_stat();
-        net_msg_gps();
-        net_msg_send();
+        if (msg[1] != '0')
+          {
+          net_msg_start();
+          net_msg_stat();
+          net_msg_gps();
+          net_msg_send();
+          }
         break;
       }
     }
