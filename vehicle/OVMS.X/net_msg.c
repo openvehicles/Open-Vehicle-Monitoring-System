@@ -263,10 +263,15 @@ void net_msg_in(char* msg)
       case 'Z': // PEER connection
         if (msg[1] != '0')
           {
+          net_apps_connected = 1;
           net_msg_start();
           net_msg_stat();
           net_msg_gps();
           net_msg_send();
+          }
+        else
+          {
+          net_apps_connected = 0;
           }
         break;
       }

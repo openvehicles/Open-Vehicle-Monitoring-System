@@ -75,6 +75,7 @@ signed long car_latitude = 0x16DEC6D9; // Raw GPS Latitude  (52.04246 zero in co
 signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not verified if this is correct)
 unsigned char net_reg = 0; // Network registration
 unsigned char net_link = 0; // Network link status
+char net_apps_connected = 0; // Network apps connected
 
 void main(void)
   {
