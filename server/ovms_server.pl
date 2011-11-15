@@ -185,7 +185,7 @@ sub io_login
       &io_tx($afn, $conns{$afn}{'handle'}, 'Z', '1');
       }
     # And notify the car itself
-    #&io_tx($fn, $hdl, 'Z', $appcount);
+    &io_tx($fn, $hdl, 'Z', $appcount);
     }
   }
 
