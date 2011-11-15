@@ -234,6 +234,18 @@ sub io_tx
   $handle->push_write(encode_base64($conns{$fn}{'txcipher'}->RC4("MP-0 $code$data"),'')."\r\n");
   }
 
+sub io_tx_apps
+  {
+  my ($vehicleid, $code, $data) = @_;
+
+  # Notify any listening apps
+  foreach (keys %{$app_conns{$vehicleid}})
+    {
+    my $afn = $_;
+    &io_tx($afn, $conns{$afn}{'handle'}, $code, $data);
+    }
+  }
+
 # A TCP listener
 tcp_server undef, 6867, sub
   {
@@ -295,13 +307,10 @@ sub io_message
   elsif ($code eq 'P') ## PUSH NOTIFICATION
     {
     AE::log info => "#$fn $vehicleid msg push notification '$data' => $vehicleid";
-    # Send to connected apps
-    foreach (keys %{$app_conns{$vehicleid}})
-      {
-      my $afn = $_;
-      &io_tx($afn, $conns{$afn}{'handle'}, 'P', $data);
-      }
-    # And also send via the mobile networks (todo)
+    # Send it to any listening apps
+    &io_tx_apps($vehicleid, $code, $data);
+    # And also send via the mobile networks
+    # TODO
     }
   elsif ($code eq 'S') ## STATUS MESSAGE
     {
@@ -311,6 +320,7 @@ sub io_message
           . 'v_chargemode=?,v_idealrange=?,v_estimatedrange=?,v_lastupdate=UTC_TIMESTAMP() WHERE vehicleid=?',
             undef,
             @params,$vehicleid);
+    &io_tx_apps($vehicleid, $code, $data); # Send it on to any listening apps
     }
   elsif ($code eq 'L') ## LOCATION MESSAGE
     {
@@ -319,5 +329,6 @@ sub io_message
     $db->do('UPDATE ovms_cars SET v_latitude=?,v_longitude=?,v_lastupdate=UTC_TIMESTAMP() WHERE vehicleid=?',
             undef,
             @params,$vehicleid);
+    &io_tx_apps($vehicleid, $code, $data); # Send it on to any listening apps
     }
   }
