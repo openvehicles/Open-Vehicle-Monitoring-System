@@ -34,13 +34,17 @@
 #define NET_BUF_MAX 100
 #define NET_TEL_MAX 20
 
+// NET_BUF_MODES
+#define NET_BUF_SMS          0xfe  // net_buf is waiting for 2nd line of SMS
+#define NET_BUF_CRLF         0xff  // net_buf is waiting for CRLF line
+// otherwise the number of bytes outstanding for IP data
+
 // STATES
 #define NET_STATE_START      0x01  // Initialise and get ready to go
 #define NET_STATE_RESET      0x02  // Reset and re-initialise the network
 #define NET_STATE_DOINIT     0x10  // Initialise the GSM network
 #define NET_STATE_READY      0x20  // READY and handling calls
 #define NET_STATE_COPS       0x21  // GSM COPS carrier selection
-#define NET_STATE_SMSIN      0x30  // Wait for SMS message text
 #define NET_STATE_DONETINIT  0x40  // Initalise the GPRS network
 
 extern char net_scratchpad[100];

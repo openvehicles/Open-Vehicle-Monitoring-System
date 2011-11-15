@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <usart.h>
 #include <string.h>
+#include <stdlib.h>
 #include "ovms.h"
 #include "net_sms.h"
 #include "net_msg.h"
@@ -44,10 +45,11 @@ unsigned char net_timeout_goto = 0;
 unsigned int  net_timeout_ticks = 0;
 unsigned int  net_granular_tick = 0;
 unsigned int  net_watchdog = 0;
-unsigned char net_buf_pos = 0;
 char net_caller[NET_TEL_MAX] = {0};
 char net_scratchpad[100];
 
+unsigned char net_buf_pos = 0;
+unsigned char net_buf_mode = NET_BUF_CRLF;
 #pragma udata NETBUF
 char net_buf[NET_BUF_MAX];
 #pragma udata
@@ -86,17 +88,66 @@ void net_reset_async(void)
 void net_poll(void)
   {
   unsigned char x;
+
   while(UARTIntGetChar(&x))
     {
-    if (x == 0x0d) continue; // Skip 0x0d (CR)
-    net_buf[net_buf_pos++] = x;
-    if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
-    if (x == 0x0A) // Newline?
-      {
-      net_buf_pos--;
-      net_buf[net_buf_pos] = 0; // mark end of string for string search functions.
-      net_state_activity();
-      net_buf_pos = 0;
+    if ((net_buf_mode==NET_BUF_SMS)||(net_buf_mode==NET_BUF_CRLF))
+      { // CRLF (either normal or SMS second line) mode
+      if (x == 0x0d) continue; // Skip 0x0d (CR)
+      net_buf[net_buf_pos++] = x;
+      if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
+      if ((x == ':')&&(net_buf_pos>=6)&&
+          (net_buf[0]=='+')&&(net_buf[1]=='I')&&
+          (net_buf[2]=='P')&&(net_buf[3]=='D'))
+        {
+        net_buf[net_buf_pos-1] = 0; // Change the ':' to an end
+        net_buf_mode = atoi(net_buf+5);
+        net_buf_pos = 0;
+        continue; // We have switched to IPD mode
+        }
+      if (x == 0x0A) // Newline?
+        {
+        net_buf_pos--;
+        net_buf[net_buf_pos] = 0; // mark end of string for string search functions.
+        if ((net_buf_pos>=4)&&
+            (net_buf[0]=='+')&&(net_buf[1]=='C')&&
+            (net_buf[2]=='M')&&(net_buf[3]=='T'))
+          {
+          x = 7;
+          while ((net_buf[x++] != '\"') && (x < net_buf_pos)); // Search for start of Phone number
+          net_buf[x - 1] = '\0'; // mark end of string
+          net_caller[0] = '\0';
+          strncpy(net_caller,net_buf+7,NET_TEL_MAX);
+          net_caller[NET_TEL_MAX-1] = '\0';
+          net_buf_pos = 0;
+          net_buf_mode = NET_BUF_SMS;
+          continue;
+          }
+        net_state_activity();
+        net_buf_pos = 0;
+        net_buf_mode = NET_BUF_CRLF;
+        }
+      }
+    else
+      { // IP data mode
+      if (x != 0x0d)
+        {
+        net_buf[net_buf_pos++] = x; // Swallow CR
+        if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
+        }
+      net_buf_mode--;
+      if (x == 0x0A) // Newline?
+        {
+        net_buf_pos--;
+        net_buf[net_buf_pos] = 0; // mark end of string for string search functions.
+        net_state_activity();
+        net_buf_pos = 0;
+        }
+      if (net_buf_mode==0)
+        {
+        net_buf_pos = 0;
+        net_buf_mode = NET_BUF_CRLF;
+        }
       }
     }
   }
@@ -151,6 +202,7 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_DOINIT;
       net_timeout_ticks = 10;
       net_state_vchar = 1;
+      net_apps_connected = 0;
       led_act(net_state_vchar);
       net_msg_init();
       break;
@@ -171,6 +223,8 @@ void net_state_enter(unsigned char newstate)
         net_timeout_ticks = 60;
         led_act(0);
         net_state_vchar = 0;
+        net_apps_connected = 0;
+        net_msg_disconnected();
         delay100(2);
         net_puts_rom("AT+CIPSHUT\r");
         break;
@@ -193,15 +247,30 @@ void net_state_enter(unsigned char newstate)
       net_msg_disconnected();
       net_puts_rom(NET_COPS);
       break;
-    case NET_STATE_SMSIN:
-      net_timeout_goto = NET_STATE_RESET;
-      net_timeout_ticks = 20;
-      break;
     }
   }
 
 void net_state_activity()
   {
+  if (net_buf_mode == NET_BUF_SMS)
+    {
+    // An SMS has arrived, and net_caller has been primed
+    if ((net_reg != 0x01)&&(net_reg != 0x05))
+      { // Treat this as a network registration
+      net_watchdog=0; // Disable watchdog, as we have connectivity
+      net_reg = 0x05;
+      led_net(1);
+      }
+    net_sms_in(net_caller,net_buf,net_buf_pos);
+    return;
+    }
+  else if (net_buf_mode != NET_BUF_CRLF)
+    {
+    // An IP data message has arrived
+    net_msg_in(net_buf);
+    return;
+    }
+
   switch (net_state)
     {
     case NET_STATE_DOINIT:
@@ -209,8 +278,6 @@ void net_state_activity()
         {
         net_state_enter(NET_STATE_COPS);
         }
-      else // Discard the input
-        net_buf_pos = 0;
       break;
     case NET_STATE_COPS:
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
@@ -297,22 +364,6 @@ void net_state_activity()
         net_puts_rom(NET_HANGUP);
         net_notify_status();
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CMT: \"", 7) == 0)
-        { // Incoming SMS message
-        unsigned char x = 7;
-        while ((net_buf[x++] != '\"') && (x < net_buf_pos)); // Search for start of Phone number
-        net_buf[x - 1] = '\0'; // mark end of string
-        net_caller[0] = '\0';
-        strncpy(net_caller,net_buf+7,NET_TEL_MAX);
-        net_caller[NET_TEL_MAX-1] = '\0';
-        if ((net_reg != 0x01)&&(net_reg != 0x05))
-          { // Treat this as a network registration
-          net_watchdog=0; // Disable watchdog, as we have connectivity
-          net_reg = 0x05;
-          led_net(1);
-          }
-        net_state_enter(NET_STATE_SMSIN);
-        }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT OK", 10) == 0)
         {
         if (net_link == 0)
@@ -345,16 +396,6 @@ void net_state_activity()
             }
           }
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+IPD,", 5) == 0)
-        { // Incoming TCP/IP NET message
-        unsigned char x = 5;
-        while ((net_buf[x++] != ':') && (x < net_buf_pos)); // Search for start of data
-        net_msg_in(net_buf+x);
-        }
-      break;
-    case NET_STATE_SMSIN:
-      net_sms_in(net_caller,net_buf,net_buf_pos);
-      net_state_enter(NET_STATE_READY);
       break;
     }
   }
@@ -385,6 +426,13 @@ void net_state_ticker60(void)
   switch (net_state)
     {
     case NET_STATE_READY:
+      if ((net_link==1)&&(net_apps_connected>0))
+        {
+        net_msg_start();
+        net_msg_stat();
+        net_msg_gps();
+        net_msg_send();
+        }
       net_state_vchar = net_state_vchar ^ 1;
       delay100(2);
       if (net_state_vchar == 0)
@@ -407,12 +455,12 @@ void net_state_ticker600(void)
   switch (net_state)
     {
     case NET_STATE_READY:
-      if (net_link==1)
+      if ((net_link==1)&&(net_apps_connected==0))
         {
-//        net_msg_start();
-//        net_msg_stat();
-//        net_msg_gps();
-//        net_msg_send();
+        net_msg_start();
+        net_msg_stat();
+        net_msg_gps();
+        net_msg_send();
         }
       break;
     }
