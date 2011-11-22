@@ -1,0 +1,135 @@
+//
+//  ovmsLocationViewController.m
+//  ovms
+//
+//  Created by Mark Webb-Johnson on 16/11/11.
+//  Copyright (c) 2011 Hong Hay Villa. All rights reserved.
+//
+
+#import "ovmsLocationViewController.h"
+
+@implementation TeslaAnnotation
+
+@synthesize name = _name;
+@synthesize description = _description;
+@synthesize coordinate = _coordinate;
+
+-(id) initWithCoordinate:(CLLocationCoordinate2D) coordinate{
+  self=[super init];
+  if(self){
+    _coordinate=coordinate;
+  }
+  return self;
+}
+
+-(void) dealloc{
+  self.name = nil;
+  self.description = nil;
+}
+
+@end
+
+@implementation ovmsLocationViewController
+@synthesize myMapView;
+@synthesize m_car_location;
+
+- (void)didReceiveMemoryWarning
+{
+  [super didReceiveMemoryWarning];
+  // Release any cached data, images, etc that aren't in use.
+}
+
+#pragma mark - View lifecycle
+
+- (void)viewDidLoad
+{
+  [super viewDidLoad];
+  
+	// Do any additional setup after loading the view, typically from a nib.
+  [NSThread detachNewThreadSelector:@selector(displayMYMap) toTarget:self withObject:nil]; 
+}
+
+- (void)viewDidUnload
+{
+  [self setMyMapView:nil];
+  [super viewDidUnload];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+  [super viewWillAppear:animated];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+  [super viewDidAppear:animated];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+	[super viewWillDisappear:animated];
+}
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+	[super viewDidDisappear:animated];
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+{
+  // Return YES for supported orientations
+  if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
+    return (interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown);
+  } else {
+    return YES;
+  }
+}
+
+-(void)displayMYMap
+{
+  MKCoordinateRegion region; 
+  MKCoordinateSpan span; 
+  span.latitudeDelta=0.01; 
+  span.longitudeDelta=0.01; 
+  
+  CLLocationCoordinate2D location; 
+  
+  location.latitude = 22.358088;
+  location.longitude = 114.122400;
+  
+  region.span=span; 
+  region.center=location; 
+  
+  TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
+  pa.name = @"EV915";
+  pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
+  [myMapView addAnnotation:pa];
+  self.m_car_location = pa;
+
+  [myMapView setRegion:region animated:YES]; 
+  [myMapView regionThatFits:region]; 
+}
+
+ - (MKAnnotationView *)mapView:(MKMapView *)mapView
+ viewForAnnotation:(id <MKAnnotation>)annotation
+  {
+  static NSString *teslaAnnotationIdentifier=@"TeslaAnnotationIdentifier";
+  
+ if ([annotation isKindOfClass:[MKUserLocation class]])
+ return nil;
+ 
+  if([annotation isKindOfClass:[TeslaAnnotation class]]){
+    //Try to get an unused annotation, similar to uitableviewcells
+    MKAnnotationView *annotationView=[mapView dequeueReusableAnnotationViewWithIdentifier:teslaAnnotationIdentifier];
+    //If one isn't available, create a new one
+    if(!annotationView){
+      annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:teslaAnnotationIdentifier];
+      //Here's where the magic happens
+      annotationView.image=[UIImage imageNamed:@"teslapin.png"];
+    }
+    return annotationView;
+  }
+  return nil;
+}
+
+@end
