@@ -1,0 +1,723 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4D5AE36914733757002F5F52 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36814733757002F5F52 /* UIKit.framework */; };
+		4D5AE36B14733757002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
+		4D5AE36D14733757002F5F52 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36C14733757002F5F52 /* CoreGraphics.framework */; };
+		4D5AE37314733757002F5F52 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE37114733757002F5F52 /* InfoPlist.strings */; };
+		4D5AE37514733757002F5F52 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5AE37414733757002F5F52 /* main.m */; };
+		4D5AE37914733758002F5F52 /* ovmsAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5AE37814733758002F5F52 /* ovmsAppDelegate.m */; };
+		4D5AE37C14733758002F5F52 /* MainStoryboard_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE37A14733758002F5F52 /* MainStoryboard_iPhone.storyboard */; };
+		4D5AE37F14733758002F5F52 /* MainStoryboard_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE37D14733758002F5F52 /* MainStoryboard_iPad.storyboard */; };
+		4D5AE38414733758002F5F52 /* first.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE38314733758002F5F52 /* first.png */; };
+		4D5AE38614733758002F5F52 /* first@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE38514733758002F5F52 /* first@2x.png */; };
+		4D5AE38B14733758002F5F52 /* second.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE38A14733758002F5F52 /* second.png */; };
+		4D5AE38D14733758002F5F52 /* second@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE38C14733758002F5F52 /* second@2x.png */; };
+		4D5AE39514733758002F5F52 /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE39414733758002F5F52 /* SenTestingKit.framework */; };
+		4D5AE39614733758002F5F52 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36814733757002F5F52 /* UIKit.framework */; };
+		4D5AE39714733758002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
+		4D5AE39F14733758002F5F52 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE39D14733758002F5F52 /* InfoPlist.strings */; };
+		4D5AE3A214733758002F5F52 /* ovmsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5AE3A114733758002F5F52 /* ovmsTests.m */; };
+		4D91CEF01473EB2700CBA435 /* ovmsCarsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEEF1473EB2700CBA435 /* ovmsCarsViewController.m */; };
+		4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */; };
+		4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */; };
+		4D91CEFA1473F24500CBA435 /* 20-gear2.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CEF91473F24500CBA435 /* 20-gear2.png */; };
+		4D91CEFC1473F26D00CBA435 /* 49-battery.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CEFB1473F26D00CBA435 /* 49-battery.png */; };
+		4D91CEFE1473F27D00CBA435 /* 51-outlet.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CEFD1473F27D00CBA435 /* 51-outlet.png */; };
+		4D91CF001473F29400CBA435 /* 54-lock.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CEFF1473F29400CBA435 /* 54-lock.png */; };
+		4D91CF021473F2B500CBA435 /* 74-location.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF011473F2B500CBA435 /* 74-location.png */; };
+		4D91CF041473F2BE00CBA435 /* 77-ekg.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF031473F2BE00CBA435 /* 77-ekg.png */; };
+		4D91CF061473F2CC00CBA435 /* 81-dashboard.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF051473F2CC00CBA435 /* 81-dashboard.png */; };
+		4D91CF081473F33400CBA435 /* 193-location-arrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF071473F33400CBA435 /* 193-location-arrow.png */; };
+		4D91CF0A1473F36000CBA435 /* 00-icons-license.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF091473F36000CBA435 /* 00-icons-license.txt */; };
+		4D91CF511473F95300CBA435 /* car_models_anzabrown.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF3A1473F95300CBA435 /* car_models_anzabrown.png */; };
+		4D91CF521473F95300CBA435 /* car_models_catalinawhite.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF3B1473F95300CBA435 /* car_models_catalinawhite.png */; };
+		4D91CF531473F95300CBA435 /* car_models_montereyblue.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF3C1473F95300CBA435 /* car_models_montereyblue.png */; };
+		4D91CF541473F95300CBA435 /* car_models_sansimeonsilver.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF3D1473F95300CBA435 /* car_models_sansimeonsilver.png */; };
+		4D91CF551473F95300CBA435 /* car_models_sequolagreen.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF3E1473F95300CBA435 /* car_models_sequolagreen.png */; };
+		4D91CF561473F95300CBA435 /* car_models_shastapearlwhite.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF3F1473F95300CBA435 /* car_models_shastapearlwhite.png */; };
+		4D91CF571473F95300CBA435 /* car_models_sierrablack.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF401473F95300CBA435 /* car_models_sierrablack.png */; };
+		4D91CF581473F95300CBA435 /* car_models_signaturered.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF411473F95300CBA435 /* car_models_signaturered.png */; };
+		4D91CF591473F95300CBA435 /* car_models_tiburongrey.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF421473F95300CBA435 /* car_models_tiburongrey.png */; };
+		4D91CF5A1473F95300CBA435 /* car_roadster_arcticwhite.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF431473F95300CBA435 /* car_roadster_arcticwhite.png */; };
+		4D91CF5B1473F95300CBA435 /* car_roadster_brilliantyellow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF441473F95300CBA435 /* car_roadster_brilliantyellow.png */; };
+		4D91CF5C1473F95300CBA435 /* car_roadster_electricblue.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF451473F95300CBA435 /* car_roadster_electricblue.png */; };
+		4D91CF5D1473F95300CBA435 /* car_roadster_fushionred.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF461473F95300CBA435 /* car_roadster_fushionred.png */; };
+		4D91CF5E1473F95300CBA435 /* car_roadster_glacierblue.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF471473F95300CBA435 /* car_roadster_glacierblue.png */; };
+		4D91CF5F1473F95300CBA435 /* car_roadster_jetblack.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF481473F95300CBA435 /* car_roadster_jetblack.png */; };
+		4D91CF601473F95300CBA435 /* car_roadster_lightninggreen.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF491473F95300CBA435 /* car_roadster_lightninggreen.png */; };
+		4D91CF611473F95300CBA435 /* car_roadster_obsidianblack.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF4A1473F95300CBA435 /* car_roadster_obsidianblack.png */; };
+		4D91CF621473F95300CBA435 /* car_roadster_racinggreen.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF4B1473F95300CBA435 /* car_roadster_racinggreen.png */; };
+		4D91CF631473F95300CBA435 /* car_roadster_radiantred.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF4C1473F95300CBA435 /* car_roadster_radiantred.png */; };
+		4D91CF641473F95300CBA435 /* car_roadster_sterlingsilver.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF4D1473F95300CBA435 /* car_roadster_sterlingsilver.png */; };
+		4D91CF651473F95300CBA435 /* car_roadster_thundergray.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF4E1473F95300CBA435 /* car_roadster_thundergray.png */; };
+		4D91CF661473F95300CBA435 /* car_roadster_twilightblue.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF4F1473F95300CBA435 /* car_roadster_twilightblue.png */; };
+		4D91CF671473F95300CBA435 /* car_roadster_veryorange.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF501473F95300CBA435 /* car_roadster_veryorange.png */; };
+		4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D91CF681473FE0900CBA435 /* MapKit.framework */; };
+		4DDA222F1476962700BA40AA /* teslapin.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDA222E1476962700BA40AA /* teslapin.png */; };
+		4DFAD7EB14752B8800416D38 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7EA14752B8800416D38 /* Icon.png */; };
+		4DFAD7EE14752BA100416D38 /* icon114x114.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7ED14752BA100416D38 /* icon114x114.png */; };
+		4DFAD7F014752CFB00416D38 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7EF14752CFB00416D38 /* Default.png */; };
+		4DFAD7F414752D4F00416D38 /* icon72x72.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7F314752D4E00416D38 /* icon72x72.png */; };
+		4DFAD7F614752ECD00416D38 /* Default-Portrait~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7F514752ECD00416D38 /* Default-Portrait~ipad.png */; };
+		4DFAD7F814752F0F00416D38 /* Default-Landscape~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7F714752F0F00416D38 /* Default-Landscape~ipad.png */; };
+		4DFAD7FB14753D7900416D38 /* battery_000.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7F914753D7900416D38 /* battery_000.png */; };
+		4DFAD7FC14753D7900416D38 /* battery_100.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7FA14753D7900416D38 /* battery_100.png */; };
+		4DFAD8021475445600416D38 /* crypto_md5.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DFAD8011475445600416D38 /* crypto_md5.c */; };
+		4DFAD8071475448000416D38 /* crypto_rc4.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DFAD8061475448000416D38 /* crypto_rc4.c */; };
+		4DFAD8091475448A00416D38 /* crypto_hmac.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DFAD8081475448A00416D38 /* crypto_hmac.c */; };
+		4DFAD80B1475449600416D38 /* crypto_base64.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DFAD80A1475449600416D38 /* crypto_base64.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4D5AE39814733758002F5F52 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4D5AE35B14733757002F5F52 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4D5AE36314733757002F5F52;
+			remoteInfo = ovms;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		4D5AE36414733757002F5F52 /* ovms.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ovms.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D5AE36814733757002F5F52 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		4D5AE36A14733757002F5F52 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		4D5AE36C14733757002F5F52 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		4D5AE37014733757002F5F52 /* ovms-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ovms-Info.plist"; sourceTree = "<group>"; };
+		4D5AE37214733757002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		4D5AE37414733757002F5F52 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		4D5AE37614733758002F5F52 /* ovms-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ovms-Prefix.pch"; sourceTree = "<group>"; };
+		4D5AE37714733758002F5F52 /* ovmsAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ovmsAppDelegate.h; sourceTree = "<group>"; };
+		4D5AE37814733758002F5F52 /* ovmsAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ovmsAppDelegate.m; sourceTree = "<group>"; };
+		4D5AE37B14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/MainStoryboard_iPhone.storyboard; sourceTree = "<group>"; };
+		4D5AE37E14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/MainStoryboard_iPad.storyboard; sourceTree = "<group>"; };
+		4D5AE38314733758002F5F52 /* first.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = first.png; sourceTree = "<group>"; };
+		4D5AE38514733758002F5F52 /* first@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "first@2x.png"; sourceTree = "<group>"; };
+		4D5AE38A14733758002F5F52 /* second.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = second.png; sourceTree = "<group>"; };
+		4D5AE38C14733758002F5F52 /* second@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "second@2x.png"; sourceTree = "<group>"; };
+		4D5AE39314733758002F5F52 /* ovmsTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ovmsTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D5AE39414733758002F5F52 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
+		4D5AE39C14733758002F5F52 /* ovmsTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ovmsTests-Info.plist"; sourceTree = "<group>"; };
+		4D5AE39E14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		4D5AE3A014733758002F5F52 /* ovmsTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ovmsTests.h; sourceTree = "<group>"; };
+		4D5AE3A114733758002F5F52 /* ovmsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ovmsTests.m; sourceTree = "<group>"; };
+		4D91CEEE1473EB2700CBA435 /* ovmsCarsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsViewController.h; sourceTree = "<group>"; };
+		4D91CEEF1473EB2700CBA435 /* ovmsCarsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsViewController.m; sourceTree = "<group>"; };
+		4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewController.h; sourceTree = "<group>"; };
+		4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsStatusViewController.m; sourceTree = "<group>"; };
+		4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsLocationViewController.h; sourceTree = "<group>"; };
+		4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsLocationViewController.m; sourceTree = "<group>"; };
+		4D91CEF91473F24500CBA435 /* 20-gear2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "20-gear2.png"; sourceTree = "<group>"; };
+		4D91CEFB1473F26D00CBA435 /* 49-battery.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "49-battery.png"; sourceTree = "<group>"; };
+		4D91CEFD1473F27D00CBA435 /* 51-outlet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "51-outlet.png"; sourceTree = "<group>"; };
+		4D91CEFF1473F29400CBA435 /* 54-lock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "54-lock.png"; sourceTree = "<group>"; };
+		4D91CF011473F2B500CBA435 /* 74-location.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "74-location.png"; sourceTree = "<group>"; };
+		4D91CF031473F2BE00CBA435 /* 77-ekg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "77-ekg.png"; sourceTree = "<group>"; };
+		4D91CF051473F2CC00CBA435 /* 81-dashboard.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "81-dashboard.png"; sourceTree = "<group>"; };
+		4D91CF071473F33400CBA435 /* 193-location-arrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "193-location-arrow.png"; sourceTree = "<group>"; };
+		4D91CF091473F36000CBA435 /* 00-icons-license.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "00-icons-license.txt"; sourceTree = "<group>"; };
+		4D91CF3A1473F95300CBA435 /* car_models_anzabrown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_models_anzabrown.png; sourceTree = "<group>"; };
+		4D91CF3B1473F95300CBA435 /* car_models_catalinawhite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_models_catalinawhite.png; sourceTree = "<group>"; };
+		4D91CF3C1473F95300CBA435 /* car_models_montereyblue.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_models_montereyblue.png; sourceTree = "<group>"; };
+		4D91CF3D1473F95300CBA435 /* car_models_sansimeonsilver.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_models_sansimeonsilver.png; sourceTree = "<group>"; };
+		4D91CF3E1473F95300CBA435 /* car_models_sequolagreen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_models_sequolagreen.png; sourceTree = "<group>"; };
+		4D91CF3F1473F95300CBA435 /* car_models_shastapearlwhite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_models_shastapearlwhite.png; sourceTree = "<group>"; };
+		4D91CF401473F95300CBA435 /* car_models_sierrablack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_models_sierrablack.png; sourceTree = "<group>"; };
+		4D91CF411473F95300CBA435 /* car_models_signaturered.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_models_signaturered.png; sourceTree = "<group>"; };
+		4D91CF421473F95300CBA435 /* car_models_tiburongrey.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_models_tiburongrey.png; sourceTree = "<group>"; };
+		4D91CF431473F95300CBA435 /* car_roadster_arcticwhite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_arcticwhite.png; sourceTree = "<group>"; };
+		4D91CF441473F95300CBA435 /* car_roadster_brilliantyellow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_brilliantyellow.png; sourceTree = "<group>"; };
+		4D91CF451473F95300CBA435 /* car_roadster_electricblue.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_electricblue.png; sourceTree = "<group>"; };
+		4D91CF461473F95300CBA435 /* car_roadster_fushionred.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_fushionred.png; sourceTree = "<group>"; };
+		4D91CF471473F95300CBA435 /* car_roadster_glacierblue.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_glacierblue.png; sourceTree = "<group>"; };
+		4D91CF481473F95300CBA435 /* car_roadster_jetblack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_jetblack.png; sourceTree = "<group>"; };
+		4D91CF491473F95300CBA435 /* car_roadster_lightninggreen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_lightninggreen.png; sourceTree = "<group>"; };
+		4D91CF4A1473F95300CBA435 /* car_roadster_obsidianblack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_obsidianblack.png; sourceTree = "<group>"; };
+		4D91CF4B1473F95300CBA435 /* car_roadster_racinggreen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_racinggreen.png; sourceTree = "<group>"; };
+		4D91CF4C1473F95300CBA435 /* car_roadster_radiantred.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_radiantred.png; sourceTree = "<group>"; };
+		4D91CF4D1473F95300CBA435 /* car_roadster_sterlingsilver.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_sterlingsilver.png; sourceTree = "<group>"; };
+		4D91CF4E1473F95300CBA435 /* car_roadster_thundergray.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_thundergray.png; sourceTree = "<group>"; };
+		4D91CF4F1473F95300CBA435 /* car_roadster_twilightblue.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_twilightblue.png; sourceTree = "<group>"; };
+		4D91CF501473F95300CBA435 /* car_roadster_veryorange.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_veryorange.png; sourceTree = "<group>"; };
+		4D91CF681473FE0900CBA435 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		4DDA222E1476962700BA40AA /* teslapin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teslapin.png; sourceTree = "<group>"; };
+		4DFAD7EA14752B8800416D38 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Icon.png; path = ../Icon.png; sourceTree = "<group>"; };
+		4DFAD7ED14752BA100416D38 /* icon114x114.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = icon114x114.png; path = ../icon114x114.png; sourceTree = "<group>"; };
+		4DFAD7EF14752CFB00416D38 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Default.png; path = ../Default.png; sourceTree = "<group>"; };
+		4DFAD7F314752D4E00416D38 /* icon72x72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = icon72x72.png; path = ../icon72x72.png; sourceTree = "<group>"; };
+		4DFAD7F514752ECD00416D38 /* Default-Portrait~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-Portrait~ipad.png"; path = "../Default-Portrait~ipad.png"; sourceTree = "<group>"; };
+		4DFAD7F714752F0F00416D38 /* Default-Landscape~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-Landscape~ipad.png"; path = "../Default-Landscape~ipad.png"; sourceTree = "<group>"; };
+		4DFAD7F914753D7900416D38 /* battery_000.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = battery_000.png; path = ../../artwork/battery_000.png; sourceTree = "<group>"; };
+		4DFAD7FA14753D7900416D38 /* battery_100.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = battery_100.png; path = ../../artwork/battery_100.png; sourceTree = "<group>"; };
+		4DFAD8001475444A00416D38 /* crypto_md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto_md5.h; sourceTree = "<group>"; };
+		4DFAD8011475445600416D38 /* crypto_md5.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = crypto_md5.c; sourceTree = "<group>"; };
+		4DFAD8031475446200416D38 /* crypto_base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto_base64.h; sourceTree = "<group>"; };
+		4DFAD8041475446C00416D38 /* crypto_hmac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto_hmac.h; sourceTree = "<group>"; };
+		4DFAD8051475447600416D38 /* crypto_rc4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto_rc4.h; sourceTree = "<group>"; };
+		4DFAD8061475448000416D38 /* crypto_rc4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = crypto_rc4.c; sourceTree = "<group>"; };
+		4DFAD8081475448A00416D38 /* crypto_hmac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = crypto_hmac.c; sourceTree = "<group>"; };
+		4DFAD80A1475449600416D38 /* crypto_base64.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = crypto_base64.c; sourceTree = "<group>"; };
+		4DFAD80C1475455C00416D38 /* crypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4D5AE36114733757002F5F52 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */,
+				4D5AE36914733757002F5F52 /* UIKit.framework in Frameworks */,
+				4D5AE36B14733757002F5F52 /* Foundation.framework in Frameworks */,
+				4D5AE36D14733757002F5F52 /* CoreGraphics.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D5AE38F14733758002F5F52 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D5AE39514733758002F5F52 /* SenTestingKit.framework in Frameworks */,
+				4D5AE39614733758002F5F52 /* UIKit.framework in Frameworks */,
+				4D5AE39714733758002F5F52 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4D5AE35914733757002F5F52 = {
+			isa = PBXGroup;
+			children = (
+				4D5AE36E14733757002F5F52 /* ovms */,
+				4D5AE39A14733758002F5F52 /* ovmsTests */,
+				4D5AE36714733757002F5F52 /* Frameworks */,
+				4D5AE36514733757002F5F52 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4D5AE36514733757002F5F52 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4D5AE36414733757002F5F52 /* ovms.app */,
+				4D5AE39314733758002F5F52 /* ovmsTests.octest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4D5AE36714733757002F5F52 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4D91CF681473FE0900CBA435 /* MapKit.framework */,
+				4D5AE36814733757002F5F52 /* UIKit.framework */,
+				4D5AE36A14733757002F5F52 /* Foundation.framework */,
+				4D5AE36C14733757002F5F52 /* CoreGraphics.framework */,
+				4D5AE39414733758002F5F52 /* SenTestingKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4D5AE36E14733757002F5F52 /* ovms */ = {
+			isa = PBXGroup;
+			children = (
+				4D5AE37714733758002F5F52 /* ovmsAppDelegate.h */,
+				4D5AE37814733758002F5F52 /* ovmsAppDelegate.m */,
+				4D5AE37A14733758002F5F52 /* MainStoryboard_iPhone.storyboard */,
+				4D5AE37D14733758002F5F52 /* MainStoryboard_iPad.storyboard */,
+				4DFAD7FF1475435300416D38 /* Tabs */,
+				4DFAD7FE1475434500416D38 /* Crypto */,
+				4D91CEF81473ECE500CBA435 /* Images */,
+				4D5AE36F14733757002F5F52 /* Supporting Files */,
+			);
+			path = ovms;
+			sourceTree = "<group>";
+		};
+		4D5AE36F14733757002F5F52 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				4D91CF091473F36000CBA435 /* 00-icons-license.txt */,
+				4D5AE37014733757002F5F52 /* ovms-Info.plist */,
+				4D5AE37114733757002F5F52 /* InfoPlist.strings */,
+				4D5AE37414733757002F5F52 /* main.m */,
+				4D5AE37614733758002F5F52 /* ovms-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		4D5AE39A14733758002F5F52 /* ovmsTests */ = {
+			isa = PBXGroup;
+			children = (
+				4D5AE3A014733758002F5F52 /* ovmsTests.h */,
+				4D5AE3A114733758002F5F52 /* ovmsTests.m */,
+				4D5AE39B14733758002F5F52 /* Supporting Files */,
+			);
+			path = ovmsTests;
+			sourceTree = "<group>";
+		};
+		4D5AE39B14733758002F5F52 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				4D5AE39C14733758002F5F52 /* ovmsTests-Info.plist */,
+				4D5AE39D14733758002F5F52 /* InfoPlist.strings */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		4D91CEF81473ECE500CBA435 /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				4DDA222E1476962700BA40AA /* teslapin.png */,
+				4DFAD7F914753D7900416D38 /* battery_000.png */,
+				4DFAD7FA14753D7900416D38 /* battery_100.png */,
+				4D91CEFB1473F26D00CBA435 /* 49-battery.png */,
+				4D91CEF91473F24500CBA435 /* 20-gear2.png */,
+				4D91CF051473F2CC00CBA435 /* 81-dashboard.png */,
+				4D91CEFD1473F27D00CBA435 /* 51-outlet.png */,
+				4D91CF071473F33400CBA435 /* 193-location-arrow.png */,
+				4D91CEFF1473F29400CBA435 /* 54-lock.png */,
+				4D91CF031473F2BE00CBA435 /* 77-ekg.png */,
+				4D91CF011473F2B500CBA435 /* 74-location.png */,
+				4D5AE38314733758002F5F52 /* first.png */,
+				4D5AE38514733758002F5F52 /* first@2x.png */,
+				4D5AE38A14733758002F5F52 /* second.png */,
+				4D5AE38C14733758002F5F52 /* second@2x.png */,
+				4DFAD7FD1475430900416D38 /* Icons */,
+				4D91CF0B1473F61A00CBA435 /* Cars */,
+			);
+			name = Images;
+			sourceTree = "<group>";
+		};
+		4D91CF0B1473F61A00CBA435 /* Cars */ = {
+			isa = PBXGroup;
+			children = (
+				4D91CF3A1473F95300CBA435 /* car_models_anzabrown.png */,
+				4D91CF3B1473F95300CBA435 /* car_models_catalinawhite.png */,
+				4D91CF3C1473F95300CBA435 /* car_models_montereyblue.png */,
+				4D91CF3D1473F95300CBA435 /* car_models_sansimeonsilver.png */,
+				4D91CF3E1473F95300CBA435 /* car_models_sequolagreen.png */,
+				4D91CF3F1473F95300CBA435 /* car_models_shastapearlwhite.png */,
+				4D91CF401473F95300CBA435 /* car_models_sierrablack.png */,
+				4D91CF411473F95300CBA435 /* car_models_signaturered.png */,
+				4D91CF421473F95300CBA435 /* car_models_tiburongrey.png */,
+				4D91CF431473F95300CBA435 /* car_roadster_arcticwhite.png */,
+				4D91CF441473F95300CBA435 /* car_roadster_brilliantyellow.png */,
+				4D91CF451473F95300CBA435 /* car_roadster_electricblue.png */,
+				4D91CF461473F95300CBA435 /* car_roadster_fushionred.png */,
+				4D91CF471473F95300CBA435 /* car_roadster_glacierblue.png */,
+				4D91CF481473F95300CBA435 /* car_roadster_jetblack.png */,
+				4D91CF491473F95300CBA435 /* car_roadster_lightninggreen.png */,
+				4D91CF4A1473F95300CBA435 /* car_roadster_obsidianblack.png */,
+				4D91CF4B1473F95300CBA435 /* car_roadster_racinggreen.png */,
+				4D91CF4C1473F95300CBA435 /* car_roadster_radiantred.png */,
+				4D91CF4D1473F95300CBA435 /* car_roadster_sterlingsilver.png */,
+				4D91CF4E1473F95300CBA435 /* car_roadster_thundergray.png */,
+				4D91CF4F1473F95300CBA435 /* car_roadster_twilightblue.png */,
+				4D91CF501473F95300CBA435 /* car_roadster_veryorange.png */,
+			);
+			name = Cars;
+			sourceTree = "<group>";
+		};
+		4DFAD7FD1475430900416D38 /* Icons */ = {
+			isa = PBXGroup;
+			children = (
+				4DFAD7F714752F0F00416D38 /* Default-Landscape~ipad.png */,
+				4DFAD7F514752ECD00416D38 /* Default-Portrait~ipad.png */,
+				4DFAD7EF14752CFB00416D38 /* Default.png */,
+				4DFAD7F314752D4E00416D38 /* icon72x72.png */,
+				4DFAD7ED14752BA100416D38 /* icon114x114.png */,
+				4DFAD7EA14752B8800416D38 /* Icon.png */,
+			);
+			name = Icons;
+			sourceTree = "<group>";
+		};
+		4DFAD7FE1475434500416D38 /* Crypto */ = {
+			isa = PBXGroup;
+			children = (
+				4DFAD80C1475455C00416D38 /* crypto.h */,
+				4DFAD8001475444A00416D38 /* crypto_md5.h */,
+				4DFAD8011475445600416D38 /* crypto_md5.c */,
+				4DFAD8031475446200416D38 /* crypto_base64.h */,
+				4DFAD80A1475449600416D38 /* crypto_base64.c */,
+				4DFAD8041475446C00416D38 /* crypto_hmac.h */,
+				4DFAD8081475448A00416D38 /* crypto_hmac.c */,
+				4DFAD8051475447600416D38 /* crypto_rc4.h */,
+				4DFAD8061475448000416D38 /* crypto_rc4.c */,
+			);
+			name = Crypto;
+			sourceTree = "<group>";
+		};
+		4DFAD7FF1475435300416D38 /* Tabs */ = {
+			isa = PBXGroup;
+			children = (
+				4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */,
+				4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */,
+				4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */,
+				4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */,
+				4D91CEEE1473EB2700CBA435 /* ovmsCarsViewController.h */,
+				4D91CEEF1473EB2700CBA435 /* ovmsCarsViewController.m */,
+			);
+			name = Tabs;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4D5AE36314733757002F5F52 /* ovms */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4D5AE3A514733758002F5F52 /* Build configuration list for PBXNativeTarget "ovms" */;
+			buildPhases = (
+				4D5AE36014733757002F5F52 /* Sources */,
+				4D5AE36114733757002F5F52 /* Frameworks */,
+				4D5AE36214733757002F5F52 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ovms;
+			productName = ovms;
+			productReference = 4D5AE36414733757002F5F52 /* ovms.app */;
+			productType = "com.apple.product-type.application";
+		};
+		4D5AE39214733758002F5F52 /* ovmsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4D5AE3A814733758002F5F52 /* Build configuration list for PBXNativeTarget "ovmsTests" */;
+			buildPhases = (
+				4D5AE38E14733758002F5F52 /* Sources */,
+				4D5AE38F14733758002F5F52 /* Frameworks */,
+				4D5AE39014733758002F5F52 /* Resources */,
+				4D5AE39114733758002F5F52 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4D5AE39914733758002F5F52 /* PBXTargetDependency */,
+			);
+			name = ovmsTests;
+			productName = ovmsTests;
+			productReference = 4D5AE39314733758002F5F52 /* ovmsTests.octest */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4D5AE35B14733757002F5F52 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+				ORGANIZATIONNAME = "Hong Hay Villa";
+			};
+			buildConfigurationList = 4D5AE35E14733757002F5F52 /* Build configuration list for PBXProject "ovms" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 4D5AE35914733757002F5F52;
+			productRefGroup = 4D5AE36514733757002F5F52 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4D5AE36314733757002F5F52 /* ovms */,
+				4D5AE39214733758002F5F52 /* ovmsTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4D5AE36214733757002F5F52 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D5AE37314733757002F5F52 /* InfoPlist.strings in Resources */,
+				4D5AE37C14733758002F5F52 /* MainStoryboard_iPhone.storyboard in Resources */,
+				4D5AE37F14733758002F5F52 /* MainStoryboard_iPad.storyboard in Resources */,
+				4D5AE38414733758002F5F52 /* first.png in Resources */,
+				4D5AE38614733758002F5F52 /* first@2x.png in Resources */,
+				4D5AE38B14733758002F5F52 /* second.png in Resources */,
+				4D5AE38D14733758002F5F52 /* second@2x.png in Resources */,
+				4D91CEFA1473F24500CBA435 /* 20-gear2.png in Resources */,
+				4D91CEFC1473F26D00CBA435 /* 49-battery.png in Resources */,
+				4D91CEFE1473F27D00CBA435 /* 51-outlet.png in Resources */,
+				4D91CF001473F29400CBA435 /* 54-lock.png in Resources */,
+				4D91CF021473F2B500CBA435 /* 74-location.png in Resources */,
+				4D91CF041473F2BE00CBA435 /* 77-ekg.png in Resources */,
+				4D91CF061473F2CC00CBA435 /* 81-dashboard.png in Resources */,
+				4D91CF081473F33400CBA435 /* 193-location-arrow.png in Resources */,
+				4D91CF0A1473F36000CBA435 /* 00-icons-license.txt in Resources */,
+				4D91CF511473F95300CBA435 /* car_models_anzabrown.png in Resources */,
+				4D91CF521473F95300CBA435 /* car_models_catalinawhite.png in Resources */,
+				4D91CF531473F95300CBA435 /* car_models_montereyblue.png in Resources */,
+				4D91CF541473F95300CBA435 /* car_models_sansimeonsilver.png in Resources */,
+				4D91CF551473F95300CBA435 /* car_models_sequolagreen.png in Resources */,
+				4D91CF561473F95300CBA435 /* car_models_shastapearlwhite.png in Resources */,
+				4D91CF571473F95300CBA435 /* car_models_sierrablack.png in Resources */,
+				4D91CF581473F95300CBA435 /* car_models_signaturered.png in Resources */,
+				4D91CF591473F95300CBA435 /* car_models_tiburongrey.png in Resources */,
+				4D91CF5A1473F95300CBA435 /* car_roadster_arcticwhite.png in Resources */,
+				4D91CF5B1473F95300CBA435 /* car_roadster_brilliantyellow.png in Resources */,
+				4D91CF5C1473F95300CBA435 /* car_roadster_electricblue.png in Resources */,
+				4D91CF5D1473F95300CBA435 /* car_roadster_fushionred.png in Resources */,
+				4D91CF5E1473F95300CBA435 /* car_roadster_glacierblue.png in Resources */,
+				4D91CF5F1473F95300CBA435 /* car_roadster_jetblack.png in Resources */,
+				4D91CF601473F95300CBA435 /* car_roadster_lightninggreen.png in Resources */,
+				4D91CF611473F95300CBA435 /* car_roadster_obsidianblack.png in Resources */,
+				4D91CF621473F95300CBA435 /* car_roadster_racinggreen.png in Resources */,
+				4D91CF631473F95300CBA435 /* car_roadster_radiantred.png in Resources */,
+				4D91CF641473F95300CBA435 /* car_roadster_sterlingsilver.png in Resources */,
+				4D91CF651473F95300CBA435 /* car_roadster_thundergray.png in Resources */,
+				4D91CF661473F95300CBA435 /* car_roadster_twilightblue.png in Resources */,
+				4D91CF671473F95300CBA435 /* car_roadster_veryorange.png in Resources */,
+				4DFAD7EB14752B8800416D38 /* Icon.png in Resources */,
+				4DFAD7EE14752BA100416D38 /* icon114x114.png in Resources */,
+				4DFAD7F014752CFB00416D38 /* Default.png in Resources */,
+				4DFAD7F414752D4F00416D38 /* icon72x72.png in Resources */,
+				4DFAD7F614752ECD00416D38 /* Default-Portrait~ipad.png in Resources */,
+				4DFAD7F814752F0F00416D38 /* Default-Landscape~ipad.png in Resources */,
+				4DFAD7FB14753D7900416D38 /* battery_000.png in Resources */,
+				4DFAD7FC14753D7900416D38 /* battery_100.png in Resources */,
+				4DDA222F1476962700BA40AA /* teslapin.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D5AE39014733758002F5F52 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D5AE39F14733758002F5F52 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		4D5AE39114733758002F5F52 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4D5AE36014733757002F5F52 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D5AE37514733757002F5F52 /* main.m in Sources */,
+				4D5AE37914733758002F5F52 /* ovmsAppDelegate.m in Sources */,
+				4D91CEF01473EB2700CBA435 /* ovmsCarsViewController.m in Sources */,
+				4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */,
+				4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */,
+				4DFAD8021475445600416D38 /* crypto_md5.c in Sources */,
+				4DFAD8071475448000416D38 /* crypto_rc4.c in Sources */,
+				4DFAD8091475448A00416D38 /* crypto_hmac.c in Sources */,
+				4DFAD80B1475449600416D38 /* crypto_base64.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D5AE38E14733758002F5F52 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D5AE3A214733758002F5F52 /* ovmsTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4D5AE39914733758002F5F52 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4D5AE36314733757002F5F52 /* ovms */;
+			targetProxy = 4D5AE39814733758002F5F52 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		4D5AE37114733757002F5F52 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4D5AE37214733757002F5F52 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		4D5AE37A14733758002F5F52 /* MainStoryboard_iPhone.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4D5AE37B14733758002F5F52 /* en */,
+			);
+			name = MainStoryboard_iPhone.storyboard;
+			sourceTree = "<group>";
+		};
+		4D5AE37D14733758002F5F52 /* MainStoryboard_iPad.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4D5AE37E14733758002F5F52 /* en */,
+			);
+			name = MainStoryboard_iPad.storyboard;
+			sourceTree = "<group>";
+		};
+		4D5AE39D14733758002F5F52 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4D5AE39E14733758002F5F52 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		4D5AE3A314733758002F5F52 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4D5AE3A414733758002F5F52 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		4D5AE3A614733758002F5F52 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
+				INFOPLIST_FILE = "ovms/ovms-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		4D5AE3A714733758002F5F52 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
+				INFOPLIST_FILE = "ovms/ovms-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		4D5AE3A914733758002F5F52 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/ovms.app/ovms";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
+				INFOPLIST_FILE = "ovmsTests/ovmsTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = octest;
+			};
+			name = Debug;
+		};
+		4D5AE3AA14733758002F5F52 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/ovms.app/ovms";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
+				INFOPLIST_FILE = "ovmsTests/ovmsTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = octest;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4D5AE35E14733757002F5F52 /* Build configuration list for PBXProject "ovms" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D5AE3A314733758002F5F52 /* Debug */,
+				4D5AE3A414733758002F5F52 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4D5AE3A514733758002F5F52 /* Build configuration list for PBXNativeTarget "ovms" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D5AE3A614733758002F5F52 /* Debug */,
+				4D5AE3A714733758002F5F52 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4D5AE3A814733758002F5F52 /* Build configuration list for PBXNativeTarget "ovmsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D5AE3A914733758002F5F52 /* Debug */,
+				4D5AE3AA14733758002F5F52 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4D5AE35B14733757002F5F52 /* Project object */;
+}
