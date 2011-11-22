@@ -27,6 +27,9 @@
 
 #include "crypto.h"
 
+extern const unsigned char cb64[];
+extern const unsigned char cd64[];
+
 void encodeblock( unsigned char in[3], unsigned char out[4], int len );
 void base64encode(uint8_t *inputData, int inputLen, uint8_t *outputData);
 

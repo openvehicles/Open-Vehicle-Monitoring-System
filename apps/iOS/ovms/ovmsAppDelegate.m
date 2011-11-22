@@ -7,12 +7,11 @@
 //
 
 #import "ovmsAppDelegate.h"
+#import "GCDAsyncSocket.h"
 
 @implementation ovmsAppDelegate
 
 @synthesize window = _window;
-
-NSInteger networkingCount = 0;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -34,6 +33,7 @@ NSInteger networkingCount = 0;
      Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
      If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
      */
+  [self serverDisconnect];
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
@@ -48,6 +48,7 @@ NSInteger networkingCount = 0;
     /*
      Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
      */
+  [self serverConnect];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -56,28 +57,160 @@ NSInteger networkingCount = 0;
      Called when the application is about to terminate.
      Save data if appropriate.
      See also applicationDidEnterBackground:.
-     */
+    */
+  [self serverDisconnect];
 }
 
 - (void)didStartNetworking
 {
-  networkingCount += 1;
+  networkingCount = 1;
   [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
 }
 
 - (void)didStopNetworking
 {
-  assert(networkingCount > 0);
-  networkingCount -= 1;
-  [UIApplication sharedApplication].networkActivityIndicatorVisible = (networkingCount != 0);
+  networkingCount = 0;
+  [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
 }
 
 
 - (void)serverConnect
 {
+  unsigned char digest[MD5_SIZE];
+  unsigned char edigest[MD5_SIZE*2];
+  char password[] = "NETPASS";
+  
+  if (asyncSocket == NULL)
+    {
+    dispatch_queue_t mainQueue = dispatch_get_main_queue();
+    asyncSocket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:mainQueue];
+    NSError *error = nil;
+    if (![asyncSocket connectToHost:@"www.openvehicles.com" onPort:6867 error:&error])
+      {
+      // Croak on the error
+      return;
+      
+      }
+    [asyncSocket readDataToData:[GCDAsyncSocket CRLFData] withTimeout:-1 tag:0];
+    
+    // Make a (semi-)random client token
+    sranddev();
+    for (int k=0;k<TOKEN_SIZE;k++)
+      {
+      token[k] = cb64[rand()%64];
+      }
+    token[TOKEN_SIZE] = 0;
+    
+    hmac_md5(token, TOKEN_SIZE, (const uint8_t*)password, strlen(password), digest);
+    base64encode(digest, MD5_SIZE, edigest);
+    NSString *welcomeStr = [NSString stringWithFormat:@"MP-A 0 %s %s %s\r\n",token,edigest,"TESTCAR"];
+    NSData *welcomeData = [welcomeStr dataUsingEncoding:NSUTF8StringEncoding];
+    [asyncSocket writeData:welcomeData withTimeout:-1 tag:0];    
+    [self didStartNetworking];
+    }
 }
 
 - (void)serverDisconnect
+{
+  if (asyncSocket != NULL)
+    {
+    [asyncSocket setDelegate:nil delegateQueue:NULL];
+    [asyncSocket disconnect];
+    [self didStopNetworking];
+    asyncSocket = NULL;
+    }
+}
+
+- (void)handleCommand:(NSString*)cmd;
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark Socket Delegate
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+- (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(UInt16)port
+{
+  // Here we do the stuff after the connection to the host
+}
+
+
+- (void)socket:(GCDAsyncSocket *)sock didWriteDataWithTag:(long)tag
+{
+}
+
+- (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
+{
+  char password[] = "NETPASS";
+  unsigned char digest[MD5_SIZE];
+  unsigned char edigest[(MD5_SIZE*2)+2];
+
+  NSString *response = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+  if (tag==0)
+    { // Welcome message
+    NSArray *rparts = [response componentsSeparatedByString:@" "];
+    NSString *stoken = [rparts objectAtIndex:2];
+    NSString *etoken = [rparts objectAtIndex:3];
+    const char *cstoken = [stoken UTF8String];
+      if ((stoken==NULL)||(etoken==NULL))
+      {
+      [self serverDisconnect];
+      return;
+      }
+    // Check for token-replay attack
+    if (strcmp((char*)token,cstoken)==0)
+      {
+      [self serverDisconnect];
+      return; // Server is using our token!
+      }
+      
+    // Validate server token
+    hmac_md5((const uint8_t*)cstoken, strlen(cstoken), (const uint8_t*)password, strlen(password), digest);
+    base64encode(digest, MD5_SIZE, edigest);
+    if (strncmp([etoken UTF8String],(const char*)edigest,strlen((const char*)edigest))!=0)
+      {
+      [self serverDisconnect];
+      return; // Invalid server digest
+      }
+      
+    // Ok, at this point, our token is ok
+    int keylen = strlen((const char*)token)+strlen(cstoken)+1;
+    char key[keylen];
+    strcpy(key,cstoken);
+    strcat(key,(const char*)token);
+    hmac_md5((const uint8_t*)key, strlen(key), (const uint8_t*)password, strlen(password), digest);
+      
+    // Setup, and prime the rx and tx cryptos
+    RC4_setup(&rxCrypto, digest, MD5_SIZE);
+    for (int k=0;k<1024;k++)
+      {
+      uint8_t x = 0;
+      RC4_crypt(&rxCrypto, &x, &x, 1);
+      }
+    RC4_setup(&txCrypto, digest, MD5_SIZE);
+    for (int k=0;k<1024;k++)
+      {
+      uint8_t x = 0;
+      RC4_crypt(&txCrypto, &x, &x, 1);
+      }
+    [asyncSocket readDataToData:[GCDAsyncSocket CRLFData] withTimeout:-1 tag:1];
+    }
+  else if (tag==1)
+    { // Normal encrypted data packet
+    //char buf[[response length]+1];
+    char buf[1024];
+    int len = base64decode((uint8_t*)[response UTF8String], (uint8_t*)buf);
+    RC4_crypt(&rxCrypto, (uint8_t*)buf, (uint8_t*)buf, len);
+      if ((buf[0]=='M')&&(buf[1]=='P')&&(buf[2]=='-')&&(buf[3]=='0'))
+        {
+        NSString *cmd = [[NSString alloc] initWithCString:buf+5 encoding:NSUTF8StringEncoding];
+        [self handleCommand: cmd];
+        }
+    [asyncSocket readDataToData:[GCDAsyncSocket CRLFData] withTimeout:-1 tag:0];
+    }
+}
+
+- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err
 {
 }
 
