@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D10FCF3147BC9AA0092FAF9 /* GCDAsyncSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D10FCF2147BC9AA0092FAF9 /* GCDAsyncSocket.m */; };
+		4D10FCF5147BCA0C0092FAF9 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D10FCF4147BCA0B0092FAF9 /* CFNetwork.framework */; };
+		4D10FCF7147BCACD0092FAF9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D10FCF6147BCACD0092FAF9 /* Security.framework */; };
 		4D5AE36914733757002F5F52 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36814733757002F5F52 /* UIKit.framework */; };
 		4D5AE36B14733757002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
 		4D5AE36D14733757002F5F52 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36C14733757002F5F52 /* CoreGraphics.framework */; };
@@ -86,6 +89,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4D10FCF1147BC9AA0092FAF9 /* GCDAsyncSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDAsyncSocket.h; sourceTree = "<group>"; };
+		4D10FCF2147BC9AA0092FAF9 /* GCDAsyncSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDAsyncSocket.m; sourceTree = "<group>"; };
+		4D10FCF4147BCA0B0092FAF9 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		4D10FCF6147BCACD0092FAF9 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		4D5AE36414733757002F5F52 /* ovms.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ovms.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D5AE36814733757002F5F52 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		4D5AE36A14733757002F5F52 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -172,6 +179,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D10FCF7147BCACD0092FAF9 /* Security.framework in Frameworks */,
+				4D10FCF5147BCA0C0092FAF9 /* CFNetwork.framework in Frameworks */,
 				4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */,
 				4D5AE36914733757002F5F52 /* UIKit.framework in Frameworks */,
 				4D5AE36B14733757002F5F52 /* Foundation.framework in Frameworks */,
@@ -214,6 +223,8 @@
 		4D5AE36714733757002F5F52 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4D10FCF6147BCACD0092FAF9 /* Security.framework */,
+				4D10FCF4147BCA0B0092FAF9 /* CFNetwork.framework */,
 				4D91CF681473FE0900CBA435 /* MapKit.framework */,
 				4D5AE36814733757002F5F52 /* UIKit.framework */,
 				4D5AE36A14733757002F5F52 /* Foundation.framework */,
@@ -232,6 +243,7 @@
 				4D5AE37D14733758002F5F52 /* MainStoryboard_iPad.storyboard */,
 				4DFAD7FF1475435300416D38 /* Tabs */,
 				4DFAD7FE1475434500416D38 /* Crypto */,
+				4D91CF0B1473F61A00CBA435 /* Cars */,
 				4D91CEF81473ECE500CBA435 /* Images */,
 				4D5AE36F14733757002F5F52 /* Supporting Files */,
 			);
@@ -288,7 +300,6 @@
 				4D5AE38A14733758002F5F52 /* second.png */,
 				4D5AE38C14733758002F5F52 /* second@2x.png */,
 				4DFAD7FD1475430900416D38 /* Icons */,
-				4D91CF0B1473F61A00CBA435 /* Cars */,
 			);
 			name = Images;
 			sourceTree = "<group>";
@@ -339,6 +350,8 @@
 		4DFAD7FE1475434500416D38 /* Crypto */ = {
 			isa = PBXGroup;
 			children = (
+				4D10FCF1147BC9AA0092FAF9 /* GCDAsyncSocket.h */,
+				4D10FCF2147BC9AA0092FAF9 /* GCDAsyncSocket.m */,
 				4DFAD80C1475455C00416D38 /* crypto.h */,
 				4DFAD8001475444A00416D38 /* crypto_md5.h */,
 				4DFAD8011475445600416D38 /* crypto_md5.c */,
@@ -527,6 +540,7 @@
 				4DFAD8071475448000416D38 /* crypto_rc4.c in Sources */,
 				4DFAD8091475448A00416D38 /* crypto_hmac.c in Sources */,
 				4DFAD80B1475449600416D38 /* crypto_base64.c in Sources */,
+				4D10FCF3147BC9AA0092FAF9 /* GCDAsyncSocket.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
