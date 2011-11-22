@@ -38,20 +38,20 @@
 
 // NET data
 #pragma udata
-unsigned char net_state = 0;
-unsigned char net_state_vchar = 0;
-unsigned int  net_state_vint = 0;
-unsigned char net_timeout_goto = 0;
-unsigned int  net_timeout_ticks = 0;
-unsigned int  net_granular_tick = 0;
-unsigned int  net_watchdog = 0;
-char net_caller[NET_TEL_MAX] = {0};
-char net_scratchpad[100];
+unsigned char net_state = 0;                // The current state
+unsigned char net_state_vchar = 0;          //   A per-state CHAR variable
+unsigned int  net_state_vint = 0;           //   A per-state INT variable
+unsigned char net_timeout_goto = 0;         // State to auto-transition to, after timeout
+unsigned int  net_timeout_ticks = 0;        // Number of seconds before timeout auto-transition
+unsigned int  net_granular_tick = 0;        // An internal ticker used to generate 1min, 5min, etc, calls
+unsigned int  net_watchdog = 0;             // Second count-down for network connectivity
+char net_caller[NET_TEL_MAX] = {0};         // The telephone number of the caller
+char net_scratchpad[100];                   // A general-purpose scratchpad
 
-unsigned char net_buf_pos = 0;
-unsigned char net_buf_mode = NET_BUF_CRLF;
+unsigned char net_buf_pos = 0;              // Current position (aka length) in the network buffer
+unsigned char net_buf_mode = NET_BUF_CRLF;  // Mode of the buffer (CRLF, SMS or MSG)
 #pragma udata NETBUF
-char net_buf[NET_BUF_MAX];
+char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
@@ -61,7 +61,12 @@ rom char NET_HANGUP[] = "ATH\r";
 rom char NET_CREG[] = "AT+CREG?\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
 
-// Interrupt Service Routine
+////////////////////////////////////////////////////////////////////////
+// The Interrupt Service Routine is standard PIC code
+//
+// It takes the incoming async data and puts it in an internal buffer,
+// and also outputs data queued for transmission.
+//
 void low_isr(void);
 
 // serial interrupt taken as low priority interrupt
@@ -80,11 +85,27 @@ void low_isr(void)
   UARTIntISR();
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_reset_async()
+// Reset the async status following an overun or other such error
+//
 void net_reset_async(void)
   {
   vUARTIntStatus.UARTIntRxError = 0;
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_poll()
+// This function is an entry point from the main() program loop, and
+// gives the NET framework an opportunity to poll for data.
+//
+// It polls the interrupt-handler async buffer and move characters into
+// net_buf, depending on net_buf_mode. This internally handles normal
+// line-by-line (CRLF) data, as well as SMS (+CMT) and MSG (+IPD) modes.
+//
+// This function is also the dispatcher for net_state_activity(),
+// to pass the incoming data to the current state for handling.
+//
 void net_poll(void)
   {
   unsigned char x;
@@ -152,6 +173,11 @@ void net_poll(void)
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_puts_rom()
+// Transmit zero-terminated character data from ROM to the async port.
+// N.B. This may block if the transmit buffer is full.
+//
 void net_puts_rom(static const rom char *data)
   {
   /* Send characters up to the null */
@@ -162,6 +188,11 @@ void net_puts_rom(static const rom char *data)
     } while (*++data);
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_puts_ram()
+// Transmit zero-terminated character data from RAM to the async port.
+// N.B. This may block if the transmit buffer is full.
+//
 void net_puts_ram(const char *data)
   {
   /* Send characters up to the null */
@@ -172,6 +203,10 @@ void net_puts_ram(const char *data)
     } while (*++data);
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_putc_ram()
+// Transmit a single character from RAM to the async port.
+// N.B. This may block if the transmit buffer is full.
 void net_putc_ram(const char data)
   {
   /* Send one character */
@@ -179,6 +214,11 @@ void net_putc_ram(const char data)
   UARTIntPutChar(data);
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_notify_status()
+// Emits a status notification error to the user (by SMS)
+// upon request (e.g. by an incoming call or sms STAT command).
+//
 void net_notify_status(void)
   {
   // Emit an unsolicited notification showing current status
@@ -191,6 +231,12 @@ void net_notify_status(void)
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_state_enter(newstate)
+// State Model: A new state has been entered.
+// This should do any initialisation and other actions required on
+// a per-state basis. It is called when the state is entered.
+//
 void net_state_enter(unsigned char newstate)
   {
   char *p;
@@ -250,6 +296,14 @@ void net_state_enter(unsigned char newstate)
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_state_activity()
+// State Model: Some async data has been received
+// This is called to indicate to the state that a complete piece of async
+// data has been received in net_buf (with length net_buf_pos, and mode
+// net_buf_mode), and the data should be completely handled before
+// returning.
+//
 void net_state_activity()
   {
   if (net_buf_mode == NET_BUF_SMS)
@@ -400,6 +454,12 @@ void net_state_activity()
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_state_ticker1()
+// State Model: Per-second ticker
+// This function is called approximately once per second, and gives
+// the state a timeslice for activity.
+//
 void net_state_ticker1(void)
   {
   switch (net_state)
@@ -421,6 +481,12 @@ void net_state_ticker1(void)
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_state_ticker60()
+// State Model: Per-minute ticker
+// This function is called approximately once per minute (since state
+// was first entered), and gives the state a timeslice for activity.
+//
 void net_state_ticker60(void)
   {
   switch (net_state)
@@ -443,6 +509,12 @@ void net_state_ticker60(void)
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_state_ticker300()
+// State Model: Per-5-minute ticker
+// This function is called approximately once per five minutes (since
+// state was first entered), and gives the state a timeslice for activity.
+//
 void net_state_ticker300(void)
   {
   switch (net_state)
@@ -450,6 +522,12 @@ void net_state_ticker300(void)
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_state_ticker600()
+// State Model: Per-10-minute ticker
+// This function is called approximately once per ten minutes (since
+// state was first entered), and gives the state a timeslice for activity.
+//
 void net_state_ticker600(void)
   {
   switch (net_state)
@@ -466,6 +544,12 @@ void net_state_ticker600(void)
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_ticker()
+// This function is an entry point from the main() program loop, and
+// gives the NET framework a ticker call approximately once per second.
+// It is used to internally generate the other net_state_ticker*() calls.
+//
 void net_ticker(void)
   {
   // This ticker is called once every second
@@ -489,6 +573,11 @@ void net_ticker(void)
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// net_initialise()
+// This function is an entry point from the main() program loop, and
+// gives the NET framework an opportunity to initialise itself.
+//
 void net_initialise(void)
   {
   // I/O configuration PORT C

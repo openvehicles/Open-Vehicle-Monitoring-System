@@ -30,9 +30,14 @@
 
 #include "ovms.h"
 
-unsigned char can_datalength;
-unsigned char can_databuffer[8];
+unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
+unsigned char can_databuffer[8];             // A buffer to store the current CAN message
 
+////////////////////////////////////////////////////////////////////////
+// can_initialise()
+// This function is an entry point from the main() program loop, and
+// gives the CAN framework an opportunity to initialise itself.
+//
 void can_initialise(void)
   {
   CANCON = 0b10010000; // Initialize CAN
@@ -59,6 +64,11 @@ void can_initialise(void)
 #endif // #ifdef OVMS_CAN_WRITE
   }
 
+////////////////////////////////////////////////////////////////////////
+// can_poll()
+// This function is an entry point from the main() program loop, and
+// gives the CAN framework an opportunity to poll for data.
+//
 void can_poll(void)
   {
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
@@ -138,6 +148,11 @@ void can_poll(void)
     }
   }
 
+////////////////////////////////////////////////////////////////////////
+// can_ticker()
+// This function is an entry point from the main() program loop, and
+// gives the CAN framework a ticker call approximately once per second.
+//
 void can_ticker(void)
   {
   // This ticker is called once every second
