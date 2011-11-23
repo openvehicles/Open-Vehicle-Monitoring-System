@@ -6,13 +6,20 @@
 //  Copyright (c) 2011 Hong Hay Villa. All rights reserved.
 //
 
-#import "CoreLocation/CoreLocation.h"
 #import "ovmsAppDelegate.h"
 #import "GCDAsyncSocket.h"
 
 @implementation ovmsAppDelegate
 
 @synthesize window = _window;
+@synthesize location_delegate;
+@synthesize car_location;
+
++ (ovmsAppDelegate *) myRef
+{
+  //return self;
+  return (ovmsAppDelegate *)[UIApplication sharedApplication].delegate;
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -132,12 +139,16 @@
       break;
     case 'L': // LOCATION
       {
-      NSArray *lparts = [cmd componentsSeparatedByString:@" "];
+      NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=2)
         {
-        CLLocationDegrees latitude = [[lparts objectAtIndex:0] doubleValue];
-        CLLocationDegrees longitude = [[lparts objectAtIndex:1] doubleValue];
+        car_location.latitude = [[lparts objectAtIndex:0] doubleValue];
+        car_location.longitude = [[lparts objectAtIndex:1] doubleValue];
         // Update the visible location
+        if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
+          {
+          [self.location_delegate updateLocation];
+          }
         }
       }
       break;

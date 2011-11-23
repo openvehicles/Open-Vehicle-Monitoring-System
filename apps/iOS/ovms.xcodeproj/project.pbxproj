@@ -27,8 +27,8 @@
 		4D5AE39714733758002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
 		4D5AE39F14733758002F5F52 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE39D14733758002F5F52 /* InfoPlist.strings */; };
 		4D5AE3A214733758002F5F52 /* ovmsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5AE3A114733758002F5F52 /* ovmsTests.m */; };
+		4D65D9C5147CBE0200F90795 /* ovmsCarsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D65D9C4147CBE0200F90795 /* ovmsCarsViewController.m */; };
 		4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D90410A147C787F00D9C8E1 /* CoreLocation.framework */; };
-		4D91CEF01473EB2700CBA435 /* ovmsCarsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEEF1473EB2700CBA435 /* ovmsCarsViewController.m */; };
 		4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */; };
 		4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */; };
 		4D91CEFA1473F24500CBA435 /* 20-gear2.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CEF91473F24500CBA435 /* 20-gear2.png */; };
@@ -116,9 +116,9 @@
 		4D5AE39E14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4D5AE3A014733758002F5F52 /* ovmsTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ovmsTests.h; sourceTree = "<group>"; };
 		4D5AE3A114733758002F5F52 /* ovmsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ovmsTests.m; sourceTree = "<group>"; };
+		4D65D9C3147CBE0200F90795 /* ovmsCarsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsViewController.h; sourceTree = "<group>"; };
+		4D65D9C4147CBE0200F90795 /* ovmsCarsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsViewController.m; sourceTree = "<group>"; };
 		4D90410A147C787F00D9C8E1 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
-		4D91CEEE1473EB2700CBA435 /* ovmsCarsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsViewController.h; sourceTree = "<group>"; };
-		4D91CEEF1473EB2700CBA435 /* ovmsCarsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsViewController.m; sourceTree = "<group>"; };
 		4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewController.h; sourceTree = "<group>"; };
 		4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsStatusViewController.m; sourceTree = "<group>"; };
 		4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsLocationViewController.h; sourceTree = "<group>"; };
@@ -376,8 +376,8 @@
 				4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */,
 				4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */,
 				4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */,
-				4D91CEEE1473EB2700CBA435 /* ovmsCarsViewController.h */,
-				4D91CEEF1473EB2700CBA435 /* ovmsCarsViewController.m */,
+				4D65D9C3147CBE0200F90795 /* ovmsCarsViewController.h */,
+				4D65D9C4147CBE0200F90795 /* ovmsCarsViewController.m */,
 			);
 			name = Tabs;
 			sourceTree = "<group>";
@@ -537,7 +537,6 @@
 			files = (
 				4D5AE37514733757002F5F52 /* main.m in Sources */,
 				4D5AE37914733758002F5F52 /* ovmsAppDelegate.m in Sources */,
-				4D91CEF01473EB2700CBA435 /* ovmsCarsViewController.m in Sources */,
 				4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */,
 				4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */,
 				4DFAD8021475445600416D38 /* crypto_md5.c in Sources */,
@@ -545,6 +544,7 @@
 				4DFAD8091475448A00416D38 /* crypto_hmac.c in Sources */,
 				4DFAD80B1475449600416D38 /* crypto_base64.c in Sources */,
 				4D10FCF3147BC9AA0092FAF9 /* GCDAsyncSocket.m in Sources */,
+				4D65D9C5147CBE0200F90795 /* ovmsCarsViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

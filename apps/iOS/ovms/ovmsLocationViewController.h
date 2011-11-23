@@ -7,7 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "ovmsAppDelegate.h"
 #import <MapKit/MapKit.h>
+
 
 @interface TeslaAnnotation : NSObject <MKAnnotation> {
   NSString *_name;
@@ -22,7 +24,7 @@
 
 @end
 
-@interface ovmsLocationViewController : UIViewController <MKMapViewDelegate> 
+@interface ovmsLocationViewController : UIViewController <MKMapViewDelegate, ovmsLocationDelegate> 
 
 @property (strong, nonatomic) IBOutlet MKMapView *myMapView;
 @property (nonatomic, retain) TeslaAnnotation *m_car_location;

@@ -39,6 +39,11 @@
   // Release any cached data, images, etc that aren't in use.
 }
 
+-(void) updateLocation
+{
+  [self displayMYMap];
+}
+
 #pragma mark - View lifecycle
 
 - (void)viewDidLoad
@@ -47,6 +52,7 @@
   
 	// Do any additional setup after loading the view, typically from a nib.
   [NSThread detachNewThreadSelector:@selector(displayMYMap) toTarget:self withObject:nil]; 
+  [ovmsAppDelegate myRef].location_delegate = self;
 }
 
 - (void)viewDidUnload
@@ -91,14 +97,9 @@
   MKCoordinateSpan span; 
   span.latitudeDelta=0.01; 
   span.longitudeDelta=0.01; 
-  
-  CLLocationCoordinate2D location; 
-  
-//  location.latitude = 22.358088;
-//  location.longitude = 114.122400;
-  location.latitude = 0;
-  location.longitude = 0;
-  
+
+  CLLocationCoordinate2D location = [ovmsAppDelegate myRef].car_location;
+    
   region.span=span; 
   region.center=location; 
   

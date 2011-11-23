@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <CFNetwork/CFSocketStream.h>
+#import "CoreLocation/CoreLocation.h"
 #import "crypto_base64.h"
 #import "crypto_md5.h"
 #import "crypto_hmac.h"
@@ -17,6 +18,11 @@
 
 @class GCDAsyncSocket;
 
+@protocol ovmsLocationDelegate
+@required
+-(void) updateLocation;
+@end
+
 @interface ovmsAppDelegate : UIResponder <UIApplicationDelegate>
 {
   GCDAsyncSocket *asyncSocket;
@@ -24,10 +30,16 @@
   unsigned char token[TOKEN_SIZE+1];
   RC4_CTX rxCrypto;
   RC4_CTX txCrypto;
+  id location_delegate;
+  
+  CLLocationCoordinate2D car_location;
 }
 
 @property (strong, nonatomic) UIWindow *window;
+@property (strong, nonatomic) id location_delegate;
+@property (assign) CLLocationCoordinate2D car_location;
 
++ (ovmsAppDelegate *) myRef;
 - (void)didStartNetworking;
 - (void)didStopNetworking;
 - (void)serverConnect;
