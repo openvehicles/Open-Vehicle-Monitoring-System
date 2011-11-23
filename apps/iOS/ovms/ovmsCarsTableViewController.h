@@ -1,5 +1,5 @@
 //
-//  ovmsCarsViewController.h
+//  ovmsCarsTableViewController.h
 //  ovms
 //
 //  Created by Mark Webb-Johnson on 23/11/11.
@@ -8,6 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ovmsCarsViewController : UITableViewController
+@interface ovmsCarsTableViewController : UITableViewController
 
 @end
