@@ -252,11 +252,21 @@ void net_state_enter(unsigned char newstate)
       led_act(net_state_vchar);
       net_msg_init();
       break;
-    case NET_STATE_RESET:
+    case NET_STATE_SOFTRESET:
       net_timeout_goto = 0;
       break;
+    case NET_STATE_HARDRESET:
+      net_timeout_goto = NET_STATE_SOFTRESET;
+      net_timeout_ticks = 10;
+      led_act(1);
+      net_state_vchar = 0;
+      net_apps_connected = 0;
+      net_msg_disconnected();
+      delay100(2);
+      net_puts_rom("AT+CFUN=1,1\r"); // This is a nasty hard reset of the modem
+      break;
     case NET_STATE_DOINIT:
-      net_timeout_goto = NET_STATE_RESET;
+      net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 10;
       led_act(0);
       net_puts_rom(NET_INIT);
@@ -265,7 +275,7 @@ void net_state_enter(unsigned char newstate)
       p = par_get(PARAM_GPRSAPN);
       if (p[0] != '\0')
         {
-        net_timeout_goto = NET_STATE_RESET;
+        net_timeout_goto = NET_STATE_SOFTRESET;
         net_timeout_ticks = 60;
         led_act(0);
         net_state_vchar = 0;
@@ -288,7 +298,7 @@ void net_state_enter(unsigned char newstate)
       break;
     case NET_STATE_COPS:
       delay100(2);
-      net_timeout_goto = NET_STATE_RESET;
+      net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 120;
       net_msg_disconnected();
       net_puts_rom(NET_COPS);
@@ -337,10 +347,19 @@ void net_state_activity()
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         net_state_enter(NET_STATE_DONETINIT); // COPS reconnect was OK
       else if ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R'))
-        net_state_enter(NET_STATE_RESET); // Reset the entire async
+        net_state_enter(NET_STATE_SOFTRESET); // Reset the entire async
       break;
     case NET_STATE_DONETINIT:
       if ((net_buf_pos >= 2)&&
+               (net_buf[0] == 'E')&&
+               (net_buf[1] == 'R')&&
+               (net_state_vchar == 5)) // ERROR response to AT+CIFSR
+        {
+        // This is a nasty case. The GPRS has locked up.
+        // The only solution I can find is a hard reset of the modem
+        net_state_enter(NET_STATE_HARDRESET);
+        }
+      else if ((net_buf_pos >= 2)&&
           (((net_buf[0] == 'O')&&(net_buf[1] == 'K')))|| // OK
           (((net_buf[0] == 'S')&&(net_buf[1] == 'H')))||  // SHUT OK
           (net_state_vchar == 5)) // Local IP address
@@ -468,7 +487,7 @@ void net_state_ticker1(void)
       net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
       led_act(net_state_vchar);
       break;
-    case NET_STATE_RESET:
+    case NET_STATE_SOFTRESET:
       net_state_enter(NET_STATE_START);
       break;
     case NET_STATE_READY:
