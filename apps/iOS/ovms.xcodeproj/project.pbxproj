@@ -27,7 +27,6 @@
 		4D5AE39714733758002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
 		4D5AE39F14733758002F5F52 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE39D14733758002F5F52 /* InfoPlist.strings */; };
 		4D5AE3A214733758002F5F52 /* ovmsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5AE3A114733758002F5F52 /* ovmsTests.m */; };
-		4D65D9C5147CBE0200F90795 /* ovmsCarsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D65D9C4147CBE0200F90795 /* ovmsCarsViewController.m */; };
 		4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D90410A147C787F00D9C8E1 /* CoreLocation.framework */; };
 		4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */; };
 		4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */; };
@@ -64,6 +63,8 @@
 		4D91CF661473F95300CBA435 /* car_roadster_twilightblue.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF4F1473F95300CBA435 /* car_roadster_twilightblue.png */; };
 		4D91CF671473F95300CBA435 /* car_roadster_veryorange.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF501473F95300CBA435 /* car_roadster_veryorange.png */; };
 		4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D91CF681473FE0900CBA435 /* MapKit.framework */; };
+		4DAD5325147D301C00949EE8 /* ovmsCarsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */; };
+		4DAD532C147D317300949EE8 /* ovmsCarsFormViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */; };
 		4DDA222F1476962700BA40AA /* teslapin.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDA222E1476962700BA40AA /* teslapin.png */; };
 		4DFAD7EB14752B8800416D38 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7EA14752B8800416D38 /* Icon.png */; };
 		4DFAD7EE14752BA100416D38 /* icon114x114.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7ED14752BA100416D38 /* icon114x114.png */; };
@@ -116,8 +117,6 @@
 		4D5AE39E14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4D5AE3A014733758002F5F52 /* ovmsTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ovmsTests.h; sourceTree = "<group>"; };
 		4D5AE3A114733758002F5F52 /* ovmsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ovmsTests.m; sourceTree = "<group>"; };
-		4D65D9C3147CBE0200F90795 /* ovmsCarsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsViewController.h; sourceTree = "<group>"; };
-		4D65D9C4147CBE0200F90795 /* ovmsCarsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsViewController.m; sourceTree = "<group>"; };
 		4D90410A147C787F00D9C8E1 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewController.h; sourceTree = "<group>"; };
 		4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsStatusViewController.m; sourceTree = "<group>"; };
@@ -156,6 +155,10 @@
 		4D91CF4F1473F95300CBA435 /* car_roadster_twilightblue.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_twilightblue.png; sourceTree = "<group>"; };
 		4D91CF501473F95300CBA435 /* car_roadster_veryorange.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = car_roadster_veryorange.png; sourceTree = "<group>"; };
 		4D91CF681473FE0900CBA435 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		4DAD5323147D301C00949EE8 /* ovmsCarsTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsTableViewController.h; sourceTree = "<group>"; };
+		4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsTableViewController.m; sourceTree = "<group>"; };
+		4DAD532A147D317300949EE8 /* ovmsCarsFormViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsFormViewController.h; sourceTree = SOURCE_ROOT; };
+		4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsFormViewController.m; sourceTree = SOURCE_ROOT; };
 		4DDA222E1476962700BA40AA /* teslapin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teslapin.png; sourceTree = "<group>"; };
 		4DFAD7EA14752B8800416D38 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Icon.png; path = ../Icon.png; sourceTree = "<group>"; };
 		4DFAD7ED14752BA100416D38 /* icon114x114.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = icon114x114.png; path = ../icon114x114.png; sourceTree = "<group>"; };
@@ -376,8 +379,10 @@
 				4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */,
 				4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */,
 				4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */,
-				4D65D9C3147CBE0200F90795 /* ovmsCarsViewController.h */,
-				4D65D9C4147CBE0200F90795 /* ovmsCarsViewController.m */,
+				4DAD5323147D301C00949EE8 /* ovmsCarsTableViewController.h */,
+				4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */,
+				4DAD532A147D317300949EE8 /* ovmsCarsFormViewController.h */,
+				4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */,
 			);
 			name = Tabs;
 			sourceTree = "<group>";
@@ -544,7 +549,8 @@
 				4DFAD8091475448A00416D38 /* crypto_hmac.c in Sources */,
 				4DFAD80B1475449600416D38 /* crypto_base64.c in Sources */,
 				4D10FCF3147BC9AA0092FAF9 /* GCDAsyncSocket.m in Sources */,
-				4D65D9C5147CBE0200F90795 /* ovmsCarsViewController.m in Sources */,
+				4DAD5325147D301C00949EE8 /* ovmsCarsTableViewController.m in Sources */,
+				4DAD532C147D317300949EE8 /* ovmsCarsFormViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
