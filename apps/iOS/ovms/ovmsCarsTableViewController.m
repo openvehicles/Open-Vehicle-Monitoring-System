@@ -1,15 +1,15 @@
 //
-//  ovmsCarsViewController.m
+//  ovmsCarsTableViewController.m
 //  ovms
 //
 //  Created by Mark Webb-Johnson on 23/11/11.
 //  Copyright (c) 2011 Hong Hay Villa. All rights reserved.
 //
 
-#import "ovmsCarsViewController.h"
+#import "ovmsCarsTableViewController.h"
 
 
-@implementation ovmsCarsViewController
+@implementation ovmsCarsTableViewController
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -35,10 +35,10 @@
     [super viewDidLoad];
 
     // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
+    self.clearsSelectionOnViewWillAppear = NO;
  
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    self.navigationItem.rightBarButtonItem = self.editButtonItem;
 }
 
 - (void)viewDidUnload
@@ -78,30 +78,40 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-//#warning Potentially incomplete method implementation.
+#warning Potentially incomplete method implementation.
     // Return the number of sections.
     return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-//#warning Incomplete method implementation.
+#warning Incomplete method implementation.
     // Return the number of rows in the section.
     return 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *CellIdentifier = @"Cell";
+    static NSString *CellIdentifier = @"CellIdentifier";
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     }
-    
-    // Configure the cell...
-    
-    return cell;
+
+  // Get the cell label using its tag and set it
+  UILabel *cellLabel = (UILabel *)[cell viewWithTag:1];
+  [cellLabel setText:@"EV915"];
+  
+  // get the cell imageview using its tag and set it
+  UIImageView *cellImage = (UIImageView *)[cell viewWithTag:2];
+  [cellImage setImage:[UIImage imageNamed:[NSString stringWithFormat:@"car_roadster_lightninggreen.png", indexPath.row]]];
+  
+  return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+  return 144;
 }
 
 /*
