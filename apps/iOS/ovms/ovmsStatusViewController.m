@@ -29,21 +29,9 @@
 {
   [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
-  m_car_image.image=[UIImage imageNamed:@"car_roadster_thundergray.png"];
-  m_car_soc.text = @"69%";
-  m_car_label.text = @"EV915";
-  m_car_charge_state.text = @"Charged OK";
-  m_car_charge_type.text = @"220V @70A";
-  m_car_range.text = @"Range: 212km (196km estimated)";
-  CGRect bounds = m_battery_front.bounds;
-  CGPoint center = m_battery_front.center;
-  CGFloat oldwidth = bounds.size.width;
-  CGFloat newwidth = (0.69*(233-17))+17;
-  bounds.size.width = newwidth;
-  center.x = center.x + ((newwidth - oldwidth)/2);
-  m_battery_front.bounds = bounds;
-  m_battery_front.center = center;
-  bounds = m_battery_front.bounds;
+  [ovmsAppDelegate myRef].status_delegate = self;
+  
+  [self updateStatus];
 }
 
 - (void)viewDidUnload
@@ -88,6 +76,62 @@
   } else {
     return YES;
   }
+}
+
+-(void) updateStatus
+{
+  NSString* units;
+  if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
+    units = @"km";
+  else
+    units = @"m";
+  
+  m_car_label.text = @"EV915";
+  m_car_image.image=[UIImage imageNamed:@"car_roadster_thundergray.png"];
+  m_car_soc.text = [NSString stringWithFormat:@"%d%%",[ovmsAppDelegate myRef].car_soc];
+  m_car_range.text = [NSString stringWithFormat:@"Range: %d%s (%d%s estimated)",
+                      [ovmsAppDelegate myRef].car_idealrange,
+                      [units UTF8String],
+                      [ovmsAppDelegate myRef].car_estimatedrange,
+                      [units UTF8String]];
+  CGRect bounds = m_battery_front.bounds;
+  CGPoint center = m_battery_front.center;
+  CGFloat oldwidth = bounds.size.width;
+  CGFloat newwidth = (((0.0+[ovmsAppDelegate myRef].car_soc)/100.0)*(233-17))+17;
+  bounds.size.width = newwidth;
+  center.x = center.x + ((newwidth - oldwidth)/2);
+  m_battery_front.bounds = bounds;
+  m_battery_front.center = center;
+  bounds = m_battery_front.bounds;
+  if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"charging"])
+    {
+    m_car_charge_state.text = [NSString stringWithFormat:@"Charging (%@)", [ovmsAppDelegate myRef].car_chargemode];
+    m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
+    [ovmsAppDelegate myRef].car_linevoltage,
+    [ovmsAppDelegate myRef].car_chargecurrent];
+    }
+  else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"topoff"])
+    {
+    m_car_charge_state.text = @"Topping off";
+    m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
+                              [ovmsAppDelegate myRef].car_linevoltage,
+                              [ovmsAppDelegate myRef].car_chargecurrent];
+    }
+  else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"done"])
+    {
+    m_car_charge_state.text = @"";
+    m_car_charge_type.text = @"";
+    }
+  else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"stopped"])
+    {
+    m_car_charge_state.text = @"Charging stopped";
+    m_car_charge_type.text = @"";
+    }
+  else
+    {
+    m_car_charge_state.text = @"";
+    m_car_charge_type.text = @"";
+    }
 }
 
 @end

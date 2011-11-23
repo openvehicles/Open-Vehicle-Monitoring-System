@@ -12,8 +12,20 @@
 @implementation ovmsAppDelegate
 
 @synthesize window = _window;
+
 @synthesize location_delegate;
+@synthesize status_delegate;
+
 @synthesize car_location;
+@synthesize car_soc;
+@synthesize car_units;
+@synthesize car_linevoltage;
+@synthesize car_chargecurrent;
+@synthesize car_chargestate;
+@synthesize car_chargemode;
+@synthesize car_idealrange;
+@synthesize car_estimatedrange;
+
 
 + (ovmsAppDelegate *) myRef
 {
@@ -136,6 +148,24 @@
     case 'Z': // PING
       break;
     case 'S': // STATUS
+      {
+      NSArray *lparts = [cmd componentsSeparatedByString:@","];
+      if ([lparts count]>=8)
+        {
+        car_soc = [[lparts objectAtIndex:0] intValue];
+        car_units = [lparts objectAtIndex:1];
+        car_linevoltage = [[lparts objectAtIndex:2] intValue];
+        car_chargecurrent = [[lparts objectAtIndex:3] intValue];
+        car_chargestate = [lparts objectAtIndex:4];
+        car_chargemode = [lparts objectAtIndex:5];
+        car_idealrange = [[lparts objectAtIndex:6] intValue];
+        car_estimatedrange = [[lparts objectAtIndex:7] intValue];
+        }
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        {
+        [self.status_delegate updateStatus];
+        }
+      }
       break;
     case 'L': // LOCATION
       {
