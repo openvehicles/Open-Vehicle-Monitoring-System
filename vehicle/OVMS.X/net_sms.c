@@ -228,7 +228,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
           y++;
         }
       net_send_sms_rom(caller,NET_MSG_PARAMS);
-      net_state_enter(NET_STATE_RESET);
+      net_state_enter(NET_STATE_SOFTRESET);
       }
     else
       net_send_sms_rom(caller,NET_MSG_DENIED);
