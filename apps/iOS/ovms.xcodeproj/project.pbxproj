@@ -27,6 +27,7 @@
 		4D5AE39714733758002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
 		4D5AE39F14733758002F5F52 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE39D14733758002F5F52 /* InfoPlist.strings */; };
 		4D5AE3A214733758002F5F52 /* ovmsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5AE3A114733758002F5F52 /* ovmsTests.m */; };
+		4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D90410A147C787F00D9C8E1 /* CoreLocation.framework */; };
 		4D91CEF01473EB2700CBA435 /* ovmsCarsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEEF1473EB2700CBA435 /* ovmsCarsViewController.m */; };
 		4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */; };
 		4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */; };
@@ -115,6 +116,7 @@
 		4D5AE39E14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4D5AE3A014733758002F5F52 /* ovmsTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ovmsTests.h; sourceTree = "<group>"; };
 		4D5AE3A114733758002F5F52 /* ovmsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ovmsTests.m; sourceTree = "<group>"; };
+		4D90410A147C787F00D9C8E1 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		4D91CEEE1473EB2700CBA435 /* ovmsCarsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsViewController.h; sourceTree = "<group>"; };
 		4D91CEEF1473EB2700CBA435 /* ovmsCarsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsViewController.m; sourceTree = "<group>"; };
 		4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewController.h; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */,
 				4D10FCF7147BCACD0092FAF9 /* Security.framework in Frameworks */,
 				4D10FCF5147BCA0C0092FAF9 /* CFNetwork.framework in Frameworks */,
 				4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */,
@@ -223,6 +226,7 @@
 		4D5AE36714733757002F5F52 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4D90410A147C787F00D9C8E1 /* CoreLocation.framework */,
 				4D10FCF6147BCACD0092FAF9 /* Security.framework */,
 				4D10FCF4147BCA0B0092FAF9 /* CFNetwork.framework */,
 				4D91CF681473FE0900CBA435 /* MapKit.framework */,

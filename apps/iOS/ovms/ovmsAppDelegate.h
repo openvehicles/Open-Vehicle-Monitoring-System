@@ -32,6 +32,6 @@
 - (void)didStopNetworking;
 - (void)serverConnect;
 - (void)serverDisconnect;
-- (void)handleCommand:(NSString*)cmd;
+- (void)handleCommand:(char)code command:(NSString*)cmd;
 
 @end

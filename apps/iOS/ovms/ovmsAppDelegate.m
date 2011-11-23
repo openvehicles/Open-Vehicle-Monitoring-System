@@ -6,6 +6,7 @@
 //  Copyright (c) 2011 Hong Hay Villa. All rights reserved.
 //
 
+#import "CoreLocation/CoreLocation.h"
 #import "ovmsAppDelegate.h"
 #import "GCDAsyncSocket.h"
 
@@ -121,8 +122,26 @@
     }
 }
 
-- (void)handleCommand:(NSString*)cmd;
+- (void)handleCommand:(char)code command:(NSString*)cmd
 {
+  switch(code)
+  {
+    case 'Z': // PING
+      break;
+    case 'S': // STATUS
+      break;
+    case 'L': // LOCATION
+      {
+      NSArray *lparts = [cmd componentsSeparatedByString:@" "];
+      if ([lparts count]>=2)
+        {
+        CLLocationDegrees latitude = [[lparts objectAtIndex:0] doubleValue];
+        CLLocationDegrees longitude = [[lparts objectAtIndex:1] doubleValue];
+        // Update the visible location
+        }
+      }
+      break;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,6 +164,8 @@
   unsigned char digest[MD5_SIZE];
   unsigned char edigest[(MD5_SIZE*2)+2];
 
+  [self didStopNetworking];
+  
   NSString *response = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
   if (tag==0)
     { // Welcome message
@@ -203,10 +224,10 @@
     RC4_crypt(&rxCrypto, (uint8_t*)buf, (uint8_t*)buf, len);
       if ((buf[0]=='M')&&(buf[1]=='P')&&(buf[2]=='-')&&(buf[3]=='0'))
         {
-        NSString *cmd = [[NSString alloc] initWithCString:buf+5 encoding:NSUTF8StringEncoding];
-        [self handleCommand: cmd];
+        NSString *cmd = [[NSString alloc] initWithCString:buf+6 encoding:NSUTF8StringEncoding];
+        [self handleCommand:buf[5] command:cmd];
         }
-    [asyncSocket readDataToData:[GCDAsyncSocket CRLFData] withTimeout:-1 tag:0];
+    [asyncSocket readDataToData:[GCDAsyncSocket CRLFData] withTimeout:-1 tag:1];
     }
 }
 
