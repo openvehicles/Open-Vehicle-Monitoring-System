@@ -21,7 +21,7 @@
                                 </accessibility>
                             </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="center" image="car_roadster_thundergray.png" id="feQ-Vi-h8L" userLabel="car_image">
-                                <rect key="frame" x="0.0" y="28" width="320" height="130"/>
+                                <rect key="frame" x="0.0" y="43" width="320" height="130"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <imageView autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" image="battery_100.png" id="CKU-Hj-ZF9" userLabel="battery_front">
@@ -138,7 +138,7 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
-                        <segue destination="T4g-Sv-yXP" kind="relationship" relationship="rootViewController" id="dge-vF-cij"/>
+                        <segue destination="T4g-Sv-yXP" kind="relationship" relationship="rootViewController" id="1Ua-cj-1sU"/>
                     </connections>
                 </navigationController>
             </objects>
@@ -147,40 +147,38 @@
         <scene sceneID="9Oa-SP-kvN">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OVn-SP-h2j" userLabel="First Responder" sceneMemberID="firstResponder"/>
-                <tableViewController id="T4g-Sv-yXP" customClass="ovmsCarsViewController" sceneMemberID="viewController">
-                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="UpT-qx-GHI">
+                <tableViewController id="T4g-Sv-yXP" customClass="ovmsCarsTableViewController" sceneMemberID="viewController">
+                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="UpT-qx-GHI">
                         <rect key="frame" x="0.0" y="64" width="320" height="367"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
                         <prototypes>
-                            <tableViewCell contentMode="left" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="car" rowHeight="0.0" id="VEc-RN-egJ">
-                                <rect key="frame" x="0.0" y="22" width="320" height="0.0"/>
-                                <autoresizingMask key="autoresizingMask"/>
-                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
-                                    <rect key="frame" x="0.0" y="-1" width="320" height="1"/>
-                                    <autoresizingMask key="autoresizingMask"/>
-                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                </view>
-                            </tableViewCell>
-                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" accessoryType="disclosureIndicator" indentationWidth="10" reuseIdentifier="onecar" rowHeight="123" id="UZy-tX-2yE">
-                                <rect key="frame" x="0.0" y="22" width="320" height="123"/>
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" accessoryType="disclosureIndicator" indentationWidth="10" reuseIdentifier="CellIdentifier" rowHeight="144" id="BP1-Se-iuM">
+                                <rect key="frame" x="0.0" y="22" width="320" height="144"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
-                                    <rect key="frame" x="0.0" y="0.0" width="300" height="122"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="300" height="143"/>
                                     <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <imageView userInteractionEnabled="NO" tag="2" contentMode="scaleAspectFit" image="car_roadster_thundergray.png" id="ztz-Yo-9ni">
+                                            <rect key="frame" x="0.0" y="29" width="266" height="104"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        </imageView>
+                                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" tag="1" contentMode="left" text="EV915" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="9QD-ct-WO5">
+                                            <rect key="frame" x="14" y="11" width="252" height="21"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                            <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="24"/>
+                                            <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                            <nil key="highlightedColor"/>
+                                            <color key="shadowColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                            <size key="shadowOffset" width="0.0" height="0.0"/>
+                                        </label>
+                                    </subviews>
                                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 </view>
-                            </tableViewCell>
-                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" accessoryType="disclosureIndicator" indentationWidth="10" reuseIdentifier="onecar" rowHeight="123" id="td3-MA-nX9">
-                                <rect key="frame" x="0.0" y="145" width="320" height="123"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
-                                    <rect key="frame" x="0.0" y="0.0" width="300" height="122"/>
-                                    <autoresizingMask key="autoresizingMask"/>
-                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                </view>
+                                <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
                                 <connections>
-                                    <segue destination="BXs-pp-JHG" kind="push" id="aVg-Az-CIP"/>
+                                    <segue destination="BXs-pp-JHG" kind="push" id="dc8-qB-GAZ"/>
                                 </connections>
                             </tableViewCell>
                         </prototypes>
@@ -190,8 +188,11 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Cars" id="k8k-XQ-p3Z">
-                        <barButtonItem key="leftBarButtonItem" title="New" id="TPP-F9-hgC"/>
-                        <barButtonItem key="rightBarButtonItem" title="Edit" id="bQs-az-hGx"/>
+                        <barButtonItem key="leftBarButtonItem" title="New" id="TPP-F9-hgC">
+                            <connections>
+                                <segue destination="BXs-pp-JHG" kind="push" id="mTX-H5-o9Y"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                 </tableViewController>
             </objects>
@@ -200,18 +201,48 @@
         <scene sceneID="rV3-H9-bVt">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="6wg-UF-9wn" userLabel="First Responder" sceneMemberID="firstResponder"/>
-                <viewController title="Car Setup" id="BXs-pp-JHG" sceneMemberID="viewController">
+                <viewController title="Car Setup" id="BXs-pp-JHG" customClass="ovmsCarsFormViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="mjE-2E-gqv">
                         <rect key="frame" x="0.0" y="64" width="320" height="367"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Car" minimumFontSize="17" clearButtonMode="whileEditing" id="4Xd-yt-3M8">
+                                <rect key="frame" x="20" y="15" width="144" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="allCharacters" autocorrectionType="no" keyboardType="alphabet" returnKeyType="next"/>
+                            </textField>
+                            <pickerView contentMode="scaleToFill" id="emP-Ft-Gqy">
+                                <rect key="frame" x="0.0" y="151" width="320" height="216"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                            </pickerView>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Password" minimumFontSize="17" clearButtonMode="whileEditing" id="OjM-14-eqm">
+                                <rect key="frame" x="20" y="95" width="280" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" secureTextEntry="YES"/>
+                            </textField>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Label" minimumFontSize="17" clearButtonMode="whileEditing" id="DwN-wJ-AKO">
+                                <rect key="frame" x="20" y="54" width="280" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="words" returnKeyType="next"/>
+                            </textField>
+                        </subviews>
                         <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <navigationItem key="navigationItem" title="Car" id="AWr-Ib-rpt">
                         <barButtonItem key="backBarButtonItem" title="Cars" id="Uj3-Qm-JjY"/>
                     </navigationItem>
+                    <connections>
+                        <outlet property="vehicleid" destination="4Xd-yt-3M8" id="Yrt-zJ-UWf"/>
+                        <outlet property="vehiclelabel" destination="DwN-wJ-AKO" id="ZA6-5K-Zrk"/>
+                        <outlet property="vehiclepassword" destination="OjM-14-eqm" id="mDI-yB-aUj"/>
+                        <outlet property="vehiclepicker" destination="emP-Ft-Gqy" id="Cbe-oJ-LWv"/>
+                    </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="1558" y="748"/>
+            <point key="canvasLocation" x="1572" y="748"/>
         </scene>
     </scenes>
     <resources>
@@ -223,8 +254,17 @@
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
     </resources>
     <classes>
-        <class className="ovmsCarsViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsViewController.h"/>
+        <class className="ovmsCarsFormViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehiclepassword" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehiclepicker" candidateClass="UIPickerView"/>
+            </relationships>
+        </class>
+        <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
         </class>
         <class className="ovmsLocationViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsLocationViewController.h"/>
@@ -250,4 +290,7 @@
         <simulatedOrientationMetrics key="orientation"/>
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
+    <inferredMetricsTieBreakers>
+        <segue reference="mTX-H5-o9Y"/>
+    </inferredMetricsTieBreakers>
 </document>
