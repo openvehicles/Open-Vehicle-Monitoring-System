@@ -94,8 +94,10 @@
   
   CLLocationCoordinate2D location; 
   
-  location.latitude = 22.358088;
-  location.longitude = 114.122400;
+//  location.latitude = 22.358088;
+//  location.longitude = 114.122400;
+  location.latitude = 0;
+  location.longitude = 0;
   
   region.span=span; 
   region.center=location; 
