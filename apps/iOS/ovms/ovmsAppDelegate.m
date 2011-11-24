@@ -36,7 +36,16 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
-    return YES;
+ 
+  // Set the application defaults
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  NSDictionary *appDefaults = [NSDictionary dictionaryWithObjectsAndKeys:@"www.openvehicles.com", @"ovmsServer",
+                                                                         @"6867", @"ovmsPort",
+                                                                         nil];
+  [defaults registerDefaults:appDefaults];
+  [defaults synchronize];
+  
+  return YES;
 }
 							
 - (void)applicationWillResignActive:(UIApplication *)application
@@ -102,10 +111,14 @@
   
   if (asyncSocket == NULL)
     {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString* ovmsServer = [defaults stringForKey:@"ovmsServer"];
+    int ovmsPort = [defaults integerForKey:@"ovmsPort"];
+    
     dispatch_queue_t mainQueue = dispatch_get_main_queue();
     asyncSocket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:mainQueue];
     NSError *error = nil;
-    if (![asyncSocket connectToHost:@"www.openvehicles.com" onPort:6867 error:&error])
+    if (![asyncSocket connectToHost:ovmsServer onPort:ovmsPort error:&error])
       {
       // Croak on the error
       return;
