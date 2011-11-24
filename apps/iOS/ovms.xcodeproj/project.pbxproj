@@ -66,7 +66,10 @@
 		4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D91CF681473FE0900CBA435 /* MapKit.framework */; };
 		4DAD5325147D301C00949EE8 /* ovmsCarsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */; };
 		4DAD532C147D317300949EE8 /* ovmsCarsFormViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */; };
+		4DC8B38C147E7BF2007FDFB2 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 4DC8B38A147E7BF2007FDFB2 /* Model.xcdatamodeld */; };
 		4DDA222F1476962700BA40AA /* teslapin.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDA222E1476962700BA40AA /* teslapin.png */; };
+		4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DE26E5F147E7E3000E3161D /* CoreData.framework */; };
+		4DE26E63147E83AE00E3161D /* Cars.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DE26E62147E83AE00E3161D /* Cars.m */; };
 		4DFAD7EB14752B8800416D38 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7EA14752B8800416D38 /* Icon.png */; };
 		4DFAD7EE14752BA100416D38 /* icon114x114.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7ED14752BA100416D38 /* icon114x114.png */; };
 		4DFAD7F014752CFB00416D38 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DFAD7EF14752CFB00416D38 /* Default.png */; };
@@ -161,7 +164,11 @@
 		4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsTableViewController.m; sourceTree = "<group>"; };
 		4DAD532A147D317300949EE8 /* ovmsCarsFormViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsFormViewController.h; sourceTree = SOURCE_ROOT; };
 		4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsFormViewController.m; sourceTree = SOURCE_ROOT; };
+		4DC8B38B147E7BF2007FDFB2 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		4DDA222E1476962700BA40AA /* teslapin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teslapin.png; sourceTree = "<group>"; };
+		4DE26E5F147E7E3000E3161D /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		4DE26E61147E83AE00E3161D /* Cars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Cars.h; path = ../Cars.h; sourceTree = "<group>"; };
+		4DE26E62147E83AE00E3161D /* Cars.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Cars.m; path = ../Cars.m; sourceTree = "<group>"; };
 		4DFAD7EA14752B8800416D38 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Icon.png; path = ../Icon.png; sourceTree = "<group>"; };
 		4DFAD7ED14752BA100416D38 /* icon114x114.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = icon114x114.png; path = ../icon114x114.png; sourceTree = "<group>"; };
 		4DFAD7EF14752CFB00416D38 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Default.png; path = ../Default.png; sourceTree = "<group>"; };
@@ -186,6 +193,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */,
 				4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */,
 				4D10FCF7147BCACD0092FAF9 /* Security.framework in Frameworks */,
 				4D10FCF5147BCA0C0092FAF9 /* CFNetwork.framework in Frameworks */,
@@ -231,6 +239,7 @@
 		4D5AE36714733757002F5F52 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4DE26E5F147E7E3000E3161D /* CoreData.framework */,
 				4D90410A147C787F00D9C8E1 /* CoreLocation.framework */,
 				4D10FCF6147BCACD0092FAF9 /* Security.framework */,
 				4D10FCF4147BCA0B0092FAF9 /* CFNetwork.framework */,
@@ -252,6 +261,7 @@
 				4D5AE37D14733758002F5F52 /* MainStoryboard_iPad.storyboard */,
 				4DFAD7FF1475435300416D38 /* Tabs */,
 				4DFAD7FE1475434500416D38 /* Crypto */,
+				4DE26E64147E83B800E3161D /* Data Model */,
 				4D91CF0B1473F61A00CBA435 /* Cars */,
 				4D91CEF81473ECE500CBA435 /* Images */,
 				4D5AE36F14733757002F5F52 /* Supporting Files */,
@@ -342,6 +352,16 @@
 				4D91CF501473F95300CBA435 /* car_roadster_veryorange.png */,
 			);
 			name = Cars;
+			sourceTree = "<group>";
+		};
+		4DE26E64147E83B800E3161D /* Data Model */ = {
+			isa = PBXGroup;
+			children = (
+				4DC8B38A147E7BF2007FDFB2 /* Model.xcdatamodeld */,
+				4DE26E61147E83AE00E3161D /* Cars.h */,
+				4DE26E62147E83AE00E3161D /* Cars.m */,
+			);
+			name = "Data Model";
 			sourceTree = "<group>";
 		};
 		4DFAD7FD1475430900416D38 /* Icons */ = {
@@ -555,6 +575,8 @@
 				4D10FCF3147BC9AA0092FAF9 /* GCDAsyncSocket.m in Sources */,
 				4DAD5325147D301C00949EE8 /* ovmsCarsTableViewController.m in Sources */,
 				4DAD532C147D317300949EE8 /* ovmsCarsFormViewController.m in Sources */,
+				4DC8B38C147E7BF2007FDFB2 /* Model.xcdatamodeld in Sources */,
+				4DE26E63147E83AE00E3161D /* Cars.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -746,6 +768,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		4DC8B38A147E7BF2007FDFB2 /* Model.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				4DC8B38B147E7BF2007FDFB2 /* Model.xcdatamodel */,
+			);
+			currentVersion = 4DC8B38B147E7BF2007FDFB2 /* Model.xcdatamodel */;
+			name = Model.xcdatamodeld;
+			path = ../Model.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 4D5AE35B14733757002F5F52 /* Project object */;
 }

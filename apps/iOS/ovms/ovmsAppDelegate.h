@@ -50,9 +50,15 @@
 }
 
 @property (strong, nonatomic) UIWindow *window;
+
+@property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
+@property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
+@property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
+
 @property (strong, nonatomic) id location_delegate;
-@property (strong, nonatomic) id status_delegate;
 @property (assign) CLLocationCoordinate2D car_location;
+
+@property (strong, nonatomic) id status_delegate;
 @property (assign) int car_soc;
 @property (strong, nonatomic) NSString* car_units;
 @property (assign) int car_linevoltage;
@@ -63,6 +69,8 @@
 @property (assign) int car_estimatedrange;
 
 + (ovmsAppDelegate *) myRef;
+- (void)saveContext;
+- (NSURL *)applicationDocumentsDirectory;
 - (void)didStartNetworking;
 - (void)didStopNetworking;
 - (void)serverConnect;

@@ -7,7 +7,15 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "ovmsAppDelegate.h"
 
 @interface ovmsCarsTableViewController : UITableViewController
+{
+  NSArray *_cars;
+  NSManagedObjectContext *_context;
+}
+
+@property (nonatomic, retain) NSArray *cars;
+@property (nonatomic, retain) NSManagedObjectContext *context;
 
 @end
