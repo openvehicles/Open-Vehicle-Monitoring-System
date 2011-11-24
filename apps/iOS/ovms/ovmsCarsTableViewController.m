@@ -7,9 +7,12 @@
 //
 
 #import "ovmsCarsTableViewController.h"
-
+#import "Cars.h"
 
 @implementation ovmsCarsTableViewController
+
+@synthesize cars = _cars;
+@synthesize context = _context;
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -39,6 +42,15 @@
  
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
+  
+  _context = [ovmsAppDelegate myRef].managedObjectContext;
+  NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+  NSEntityDescription *entity = [NSEntityDescription 
+                                 entityForName:@"Cars" inManagedObjectContext:_context];
+  [fetchRequest setEntity:entity];
+  NSError *error;
+  self.cars = [_context executeFetchRequest:fetchRequest error:&error];
+  self.title = @"Cars"; 
 }
 
 - (void)viewDidUnload
@@ -85,7 +97,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     // Return the number of rows in the section.
-    return 1;
+   return [_cars count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -97,13 +109,16 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     }
 
+  // Retrieve the relevant car record
+  Cars *car = [_cars objectAtIndex:indexPath.row];
+
   // Get the cell label using its tag and set it
   UILabel *cellLabel = (UILabel *)[cell viewWithTag:1];
-  [cellLabel setText:@"EV915"];
+  [cellLabel setText:car.label];
   
   // get the cell imageview using its tag and set it
   UIImageView *cellImage = (UIImageView *)[cell viewWithTag:2];
-  [cellImage setImage:[UIImage imageNamed:[NSString stringWithFormat:@"car_roadster_lightninggreen.png", indexPath.row]]];
+  [cellImage setImage:[UIImage imageNamed:[NSString stringWithFormat:car.imagepath, indexPath.row]]];
   
   return cell;
 }
