@@ -53,6 +53,7 @@
 	// Do any additional setup after loading the view, typically from a nib.
   [NSThread detachNewThreadSelector:@selector(displayMYMap) toTarget:self withObject:nil]; 
   [ovmsAppDelegate myRef].location_delegate = self;
+  self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
 }
 
 - (void)viewDidUnload

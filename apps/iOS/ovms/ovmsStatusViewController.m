@@ -9,7 +9,6 @@
 #import "ovmsStatusViewController.h"
 
 @implementation ovmsStatusViewController
-@synthesize m_car_label;
 @synthesize m_car_image;
 @synthesize m_car_charge_state;
 @synthesize m_car_charge_type;
@@ -31,12 +30,13 @@
 	// Do any additional setup after loading the view, typically from a nib.
   [ovmsAppDelegate myRef].status_delegate = self;
   
+  self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
+
   [self updateStatus];
 }
 
 - (void)viewDidUnload
 {
-    [self setM_car_label:nil];
     [self setM_car_image:nil];
     [self setM_car_charge_state:nil];
     [self setM_car_charge_type:nil];
@@ -86,7 +86,6 @@
   else
     units = @"m";
   
-  m_car_label.text = @"EV915";
   m_car_image.image=[UIImage imageNamed:@"car_roadster_thundergray.png"];
   m_car_soc.text = [NSString stringWithFormat:@"%d%%",[ovmsAppDelegate myRef].car_soc];
   m_car_range.text = [NSString stringWithFormat:@"Range: %d%s (%d%s estimated)",

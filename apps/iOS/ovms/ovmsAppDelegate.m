@@ -14,6 +14,11 @@
 
 @synthesize window = _window;
 
+@synthesize sel_car;
+@synthesize sel_label;
+@synthesize sel_netpass;
+@synthesize sel_userpass;
+
 @synthesize managedObjectContext = __managedObjectContext;
 @synthesize managedObjectModel = __managedObjectModel;
 @synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
@@ -49,6 +54,11 @@
   [defaults registerDefaults:appDefaults];
   [defaults synchronize];
 
+  sel_car = @"DEMO";
+  sel_label = @"Demonstration Car";
+  sel_netpass = @"DEMO";
+  sel_userpass = @"DEMO";
+  
   NSManagedObjectContext *context = [self managedObjectContext];
   NSFetchRequest *request = [[NSFetchRequest alloc] init];
   [request setEntity: [NSEntityDescription entityForName:@"Cars" inManagedObjectContext: context]];
@@ -63,7 +73,7 @@
     car.label = @"Demonstration Car";
     car.netpass = @"DEMO";
     car.userpass = @"DEMO";
-    car.imagepath = @"car_roadster_thundergray.png";
+    car.imagepath = @"car_roadster_radiantred.png";
     if (![context save:&error])
       {
       NSLog(@"Whoops, couldn't save: %@", [error localizedDescription]);

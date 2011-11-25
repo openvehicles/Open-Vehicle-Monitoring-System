@@ -38,6 +38,11 @@
   id location_delegate;
   id status_delegate;
   
+  NSString* sel_car;
+  NSString* sel_label;
+  NSString* sel_netpass;
+  NSString* sel_userpass;
+
   CLLocationCoordinate2D car_location;
   int car_soc;
   NSString* car_units;
@@ -50,6 +55,11 @@
 }
 
 @property (strong, nonatomic) UIWindow *window;
+
+@property (strong, nonatomic) NSString* sel_car;
+@property (strong, nonatomic) NSString* sel_label;
+@property (strong, nonatomic) NSString* sel_netpass;
+@property (strong, nonatomic) NSString* sel_userpass;
 
 @property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;

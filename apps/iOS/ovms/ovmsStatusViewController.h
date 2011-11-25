@@ -11,7 +11,6 @@
 
 @interface ovmsStatusViewController : UIViewController <ovmsStatusDelegate>
 
-@property (strong, nonatomic) IBOutlet UILabel *m_car_label;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_image;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_charge_state;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_charge_type;
