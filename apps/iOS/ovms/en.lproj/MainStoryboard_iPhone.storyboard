@@ -148,7 +148,7 @@
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OVn-SP-h2j" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <tableViewController id="T4g-Sv-yXP" customClass="ovmsCarsTableViewController" sceneMemberID="viewController">
-                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="UpT-qx-GHI">
+                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="144" sectionHeaderHeight="22" sectionFooterHeight="22" id="UpT-qx-GHI">
                         <rect key="frame" x="0.0" y="64" width="320" height="367"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
@@ -207,27 +207,49 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Car" minimumFontSize="17" clearButtonMode="whileEditing" id="4Xd-yt-3M8">
-                                <rect key="frame" x="20" y="15" width="144" height="31"/>
+                                <rect key="frame" x="20" y="5" width="144" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocapitalizationType="allCharacters" autocorrectionType="no" keyboardType="alphabet" returnKeyType="next"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="allCharacters" autocorrectionType="no" keyboardType="alphabet"/>
+                                <connections>
+                                    <action selector="textFieldReturn:" destination="BXs-pp-JHG" eventType="editingDidEndOnExit" id="iw8-76-B27"/>
+                                </connections>
                             </textField>
-                            <pickerView contentMode="scaleToFill" id="emP-Ft-Gqy">
-                                <rect key="frame" x="0.0" y="151" width="320" height="216"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                            </pickerView>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Password" minimumFontSize="17" clearButtonMode="whileEditing" id="OjM-14-eqm">
-                                <rect key="frame" x="20" y="95" width="280" height="31"/>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Network Password" minimumFontSize="17" clearButtonMode="whileEditing" id="OjM-14-eqm">
+                                <rect key="frame" x="20" y="67" width="280" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocorrectionType="no" secureTextEntry="YES"/>
+                                <connections>
+                                    <action selector="textFieldReturn:" destination="BXs-pp-JHG" eventType="editingDidEndOnExit" id="wuB-Pg-BNQ"/>
+                                </connections>
                             </textField>
                             <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Label" minimumFontSize="17" clearButtonMode="whileEditing" id="DwN-wJ-AKO">
-                                <rect key="frame" x="20" y="54" width="280" height="31"/>
+                                <rect key="frame" x="20" y="36" width="280" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocapitalizationType="words" returnKeyType="next"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="words"/>
+                                <connections>
+                                    <action selector="textFieldReturn:" destination="BXs-pp-JHG" eventType="editingDidEndOnExit" id="5k6-O0-ydT"/>
+                                </connections>
                             </textField>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="User Password" minimumFontSize="17" clearButtonMode="whileEditing" id="LRB-n2-dGM">
+                                <rect key="frame" x="20" y="98" width="280" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" secureTextEntry="YES"/>
+                                <connections>
+                                    <action selector="textFieldReturn:" destination="BXs-pp-JHG" eventType="editingDidEndOnExit" id="Va1-tj-LqW"/>
+                                </connections>
+                            </textField>
+                            <pickerView contentMode="scaleAspectFit" showsSelectionIndicator="NO" id="fbz-J9-5fJ">
+                                <rect key="frame" x="0.0" y="151" width="320" height="216"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <connections>
+                                    <outlet property="dataSource" destination="BXs-pp-JHG" id="s0H-9K-QFL"/>
+                                    <outlet property="delegate" destination="BXs-pp-JHG" id="3pr-F9-DhU"/>
+                                </connections>
+                            </pickerView>
                         </subviews>
                         <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -235,10 +257,11 @@
                         <barButtonItem key="backBarButtonItem" title="Cars" id="Uj3-Qm-JjY"/>
                     </navigationItem>
                     <connections>
+                        <outlet property="vehicleImage" destination="fbz-J9-5fJ" id="KAD-x3-FcB"/>
+                        <outlet property="vehicleNetPass" destination="OjM-14-eqm" id="mCc-qM-z6u"/>
+                        <outlet property="vehicleUserPass" destination="LRB-n2-dGM" id="zSx-zU-QJk"/>
                         <outlet property="vehicleid" destination="4Xd-yt-3M8" id="Yrt-zJ-UWf"/>
                         <outlet property="vehiclelabel" destination="DwN-wJ-AKO" id="ZA6-5K-Zrk"/>
-                        <outlet property="vehiclepassword" destination="OjM-14-eqm" id="mDI-yB-aUj"/>
-                        <outlet property="vehiclepicker" destination="emP-Ft-Gqy" id="Cbe-oJ-LWv"/>
                     </connections>
                 </viewController>
             </objects>
@@ -257,10 +280,12 @@
         <class className="ovmsCarsFormViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
             <relationships>
+                <relationship kind="action" name="textFieldReturn:"/>
+                <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
+                <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
                 <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
                 <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehiclepassword" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehiclepicker" candidateClass="UIPickerView"/>
             </relationships>
         </class>
         <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
