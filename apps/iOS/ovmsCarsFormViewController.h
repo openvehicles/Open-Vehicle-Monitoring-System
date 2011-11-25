@@ -8,11 +8,18 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ovmsCarsFormViewController : UIViewController
+@interface ovmsCarsFormViewController : UIViewController <UIPickerViewDataSource, UIPickerViewDelegate>
+{
+  NSMutableArray            *carImages;
+}
+@property (strong, nonatomic) NSMutableArray *carImages;
 
 @property (strong, nonatomic) IBOutlet UITextField *vehicleid;
 @property (strong, nonatomic) IBOutlet UITextField *vehiclelabel;
-@property (strong, nonatomic) IBOutlet UITextField *vehiclepassword;
-@property (strong, nonatomic) IBOutlet UIPickerView *vehiclepicker;
+@property (strong, nonatomic) IBOutlet UITextField *vehicleNetPass;
+@property (strong, nonatomic) IBOutlet UITextField *vehicleUserPass;
+@property (strong, nonatomic) IBOutlet UIPickerView *vehicleImage;
+
+- (IBAction)textFieldReturn:(id)sender;
 
 @end
