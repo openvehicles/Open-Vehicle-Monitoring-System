@@ -7,8 +7,12 @@
 //
 
 #import "ovmsCarsFormViewController.h"
+#import "Cars.h"
 
 @implementation ovmsCarsFormViewController
+
+@synthesize context = _context;
+@synthesize carEditing = _carEditing;
 
 @synthesize carImages;
 
@@ -59,6 +63,7 @@
       [self.carImages addObject: tString];
       }
     }
+  _context = [ovmsAppDelegate myRef].managedObjectContext;
 }
 
 - (void)viewDidUnload
@@ -68,6 +73,8 @@
   [self setVehicleNetPass:nil];
   [self setVehicleUserPass:nil];
   [self setVehicleImage:nil];
+  [self setContext:nil];
+
   [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -79,11 +86,114 @@
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
-- (IBAction)textFieldReturn:(id)sender
+-(void) viewWillAppear:(BOOL)animated
 {
-  [sender resignFirstResponder];
+  // only enable the vehicleid field if this is a NEW car
+  if (self.carEditing==nil)
+    {
+    self.vehicleid.enabled = YES;
+    self.title = @"New Car";
+    }
+  else
+    {
+    self.title = self.carEditing;
+    self.vehicleid.text = self.carEditing;
+    self.vehicleid.enabled = NO;
+
+    NSManagedObjectContext *context = [ovmsAppDelegate myRef].managedObjectContext;
+    NSFetchRequest *request = [[NSFetchRequest alloc] init];
+    [request setEntity: [NSEntityDescription entityForName:@"Cars" inManagedObjectContext: context]];
+    NSPredicate *predicate =
+    [NSPredicate predicateWithFormat:@"vehicleid == %@", self.carEditing];
+    [request setPredicate:predicate];
+    NSError *error = nil;
+    NSArray *array = [context executeFetchRequest:request error:&error];
+    if (array != nil)
+      {
+      if ([array count]>0)
+        {
+        Cars* car = [array objectAtIndex:0];
+        self.vehiclelabel.text = car.label;
+        self.vehicleNetPass.text = car.netpass;
+        self.vehicleUserPass.text = car.userpass;
+        NSString *imagepath = car.imagepath;
+        for (int k=0;k<[carImages count];k++)
+          {
+          if ([[carImages objectAtIndex:k] isEqualToString:imagepath])
+            {
+            [vehicleImage selectRow:k inComponent:0 animated:NO];
+            }
+          }
+        }
+      }
+    }
 }
 
+-(void) viewWillDisappear:(BOOL)animated {
+  if ([self.navigationController.viewControllers indexOfObject:self]==NSNotFound) {
+    // back button was pressed.  We know this is true because self is no longer
+    // in the navigation stack.  
+    if (self.carEditing==nil)
+      {
+      // We need to create a new car record
+      if (([vehicleid.text length]==0)||
+          ([vehiclelabel.text length]==0)||
+          ([vehicleUserPass.text length]==0)||
+          ([vehicleNetPass.text length]==0))
+        {
+        return;
+        }
+      NSError *error = nil;
+      Cars *car = [NSEntityDescription
+                   insertNewObjectForEntityForName:@"Cars"
+                   inManagedObjectContext:_context];
+      car.vehicleid = vehicleid.text;
+      car.label = vehiclelabel.text;
+      car.netpass = vehicleNetPass.text;
+      car.userpass = vehicleUserPass.text;
+      car.imagepath = [carImages objectAtIndex:[vehicleImage selectedRowInComponent:0]];
+      if (![_context save:&error])
+        {
+        NSLog(@"Whoops, couldn't save: %@", [error localizedDescription]);
+        }
+      }
+    else
+      {
+      // We need to update the existing car record
+      NSManagedObjectContext *context = [ovmsAppDelegate myRef].managedObjectContext;
+      NSFetchRequest *request = [[NSFetchRequest alloc] init];
+      [request setEntity: [NSEntityDescription entityForName:@"Cars" inManagedObjectContext: context]];
+      NSPredicate *predicate =
+      [NSPredicate predicateWithFormat:@"vehicleid == %@", vehicleid.text];
+      [request setPredicate:predicate];
+      NSError *error = nil;
+      NSArray *array = [context executeFetchRequest:request error:&error];
+      if (array != nil)
+        {
+        if ([array count]>0)
+          {
+          NSError *error = nil;
+          Cars* car = [array objectAtIndex:0];
+          car.vehicleid = vehicleid.text;
+          car.label = vehiclelabel.text;
+          car.netpass = vehicleNetPass.text;
+          car.userpass = vehicleUserPass.text;
+          car.imagepath = [carImages objectAtIndex:[vehicleImage selectedRowInComponent:0]];
+          if (![_context save:&error])
+            {
+            NSLog(@"Whoops, couldn't save: %@", [error localizedDescription]);
+            }
+          }
+        }
+      }
+  }
+  [super viewWillDisappear:animated];
+}
+
+- (void)setCarEditing:(NSString *)newCarEditing
+{
+  _carEditing = newCarEditing;
+}
 
 #pragma mark -
 #pragma mark PickerView DataSource
@@ -118,6 +228,15 @@
 -(void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row
       inComponent:(NSInteger)component
 {
+}
+
+#pragma mark -
+#pragma mark UITextField Delegate
+
+-(BOOL) textFieldShouldReturn:(UITextField*) textField
+{
+  [textField resignFirstResponder]; 
+  return YES;
 }
 
 @end

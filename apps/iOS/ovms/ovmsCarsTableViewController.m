@@ -7,6 +7,7 @@
 //
 
 #import "ovmsCarsTableViewController.h"
+#import "ovmsCarsFormViewController.h"
 #import "Cars.h"
 
 @implementation ovmsCarsTableViewController
@@ -43,14 +44,7 @@
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
   
-  _context = [ovmsAppDelegate myRef].managedObjectContext;
-  NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
-  NSEntityDescription *entity = [NSEntityDescription 
-                                 entityForName:@"Cars" inManagedObjectContext:_context];
-  [fetchRequest setEntity:entity];
-  NSError *error;
-  self.cars = [_context executeFetchRequest:fetchRequest error:&error];
-  self.title = @"Cars"; 
+  self.title = @"Cars";
 }
 
 - (void)viewDidUnload
@@ -63,6 +57,21 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+  
+  int originalcount = [_cars count];
+  
+  _context = [ovmsAppDelegate myRef].managedObjectContext;
+  NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+  NSEntityDescription *entity = [NSEntityDescription 
+                                 entityForName:@"Cars" inManagedObjectContext:_context];
+  [fetchRequest setEntity:entity];
+  NSError *error;
+  self.cars = [_context executeFetchRequest:fetchRequest error:&error];
+
+  if (originalcount>0)
+    {
+    [self.tableView reloadData];
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -84,6 +93,20 @@
 {
     // Return YES for supported orientations
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+  if ([[segue identifier] isEqualToString:@"editCar"])
+    {
+    NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+    Cars *car = [_cars objectAtIndex:indexPath.row];
+    [[segue destinationViewController] setCarEditing:car.vehicleid];
+    }
+  else if ([[segue identifier] isEqualToString:@"newCar"])
+    {
+    [[segue destinationViewController] setCarEditing:@""];
+    }
 }
 
 #pragma mark - Table view data source
@@ -127,44 +150,35 @@
   return 144;
 }
 
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
-}
-*/
-
-/*
-// Override to support editing the table view.
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    }   
-    else if (editingStyle == UITableViewCellEditingStyleInsert) {
+    if (editingStyle == UITableViewCellEditingStyleDelete)
+      {
+      // Delete the row from the data source
+      if ([_cars count]==1) return; // Can't delete the last car
+      Cars *car = [_cars objectAtIndex:indexPath.row];
+      [_context deleteObject:car];
+      NSError *error;
+      if (![_context save:&error])
+        {
+        NSLog(@"Whoops, couldn't save: %@", [error localizedDescription]);
+        return;
+        }
+
+      // Reload the cars array...
+      NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+      NSEntityDescription *entity = [NSEntityDescription 
+                                     entityForName:@"Cars" inManagedObjectContext:_context];
+      [fetchRequest setEntity:entity];
+      self.cars = [_context executeFetchRequest:fetchRequest error:&error];
+
+      [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
+      }   
+    else if (editingStyle == UITableViewCellEditingStyleInsert)
+      {
         // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
+      }   
 }
-*/
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
 
 #pragma mark - Table view delegate
 
