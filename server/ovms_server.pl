@@ -45,7 +45,8 @@ sub io_error
 
   my $fn = $hdl->fh->fileno();
   my $vid = $conns{$fn}{'vehicleid'}; $vid='-' if (!defined $vid);
-  AE::log info => "#$fn $vid got error $msg";
+  my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
+  AE::log info => "#$fn $clienttype $vid got error $msg";
   &io_terminate($fn,$hdl,$conns{$fn}{'vehicleid'},undef);
   }
 
@@ -55,7 +56,8 @@ sub io_timeout
 
   my $fn = $hdl->fh->fileno();
   my $vid = $conns{$fn}{'vehicleid'}; $vid='-' if (!defined $vid);
-  AE::log error => "#$fn $vid got timeout";
+  my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
+  AE::log error => "#$fn $clienttype $vid got timeout";
   &io_terminate($fn,$hdl,$conns{$fn}{'vehicleid'},undef);
   }
 
@@ -65,7 +67,8 @@ sub io_line
 
   my $fn = $hdl->fh->fileno();
   my $vid = $conns{$fn}{'vehicleid'}; $vid='-' if (!defined $vid);
-  AE::log info => "#$fn $vid rx $line";
+  my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
+  AE::log info => "#$fn $clienttype $vid rx $line";
   $hdl->push_read(line => \&io_line);
 
   if ($line =~ /^MP-(\S)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/)
@@ -106,7 +109,7 @@ sub io_line
     my $sessionkey = $servertoken . $clienttoken;
     $serverhmac->add($sessionkey);
     my $serverkey = $serverhmac->digest;
-    AE::log info => "#$fn $vehicleid crypt session key $sessionkey (".unpack("H*",$serverkey).")";
+    AE::log info => "#$fn $clienttype $vehicleid crypt session key $sessionkey (".unpack("H*",$serverkey).")";
     my $txcipher = Crypt::RC4::XS->new($serverkey);
     $txcipher->RC4(chr(0) x 1024);  # Prime with 1KB of zeros
     my $rxcipher = Crypt::RC4::XS->new($serverkey);
@@ -124,7 +127,7 @@ sub io_line
     $conns{$fn}{'clienttype'} = $clienttype;
 
     # Send out server welcome message
-    AE::log info => "#$fn $vehicleid tx MP-S 0 $servertoken $serverdigest";
+    AE::log info => "#$fn $clienttype $vehicleid tx MP-S 0 $servertoken $serverdigest";
     $hdl->push_write("MP-S 0 $servertoken $serverdigest\r\n");
 
     # Login...
@@ -137,7 +140,7 @@ sub io_line
     if ($message =~ /^MP-0\s(\S)(.*)/)
       {
       my ($code,$data) = ($1,$2);
-      AE::log info => "#$fn $vid rx $code $data";
+      AE::log info => "#$fn $clienttype $vid rx $code $data";
       &io_message($fn, $hdl, $conns{$fn}{'vehicleid'}, $code, $data);
       }
     else
@@ -148,7 +151,7 @@ sub io_line
     }
   else
     {
-    AE::log info => "#$fn $vid error - unrecognised message from vehicle";
+    AE::log info => "#$fn $clienttype $vid error - unrecognised message from vehicle";
     }
   }
 
@@ -168,6 +171,20 @@ sub io_login
       }
     # And notify the app itself
     &io_tx($fn, $hdl, 'Z', (defined $car_conns{$vehicleid})?"1":"0");
+    # Update the app with current status and location (if any)
+    my $vrec = &db_get_vehicle($vehicleid);
+    &io_tx_apps($vehicleid,'T',$vrec->{'v_lastupdatesecs'});
+    if ($vrec->{'v_soc'} > 0)
+      {
+      &io_tx_apps($vehicleid,'S',sprintf('%d,%s,%d,%d,%s,%s,%d,%d',
+        $vrec->{'v_soc'},$vrec->{'v_units'},$vrec->{'v_linevoltage'},$vrec->{'v_chargecurrent'},
+        $vrec->{'v_chargestate'},$vrec->{'v_chargemode'},$vrec->{'v_idealrange'},$vrec->{'v_estimatedrange'}));
+      }
+    if ($vrec->{'v_latitude'} > 0)
+      {
+      &io_tx_apps($vehicleid,'L',sprintf('%0.6f,%0.6f',
+                  $vrec->{'v_latitude'},$vrec->{'v_longitude'}));
+      }
     }
   elsif ($clienttype eq 'C')
     {
@@ -230,7 +247,8 @@ sub io_tx
   my ($fn, $handle, $code, $data) = @_;
 
   my $vid = $conns{$fn}{'vehicleid'};
-  AE::log info => "#$fn $vid tx $code $data";
+  my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
+  AE::log info => "#$fn $clienttype $vid tx $code $data";
   $handle->push_write(encode_base64($conns{$fn}{'txcipher'}->RC4("MP-0 $code$data"),'')."\r\n");
   }
 
@@ -283,7 +301,7 @@ sub db_get_vehicle
   {
   my ($vehicleid) = @_;
 
-  my $sth = $db->prepare('SELECT * FROM ovms_cars WHERE vehicleid=?');
+  my $sth = $db->prepare('SELECT *,TIME_TO_SEC(TIMEDIFF(UTC_TIMESTAMP(),v_lastupdate)) as v_lastupdatesecs FROM ovms_cars WHERE vehicleid=?');
   $sth->execute($vehicleid);
   my $row = $sth->fetchrow_hashref();
 
@@ -295,18 +313,20 @@ sub io_message
   {
   my ($fn, $handle,$vehicleid,$code,$data) = @_;
 
+  my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
+
   if ($code eq 'A') ## PING
     {
-    AE::log info => "#$fn $vehicleid msg ping from $vehicleid";
+    AE::log info => "#$fn $clienttype $vehicleid msg ping from $vehicleid";
     &io_tx($fn, $handle, "a", "");
     }
   elsif ($code eq 'a') ## PING ACK
     {
-    AE::log info => "#$fn $vehicleid msg pingack from $vehicleid";
+    AE::log info => "#$fn $clienttype $vehicleid msg pingack from $vehicleid";
     }
   elsif ($code eq 'P') ## PUSH NOTIFICATION
     {
-    AE::log info => "#$fn $vehicleid msg push notification '$data' => $vehicleid";
+    AE::log info => "#$fn $clienttype $vehicleid msg push notification '$data' => $vehicleid";
     # Send it to any listening apps
     &io_tx_apps($vehicleid, $code, $data);
     # And also send via the mobile networks
@@ -314,7 +334,7 @@ sub io_message
     }
   elsif ($code eq 'S') ## STATUS MESSAGE
     {
-    AE::log info => "#$fn $vehicleid msg status $data from $vehicleid";
+    AE::log info => "#$fn $clienttype $vehicleid msg status $data from $vehicleid";
     my @params = split /,/,$data,8;
     $db->do('UPDATE ovms_cars SET v_soc=?,v_units=?,v_linevoltage=?,v_chargecurrent=?,v_chargestate=?,'
           . 'v_chargemode=?,v_idealrange=?,v_estimatedrange=?,v_lastupdate=UTC_TIMESTAMP() WHERE vehicleid=?',
@@ -324,7 +344,7 @@ sub io_message
     }
   elsif ($code eq 'L') ## LOCATION MESSAGE
     {
-    AE::log info => "#$fn $vehicleid msg location $data from $vehicleid";
+    AE::log info => "#$fn $clienttype $vehicleid msg location $data from $vehicleid";
     my @params = split /,/,$data,2;
     $db->do('UPDATE ovms_cars SET v_latitude=?,v_longitude=?,v_lastupdate=UTC_TIMESTAMP() WHERE vehicleid=?',
             undef,
