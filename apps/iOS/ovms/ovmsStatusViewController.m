@@ -9,6 +9,7 @@
 #import "ovmsStatusViewController.h"
 
 @implementation ovmsStatusViewController
+@synthesize m_car_connection_state;
 @synthesize m_car_image;
 @synthesize m_car_charge_state;
 @synthesize m_car_charge_type;
@@ -43,6 +44,7 @@
     [self setM_car_soc:nil];
     [self setM_battery_front:nil];
     [self setM_car_range:nil];
+    [self setM_car_connection_state:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -52,7 +54,7 @@
 {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
-  m_car_image.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
+  [self updateStatus];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -87,6 +89,34 @@
     units = @"km";
   else
     units = @"m";
+  
+  time_t lastupdated = [ovmsAppDelegate myRef].car_lastupdated;
+  int minutes = (time(0)-lastupdated)/60;
+  if (lastupdated == 0)
+    {
+    m_car_connection_state.text = @"";
+    m_car_connection_state.textColor = [UIColor whiteColor];
+    }
+  else if (minutes == 0)
+    {
+    m_car_connection_state.text = @"Connected (just now)";
+    m_car_connection_state.textColor = [UIColor whiteColor];
+    }
+  else if (minutes == 1)
+    {
+    m_car_connection_state.text = @"Connected (1 minute ago)";
+    m_car_connection_state.textColor = [UIColor whiteColor];
+    }
+  else if (minutes >= 20)
+    {
+    m_car_connection_state.text = [NSString stringWithFormat:@"No connection (for %d mins)",minutes];
+    m_car_connection_state.textColor = [UIColor redColor];
+    }
+  else
+    {
+    m_car_connection_state.text = [NSString stringWithFormat:@"Connected (%d mins ago)",minutes];
+    m_car_connection_state.textColor = [UIColor whiteColor];
+    }
   
   m_car_image.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
   m_car_soc.text = [NSString stringWithFormat:@"%d%%",[ovmsAppDelegate myRef].car_soc];
