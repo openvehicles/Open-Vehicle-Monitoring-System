@@ -24,6 +24,8 @@
 @synthesize managedObjectModel = __managedObjectModel;
 @synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
 
+@synthesize car_lastupdated;
+
 @synthesize location_delegate;
 @synthesize car_location;
 
@@ -230,6 +232,8 @@
   
   if (asyncSocket == NULL)
     {
+    self.car_lastupdated = 0;
+    
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString* ovmsServer = [defaults stringForKey:@"ovmsServer"];
     int ovmsPort = [defaults integerForKey:@"ovmsPort"];
@@ -268,6 +272,8 @@
 {
   if (asyncSocket != NULL)
     {
+    self.car_lastupdated = 0;
+    
     [asyncSocket setDelegate:nil delegateQueue:NULL];
     [asyncSocket disconnect];
     [self didStopNetworking];
@@ -295,6 +301,15 @@
         car_idealrange = [[lparts objectAtIndex:6] intValue];
         car_estimatedrange = [[lparts objectAtIndex:7] intValue];
         }
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        {
+        [self.status_delegate updateStatus];
+        }
+      }
+      break;
+    case 'T': // TIME
+      {
+      self.car_lastupdated = time(0) - [cmd intValue];
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
         {
         [self.status_delegate updateStatus];

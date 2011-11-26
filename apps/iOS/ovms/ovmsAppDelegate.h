@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <CFNetwork/CFSocketStream.h>
+#import "time.h"
 #import "CoreLocation/CoreLocation.h"
 #import "crypto_base64.h"
 #import "crypto_md5.h"
@@ -44,6 +45,8 @@
   NSString* sel_userpass;
   NSString* sel_imagepath;
 
+  time_t car_lastupdated;
+  
   CLLocationCoordinate2D car_location;
   int car_soc;
   NSString* car_units;
@@ -66,6 +69,8 @@
 @property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
 @property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
+
+@property (assign) time_t car_lastupdated;
 
 @property (strong, nonatomic) id location_delegate;
 @property (assign) CLLocationCoordinate2D car_location;
