@@ -30,6 +30,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# CREDIT
+# Thanks to Scott451 for figuring out many of the Roadster CAN bus messages used by the OVMS,
+# and the pinout of the CAN bus socket in the Roadster.
+# http://www.teslamotorsclub.com/showthread.php/4388-iPhone-app?p=49456&viewfull=1#post49456"]iPhone app
+# Thanks to fuzzylogic for further analysis and messages such as door status, unlock/lock, speed, VIN, etc.
+# Thanks to markwj for further analysis and messages such as Trip, Odometer, TPMS, etc.
+
 # Input is a can-do CSV log. For example:
 #   TYPE,TIME,ID,D1,D2,D3,D4,D5,D6,D7,D8
 #   RD11, 0.0452,400,02,AB,01,80,12,81,55,00
