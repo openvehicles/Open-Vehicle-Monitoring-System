@@ -289,6 +289,7 @@
       break;
     case 'S': // STATUS
       {
+      self.car_lastupdated = time(0);
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=8)
         {
@@ -318,6 +319,11 @@
       break;
     case 'L': // LOCATION
       {
+      self.car_lastupdated = time(0);
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        {
+        [self.status_delegate updateStatus];
+        }
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=2)
         {
