@@ -42,6 +42,7 @@
   NSString* sel_label;
   NSString* sel_netpass;
   NSString* sel_userpass;
+  NSString* sel_imagepath;
 
   CLLocationCoordinate2D car_location;
   int car_soc;
@@ -60,6 +61,7 @@
 @property (strong, nonatomic) NSString* sel_label;
 @property (strong, nonatomic) NSString* sel_netpass;
 @property (strong, nonatomic) NSString* sel_userpass;
+@property (strong, nonatomic) NSString* sel_imagepath;
 
 @property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
@@ -86,5 +88,6 @@
 - (void)serverConnect;
 - (void)serverDisconnect;
 - (void)handleCommand:(char)code command:(NSString*)cmd;
+- (void)switchCar:(NSString*)car;
 
 @end

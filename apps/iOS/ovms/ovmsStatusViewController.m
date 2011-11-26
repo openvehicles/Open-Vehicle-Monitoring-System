@@ -51,6 +51,8 @@
 - (void)viewWillAppear:(BOOL)animated
 {
   [super viewWillAppear:animated];
+  self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
+  m_car_image.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -86,7 +88,7 @@
   else
     units = @"m";
   
-  m_car_image.image=[UIImage imageNamed:@"car_roadster_thundergray.png"];
+  m_car_image.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
   m_car_soc.text = [NSString stringWithFormat:@"%d%%",[ovmsAppDelegate myRef].car_soc];
   m_car_range.text = [NSString stringWithFormat:@"Range: %d%s (%d%s estimated)",
                       [ovmsAppDelegate myRef].car_idealrange,

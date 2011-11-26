@@ -18,6 +18,7 @@
 @synthesize sel_label;
 @synthesize sel_netpass;
 @synthesize sel_userpass;
+@synthesize sel_imagepath;
 
 @synthesize managedObjectContext = __managedObjectContext;
 @synthesize managedObjectModel = __managedObjectModel;
@@ -48,16 +49,23 @@
  
   // Set the application defaults
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-  NSDictionary *appDefaults = [NSDictionary dictionaryWithObjectsAndKeys:@"www.openvehicles.com", @"ovmsServer",
-                                                                         @"6867", @"ovmsPort",
-                                                                         nil];
+  NSDictionary *appDefaults = [NSDictionary
+                               dictionaryWithObjectsAndKeys:@"www.openvehicles.com", @"ovmsServer",
+                                                            @"6867", @"ovmsPort",
+                                                            @"DEMO", @"selCar",
+                                                            @"Demonstration Car", @"selLabel",
+                                                            @"DEMO", @"selNetPass",
+                                                            @"DEMO", @"selUserPass",
+                                                            @"car_models_signaturered.png", @"selImagePath",
+                                                            nil];
   [defaults registerDefaults:appDefaults];
   [defaults synchronize];
 
-  sel_car = @"DEMO";
-  sel_label = @"Demonstration Car";
-  sel_netpass = @"DEMO";
-  sel_userpass = @"DEMO";
+  sel_car = [defaults stringForKey:@"selCar"];
+  sel_label = [defaults stringForKey:@"selLabel"];
+  sel_netpass = [defaults stringForKey:@"selNetPass"];
+  sel_userpass = [defaults stringForKey:@"selUserPass"];
+  sel_imagepath = [defaults stringForKey:@"selImagePath"];
   
   NSManagedObjectContext *context = [self managedObjectContext];
   NSFetchRequest *request = [[NSFetchRequest alloc] init];
@@ -73,7 +81,7 @@
     car.label = @"Demonstration Car";
     car.netpass = @"DEMO";
     car.userpass = @"DEMO";
-    car.imagepath = @"car_roadster_radiantred.png";
+    car.imagepath = @"car_models_signaturered.png";
     if (![context save:&error])
       {
       NSLog(@"Whoops, couldn't save: %@", [error localizedDescription]);
@@ -89,6 +97,13 @@
      Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
      Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
      */
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  [defaults setObject:sel_car forKey:@"selCar"];
+  [defaults setObject:sel_label forKey:@"selLabel"];
+  [defaults setObject:sel_netpass forKey:@"selNetPass"];
+  [defaults setObject:sel_userpass forKey:@"selUserPass"];
+  [defaults setObject:sel_imagepath forKey:@"selImagePath"];
+  [defaults synchronize];
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
@@ -123,6 +138,14 @@
      Save data if appropriate.
      See also applicationDidEnterBackground:.
     */
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  [defaults setObject:sel_car forKey:@"selCar"];
+  [defaults setObject:sel_label forKey:@"selLabel"];
+  [defaults setObject:sel_netpass forKey:@"selNetPass"];
+  [defaults setObject:sel_userpass forKey:@"selUserPass"];
+  [defaults setObject:sel_imagepath forKey:@"selImagePath"];
+  [defaults synchronize];
+
   [self serverDisconnect];
   [self saveContext];
 }
@@ -154,6 +177,39 @@
     }
 }
 
+- (void)switchCar:(NSString*)car
+{
+  // We need to get the car record
+  NSString* oldcar = sel_car;
+  NSString* oldnewpass = sel_netpass;
+  
+  NSManagedObjectContext *context = [self managedObjectContext];
+  NSFetchRequest *request = [[NSFetchRequest alloc] init];
+  [request setEntity: [NSEntityDescription entityForName:@"Cars" inManagedObjectContext: context]];
+  NSPredicate *predicate =
+  [NSPredicate predicateWithFormat:@"vehicleid == %@", car];
+  [request setPredicate:predicate];
+  NSError *error = nil;
+  NSArray *array = [context executeFetchRequest:request error:&error];
+  if (array != nil)
+    {
+    if ([array count]>0)
+      {
+      Cars* car = [array objectAtIndex:0];
+      sel_car = car.vehicleid;
+      sel_label = car.label;
+      sel_userpass = car.userpass;
+      sel_netpass = car.netpass;
+      sel_imagepath = car.imagepath;
+      if ((![oldcar isEqualToString:sel_car])||(![oldnewpass isEqualToString:sel_netpass]))
+        {
+        [self serverDisconnect];
+        [self serverConnect];
+        }
+      }
+    }
+}
+
 - (void)didStartNetworking
 {
   networkingCount = 1;
@@ -171,13 +227,14 @@
 {
   unsigned char digest[MD5_SIZE];
   unsigned char edigest[MD5_SIZE*2];
-  char password[] = "NETPASS";
   
   if (asyncSocket == NULL)
     {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString* ovmsServer = [defaults stringForKey:@"ovmsServer"];
     int ovmsPort = [defaults integerForKey:@"ovmsPort"];
+    const char *password = [sel_netpass UTF8String];
+    const char *vehicleid = [sel_car UTF8String];
     
     dispatch_queue_t mainQueue = dispatch_get_main_queue();
     asyncSocket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:mainQueue];
@@ -200,7 +257,7 @@
     
     hmac_md5(token, TOKEN_SIZE, (const uint8_t*)password, strlen(password), digest);
     base64encode(digest, MD5_SIZE, edigest);
-    NSString *welcomeStr = [NSString stringWithFormat:@"MP-A 0 %s %s %s\r\n",token,edigest,"TESTCAR"];
+    NSString *welcomeStr = [NSString stringWithFormat:@"MP-A 0 %s %s %s\r\n",token,edigest,vehicleid];
     NSData *welcomeData = [welcomeStr dataUsingEncoding:NSUTF8StringEncoding];
     [asyncSocket writeData:welcomeData withTimeout:-1 tag:0];    
     [self didStartNetworking];
@@ -278,7 +335,7 @@
 
 - (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
 {
-  char password[] = "NETPASS";
+  const char *password = [sel_netpass UTF8String];
   unsigned char digest[MD5_SIZE];
   unsigned char edigest[(MD5_SIZE*2)+2];
 
@@ -351,6 +408,26 @@
 
 - (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err
 {
+  //TODO
+  car_location.latitude = 0;
+  car_location.longitude = 0;
+  car_soc = 0;
+  car_units = @"-";
+  car_linevoltage = 0;
+  car_chargecurrent = 0;
+  car_chargestate = @"";
+  car_chargemode = @"";
+  car_idealrange = 0;
+  car_estimatedrange = 0;
+
+  if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
+    {
+    [self.location_delegate updateLocation];
+    }
+  if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+    {
+    [self.status_delegate updateStatus];
+    }
 }
 
 /**
