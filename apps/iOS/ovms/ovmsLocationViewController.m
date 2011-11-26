@@ -104,12 +104,25 @@
     
   region.span=span; 
   region.center=location; 
-  
-  TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
-  pa.name = @"EV915";
-  pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
-  [myMapView addAnnotation:pa];
-  self.m_car_location = pa;
+
+  // Remove all existing annotations
+  for (int k=0; k < [myMapView.annotations count]; k++)
+    { 
+      if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[TeslaAnnotation class]])
+        {
+        [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
+        }
+    }
+
+  if ((location.latitude != 0)||(location.longitude != 0))
+    {
+    // Add in the new annotation for current car location
+    TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
+    pa.name = @"EV915";
+    pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
+    [myMapView addAnnotation:pa];
+    self.m_car_location = pa;
+    }
 
   [myMapView setRegion:region animated:YES]; 
   [myMapView regionThatFits:region]; 
