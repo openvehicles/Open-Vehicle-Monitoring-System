@@ -83,10 +83,12 @@
       {
       [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
       info.enabled = YES;
+      info.hidden = NO;
       }
     else
       {
       info.enabled = NO;
+      info.hidden = YES;
       }
     }
 }
@@ -217,10 +219,12 @@
       {
       [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
       info.enabled = YES;
+      info.hidden = NO;
       }
     else
       {
       info.enabled = NO;
+      info.hidden = YES;
       }
     }
 }
