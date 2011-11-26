@@ -76,10 +76,17 @@
   for (int k=0;k<[_cars count]; k++)
     {
     Cars *car = [_cars objectAtIndex:k];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow: k inSection: 0];
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    UIButton *info = (UIButton*)[cell viewWithTag:3];
     if ([car.vehicleid isEqualToString:[ovmsAppDelegate myRef].sel_car])
       {
-      NSIndexPath *indexPath = [NSIndexPath indexPathForRow: k inSection: 0];
       [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
+      info.enabled = YES;
+      }
+    else
+      {
+      info.enabled = NO;
       }
     }
 }
@@ -199,6 +206,22 @@
     {
     // Switch the car
     [[ovmsAppDelegate myRef] switchCar:car.vehicleid];
+    }
+  for (int k=0;k<[_cars count]; k++)
+    {
+    Cars *car = [_cars objectAtIndex:k];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow: k inSection: 0];
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    UIButton *info = (UIButton*)[cell viewWithTag:3];
+    if ([car.vehicleid isEqualToString:[ovmsAppDelegate myRef].sel_car])
+      {
+      [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
+      info.enabled = YES;
+      }
+    else
+      {
+      info.enabled = NO;
+      }
     }
 }
 
