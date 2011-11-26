@@ -28,6 +28,15 @@
 ; THE SOFTWARE.
 */
 
+/*
+; CREDIT
+; Thanks to Scott451 for figuring out many of the Roadster CAN bus messages used by the OVMS,
+; and the pinout of the CAN bus socket in the Roadster.
+; http://www.teslamotorsclub.com/showthread.php/4388-iPhone-app?p=49456&viewfull=1#post49456"]iPhone app
+; Thanks to fuzzylogic for further analysis and messages such as door status, unlock/lock, speed, VIN, etc.
+; Thanks to markwj for further analysis and messages such as Trip, Odometer, TPMS, etc.
+*/
+
 #include "ovms.h"
 
 unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
