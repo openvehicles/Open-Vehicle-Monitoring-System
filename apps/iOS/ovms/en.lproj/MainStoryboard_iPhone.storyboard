@@ -280,7 +280,7 @@
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="eV5-G5-oge" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController definesPresentationContext="YES" id="ORt-fv-3cW" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Status" image="49-battery.png" id="bPi-UE-IG5"/>
+                    <tabBarItem key="tabBarItem" title="Battery" image="49-battery.png" id="bPi-UE-IG5"/>
                     <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                     <navigationBar key="navigationBar" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" barStyle="blackOpaque" id="AkA-v0-yQB">
                         <autoresizingMask key="autoresizingMask"/>
@@ -301,6 +301,38 @@
         <image name="battery_100.png" width="268" height="70"/>
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
     </resources>
+    <classes>
+        <class className="ovmsCarsFormViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
+                <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
+            </relationships>
+        </class>
+        <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
+        </class>
+        <class className="ovmsLocationViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsLocationViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
+            </relationships>
+        </class>
+        <class className="ovmsStatusViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_range" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
+            </relationships>
+        </class>
+    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>

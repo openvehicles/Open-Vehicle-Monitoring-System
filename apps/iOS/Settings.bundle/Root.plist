@@ -46,7 +46,45 @@
 			<key>Type</key>
 			<string>PSTextFieldSpecifier</string>
 		</dict>
+		<dict>
+			<key>AutocapitalizationType</key>
+			<string>None</string>
+			<key>AutocorrectionType</key>
+			<string>No</string>
+			<key>DefaultValue</key>
+			<string></string>
+			<key>IsSecure</key>
+			<false/>
+			<key>Key</key>
+			<string>ovmsUser</string>
+			<key>KeyboardType</key>
+			<string>Alphabet</string>
+			<key>Title</key>
+			<string>Username</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+		</dict>
+		<dict>
+			<key>AutocapitalizationType</key>
+			<string>None</string>
+			<key>AutocorrectionType</key>
+			<string>No</string>
+			<key>DefaultValue</key>
+			<string>www.openvehicles.com</string>
+			<key>IsSecure</key>
+			<true/>
+			<key>Key</key>
+			<string>ovmsPassword</string>
+			<key>KeyboardType</key>
+			<string>Alphabet</string>
+			<key>Title</key>
+			<string>Password</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+		</dict>
 	</array>
+	<key>Title</key>
+	<string>Open Vehicles</string>
 	<key>StringsTable</key>
 	<string>Root</string>
 </dict>

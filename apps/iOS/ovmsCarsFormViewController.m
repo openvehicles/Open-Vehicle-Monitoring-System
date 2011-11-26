@@ -113,6 +113,11 @@
       if ([array count]>0)
         {
         Cars* car = [array objectAtIndex:0];
+        if (! [[ovmsAppDelegate myRef].sel_car isEqualToString:car.vehicleid])
+          {
+          // Switch the car
+          [[ovmsAppDelegate myRef] switchCar:car.vehicleid];
+          }
         self.vehiclelabel.text = car.label;
         self.vehicleNetPass.text = car.netpass;
         self.vehicleUserPass.text = car.userpass;
@@ -186,6 +191,8 @@
           }
         }
       }
+    // Switch the car
+    [[ovmsAppDelegate myRef] switchCar:vehicleid.text];
   }
   [super viewWillDisappear:animated];
 }

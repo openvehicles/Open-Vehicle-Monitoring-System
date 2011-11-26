@@ -65,6 +65,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
   [super viewWillAppear:animated];
+  self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
 }
 
 - (void)viewDidAppear:(BOOL)animated

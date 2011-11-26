@@ -57,7 +57,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-  
+
   int originalcount = [_cars count];
   
   _context = [ovmsAppDelegate myRef].managedObjectContext;
@@ -105,7 +105,7 @@
     }
   else if ([[segue identifier] isEqualToString:@"newCar"])
     {
-    [[segue destinationViewController] setCarEditing:@""];
+    [[segue destinationViewController] setCarEditing:nil];
     }
 }
 
