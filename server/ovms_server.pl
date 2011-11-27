@@ -171,20 +171,26 @@ sub io_login
       }
     # And notify the app itself
     &io_tx($fn, $hdl, 'Z', (defined $car_conns{$vehicleid})?"1":"0");
-    # Update the app with current status and location (if any)
+    # Update the app with current stored messages
     my $vrec = &db_get_vehicle($vehicleid);
-    &io_tx_apps($vehicleid,'T',$vrec->{'v_lastupdatesecs'});
-    if ($vrec->{'v_soc'} > 0)
+    if ($vrec->{'v_ptoken'} ne '')
       {
-      &io_tx_apps($vehicleid,'S',sprintf('%d,%s,%d,%d,%s,%s,%d,%d',
-        $vrec->{'v_soc'},$vrec->{'v_units'},$vrec->{'v_linevoltage'},$vrec->{'v_chargecurrent'},
-        $vrec->{'v_chargestate'},$vrec->{'v_chargemode'},$vrec->{'v_idealrange'},$vrec->{'v_estimatedrange'}));
+      &io_tx($fn, $hdl, 'E', 'T'.$vrec->{'v_ptoken'});
       }
-    if ($vrec->{'v_latitude'} > 0)
+    my $sth = $db->prepare('SELECT * FROM ovms_carmessages WHERE vehicleid=? and m_valid=1');
+    $sth->execute($vehicleid);
+    while (my $row = $sth->fetchrow_hashref())
       {
-      &io_tx_apps($vehicleid,'L',sprintf('%0.6f,%0.6f',
-                  $vrec->{'v_latitude'},$vrec->{'v_longitude'}));
+      if ($row->{'m_paranoid'})
+        {
+        &io_tx($fn, $hdl, 'E', 'M'.$row->{'m_code'}.$row->{'m_msg'});
+        }
+      else
+        {
+        &io_tx($fn, $hdl, $row->{'m_code'},$row->{'m_msg'});
+        }
       }
+    &io_tx($fn, $hdl, 'T', $vrec->{'v_lastupdatesecs'});
     }
   elsif ($clienttype eq 'C')
     {
@@ -195,13 +201,9 @@ sub io_login
       }
     $car_conns{$vehicleid} = $fn;
     # Notify any listening apps
-    my $appcount = (defined $app_conns{$vehicleid})?(scalar keys %{$app_conns{$vehicleid}}):0;
-    foreach (keys %{$app_conns{$vehicleid}})
-      {
-      my $afn = $_;
-      &io_tx($afn, $conns{$afn}{'handle'}, 'Z', '1');
-      }
+    &io_tx_apps($vehicleid, 'Z', '1');
     # And notify the car itself
+    my $appcount = (defined $app_conns{$vehicleid})?(scalar keys %{$app_conns{$vehicleid}}):0;
     &io_tx($fn, $hdl, 'Z', $appcount);
     }
   }
@@ -250,6 +252,17 @@ sub io_tx
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
   AE::log info => "#$fn $clienttype $vid tx $code $data";
   $handle->push_write(encode_base64($conns{$fn}{'txcipher'}->RC4("MP-0 $code$data"),'')."\r\n");
+  }
+
+sub io_tx_car
+  {
+  my ($vehicleid, $code, $data) = @_;
+
+  my $cfn = $car_conns{$vehicleid};
+  if (defined $cfn)
+    {
+    &io_tx($cfn, $conns{$cfn}{'handle'}, $code, $data);
+    }
   }
 
 sub io_tx_apps
@@ -311,18 +324,21 @@ sub db_get_vehicle
 # Message handlers
 sub io_message
   {
-  my ($fn, $handle,$vehicleid,$code,$data) = @_;
+  my ($fn,$handle,$vehicleid,$code,$data) = @_;
 
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
 
+  # Handle system-level messages first
   if ($code eq 'A') ## PING
     {
     AE::log info => "#$fn $clienttype $vehicleid msg ping from $vehicleid";
     &io_tx($fn, $handle, "a", "");
+    return;
     }
   elsif ($code eq 'a') ## PING ACK
     {
     AE::log info => "#$fn $clienttype $vehicleid msg pingack from $vehicleid";
+    return;
     }
   elsif ($code eq 'P') ## PUSH NOTIFICATION
     {
@@ -331,24 +347,62 @@ sub io_message
     &io_tx_apps($vehicleid, $code, $data);
     # And also send via the mobile networks
     # TODO
+    return;
     }
-  elsif ($code eq 'S') ## STATUS MESSAGE
+
+  # The remaining messages are standard
+
+  # Handle paranoid messages
+  my $m_paranoid=0;
+  my $m_code=$code;
+  my $m_data=$data;
+  if ($code eq 'E')
     {
-    AE::log info => "#$fn $clienttype $vehicleid msg status $data from $vehicleid";
-    my @params = split /,/,$data,8;
-    $db->do('UPDATE ovms_cars SET v_soc=?,v_units=?,v_linevoltage=?,v_chargecurrent=?,v_chargestate=?,'
-          . 'v_chargemode=?,v_idealrange=?,v_estimatedrange=?,v_lastupdate=UTC_TIMESTAMP() WHERE vehicleid=?',
-            undef,
-            @params,$vehicleid);
-    &io_tx_apps($vehicleid, $code, $data); # Send it on to any listening apps
+    my ($paranoidmsg,$paranoidcode,$paranoiddata,$paranoidtoken)=($1,$3,$4,$2) if ($data =~ /^(.)((.)(.+))$/);
+    if ($paranoidmsg eq 'T')
+      {
+      # The paranoid token is being set
+      $conns{$fn}{'ptoken'} = $paranoidtoken;
+      &io_tx_apps($vehicleid, $code, $data); # Send it on to connected apps
+      # Invalidate any stored paranoid messages for this vehicle
+      $db->do("UPDATE ovms_carmessages SET m_valid=0 WHERE vehicleid=? AND m_paranoid=1",undef,$vehicleid);
+      AE::log error => "#$fn $clienttype $vehicleid paranoid token set '$paranoidtoken'";
+      return;
+      }
+    elsif ($paranoidmsg eq 'M')
+      {
+      # A paranoid message is being sent
+      $m_paranoid=1;
+      $m_code=$paranoidcode;
+      $m_data=$paranoiddata;
+      }
+    else
+      {
+      # Unknown paranoid msg type
+      AE::log error => "#$fn $clienttype $vehicleid unknown paranoid message type '$paranoidmsg'";
+      return;
+      }
     }
-  elsif ($code eq 'L') ## LOCATION MESSAGE
+
+  if ($clienttype eq 'C')
     {
-    AE::log info => "#$fn $clienttype $vehicleid msg location $data from $vehicleid";
-    my @params = split /,/,$data,2;
-    $db->do('UPDATE ovms_cars SET v_latitude=?,v_longitude=?,v_lastupdate=UTC_TIMESTAMP() WHERE vehicleid=?',
+    # Let's store the data in the database...
+    my $ptoken = $conns{$fn}{'ptoken'}; $ptoken="" if (!defined $ptoken);
+    $db->do("INSERT INTO ovms_carmessages (vehicleid,m_code,m_valid,m_msgtime,m_paranoid,m_ptoken,m_msg) "
+          . "VALUES (?,?,1,UTC_TIMESTAMP(),?,?,?) ON DUPLICATE KEY UPDATE "
+          . "m_valid=1, m_msgtime=UTC_TIMESTAMP(), m_paranoid=?, m_ptoken=?, m_msg=?",
             undef,
-            @params,$vehicleid);
-    &io_tx_apps($vehicleid, $code, $data); # Send it on to any listening apps
+            $vehicleid, $m_code, $m_paranoid, $ptoken, $m_data,
+            $m_paranoid, $ptoken, $m_data);
+    $db->do("UPDATE ovms_cars SET v_lastupdate=UTC_TIMESTAMP() WHERE vehicleid=?",undef,$vehicleid);
+    # And send it on to the apps...
+    AE::log info => "#$fn $clienttype $vehicleid msg handle $m_code $m_data";
+    &io_tx_apps($vehicleid, $code, $data);
+    &io_tx_apps($vehicleid, "T", 0);
+    }
+  elsif ($clienttype eq 'A')
+    {
+    # Send it on to the car...
+    &io_tx_car($vehicleid, $code, $data);
     }
   }
