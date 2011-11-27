@@ -1,0 +1,129 @@
+HOWTO Setup OVMS in a Tesla Roadster
+
+1. PREREQUISITES
+
+You'll need an OVMS hardware module and a Tesla Roadster. The module will need to have the
+firmware installed (a seperate topic). You'll also need a SIM card and active account with
+a cellular provider. We suggest you activate the SIM card using a normal mobile phone
+before you install it in the car.
+
+If you want to use an App (rather than SMS) to control the car, you'll also need an account
+on an OVMS server. You can use the public server at openvehicles.com, or any other
+compatible server.
+
+2. CAR MODULE INSTALLATION
+
+The module plugs in to the car diagnostics port. The port is found in the passenger footwell
+of the car. You can see a picture of this connector on the github site at:
+
+  https://github.com/markwj/Open-Vehicle-Monitoring-System/blob/master/vehicle/Car%20Module/can_connector.jpg
+
+You will need to run a GSM antenna from somewhere high-up on the car to the car module. If
+you are putting this on the front windscreen, you can route the cable through the area under
+the fuse box, and up. You can leave the antenna low down in the passenger footwell, but
+cellular reception will be poor, so we recommend you put it as high up as possible.
+
+Plug the GSM antenna into the module, and the module into the car diagnostics port. It will
+power on automatically and connect to the GSM network.
+
+3. REGISTER YOUR PHONE
+
+Using your main cellular telephone, create an address book entry for your car OVMS module.
+Then, send an SMS to the car, as follows:
+
+  REGISTER OVMS
+
+(note that OVMS is the default car password)
+
+If all is well, within a few seconds the car will SMS you back with:
+
+  Your phone has been registered as the owner.
+
+At this point, the telephone number of your phone has been registered and remembered
+by the car module. You don't need the password to SMS the car any more, as the car
+will use callerid to recognise you.
+
+4. CHANGE THE DEFAULT PASSWORD
+
+Using the cellular telephone that you registered to the car in the last step,
+you should now change the default OVMS password in the car. This password is
+known as the "user password".
+
+Send an SMS to the car, as follows:
+
+  PASS MYNEWPASSWORD
+
+(obviously replacing MYNEWPASSWORD with the secret password of your choice)
+
+We recommend you keep it between 4 and 22 characters, and upper-case only.
+
+If all is well, within a few seconds the car will SMS you back with:
+
+  Your password has been changed.
+
+At this point, you have SMS control of the car. You only need to proceed with
+GPRS network setup if you want to use a cellphone App to control the car.
+
+5. OPTIONAL: DEFINE THE OVMS NETWORK CONNECTION
+
+Usin the cellular telephone that you registered to the car in the previous
+steps, you need to set the GPRS and OVMS parameters in the car. You do this
+by sending an SMS to the car:
+
+  PARAMS K SMS,IP 202.52.42.80 imobile.three.com.hk - - DEMO NETPASS
+
+If all is well, within a few seconds the car will SMS you back with:
+
+  System parameters have been set.
+
+The parameters are listed one-by-one, seperated by spaces, after the
+PARAMS command. Let's go through them:
+
+  a) "K". This is used to specify "K" for Kilometers or "M" for miles, and
+     is used to tell the car what you prefer to work in.
+
+  b) "SMS,IP". This is a comma-seperated list of notification mechanisms
+     you want the car to use. "SMS" would be just SMS to registed phone,
+     "IP" would be just PUSH notifications to your cellular App via the
+     OVMS server, and "SMS,IP" would be both.
+
+  c) "202.52.42.80". This is the IP address of the OVMS server you have
+     chosen to use. This example is the public openvehicles.com server,
+     and you can use this or any other you choose.
+
+  d) "imobile.three.com.hk","-","-". This is the APN, username and
+     password for the cellular network. Use "-" if any field is empty.
+     You will need to check with your cellular provider to find the
+     correct values for this, and please double-check. Problems here
+     are the single biggest cause of issues.
+
+  e) "DEMO". This is the unique vehicleid that identifies your vehicle
+     to the OVMS server.
+
+  f) "NETPASS". This is the network password for your vehicle. It should
+     be different than the user password, and we recommend you use
+     between 4 and 22 characters.
+
+You will also need to ensure that your car vehicleid and network password
+are pre-registered on the OVMS server you have chosen. For openvehicles.com,
+the procedure is:
+
+  g) With a web browser, go to www.openvehicles.com and register for a
+     user account on the site. You can use any username and password you
+     want (it doesn't have to be the same as the vehicleid and network
+     password).
+
+  h) Contact the www.openvehicles.com adminstrators (info@openvehicles.com)
+     letting them know:
+       (i) the username you chose
+       (ii) your vehicleid
+       (iii) your network password
+     The administrators will then authorise your account and create the
+     appropriate permissions for your vehicle to use the OVMS server.
+
+6. ENJOY
+
+Any questions/comments, please let us know.
+
+Mark Webb-Johnson
+November 2011
