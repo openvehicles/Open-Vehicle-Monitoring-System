@@ -9,6 +9,7 @@
 #import "ovmsStatusViewController.h"
 
 @implementation ovmsStatusViewController
+@synthesize m_car_connection_image;
 @synthesize m_car_connection_state;
 @synthesize m_car_image;
 @synthesize m_car_charge_state;
@@ -45,6 +46,7 @@
     [self setM_battery_front:nil];
     [self setM_car_range:nil];
     [self setM_car_connection_state:nil];
+    [self setM_car_connection_image:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -93,49 +95,40 @@
   int connected = [ovmsAppDelegate myRef].car_connected;
   time_t lastupdated = [ovmsAppDelegate myRef].car_lastupdated;
   int minutes = (time(0)-lastupdated)/60;
+  
+  if (connected>0)
+    {
+    m_car_connection_image.image=[UIImage imageNamed:@"connection_good.png"];
+    }
+  else
+    {
+    m_car_connection_image.image=[UIImage imageNamed:@"connection_unknown.png"];
+    }
+  
   if (lastupdated == 0)
     {
     m_car_connection_state.text = @"";
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
-  else if ((connected>0)&&(minutes == 0))
+  else if (minutes == 0)
     {
-    m_car_connection_state.text = @"Connected (just now)";
+    m_car_connection_state.text = @"Car reported status just now";
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
-  else if ((connected==0)&&(minutes == 0))
+  else if (minutes == 1)
     {
-    m_car_connection_state.text = @"Disconnected (just now)";
+    m_car_connection_state.text = @"Car reported status 1 minute ago";
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
-  else if ((connected>0)&&(minutes == 1))
+  else if (minutes >= 20)
     {
-    m_car_connection_state.text = @"Connected (1 minute ago)";
-    m_car_connection_state.textColor = [UIColor whiteColor];
-    }
-  else if ((connected==0)&&(minutes == 1))
-    {
-    m_car_connection_state.text = @"Disconnected (1 minute ago)";
-    m_car_connection_state.textColor = [UIColor whiteColor];
-    }
-  else if ((connected>0)&&(minutes >= 20))
-    {
-    m_car_connection_state.text = [NSString stringWithFormat:@"Connected (idle %d mins)",minutes];
+    m_car_connection_state.text = [NSString stringWithFormat:@"No report from car for %d mins",minutes];
     m_car_connection_state.textColor = [UIColor redColor];
-    }
-  else if ((connected==0)&&(minutes >= 20))
-    {
-    m_car_connection_state.text = [NSString stringWithFormat:@"Disconnected (for %d mins)",minutes];
-    m_car_connection_state.textColor = [UIColor redColor];
-    }
-  else if (connected>0)
-    {
-    m_car_connection_state.text = [NSString stringWithFormat:@"Connected (%d mins ago)",minutes];
-    m_car_connection_state.textColor = [UIColor whiteColor];
+    m_car_connection_image.image=[UIImage imageNamed:@"connection_bad.png"];
     }
   else
     {
-    m_car_connection_state.text = [NSString stringWithFormat:@"Disconnected (%d mins ago)",minutes];
+    m_car_connection_state.text = [NSString stringWithFormat:@"Car reported status %d mins ago",minutes];
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
   
