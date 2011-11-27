@@ -46,6 +46,7 @@
   NSString* sel_imagepath;
 
   time_t car_lastupdated;
+  int car_connected;
   
   CLLocationCoordinate2D car_location;
   int car_soc;
@@ -71,6 +72,7 @@
 @property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 
 @property (assign) time_t car_lastupdated;
+@property (assign) int car_connected;
 
 @property (strong, nonatomic) id location_delegate;
 @property (assign) CLLocationCoordinate2D car_location;

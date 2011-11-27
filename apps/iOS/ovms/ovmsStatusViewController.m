@@ -90,6 +90,7 @@
   else
     units = @"m";
   
+  int connected = [ovmsAppDelegate myRef].car_connected;
   time_t lastupdated = [ovmsAppDelegate myRef].car_lastupdated;
   int minutes = (time(0)-lastupdated)/60;
   if (lastupdated == 0)
@@ -97,24 +98,44 @@
     m_car_connection_state.text = @"";
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
-  else if (minutes == 0)
+  else if ((connected>0)&&(minutes == 0))
     {
     m_car_connection_state.text = @"Connected (just now)";
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
-  else if (minutes == 1)
+  else if ((connected==0)&&(minutes == 0))
+    {
+    m_car_connection_state.text = @"Disconnected (just now)";
+    m_car_connection_state.textColor = [UIColor whiteColor];
+    }
+  else if ((connected>0)&&(minutes == 1))
     {
     m_car_connection_state.text = @"Connected (1 minute ago)";
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
-  else if (minutes >= 20)
+  else if ((connected==0)&&(minutes == 1))
     {
-    m_car_connection_state.text = [NSString stringWithFormat:@"No connection (for %d mins)",minutes];
+    m_car_connection_state.text = @"Disconnected (1 minute ago)";
+    m_car_connection_state.textColor = [UIColor whiteColor];
+    }
+  else if ((connected>0)&&(minutes >= 20))
+    {
+    m_car_connection_state.text = [NSString stringWithFormat:@"Connected (idle %d mins)",minutes];
     m_car_connection_state.textColor = [UIColor redColor];
+    }
+  else if ((connected==0)&&(minutes >= 20))
+    {
+    m_car_connection_state.text = [NSString stringWithFormat:@"Disconnected (for %d mins)",minutes];
+    m_car_connection_state.textColor = [UIColor redColor];
+    }
+  else if (connected>0)
+    {
+    m_car_connection_state.text = [NSString stringWithFormat:@"Connected (%d mins ago)",minutes];
+    m_car_connection_state.textColor = [UIColor whiteColor];
     }
   else
     {
-    m_car_connection_state.text = [NSString stringWithFormat:@"Connected (%d mins ago)",minutes];
+    m_car_connection_state.text = [NSString stringWithFormat:@"Disconnected (%d mins ago)",minutes];
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
   
