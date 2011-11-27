@@ -25,6 +25,7 @@
 @synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
 
 @synthesize car_lastupdated;
+@synthesize car_connected;
 
 @synthesize location_delegate;
 @synthesize car_location;
@@ -233,6 +234,7 @@
   if (asyncSocket == NULL)
     {
     self.car_lastupdated = 0;
+    self.car_connected = 0;
     
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString* ovmsServer = [defaults stringForKey:@"ovmsServer"];
@@ -273,6 +275,7 @@
   if (asyncSocket != NULL)
     {
     self.car_lastupdated = 0;
+    self.car_connected = 0;
     
     [asyncSocket setDelegate:nil delegateQueue:NULL];
     [asyncSocket disconnect];
@@ -285,11 +288,17 @@
 {
   switch(code)
   {
-    case 'Z': // PING
+    case 'Z': // Number of connected cars
+      {
+      self.car_connected = [cmd intValue];
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        {
+        [self.status_delegate updateStatus];
+        }
+      }
       break;
     case 'S': // STATUS
       {
-      self.car_lastupdated = time(0);
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=8)
         {
@@ -319,7 +328,6 @@
       break;
     case 'L': // LOCATION
       {
-      self.car_lastupdated = time(0);
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
         {
         [self.status_delegate updateStatus];
