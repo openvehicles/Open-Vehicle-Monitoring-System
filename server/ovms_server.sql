@@ -28,20 +28,30 @@ CREATE TABLE `ovms_cars` (
   `carpass` varchar(255) NOT NULL default '' COMMENT 'Car password',
   `userpass` varchar(255) NOT NULL default '' COMMENT 'User password (optional)',
   `cryptscheme` varchar(1) NOT NULL default '0',
-  `v_latitude` double(10,6) NOT NULL default '0.000000',
-  `v_longitude` double(10,6) NOT NULL default '0.000000',
-  `v_soc` int(3) NOT NULL default '0' COMMENT 'Car SOC %',
-  `v_units` char(1) NOT NULL default 'K' COMMENT 'Car units M/K',
-  `v_linevoltage` int(3) NOT NULL default '0' COMMENT 'Car line voltage',
-  `v_chargecurrent` int(3) NOT NULL default '0' COMMENT 'Car charge current',
-  `v_chargestate` varchar(20) NOT NULL default '' COMMENT 'Car charge state',
-  `v_chargemode` varchar(20) NOT NULL default '' COMMENT 'Car charge mode',
-  `v_idealrange` int(3) NOT NULL default '0' COMMENT 'Car ideal range',
-  `v_estimatedrange` int(3) NOT NULL default '0' COMMENT 'Car estimated range',
+  `v_ptoken` varchar(32) NOT NULL default '',
   `v_lastupdate` datetime NOT NULL default '0000-00-00 00:00:00' COMMENT 'Car last update received',
   PRIMARY KEY  (`vehicleid`),
   KEY `owner` (`owner`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='OVMS: Stores vehicle current data';
+SET character_set_client = @saved_cs_client;
+
+--
+-- Table structure for table `ovms_carmessages`
+--
+
+DROP TABLE IF EXISTS `ovms_carmessages`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+CREATE TABLE `ovms_carmessages` (
+  `vehicleid` varchar(32) NOT NULL default '' COMMENT 'Unique vehicle ID',
+  `m_code` char(1) NOT NULL default '',
+  `m_valid` tinyint(1) NOT NULL default '1',
+  `m_msgtime` datetime NOT NULL default '0000-00-00 00:00:00',
+  `m_paranoid` tinyint(1) NOT NULL default '0',
+  `m_ptoken` varchar(32) NOT NULL default '',
+  `m_msg` varchar(255) NOT NULL default '',
+  PRIMARY KEY  (`vehicleid`,`m_code`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='OVMS: Stores vehicle messages';
 SET character_set_client = @saved_cs_client;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -53,4 +63,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2011-11-13 12:53:26
+-- Dump completed on 2011-11-27  8:49:13
