@@ -66,13 +66,17 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="RVX-xh-Dj1" userLabel="car_connection_state">
-                                <rect key="frame" x="26" y="130" width="268" height="29"/>
+                                <rect key="frame" x="26" y="131" width="268" height="29"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="18"/>
+                                <fontDescription key="fontDescription" name="Helvetica-BoldOblique" family="Helvetica" pointSize="12"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="connection_good.png" id="Rcp-Jf-HIC">
+                                <rect key="frame" x="289" y="5" width="24" height="24"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                         </subviews>
                         <color key="backgroundColor" red="0.25882354378700256" green="0.39607846736907959" blue="0.61568629741668701" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -82,6 +86,7 @@
                         <outlet property="m_battery_front" destination="CKU-Hj-ZF9" id="O1T-SI-yN0"/>
                         <outlet property="m_car_charge_state" destination="as8-eT-6NH" id="Xgp-Ol-StF"/>
                         <outlet property="m_car_charge_type" destination="8Nu-Np-kIL" id="skw-DC-HZk"/>
+                        <outlet property="m_car_connection_image" destination="Rcp-Jf-HIC" id="M2R-tK-9DK"/>
                         <outlet property="m_car_connection_state" destination="RVX-xh-Dj1" id="vaW-DF-OYn"/>
                         <outlet property="m_car_image" destination="feQ-Vi-h8L" id="JLe-fz-8AU"/>
                         <outlet property="m_car_range" destination="kQB-dH-EY6" id="TXF-ba-tqa"/>
@@ -321,6 +326,7 @@
         <image name="battery_000.png" width="268" height="70"/>
         <image name="battery_100.png" width="268" height="70"/>
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
+        <image name="connection_good.png" width="64" height="64"/>
     </resources>
     <classes>
         <class className="ovmsCarsFormViewController" superclassName="UIViewController">
@@ -348,6 +354,7 @@
                 <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_connection_state" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_range" candidateClass="UILabel"/>

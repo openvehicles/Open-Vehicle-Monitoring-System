@@ -43,6 +43,9 @@
 		4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D91CF681473FE0900CBA435 /* MapKit.framework */; };
 		4DAD5325147D301C00949EE8 /* ovmsCarsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */; };
 		4DAD532C147D317300949EE8 /* ovmsCarsFormViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */; };
+		4DBB7930148270A50055769F /* connection_good.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DBB792D148270A50055769F /* connection_good.png */; };
+		4DBB7931148270A50055769F /* connection_bad.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DBB792E148270A50055769F /* connection_bad.png */; };
+		4DBB7932148270A50055769F /* connection_unknown.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DBB792F148270A50055769F /* connection_unknown.png */; };
 		4DC8B38C147E7BF2007FDFB2 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 4DC8B38A147E7BF2007FDFB2 /* Model.xcdatamodeld */; };
 		4DDA222F1476962700BA40AA /* teslapin.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDA222E1476962700BA40AA /* teslapin.png */; };
 		4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DE26E5F147E7E3000E3161D /* CoreData.framework */; };
@@ -141,6 +144,9 @@
 		4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsTableViewController.m; sourceTree = "<group>"; };
 		4DAD532A147D317300949EE8 /* ovmsCarsFormViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsFormViewController.h; sourceTree = SOURCE_ROOT; };
 		4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsFormViewController.m; sourceTree = SOURCE_ROOT; };
+		4DBB792D148270A50055769F /* connection_good.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_good.png; sourceTree = "<group>"; };
+		4DBB792E148270A50055769F /* connection_bad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_bad.png; sourceTree = "<group>"; };
+		4DBB792F148270A50055769F /* connection_unknown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_unknown.png; sourceTree = "<group>"; };
 		4DC8B38B147E7BF2007FDFB2 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		4DDA222E1476962700BA40AA /* teslapin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teslapin.png; sourceTree = "<group>"; };
 		4DE26E5F147E7E3000E3161D /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -304,6 +310,9 @@
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
 			isa = PBXGroup;
 			children = (
+				4DBB792D148270A50055769F /* connection_good.png */,
+				4DBB792E148270A50055769F /* connection_bad.png */,
+				4DBB792F148270A50055769F /* connection_unknown.png */,
 				4DDA222E1476962700BA40AA /* teslapin.png */,
 				4DFAD7F914753D7900416D38 /* battery_000.png */,
 				4DFAD7FA14753D7900416D38 /* battery_100.png */,
@@ -531,6 +540,9 @@
 				4DF754F6147F1D5C00C33AA4 /* car_roadster_thundergray.png in Resources */,
 				4DF754F7147F1D5C00C33AA4 /* car_roadster_twilightblue.png in Resources */,
 				4DF754F8147F1D5C00C33AA4 /* car_roadster_veryorange.png in Resources */,
+				4DBB7930148270A50055769F /* connection_good.png in Resources */,
+				4DBB7931148270A50055769F /* connection_bad.png in Resources */,
+				4DBB7932148270A50055769F /* connection_unknown.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
