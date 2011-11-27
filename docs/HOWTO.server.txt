@@ -1,0 +1,85 @@
+HOWTO Setup an OVMS server
+
+0. DO I NEED THIS?
+
+You don't need to run your own OVMS server.
+You can just use the public Open Vehicles OVMS server.
+The choice is yours.
+
+1. PREREQUISITES
+
+You'll need a Linux. OSX, BSD, or other flavour of Unix, server with a public IP address and
+a shell account able to setup a daemon listening on a port. You'll need a modern version of
+perl running on that server, and a bunch of perl modules (from cpan).
+
+You'll need a MYSQL server running on the same machine, or another machine, and credentials
+to be able to create a database and accounts.
+
+This could conscievably run on a windows server, but you are on your own ;-)
+[ let us know instructions if you manage to get it running ]
+
+2. MODULE INSTALLATION
+
+Install the following perl modules from CPAN:
+
+  EV
+  AnyEvent
+  Config::IniFiles
+  DBI
+  DBD::MySQL
+  Digest::MD5
+  Digest::HMAC
+  Crypt::RC4::XS
+  MIME::Base64
+
+3. MYSQL SETUP
+
+Create a mysql database "openvehicles" and use the ovms_server.sql script from github (server
+directory) to create the necessary ovms_* tables. Create a mysql username and password with
+access to the database.
+
+Insert a record into the ovms_cars table, to give you access to your own car:
+
+      vehicleid: DEMO
+         owner: 1
+       carpass: DEMO
+      userpass: DEMO
+   cryptscheme: 0
+      v_ptoken: 
+  v_lastupdate: 0000-00-00 00:00:00
+
+Obviously, change the vehicleid, carpass and userpass as necessary. The only required fields are
+vehicleid and carpass.
+
+4. OVMS_SERVER ACCESS TO MYSQL
+
+Create a file ovms_server.conf which defines the access to the mysql database:
+
+  [db]
+  path=DBI:mysql:database=openvehicles;host=127.0.0.1
+  user=<mysqlusername>
+  pass=<mysqlpassword>
+
+If the host is remote, change the host= parameter to be the remote IP address. Use 127.0.0.1 for local.
+
+Test the connection with:
+
+  $ mysql -h 127.0.0.1 -u <mysqlusername> -p 
+  Enter password: <mysqlpassword>
+  Welcome to the MySQL monitor.  Commands end with ; or \g.
+
+If you get "ERROR 1044 (42000): Access denied", fix it before proceeding. The most likely cause
+is a mistake in your mysql user grant rights.
+
+5. RUN THE SERVER
+
+Get the ovms_server.pl code from github and run it with:
+
+  $ ./ovms_server.pl
+
+6. ENJOY
+
+Any questions/comments, please let us know.
+
+Mark Webb-Johnson
+November 2011
