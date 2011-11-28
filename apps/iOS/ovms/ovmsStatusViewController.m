@@ -95,6 +95,8 @@
   int connected = [ovmsAppDelegate myRef].car_connected;
   time_t lastupdated = [ovmsAppDelegate myRef].car_lastupdated;
   int minutes = (time(0)-lastupdated)/60;
+  int hours = minutes/60;
+  int days = minutes/(60*24);
   
   if (connected>0)
     {
@@ -112,23 +114,35 @@
     }
   else if (minutes == 0)
     {
-    m_car_connection_state.text = @"Car reported status just now";
+    m_car_connection_state.text = @"now";
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
   else if (minutes == 1)
     {
-    m_car_connection_state.text = @"Car reported status 1 minute ago";
+    m_car_connection_state.text = @"1 min";
     m_car_connection_state.textColor = [UIColor whiteColor];
+    }
+  else if (days > 1)
+    {
+    m_car_connection_state.text = [NSString stringWithFormat:@"%d days",days];
+    m_car_connection_state.textColor = [UIColor redColor];
+    m_car_connection_image.image=[UIImage imageNamed:@"connection_bad.png"];
+    }
+  else if (hours > 1)
+    {
+    m_car_connection_state.text = [NSString stringWithFormat:@"%d hours",hours];
+    m_car_connection_state.textColor = [UIColor redColor];
+    m_car_connection_image.image=[UIImage imageNamed:@"connection_bad.png"];
     }
   else if (minutes >= 20)
     {
-    m_car_connection_state.text = [NSString stringWithFormat:@"No report from car for %d mins",minutes];
+    m_car_connection_state.text = [NSString stringWithFormat:@"%d mins",minutes];
     m_car_connection_state.textColor = [UIColor redColor];
     m_car_connection_image.image=[UIImage imageNamed:@"connection_bad.png"];
     }
   else
     {
-    m_car_connection_state.text = [NSString stringWithFormat:@"Car reported status %d mins ago",minutes];
+    m_car_connection_state.text = [NSString stringWithFormat:@"%d mins",minutes];
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
   

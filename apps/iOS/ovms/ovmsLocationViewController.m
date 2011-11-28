@@ -30,6 +30,7 @@
 @end
 
 @implementation ovmsLocationViewController
+
 @synthesize myMapView;
 @synthesize m_car_location;
 
@@ -66,6 +67,7 @@
 {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
+  [self updateLocation];
 }
 
 - (void)viewDidAppear:(BOOL)animated

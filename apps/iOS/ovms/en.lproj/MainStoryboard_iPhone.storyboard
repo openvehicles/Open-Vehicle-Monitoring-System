@@ -65,18 +65,18 @@
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="RVX-xh-Dj1" userLabel="car_connection_state">
-                                <rect key="frame" x="26" y="131" width="268" height="29"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="connection_good.png" id="Rcp-Jf-HIC">
+                                <rect key="frame" x="291" y="5" width="24" height="24"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="RVX-xh-Dj1" userLabel="car_connection_state">
+                                <rect key="frame" x="233" y="25" width="79" height="29"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <fontDescription key="fontDescription" name="Helvetica-BoldOblique" family="Helvetica" pointSize="12"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="connection_good.png" id="Rcp-Jf-HIC">
-                                <rect key="frame" x="289" y="5" width="24" height="24"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            </imageView>
                         </subviews>
                         <color key="backgroundColor" red="0.25882354378700256" green="0.39607846736907959" blue="0.61568629741668701" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -328,40 +328,6 @@
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
         <image name="connection_good.png" width="64" height="64"/>
     </resources>
-    <classes>
-        <class className="ovmsCarsFormViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
-                <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
-            </relationships>
-        </class>
-        <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
-        </class>
-        <class className="ovmsLocationViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsLocationViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
-            </relationships>
-        </class>
-        <class className="ovmsStatusViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_connection_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_range" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
-            </relationships>
-        </class>
-    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>
