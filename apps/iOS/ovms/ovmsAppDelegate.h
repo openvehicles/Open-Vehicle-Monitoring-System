@@ -36,6 +36,11 @@
   unsigned char token[TOKEN_SIZE+1];
   RC4_CTX rxCrypto;
   RC4_CTX txCrypto;
+
+  NSString* pmToken;
+  RC4_CTX pmCrypto;
+  MD5_CTX pmDigest;
+  
   id location_delegate;
   id status_delegate;
   

@@ -286,6 +286,37 @@
 
 - (void)handleCommand:(char)code command:(NSString*)cmd
 {
+  if (code == 'E')
+    {
+    // We have a paranoid mode message
+    const char *pm = [cmd UTF8String];
+    if (*pm == 'T')
+      {
+      // Set the paranoid token
+      pmToken =  [[NSString alloc] initWithCString:pm+1 encoding:NSUTF8StringEncoding];
+      const char *password = [sel_userpass UTF8String];
+      hmac_md5((uint8_t*)pm+1, strlen(pm+1), (const uint8_t*)password, strlen(password), (uint8_t*)&pmDigest);
+      return;
+      }
+    else if (*pm == 'M')
+      {
+      // Decrypt the paranoid message
+      char buf[1024];
+      int len;
+
+      code = pm[1];
+      len = base64decode((uint8_t*)pm+2, (uint8_t*)buf);
+      RC4_setup(&pmCrypto, (uint8_t*)&pmDigest, MD5_SIZE);
+      for (int k=0;k<1024;k++)
+        {
+        uint8_t x = 0;
+        RC4_crypt(&pmCrypto, &x, &x, 1);
+        }
+      RC4_crypt(&pmCrypto, (uint8_t*)buf, (uint8_t*)buf, len);
+      cmd = [[NSString alloc] initWithCString:buf encoding:NSUTF8StringEncoding];
+      }
+    }
+
   switch(code)
   {
     case 'Z': // Number of connected cars

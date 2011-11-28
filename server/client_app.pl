@@ -9,6 +9,8 @@ use IO::Socket::INET;
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 my $shared_secret = "NETPASS";
+my $user_pass = "OVMS";
+
 print STDERR "Shared Secret is: ",$shared_secret,"\n";
 
 #####
@@ -71,9 +73,29 @@ my $encrypted = encode_base64($txcipher->RC4("MP-0 A"),'');
 print STDERR "  Sending message $encrypted\n";
 print $sock "$encrypted\r\n";
 
+my $ptoken = "";
+my $pdigest = "";
 while(<$sock>)
   {
   chop; chop;
   print STDERR "  Received $_ from server\n";
-  print STDERR "  Server message decodes to: ",$rxcipher->RC4(decode_base64($_)),"\n";
+  my $decoded = $rxcipher->RC4(decode_base64($_));
+  print STDERR "  Server message decodes to: ",$decoded,"\n";
+
+  if ($decoded =~ /^MP-0 ET(.+)/)
+    {
+    $ptoken = $1;
+    print STDERR "    Paranoid token $ptoken received\n";
+    my $paranoid_hmac = Digest::HMAC->new($user_pass, "Digest::MD5");
+    $paranoid_hmac->add($ptoken);
+    $pdigest = $paranoid_hmac->digest;
+    }
+  elsif ($decoded =~ /^MP-0 EM(.)(.*)/)
+    {
+    my ($code,$data) = ($1,$2);
+    my $pmcipher = Crypt::RC4::XS->new($pdigest);
+    $pmcipher->RC4(chr(0) x 1024); # Prime the cipher
+    $decoded = $pmcipher->RC4(decode_base64($data));
+    print STDERR "    Paranoid message $code $decoded\n";
+    }
   }
