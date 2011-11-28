@@ -45,7 +45,10 @@
 #define TOKEN_SIZE 22
 #pragma udata
 char token[23] = {0};
+char ptoken[23] = {0};
+char ptokenmade = 0;
 char digest[MD5_SIZE];
+char pdigest[MD5_SIZE];
 char serverok = 0;
 char net_msg_scratchpad[100];
 
@@ -53,9 +56,12 @@ char net_msg_scratchpad[100];
 RC4_CTX2 tx_crypto2;
 #pragma udata RX_CRYPTO
 RC4_CTX2 rx_crypto2;
+#pragma udata PM_CRYPTO
+RC4_CTX2 pm_crypto2;
 #pragma udata
 RC4_CTX1 tx_crypto1;
 RC4_CTX1 rx_crypto1;
+RC4_CTX1 pm_crypto1;
 
 void net_msg_init(void)
   {
@@ -83,8 +89,38 @@ void net_msg_send(void)
 // Encode the message in net_scratchpad and start the send process
 void net_msg_encode_puts(void)
   {
-  int k = strlen(net_scratchpad);
+  int k;
+  char code;
 
+  if ((ptokenmade==1)&&
+      (net_scratchpad[5]!='E')&&
+      (net_scratchpad[5]!='A')&&
+      (net_scratchpad[5]!='a'))
+    {
+    // We must convert the message to a paranoid one...
+    // The message in net_scratchpad is of the form MP-0 X...
+    // Where X is the code and ... is the (optional) data
+    // Let's rebuild it in the net_msg_scratchpad...
+    code = net_scratchpad[5];
+    strcpy(net_msg_scratchpad,net_scratchpad+6);
+
+    // Paranoid encrypt the message part of the transaction
+    RC4_setup(&pm_crypto1, &pm_crypto2, pdigest, MD5_SIZE);
+    for (k=0;k<1024;k++)
+      {
+      net_scratchpad[0] = 0;
+      RC4_crypt(&pm_crypto1, &pm_crypto2, net_scratchpad, 1);
+      }
+    k=strlen(net_msg_scratchpad);
+    RC4_crypt(&pm_crypto1, &pm_crypto2, net_msg_scratchpad, k);
+
+    strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 EM");
+    net_scratchpad[7] = code;
+    base64encode(net_msg_scratchpad,k,net_scratchpad+8);
+    // The messdage is now in paranoid mode...
+    }
+
+  k=strlen(net_scratchpad);
   RC4_crypt(&tx_crypto1, &tx_crypto2, net_scratchpad, k);
   base64encodesend(net_scratchpad,k);
   net_puts_rom("\r\n");
@@ -230,6 +266,38 @@ void net_msg_server_welcome(char *msg)
     }
 
   serverok = 1;
+
+  p = par_get(PARAM_PARANOID);
+  if (*p == 'P')
+    {
+    // Paranoid mode initialisation
+    if (ptokenmade==0)
+      {
+      // We need to make the ptoken
+      for (k=0;k<TOKEN_SIZE;k++)
+        {
+        ptoken[k] = cb64[rand()%64];
+        }
+      ptoken[TOKEN_SIZE] = 0;
+      }
+
+    // To be truly paranoid, we must send the paranoid token to the server ;-)
+    ptokenmade=0; // Leave it off for the MP-0 ET message
+    strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 ET");
+    strcat(net_scratchpad,ptoken);
+    net_msg_start();
+    net_msg_encode_puts();
+    net_msg_send();
+    ptokenmade=1; // And enable paranoid mode from now on...
+
+    // And calculate the pdigest for future use
+    p = par_get(PARAM_REGPASS);
+    hmac_md5(ptoken, strlen(ptoken), p, strlen(p), pdigest);
+    }
+  else
+    {
+    ptokenmade = 0; // This disables paranoid mode
+    }
   }
 
 // Receive a NET msg from the OVMS server

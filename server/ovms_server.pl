@@ -141,7 +141,7 @@ sub io_line
       {
       my ($code,$data) = ($1,$2);
       AE::log info => "#$fn $clienttype $vid rx $code $data";
-      &io_message($fn, $hdl, $conns{$fn}{'vehicleid'}, $code, $data);
+      &io_message($fn, $hdl, $conns{$fn}{'vehicleid'}, $vrec, $code, $data);
       }
     else
       {
@@ -324,7 +324,7 @@ sub db_get_vehicle
 # Message handlers
 sub io_message
   {
-  my ($fn,$handle,$vehicleid,$code,$data) = @_;
+  my ($fn,$handle,$vehicleid,$vrec,$code,$data) = @_;
 
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
 
@@ -364,8 +364,12 @@ sub io_message
       # The paranoid token is being set
       $conns{$fn}{'ptoken'} = $paranoidtoken;
       &io_tx_apps($vehicleid, $code, $data); # Send it on to connected apps
-      # Invalidate any stored paranoid messages for this vehicle
-      $db->do("UPDATE ovms_carmessages SET m_valid=0 WHERE vehicleid=? AND m_paranoid=1",undef,$vehicleid);
+      if ($vrec->{'v_ptoken'} ne $paranoidtoken)
+        {
+        # Invalidate any stored paranoid messages for this vehicle
+        $db->do("UPDATE ovms_carmessages SET m_valid=0 WHERE vehicleid=? AND m_paranoid=1",undef,$vehicleid);
+        $db->do("UPDATE ovms_cars SET v_ptoken=? WHERE vehicleid=?",undef,$paranoidtoken,$vehicleid);
+        }
       AE::log error => "#$fn $clienttype $vehicleid paranoid token set '$paranoidtoken'";
       return;
       }

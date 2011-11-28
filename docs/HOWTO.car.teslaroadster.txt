@@ -70,7 +70,7 @@ Usin the cellular telephone that you registered to the car in the previous
 steps, you need to set the GPRS and OVMS parameters in the car. You do this
 by sending an SMS to the car:
 
-  PARAMS K SMS,IP 202.52.42.80 imobile.three.com.hk - - DEMO NETPASS
+  PARAMS K SMS,IP 202.52.42.80 imobile.three.com.hk - - DEMO NETPASS -
 
 If all is well, within a few seconds the car will SMS you back with:
 
@@ -103,6 +103,13 @@ PARAMS command. Let's go through them:
   f) "NETPASS". This is the network password for your vehicle. It should
      be different than the user password, and we recommend you use
      between 4 and 22 characters.
+
+  g) "-". The last parameter controls paranoid mode. In this mode, the
+     messages between the apps and the cars and further encrypted using
+     the shared user password (which the server is not privy to). Setting
+     this to "PARANOID" will enable this mode and will mean that the
+     server will merely relay the messages and will be unable to decode
+     and of the messages (such as battery status, location, etc).
 
 You will also need to ensure that your car vehicleid and network password
 are pre-registered on the OVMS server you have chosen. For openvehicles.com,
