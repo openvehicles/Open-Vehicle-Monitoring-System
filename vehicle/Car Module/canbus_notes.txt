@@ -160,6 +160,24 @@ messages from the VDS are sent on CAN ID # 0x102.
 		B7=0x00
 		B8=0x00
 
+	Lock/Unlock
+		B1=0x0B
+		B2=	0x00 = Activate Valet mode
+			0x01 = Deactivate Valet mode
+			0x02 = Lock car
+			0x03 = unlock car
+			0x04 = PIN related (have to investigate more)
+		B3=0x00
+		B4=0x00
+		B5= PIN LSB
+		B6= PIN
+		B7= PIN (total 28 bits for PIN)
+		B8= PIN MSB	4 bits = number of PIN characters (1-8)
+				4 LSB bits = PIN MSB
+
+		N.B. example PIN 1234 unlock is 0x0B, 0x03, 0x00, 0x00, 0xD2, 0X04, 0x00, 0x40
+		N.B. unlock/lock does not affect the immobilizer+alarm (when fitted)
+
 	Lock/Unlock result
 		B1=0x0E
 		B2=result (0x04=locked, 0x05=unlocked)
