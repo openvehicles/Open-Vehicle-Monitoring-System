@@ -12,6 +12,7 @@ use Digest::MD5;
 use Digest::HMAC;
 use Crypt::RC4::XS;
 use MIME::Base64;
+use JSON::XS;
 
 # Global Variables
 
@@ -22,12 +23,21 @@ my %app_conns;
 my $db;
 my $config;
 
+# PUSH notifications
+my @apns_queue_sandbox;
+my @apns_queue_production;
+my @apns_queue;
+my $apns_handle;
+
 # Auto-flush
 select STDOUT; $|=1;
 $AnyEvent::Log::FILTER->level ("info");
 
 # Configuration
 $config = Config::IniFiles->new(-file => 'ovms_server.conf');
+
+# Globals
+my $inactivitytimeout = $config->val('server','inactivitytimeout',720);
 
 # A database ticker
 $db = DBI->connect($config->val('db','path'),$config->val('db','user'),$config->val('db','pass'));
@@ -38,6 +48,9 @@ if (!defined $db)
   }
 $db->{mysql_auto_reconnect} = 1;
 my $dbtim = AnyEvent->timer (after => 60, interval => 60, cb => \&db_tim);
+
+# An APNS ticker
+my $apnstim = AnyEvent->timer (after => 1, interval => 1, cb => \&apns_tim);
 
 sub io_error
   {
@@ -70,6 +83,7 @@ sub io_line
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
   AE::log info => "#$fn $clienttype $vid rx $line";
   $hdl->push_read(line => \&io_line);
+  $hdl->rtimeout($inactivitytimeout);
 
   if ($line =~ /^MP-(\S)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/)
     {
@@ -285,7 +299,7 @@ tcp_server undef, 6867, sub
   $fh->blocking(0);
   my $fn = $fh->fileno();
   AE::log info => "#$fn - new connection from $host:$port";
-  my $handle; $handle = new AnyEvent::Handle(fh => $fh, on_error => \&io_error, on_timeout => \&io_timeout, keepalive => 1, no_delay => 1, rtimeout => 1200.0);
+  my $handle; $handle = new AnyEvent::Handle(fh => $fh, on_error => \&io_error, on_timeout => \&io_timeout, keepalive => 1, no_delay => 1, rtimeout => $inactivitytimeout);
   $handle->push_read (line => \&io_line);
 
   $conns{$fn}{'fh'} = $fh;
@@ -346,7 +360,34 @@ sub io_message
     # Send it to any listening apps
     &io_tx_apps($vehicleid, $code, $data);
     # And also send via the mobile networks
-    # TODO
+    if ($data =~ /^(.)(.+)/)
+      {
+      my ($alerttype,$alertmsg) = ($1,$2);
+      &push_queuenotify($vehicleid, $alerttype, $alertmsg);
+      }
+    return;
+    }
+  elsif ($code eq 'p') ## PUSH SUBSCRIPTION
+    {
+    my ($appid,$pushtype,$pushkeytype,@vkeys) = split /,/,$data;
+    while (scalar @vkeys > 0)
+      {
+      my $vk_vehicleid = shift @vkeys;
+      my $vk_netpass = shift @vkeys;
+      my $vk_pushkeyvalue = shift @vkeys;
+
+      my $vk_rec = &db_get_vehicle($vk_vehicleid);
+      if ((defined $vk_rec)&&($vk_rec->{'carpass'} eq $vk_netpass))
+        {
+        AE::log info => "#$fn $clienttype $vehicleid msg push subscription $vk_vehicleid:$pushtype/$pushkeytype => $vk_pushkeyvalue";
+        $db->do("INSERT INTO ovms_notifies (vehicleid,appid,pushtype,pushkeytype,pushkeyvalue,lastupdated) "
+              . "VALUES (?,?,?,?,?,UTC_TIMESTAMP()) ON DUPLICATE KEY UPDATE "
+              . "lastupdated=UTC_TIMESTAMP(), pushkeytype=?, pushkeyvalue=?",
+                undef,
+                $vk_vehicleid, $appid, $pushtype, $pushkeytype, $vk_pushkeyvalue,
+                $pushkeytype,$vk_pushkeyvalue);
+        }
+      }
     return;
     }
 
@@ -408,5 +449,163 @@ sub io_message
     {
     # Send it on to the car...
     &io_tx_car($vehicleid, $code, $data);
+    }
+  }
+
+sub push_queuenotify
+  {
+  my ($vehicleid, $alerttype, $alertmsg) = @_;
+
+  my $sth = $db->prepare('SELECT * FROM ovms_notifies WHERE vehicleid=? and active=1');
+  $sth->execute($vehicleid);
+  while (my $row = $sth->fetchrow_hashref())
+    {
+    my %rec;
+    if ($row->{'pushtype'} eq 'apns')
+      {
+      $rec{'vehicleid'} = $vehicleid;
+      $rec{'alerttype'} = $alerttype;
+      $rec{'alertmsg'} = $alertmsg;
+      $rec{'pushkeytype'} = $row->{'pushkeytype'};
+      $rec{'pushkeyvalue'} = $row->{'pushkeyvalue'};
+      $rec{'appid'} = $row->{'appid'};
+      if ($row->{'pushkeytype'} eq 'sandbox')
+        { push @apns_queue_sandbox,\%rec; }
+      else
+        { push @apns_queue_production,\%rec; }
+      AE::log info => "- - $vehicleid msg queued notification for $rec{'pushkeytype'}:$rec{'appid'}";
+      }
+    }
+  }
+
+sub apns_send
+  {
+  my ($token, $payload) = @_;
+
+  my $json = JSON::XS->new->utf8->encode ($payload);
+
+  my $btoken = pack "H*",$token;
+
+  $apns_handle->push_write( pack('C', 0) ); # command
+
+  $apns_handle->push_write( pack('n', bytes::length($btoken)) ); # token length
+  $apns_handle->push_write( $btoken );                           # device token
+
+  # Apple Push Notification Service refuses string values as badge number
+  if ($payload->{aps}{badge} && looks_like_number($payload->{aps}{badge}))
+    {
+    $payload->{aps}{badge} += 0;
+    }
+
+  # The maximum size allowed for a notification payload is 256 bytes;
+  # Apple Push Notification Service refuses any notification that exceeds this limit.
+  if ( (my $exceeded = bytes::length($json) - 256) > 0 )
+    {
+    if (ref $payload->{aps}{alert} eq 'HASH')
+      {
+      $payload->{aps}{alert}{body} = &_trim_utf8($payload->{aps}{alert}{body}, $exceeded);
+      }
+    else
+      {
+      $payload->{aps}{alert} = &_trim_utf8($payload->{aps}{alert}, $exceeded);
+      }
+
+    $json = JSON::XS->new->utf8->encode($payload);
+    }
+
+  $apns_handle->push_write( pack('n', bytes::length($json)) ); # payload length
+  $apns_handle->push_write( $json );                           # payload
+  }
+
+sub _trim_utf8
+  {
+  my ($string, $trim_length) = @_;
+
+  my $string_bytes = JSON::XS->new->utf8->encode($string);
+  my $trimmed = '';
+
+  my $start_length = bytes::length($string_bytes) - $trim_length;
+  return $trimmed if $start_length <= 0;
+
+  for my $len ( reverse $start_length - 6 .. $start_length )
+    {
+    local $@;
+    eval
+      {
+      $trimmed = JSON::XS->new->utf8->decode(substr($string_bytes, 0, $len));
+      };
+    last if $trimmed;
+    }
+
+  return $trimmed;
+  }
+
+sub apns_push
+  {
+  my ($hdl, $success, $error_message) = @_;
+
+  my $fn = $hdl->fh->fileno();
+  AE::log info => "#$fn - - connected to apns for push notification";
+
+  foreach my $rec (@apns_queue)
+    {
+    my $vehicleid = $rec->{'vehicleid'};
+    my $alerttype = $rec->{'alerttype'};
+    my $alertmsg = $rec->{'alertmsg'};
+    my $pushkeyvalue = $rec->{'pushkeyvalue'};
+    my $appid = $rec->{'appid'};
+    print "Got rec for $appid\n";
+    AE::log info => "#$fn - $vehicleid msg apns '$alertmsg' => $pushkeyvalue";
+    &apns_send( $pushkeyvalue => { aps => { alert => "$vehicleid\n$alertmsg" } } );
+    }
+  $apns_handle->on_drain(sub
+                {
+                my ($hdl) = @_;
+                my $fn = $hdl->fh->fileno();
+                AE::log info => "#$fn - - msg apns is drained and done";
+                undef $apns_handle;
+                });
+  }
+
+sub apns_tim
+  {
+  return if (defined $apns_handle);
+  return if ((scalar @apns_queue_sandbox == 0)&&(scalar @apns_queue_production == 0));
+
+  my ($host,$certfile,$keyfile);
+  if (scalar @apns_queue_sandbox > 0)
+    {
+    # We have notifications to deliver for the sandbox
+    @apns_queue = @apns_queue_sandbox;
+    @apns_queue_sandbox = ();
+    $host = 'gateway.sandbox.push.apple.com';
+    $certfile = $keyfile = 'ovms_apns_sandbox.pem';
+    }
+  elsif (scalar @apns_queue_production > 0)
+    {
+    @apns_queue = @apns_queue_production;
+    @apns_queue_production = ();
+    $host = 'gateway.push.apple.com';
+    $certfile = $keyfile = 'ovms_apns_production.pem';
+    }
+
+  AE::log info => "- - - msg apns processing queue for $host";
+
+  tcp_connect $host, 2195, sub
+    {
+    my ($fh) = @_;
+
+    $apns_handle = new AnyEvent::Handle(
+          fh       => $fh,
+          peername => $host,
+          tls      => "connect",
+          tls_ctx  => { cert_file => $certfile, key_file => $keyfile, verify => 0, verify_peername => $host },
+          on_error => sub
+                {
+                $apns_handle = undef;
+                $_[0]->destroy;
+                },
+          on_starttls => \&apns_push
+          );
     }
   }
