@@ -60,9 +60,29 @@
                                                             @"DEMO", @"selNetPass",
                                                             @"DEMO", @"selUserPass",
                                                             @"car_models_signaturered.png", @"selImagePath",
+                                                            @"", @"apnsDeviceid",
                                                             nil];
   [defaults registerDefaults:appDefaults];
   [defaults synchronize];
+
+  apns_deviceid = [defaults stringForKey:@"apnsDeviceid"];
+  apns_devicetoken = @"";
+  #ifdef DEBUG
+  apns_pushkeytype = @"sandbox";
+  #else
+  apns_pushkeytype = @"production";
+  #endif
+  
+  if ([apns_deviceid length] == 0)
+    {
+    CFUUIDRef     myUUID;
+    CFStringRef   myUUIDString;
+  
+    myUUID = CFUUIDCreate(kCFAllocatorDefault);
+    myUUIDString = CFUUIDCreateString(kCFAllocatorDefault, myUUID);
+  
+    apns_deviceid = (__bridge_transfer NSString*)myUUIDString;
+    }
 
   sel_car = [defaults stringForKey:@"selCar"];
   sel_label = [defaults stringForKey:@"selLabel"];
@@ -91,9 +111,35 @@
       }
     }
   
+  // Let the device know we want to receive push notifications
+	[[UIApplication sharedApplication] registerForRemoteNotificationTypes:
+   (UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
+  
   return YES;
 }
-							
+	
+- (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)deviceToken
+{
+  NSString *tempString = [[deviceToken description] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"<>"]];
+  apns_devicetoken = [tempString stringByReplacingOccurrencesOfString:@" " withString:@""];
+	NSLog(@"My token is: %@", apns_devicetoken);
+}
+
+- (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError*)error
+{
+	NSLog(@"Failed to get token, error: %@", error);
+}
+
+- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
+{
+  
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+{
+  
+}
+
 - (void)applicationWillResignActive:(UIApplication *)application
 {
     /*
@@ -101,6 +147,7 @@
      Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
      */
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  [defaults setObject:apns_deviceid forKey:@"apnsDeviceid"];
   [defaults setObject:sel_car forKey:@"selCar"];
   [defaults setObject:sel_label forKey:@"selLabel"];
   [defaults setObject:sel_netpass forKey:@"selNetPass"];
@@ -142,6 +189,7 @@
      See also applicationDidEnterBackground:.
     */
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  [defaults setObject:apns_deviceid forKey:@"apnsDeviceid"];
   [defaults setObject:sel_car forKey:@"selCar"];
   [defaults setObject:sel_label forKey:@"selLabel"];
   [defaults setObject:sel_netpass forKey:@"selNetPass"];
@@ -268,7 +316,7 @@
     [asyncSocket writeData:welcomeData withTimeout:-1 tag:0];    
     [self didStartNetworking];
     }
-}
+  }
 
 - (void)serverDisconnect
 {
@@ -450,6 +498,23 @@
       RC4_crypt(&txCrypto, &x, &x, 1);
       }
     [asyncSocket readDataToData:[GCDAsyncSocket CRLFData] withTimeout:-1 tag:1];
+      
+      
+    if ([apns_devicetoken length] > 0)
+    {
+      // Subscribe to push notifications
+      char buf[1024];
+      char output[1024];
+      NSString* pns = [NSString stringWithFormat:@"MP-0 p%@,apns,%@,%@,%@,%@",
+                       apns_deviceid, apns_pushkeytype, sel_car, sel_netpass, apns_devicetoken];
+      strcpy(buf, [pns UTF8String]);
+      int len = strlen(buf);
+      RC4_crypt(&txCrypto, (uint8_t*)buf, (uint8_t*)buf, len);
+      base64encode((uint8_t*)buf, len, (uint8_t*)output);
+      NSString *pushStr = [NSString stringWithFormat:@"%s\r\n",output];
+      NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
+      [asyncSocket writeData:pushData withTimeout:-1 tag:0];    
+      }
     }
   else if (tag==1)
     { // Normal encrypted data packet

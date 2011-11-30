@@ -44,6 +44,10 @@
   id location_delegate;
   id status_delegate;
   
+  NSString* apns_deviceid;
+  NSString* apns_pushkeytype;
+  NSString* apns_devicetoken;
+  
   NSString* sel_car;
   NSString* sel_label;
   NSString* sel_netpass;

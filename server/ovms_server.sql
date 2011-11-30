@@ -53,6 +53,25 @@ CREATE TABLE `ovms_carmessages` (
   PRIMARY KEY  (`vehicleid`,`m_code`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='OVMS: Stores vehicle messages';
 SET character_set_client = @saved_cs_client;
+
+--
+-- Table structure for table `ovms_notifies`
+--
+
+DROP TABLE IF EXISTS `ovms_notifies`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+CREATE TABLE `ovms_notifies` (
+  `vehicleid` varchar(32) NOT NULL default '' COMMENT 'Unique vehicle ID',
+  `appid` varchar(128) NOT NULL default '' COMMENT 'Unique App ID',
+  `pushtype` varchar(16) NOT NULL default '',
+  `pushkeytype` varchar(16) NOT NULL default '',
+  `pushkeyvalue` varchar(128) NOT NULL default '',
+  `lastupdated` datetime NOT NULL default '0000-00-00 00:00:00',
+  `active` tinyint(1) NOT NULL default '1',
+  PRIMARY KEY  (`vehicleid`,`appid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='OVMS: Stores app notification configs';
+SET character_set_client = @saved_cs_client;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -63,4 +82,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2011-11-27  8:49:13
+-- Dump completed on 2011-11-30 16:00:12
