@@ -1,114 +1,381 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.0" toolsVersion="1938" systemVersion="11C74" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" initialViewController="4">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.0" toolsVersion="1938" systemVersion="11C74" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" initialViewController="yen-VS-8ek">
     <dependencies>
         <development defaultVersion="4200" identifier="xcode"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="933"/>
     </dependencies>
     <scenes>
-        <scene sceneID="11">
+        <scene sceneID="JJ7-hf-7N0">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="10" sceneMemberID="firstResponder"/>
-                <viewController title="Status" id="2" customClass="ovmsStatusViewController" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="17">
-                        <rect key="frame" x="0.0" y="20" width="768" height="955"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="BWI-gU-kdJ" sceneMemberID="firstResponder"/>
+                <viewController title="Status" id="KQf-3p-4Zw" customClass="ovmsStatusViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Atv-L5-6cu">
+                        <rect key="frame" x="0.0" y="64" width="768" height="911"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="20">
-                                <rect key="frame" x="0.0" y="0.0" width="768" height="44"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                                <items/>
-                            </toolbar>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="car_roadster_thundergray.png" id="DUc-0K-Dm6">
-                                <rect key="frame" x="64" y="44" width="640" height="342"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="car_roadster_thundergray.png" id="s2N-H5-QE1" userLabel="car_image">
+                                <rect key="frame" x="80" y="-6" width="609" height="282"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
-                        </subviews>
-                        <color key="backgroundColor" red="0.25882354378700256" green="0.39607846736907959" blue="0.61568629741668701" alpha="1" colorSpace="deviceRGB"/>
-                    </view>
-                    <tabBarItem key="tabBarItem" title="Status" image="first" id="7"/>
-                </viewController>
-            </objects>
-            <point key="canvasLocation" x="3011" y="-441"/>
-        </scene>
-        <scene sceneID="13">
-            <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="12" sceneMemberID="firstResponder"/>
-                <viewController title="Location" id="3" customClass="ovmsLocationViewController" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="16" customClass="MKMapView">
-                        <rect key="frame" x="0.0" y="20" width="768" height="955"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <navigationBar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="23">
-                                <rect key="frame" x="0.0" y="0.0" width="768" height="44"/>
+                            <imageView userInteractionEnabled="NO" contentMode="left" image="battery_000.png" id="SL7-PT-bkj" userLabel="battery_back">
+                                <rect key="frame" x="250" y="784" width="268" height="70"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <accessibility key="accessibilityConfiguration">
+                                    <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
+                                </accessibility>
+                            </imageView>
+                            <imageView autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" image="battery_100.png" id="vZC-ps-wlb" userLabel="battery_front">
+                                <rect key="frame" x="250" y="784" width="268" height="70"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <accessibility key="accessibilityConfiguration">
+                                    <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
+                                </accessibility>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="18" id="sws-Jc-laf" userLabel="car_range">
+                                <rect key="frame" x="77" y="868" width="614" height="29"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                                <items>
-                                    <navigationItem id="24"/>
-                                </items>
-                            </navigationBar>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="18"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="mnC-x1-YJF" userLabel="car_soc">
+                                <rect key="frame" x="286" y="784" width="196" height="70"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="36"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                                <color key="shadowColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <size key="shadowOffset" width="2" height="2"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="7w4-hx-i9N" userLabel="car_charge_state">
+                                <rect key="frame" x="26" y="303" width="716" height="29"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="24"/>
+                                <color key="textColor" red="0.0" green="1" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="sxR-cz-Rl7" userLabel="car_charge_type">
+                                <rect key="frame" x="26" y="340" width="716" height="29"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="18"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="connection_good.png" id="JoM-cn-ghC">
+                                <rect key="frame" x="719" y="12" width="35" height="35"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="K2G-Mz-umh" userLabel="car_connection_state">
+                                <rect key="frame" x="184" y="15" width="527" height="29"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-BoldOblique" family="Helvetica" pointSize="14"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
-                        <color key="backgroundColor" red="0.25882354378700256" green="0.39607846736907959" blue="0.61568629741668701" alpha="1" colorSpace="deviceRGB"/>
+                        <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
                     </view>
-                    <tabBarItem key="tabBarItem" title="Location" image="second" id="6"/>
+                    <tabBarItem key="tabBarItem" title="Status" image="49-battery.png" id="ltk-Aa-W7F"/>
+                    <navigationItem key="navigationItem" id="6ol-L2-L2d"/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <connections>
+                        <outlet property="m_battery_front" destination="vZC-ps-wlb" id="wWi-MH-akZ"/>
+                        <outlet property="m_car_charge_state" destination="7w4-hx-i9N" id="5jT-G8-K6e"/>
+                        <outlet property="m_car_charge_type" destination="sxR-cz-Rl7" id="FqU-iR-Wms"/>
+                        <outlet property="m_car_connection_image" destination="JoM-cn-ghC" id="36M-Fv-y3c"/>
+                        <outlet property="m_car_connection_state" destination="K2G-Mz-umh" id="VF1-K2-XSI"/>
+                        <outlet property="m_car_image" destination="s2N-H5-QE1" id="CeG-RB-cFO"/>
+                        <outlet property="m_car_range" destination="sws-Jc-laf" id="khz-k7-5A7"/>
+                        <outlet property="m_car_soc" destination="mnC-x1-YJF" id="cQl-Fy-1nl"/>
+                    </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="3022" y="749"/>
+            <point key="canvasLocation" x="2906" y="-698"/>
         </scene>
-        <scene sceneID="15">
+        <scene sceneID="d9y-sC-jNk">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="14" sceneMemberID="firstResponder"/>
-                <tabBarController id="4" sceneMemberID="viewController">
+                <placeholder placeholderIdentifier="IBFirstResponder" id="DGU-sg-EEZ" sceneMemberID="firstResponder"/>
+                <viewController title="Location" id="mH6-Nn-Vim" customClass="ovmsLocationViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="8XF-hT-Kwa" customClass="MKMapView">
+                        <rect key="frame" x="0.0" y="64" width="768" height="911"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" red="0.20392158630000001" green="0.32941177490000001" blue="0.53333336109999996" alpha="1" colorSpace="deviceRGB"/>
+                        <connections>
+                            <outlet property="delegate" destination="mH6-Nn-Vim" id="ouJ-uk-SB2"/>
+                        </connections>
+                    </view>
+                    <tabBarItem key="tabBarItem" title="Location" image="74-location.png" id="kUT-2A-jXa"/>
+                    <navigationItem key="navigationItem" id="P0C-AS-s6I"/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <connections>
+                        <outlet property="myMapView" destination="8XF-hT-Kwa" id="6lw-dC-cnW"/>
+                    </connections>
+                </viewController>
+            </objects>
+            <point key="canvasLocation" x="2898" y="448"/>
+        </scene>
+        <scene sceneID="LBL-91-hfX">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Vhu-Zw-Z8R" sceneMemberID="firstResponder"/>
+                <tabBarController id="yen-VS-8ek" sceneMemberID="viewController">
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                     <nil key="simulatedBottomBarMetrics"/>
-                    <tabBar key="tabBar" contentMode="scaleToFill" id="5">
-                        <rect key="frame" x="0.0" y="975" width="768" height="49"/>
+                    <tabBar key="tabBar" contentMode="scaleToFill" id="r6m-1c-JPh">
+                        <rect key="frame" x="0.0" y="431" width="320" height="49"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                     </tabBar>
                     <connections>
-                        <segue destination="2" kind="relationship" relationship="viewControllers" id="27"/>
-                        <segue destination="3" kind="relationship" relationship="viewControllers" id="28"/>
-                        <segue destination="uho-Yy-bE4" kind="relationship" relationship="viewControllers" id="cQL-KM-wKs"/>
+                        <segue destination="rOH-qE-UmW" kind="relationship" relationship="viewControllers" id="ze5-fH-a8k"/>
+                        <segue destination="CHW-Oh-PbA" kind="relationship" relationship="viewControllers" id="BPB-15-xe5"/>
+                        <segue destination="aVr-bq-lN6" kind="relationship" relationship="viewControllers" id="jfI-TG-qxk"/>
                     </connections>
                 </tabBarController>
             </objects>
-            <point key="canvasLocation" x="2023" y="718"/>
+            <point key="canvasLocation" x="972" y="456"/>
         </scene>
-        <scene sceneID="GrI-5s-RC0">
+        <scene sceneID="2tD-lO-Yqo">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="Cl8-Et-JrU" sceneMemberID="firstResponder"/>
-                <viewController title="Cars" id="uho-Yy-bE4" customClass="ovmsCarsViewController" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="Hmt-oO-AGi">
-                        <rect key="frame" x="0.0" y="20" width="768" height="955"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="w8L-ye-nGK" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <navigationController definesPresentationContext="YES" id="aVr-bq-lN6" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Cars" image="20-gear2.png" id="Roq-t4-hlC"/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <navigationBar key="navigationBar" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" barStyle="blackOpaque" id="71L-Nt-Rqi">
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="xdX-PC-pUv" kind="relationship" relationship="rootViewController" id="dWH-R8-yg5"/>
+                    </connections>
+                </navigationController>
+            </objects>
+            <point key="canvasLocation" x="2017" y="1643"/>
+        </scene>
+        <scene sceneID="tb7-Sz-gFl">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="CrE-Gw-aBa" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <tableViewController id="xdX-PC-pUv" customClass="ovmsCarsTableViewController" sceneMemberID="viewController">
+                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="200" sectionHeaderHeight="22" sectionFooterHeight="22" id="rbt-Zb-27p">
+                        <rect key="frame" x="0.0" y="64" width="768" height="911"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" indentationWidth="10" reuseIdentifier="CellIdentifier" rowHeight="200" id="bgS-Zb-VCe">
+                                <rect key="frame" x="0.0" y="22" width="768" height="200"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                    <rect key="frame" x="0.0" y="0.0" width="768" height="199"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <imageView tag="2" contentMode="scaleAspectFit" image="car_roadster_thundergray.png" id="Yje-sZ-bej">
+                                            <rect key="frame" x="179" y="2" width="415" height="196"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        </imageView>
+                                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" tag="1" contentMode="left" text="EV915" lineBreakMode="tailTruncation" minimumFontSize="10" id="NWX-QS-mGR">
+                                            <rect key="frame" x="52" y="18" width="252" height="21"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                            <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="18"/>
+                                            <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                            <nil key="highlightedColor"/>
+                                            <color key="shadowColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                            <size key="shadowOffset" width="0.0" height="0.0"/>
+                                        </label>
+                                        <button opaque="NO" tag="3" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoDark" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" id="FRl-f6-bSE">
+                                            <rect key="frame" x="20" y="19" width="18" height="19"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                            <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                            <state key="normal">
+                                                <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                                <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                            </state>
+                                            <state key="highlighted">
+                                                <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                            </state>
+                                            <connections>
+                                                <segue destination="Tmg-Xo-UQI" kind="push" identifier="editCar" id="pfe-tY-npV"/>
+                                            </connections>
+                                        </button>
+                                    </subviews>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </view>
+                                <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="xdX-PC-pUv" id="POX-oy-Zzy"/>
+                            <outlet property="delegate" destination="xdX-PC-pUv" id="Dcm-Y8-N2T"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Cars" id="Hr3-ac-6fX">
+                        <barButtonItem key="leftBarButtonItem" title="New" id="tBu-Pn-p1d">
+                            <connections>
+                                <segue destination="Tmg-Xo-UQI" kind="push" identifier="newCar" id="JjB-tE-bjq"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                </tableViewController>
+            </objects>
+            <point key="canvasLocation" x="2898" y="1643"/>
+        </scene>
+        <scene sceneID="NC0-BO-LFr">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="9ej-dV-R3F" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <viewController id="Tmg-Xo-UQI" customClass="ovmsCarsFormViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="rmv-T8-5V7">
+                        <rect key="frame" x="0.0" y="64" width="768" height="911"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="eMh-dz-pt1">
-                                <rect key="frame" x="0.0" y="44" width="768" height="911"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                <color key="backgroundColor" red="0.25882354378700256" green="0.39607846736907959" blue="0.61568629741668701" alpha="1" colorSpace="deviceRGB"/>
-                            </tableView>
-                            <navigationBar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="Uuh-4M-iVK">
-                                <rect key="frame" x="0.0" y="0.0" width="768" height="44"/>
+                            <textField opaque="NO" clipsSubviews="YES" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Car" minimumFontSize="17" clearButtonMode="whileEditing" id="3qX-oF-YI4">
+                                <rect key="frame" x="20" y="10" width="144" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="allCharacters" autocorrectionType="no" keyboardType="alphabet"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Tmg-Xo-UQI" id="FOc-ZG-dgU"/>
+                                </connections>
+                            </textField>
+                            <textField opaque="NO" clipsSubviews="YES" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Network Password" minimumFontSize="17" clearButtonMode="whileEditing" id="jqJ-0m-0Kb">
+                                <rect key="frame" x="20" y="150" width="280" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" secureTextEntry="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Tmg-Xo-UQI" id="VIg-Wj-ql6"/>
+                                </connections>
+                            </textField>
+                            <textField opaque="NO" clipsSubviews="YES" tag="2" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Label" minimumFontSize="17" clearButtonMode="whileEditing" id="3Mp-Qu-4AR">
+                                <rect key="frame" x="20" y="49" width="280" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="words"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Tmg-Xo-UQI" id="GaQ-Xp-K7E"/>
+                                </connections>
+                            </textField>
+                            <textField opaque="NO" clipsSubviews="YES" tag="4" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="User Password" minimumFontSize="17" clearButtonMode="whileEditing" id="a9K-DJ-xW8">
+                                <rect key="frame" x="20" y="195" width="280" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" secureTextEntry="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Tmg-Xo-UQI" id="I5X-FL-HOm"/>
+                                </connections>
+                            </textField>
+                            <pickerView tag="5" contentMode="scaleAspectFit" showsSelectionIndicator="NO" id="wi3-LI-KEr">
+                                <rect key="frame" x="315" y="10" width="433" height="216"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                                <items>
-                                    <navigationItem id="f5l-Ua-6U5"/>
-                                </items>
-                            </navigationBar>
+                                <connections>
+                                    <outlet property="dataSource" destination="Tmg-Xo-UQI" id="kF7-dm-yWU"/>
+                                    <outlet property="delegate" destination="Tmg-Xo-UQI" id="heo-Yn-fwl"/>
+                                </connections>
+                            </pickerView>
                         </subviews>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
                     </view>
-                    <tabBarItem key="tabBarItem" title="Cars" image="second" id="HOp-14-5lh"/>
+                    <navigationItem key="navigationItem" id="4So-nH-Sz0">
+                        <barButtonItem key="backBarButtonItem" title="Cancel" id="ihC-oO-yDM"/>
+                    </navigationItem>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <connections>
+                        <outlet property="vehicleImage" destination="wi3-LI-KEr" id="XY3-RO-DoT"/>
+                        <outlet property="vehicleNetPass" destination="jqJ-0m-0Kb" id="ykw-j4-7qQ"/>
+                        <outlet property="vehicleUserPass" destination="a9K-DJ-xW8" id="mzn-9f-l0K"/>
+                        <outlet property="vehicleid" destination="3qX-oF-YI4" id="g2H-bh-dlN"/>
+                        <outlet property="vehiclelabel" destination="3Mp-Qu-4AR" id="YNO-4F-7qg"/>
+                    </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="3050" y="1889"/>
+            <point key="canvasLocation" x="3775" y="1643"/>
+        </scene>
+        <scene sceneID="Ugr-eL-hmQ">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="LOL-R9-Kgs" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <navigationController definesPresentationContext="YES" id="CHW-Oh-PbA" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Location" image="74-location.png" id="3PN-4j-kqf"/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
+                    <navigationBar key="navigationBar" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" barStyle="blackOpaque" id="25N-6f-8Jy">
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="mH6-Nn-Vim" kind="relationship" relationship="rootViewController" id="vY1-Py-fm5"/>
+                    </connections>
+                </navigationController>
+            </objects>
+            <point key="canvasLocation" x="2017" y="456"/>
+        </scene>
+        <scene sceneID="057-Rn-1Wh">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Jim-7m-X2B" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <navigationController definesPresentationContext="YES" id="rOH-qE-UmW" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Battery" image="49-battery.png" id="xhk-5W-DoK"/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
+                    <navigationBar key="navigationBar" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" barStyle="blackOpaque" id="U9H-dB-TO7">
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="KQf-3p-4Zw" kind="relationship" relationship="rootViewController" id="8nD-Ok-4k1"/>
+                    </connections>
+                </navigationController>
+            </objects>
+            <point key="canvasLocation" x="2017" y="-698"/>
         </scene>
     </scenes>
     <resources>
+        <image name="20-gear2.png" width="26" height="28"/>
+        <image name="49-battery.png" width="26" height="14"/>
+        <image name="74-location.png" width="20" height="20"/>
+        <image name="battery_000.png" width="268" height="70"/>
+        <image name="battery_100.png" width="268" height="70"/>
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
-        <image name="first" width="16" height="16"/>
-        <image name="second" width="16" height="16"/>
+        <image name="connection_good.png" width="64" height="64"/>
     </resources>
+    <classes>
+        <class className="ovmsCarsFormViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
+                <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
+            </relationships>
+        </class>
+        <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
+        </class>
+        <class className="ovmsLocationViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsLocationViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
+            </relationships>
+        </class>
+        <class className="ovmsStatusViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_connection_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_range" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
+            </relationships>
+        </class>
+    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar" statusBarStyle="blackTranslucent"/>
         <simulatedOrientationMetrics key="orientation"/>
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
+    <inferredMetricsTieBreakers>
+        <segue reference="pfe-tY-npV"/>
+    </inferredMetricsTieBreakers>
 </document>
