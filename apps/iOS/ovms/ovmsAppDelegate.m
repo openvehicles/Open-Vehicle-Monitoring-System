@@ -8,6 +8,7 @@
 
 #import "ovmsAppDelegate.h"
 #import "GCDAsyncSocket.h"
+#import "JHNotificationManager.h"
 #import "Cars.h"
 
 @implementation ovmsAppDelegate
@@ -137,7 +138,18 @@
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
 {
+  NSString *message = nil;
+  id alert = [userInfo objectForKey:@"alert"];
+  if ([alert isKindOfClass:[NSString class]])
+    {
+    message = alert;
+    }
+  else if ([alert isKindOfClass:[NSDictionary class]])
+    {
+    message = [alert objectForKey:@"body"];
+    }
   
+  [JHNotificationManager notificationWithMessage:message];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application
@@ -374,6 +386,12 @@
         {
         [self.status_delegate updateStatus];
         }
+      }
+      break;
+    case 'P': // PUSH notification
+      {
+      NSString* message = [cmd substringFromIndex:1];
+      [JHNotificationManager notificationWithMessage:message];
       }
       break;
     case 'S': // STATUS

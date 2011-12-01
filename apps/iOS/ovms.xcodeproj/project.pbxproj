@@ -11,6 +11,8 @@
 		4D10FCF3147BC9AA0092FAF9 /* GCDAsyncSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D10FCF2147BC9AA0092FAF9 /* GCDAsyncSocket.m */; };
 		4D10FCF5147BCA0C0092FAF9 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D10FCF4147BCA0B0092FAF9 /* CFNetwork.framework */; };
 		4D10FCF7147BCACD0092FAF9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D10FCF6147BCACD0092FAF9 /* Security.framework */; };
+		4D16EF32148747EC004A80AE /* JHNotificationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D16EF31148747EC004A80AE /* JHNotificationManager.m */; };
+		4D16EF3514874AE7004A80AE /* notification_background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D16EF3414874AE7004A80AE /* notification_background.png */; };
 		4D5AE36914733757002F5F52 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36814733757002F5F52 /* UIKit.framework */; };
 		4D5AE36B14733757002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
 		4D5AE36D14733757002F5F52 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36C14733757002F5F52 /* CoreGraphics.framework */; };
@@ -103,6 +105,9 @@
 		4D10FCF2147BC9AA0092FAF9 /* GCDAsyncSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDAsyncSocket.m; sourceTree = "<group>"; };
 		4D10FCF4147BCA0B0092FAF9 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		4D10FCF6147BCACD0092FAF9 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		4D16EF30148747EC004A80AE /* JHNotificationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JHNotificationManager.h; sourceTree = "<group>"; };
+		4D16EF31148747EC004A80AE /* JHNotificationManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JHNotificationManager.m; sourceTree = "<group>"; };
+		4D16EF3414874AE7004A80AE /* notification_background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = notification_background.png; sourceTree = "<group>"; };
 		4D5AE36414733757002F5F52 /* ovms.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ovms.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D5AE36814733757002F5F52 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		4D5AE36A14733757002F5F52 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -263,6 +268,8 @@
 			children = (
 				4D5AE37714733758002F5F52 /* ovmsAppDelegate.h */,
 				4D5AE37814733758002F5F52 /* ovmsAppDelegate.m */,
+				4D16EF30148747EC004A80AE /* JHNotificationManager.h */,
+				4D16EF31148747EC004A80AE /* JHNotificationManager.m */,
 				4D5AE37A14733758002F5F52 /* MainStoryboard_iPhone.storyboard */,
 				4D5AE37D14733758002F5F52 /* MainStoryboard_iPad.storyboard */,
 				4DFAD7FF1475435300416D38 /* Tabs */,
@@ -310,6 +317,7 @@
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
 			isa = PBXGroup;
 			children = (
+				4D16EF3414874AE7004A80AE /* notification_background.png */,
 				4DBB792D148270A50055769F /* connection_good.png */,
 				4DBB792E148270A50055769F /* connection_bad.png */,
 				4DBB792F148270A50055769F /* connection_unknown.png */,
@@ -543,6 +551,7 @@
 				4DBB7930148270A50055769F /* connection_good.png in Resources */,
 				4DBB7931148270A50055769F /* connection_bad.png in Resources */,
 				4DBB7932148270A50055769F /* connection_unknown.png in Resources */,
+				4D16EF3514874AE7004A80AE /* notification_background.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -590,6 +599,7 @@
 				4DAD532C147D317300949EE8 /* ovmsCarsFormViewController.m in Sources */,
 				4DC8B38C147E7BF2007FDFB2 /* Model.xcdatamodeld in Sources */,
 				4DE26E63147E83AE00E3161D /* Cars.m in Sources */,
+				4D16EF32148747EC004A80AE /* JHNotificationManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
