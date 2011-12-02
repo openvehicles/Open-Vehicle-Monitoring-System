@@ -410,7 +410,7 @@ sub io_message
       if ($vrec->{'v_ptoken'} ne $paranoidtoken)
         {
         # Invalidate any stored paranoid messages for this vehicle
-        $db->do("UPDATE ovms_carmessages SET m_valid=0 WHERE vehicleid=? AND m_paranoid=1",undef,$vehicleid);
+        $db->do("UPDATE ovms_carmessages SET m_valid=0 WHERE vehicleid=? AND m_paranoid=1 AND m_ptoken != ?",undef,$vehicleid,$paranoidtoken);
         $db->do("UPDATE ovms_cars SET v_ptoken=? WHERE vehicleid=?",undef,$paranoidtoken,$vehicleid);
         }
       AE::log error => "#$fn $clienttype $vehicleid paranoid token set '$paranoidtoken'";
