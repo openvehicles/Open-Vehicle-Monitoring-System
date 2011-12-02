@@ -66,9 +66,11 @@
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 5, 300, notificationView.frame.size.height)];
     [label setText:message];
     [label setFont:[UIFont systemFontOfSize:14.0f]];
-    [label setTextAlignment:UITextAlignmentCenter];
+    [label setTextAlignment:UITextAlignmentLeft];
     [label setTextColor:[UIColor whiteColor]];
     [label setBackgroundColor:[UIColor clearColor]];
+    label.lineBreakMode=UILineBreakModeWordWrap;
+    label.numberOfLines=0;
     [notificationView addSubview:label];
     
     // Add to the window
