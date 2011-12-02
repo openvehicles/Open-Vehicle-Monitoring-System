@@ -28,6 +28,7 @@ my @apns_queue_sandbox;
 my @apns_queue_production;
 my @apns_queue;
 my $apns_handle;
+my $apns_running=0;
 
 # Auto-flush
 select STDOUT; $|=1;
@@ -370,6 +371,7 @@ sub io_message
   elsif ($code eq 'p') ## PUSH SUBSCRIPTION
     {
     my ($appid,$pushtype,$pushkeytype,@vkeys) = split /,/,$data;
+    $conns{$fn}{'appid'} = $appid;
     while (scalar @vkeys > 0)
       {
       my $vk_vehicleid = shift @vkeys;
@@ -457,7 +459,7 @@ sub push_queuenotify
   my ($vehicleid, $alerttype, $alertmsg) = @_;
 
   my $sth = $db->prepare('SELECT * FROM ovms_notifies WHERE vehicleid=? and active=1');
-  $sth->execute($vehicleid);
+  CANDIDATE: $sth->execute($vehicleid);
   while (my $row = $sth->fetchrow_hashref())
     {
     my %rec;
@@ -469,6 +471,12 @@ sub push_queuenotify
       $rec{'pushkeytype'} = $row->{'pushkeytype'};
       $rec{'pushkeyvalue'} = $row->{'pushkeyvalue'};
       $rec{'appid'} = $row->{'appid'};
+
+      foreach (%{$app_conns{$vehicleid}})
+        {
+        my $fn = $_;
+        next CANDIDATE if ($conns{$fn}{'appid'} eq $row->{'appid'}); # Car connected?
+        }
       if ($row->{'pushkeytype'} eq 'sandbox')
         { push @apns_queue_sandbox,\%rec; }
       else
@@ -564,12 +572,13 @@ sub apns_push
                 my $fn = $hdl->fh->fileno();
                 AE::log info => "#$fn - - msg apns is drained and done";
                 undef $apns_handle;
+                $apns_running=0;
                 });
   }
 
 sub apns_tim
   {
-  return if (defined $apns_handle);
+  return if ($apns_running);
   return if ((scalar @apns_queue_sandbox == 0)&&(scalar @apns_queue_production == 0));
 
   my ($host,$certfile,$keyfile);
@@ -590,6 +599,7 @@ sub apns_tim
     }
 
   AE::log info => "- - - msg apns processing queue for $host";
+  $apns_running=1;
 
   tcp_connect $host, 2195, sub
     {
@@ -603,6 +613,7 @@ sub apns_tim
           on_error => sub
                 {
                 $apns_handle = undef;
+                $apns_running = 0;
                 $_[0]->destroy;
                 },
           on_starttls => \&apns_push
