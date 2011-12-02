@@ -44,6 +44,7 @@
 // NET_MSG data
 #define TOKEN_SIZE 22
 #pragma udata
+char net_msg_notify = 0;
 char token[23] = {0};
 char ptoken[23] = {0};
 char ptokenmade = 0;
@@ -95,7 +96,8 @@ void net_msg_encode_puts(void)
   if ((ptokenmade==1)&&
       (net_scratchpad[5]!='E')&&
       (net_scratchpad[5]!='A')&&
-      (net_scratchpad[5]!='a'))
+      (net_scratchpad[5]!='a')&&
+      (net_scratchpad[5]!='P'))
     {
     // We must convert the message to a paranoid one...
     // The message in net_scratchpad is of the form MP-0 X...
@@ -344,4 +346,56 @@ void net_msg_in(char* msg)
         break;
       }
     }
+  }
+
+void net_msg_alert(void)
+  {
+  char *p;
+
+  delay100(2);
+  net_msg_start();
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PA");
+
+  switch (car_chargemode)
+    {
+    case 0x00:
+      strcatpgm2ram(net_scratchpad,(char const rom far *)"Standard - "); // Charge Mode Standard
+      break;
+    case 0x01:
+      strcatpgm2ram(net_scratchpad,(char const rom far *)"Storage - "); // Storage
+      break;
+    case 0x03:
+      strcatpgm2ram(net_scratchpad,(char const rom far *)"Range - "); // Range
+      break;
+    case 0x04:
+      strcatpgm2ram(net_scratchpad,(char const rom far *)"Performance - "); // Performance
+    }
+  switch (car_chargestate)
+    {
+    case 0x01:
+      strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging"); // Charge State Charging
+      break;
+    case 0x02:
+      strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging, Topping off"); // Topping off
+      break;
+    case 0x04:
+      strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Done"); // Done
+      break;
+    default:
+      strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Stopped"); // Stopped
+    }
+
+  strcatpgm2ram(net_scratchpad,(char const rom far *)"\rIdeal Range: "); // Ideal Range
+  p = par_get(PARAM_MILESKM);
+  if (*p == 'M') // Kmh or Miles
+    sprintf(net_msg_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
+  else
+    sprintf(net_msg_scratchpad, (rom far char*)"%u Km", (unsigned int) ((float) car_idealrange * 1.609)); // Kmh
+  strcat((char*)net_scratchpad,net_msg_scratchpad);
+
+  strcatpgm2ram(net_scratchpad,(char const rom far *)" SOC: ");
+  sprintf(net_msg_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
+  strcat(net_scratchpad,net_msg_scratchpad);
+  net_msg_encode_puts();
+  net_msg_send();
   }

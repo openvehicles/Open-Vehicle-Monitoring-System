@@ -35,6 +35,9 @@
 #include "net.h"
 #include "net_sms.h"
 
+#pragma udata
+char net_sms_notify = 0;
+
 rom char NET_MSG_DENIED[] = "Permission denied";
 rom char NET_MSG_REGISTERED[] = "Your phone has been registered as the owner.";
 rom char NET_MSG_PASSWORD[] = "Your password has been changed.";
@@ -74,6 +77,7 @@ void net_sms_params(char* number)
 
 void net_sms_gps(char* number)
   {
+  delay100(2);
   net_send_sms_start(number);
   net_puts_rom(NET_MSG_GOOGLEMAPS);
   format_latlon(car_latitude,net_scratchpad);
@@ -88,6 +92,7 @@ void net_sms_stat(char* number)
   {
   char *p;
 
+  delay100(2);
   net_send_sms_start(number);
 
   switch (car_chargemode)

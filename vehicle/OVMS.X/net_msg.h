@@ -33,6 +33,8 @@
 
 #include "net.h"
 
+extern char net_msg_notify;
+
 void net_msg_init(void);
 void net_msg_disconnected(void);
 void net_msg_start(void);
@@ -41,5 +43,6 @@ void net_msg_register(void);
 void net_msg_stat(void);
 void net_msg_gps(void);
 void net_msg_in(char* msg);
+void net_msg_alert(void);
 
 #endif // #ifndef __OVMS_MSG_H
