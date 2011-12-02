@@ -139,7 +139,10 @@
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
 {
   NSString *message = nil;
-  id alert = [userInfo objectForKey:@"alert"];
+  NSDictionary* aps = [userInfo objectForKey:@"aps"];
+  if (aps == nil) return;
+  
+  id alert = [aps objectForKey:@"alert"];
   if ([alert isKindOfClass:[NSString class]])
     {
     message = alert;
