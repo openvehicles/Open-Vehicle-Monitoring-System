@@ -226,8 +226,11 @@ void net_notify_status(void)
   p = par_get(PARAM_NOTIFIES);
   if (strstrrampgm(p,(char const rom far*)"SMS") != NULL)
     {
-    q = par_get(PARAM_REGPHONE);
-    net_sms_stat(q);
+    net_sms_notify = 1;
+    }
+  if (strstrrampgm(p,(char const rom far*)"IP") != NULL)
+    {
+    net_msg_notify = 1;
     }
   }
 
@@ -481,6 +484,8 @@ void net_state_activity()
 //
 void net_state_ticker1(void)
   {
+  char *p;
+
   switch (net_state)
     {
     case NET_STATE_START:
@@ -494,7 +499,28 @@ void net_state_ticker1(void)
       if (net_watchdog > 0)
         {
         if (--net_watchdog == 0)
+          {
           net_state_enter(NET_STATE_COPS); // Reset network connection
+          return;
+          }
+        }
+      if ((net_reg == 0x01)||(net_reg == 0x05))
+        {
+        if (net_msg_notify==1)
+          {
+          delay100(10);
+          net_msg_alert();
+          net_msg_notify = 0;
+          return;
+          }
+        if (net_sms_notify==1)
+          {
+          delay100(10);
+          p = par_get(PARAM_REGPHONE);
+          net_sms_stat(p);
+          net_sms_notify = 0;
+          return;
+          }
         }
       break;
     }
