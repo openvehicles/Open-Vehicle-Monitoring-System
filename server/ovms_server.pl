@@ -4,6 +4,7 @@ use EV;
 use AnyEvent;
 use AnyEvent::Handle;
 use AnyEvent::Socket;
+use AnyEvent::HTTP;
 use IO::Handle;
 use AnyEvent::Log;
 use Config::IniFiles;
@@ -13,6 +14,7 @@ use Digest::HMAC;
 use Crypt::RC4::XS;
 use MIME::Base64;
 use JSON::XS;
+use URI::Escape;
 
 # Global Variables
 
@@ -29,6 +31,10 @@ my @apns_queue_production;
 my @apns_queue;
 my $apns_handle;
 my $apns_running=0;
+my @c2dm_queue;
+my $c2dm_handle;
+my $c2dm_auth;
+my $c2dm_running=0;
 
 # Auto-flush
 select STDOUT; $|=1;
@@ -52,6 +58,9 @@ my $dbtim = AnyEvent->timer (after => 60, interval => 60, cb => \&db_tim);
 
 # An APNS ticker
 my $apnstim = AnyEvent->timer (after => 1, interval => 1, cb => \&apns_tim);
+
+# A C2DM ticker
+my $c2dmtim = AnyEvent->timer (after => 1, interval => 1, cb => \&c2dm_tim);
 
 sub io_error
   {
@@ -459,29 +468,32 @@ sub push_queuenotify
   my ($vehicleid, $alerttype, $alertmsg) = @_;
 
   my $sth = $db->prepare('SELECT * FROM ovms_notifies WHERE vehicleid=? and active=1');
-  CANDIDATE: $sth->execute($vehicleid);
-  while (my $row = $sth->fetchrow_hashref())
+  $sth->execute($vehicleid);
+  CANDIDATE: while (my $row = $sth->fetchrow_hashref())
     {
     my %rec;
+    $rec{'vehicleid'} = $vehicleid;
+    $rec{'alerttype'} = $alerttype;
+    $rec{'alertmsg'} = $alertmsg;      $rec{'pushkeytype'} = $row->{'pushkeytype'};
+    $rec{'pushkeyvalue'} = $row->{'pushkeyvalue'};
+    $rec{'appid'} = $row->{'appid'};
+    foreach (%{$app_conns{$vehicleid}})
+      {
+      my $fn = $_;
+      next CANDIDATE if ($conns{$fn}{'appid'} eq $row->{'appid'}); # Car connected?
+      }
     if ($row->{'pushtype'} eq 'apns')
       {
-      $rec{'vehicleid'} = $vehicleid;
-      $rec{'alerttype'} = $alerttype;
-      $rec{'alertmsg'} = $alertmsg;
-      $rec{'pushkeytype'} = $row->{'pushkeytype'};
-      $rec{'pushkeyvalue'} = $row->{'pushkeyvalue'};
-      $rec{'appid'} = $row->{'appid'};
-
-      foreach (%{$app_conns{$vehicleid}})
-        {
-        my $fn = $_;
-        next CANDIDATE if ($conns{$fn}{'appid'} eq $row->{'appid'}); # Car connected?
-        }
       if ($row->{'pushkeytype'} eq 'sandbox')
         { push @apns_queue_sandbox,\%rec; }
       else
         { push @apns_queue_production,\%rec; }
-      AE::log info => "- - $vehicleid msg queued notification for $rec{'pushkeytype'}:$rec{'appid'}";
+      AE::log info => "- - $vehicleid msg queued apns notification for $rec{'pushkeytype'}:$rec{'appid'}";
+      }
+    if ($row->{'pushtype'} eq 'c2dm')
+      {
+      push @c2dm_queue,\%rec;
+      AE::log info => "- - $vehicleid msg queued c2dm notification for $rec{'pushkeytype'}:$rec{'appid'}";
       }
     }
   }
@@ -562,7 +574,6 @@ sub apns_push
     my $alertmsg = $rec->{'alertmsg'};
     my $pushkeyvalue = $rec->{'pushkeyvalue'};
     my $appid = $rec->{'appid'};
-    print "Got rec for $appid\n";
     AE::log info => "#$fn - $vehicleid msg apns '$alertmsg' => $pushkeyvalue";
     &apns_send( $pushkeyvalue => { aps => { alert => "$vehicleid\n$alertmsg" } } );
     }
@@ -618,5 +629,73 @@ sub apns_tim
                 },
           on_starttls => \&apns_push
           );
+    }
+  }
+
+sub c2dm_tim
+  {
+  if ($c2dm_running == 0)
+    {
+    return if (scalar @c2dm_queue == 0);
+
+    # OK. First step is we need to get an AUTH token...
+    $c2dm_running = 1;
+    $c2dm_auth = 0;
+    my $c2dm_email = uri_escape($config->val('c2dm','email'));
+    my $c2dm_password = uri_escape($config->val('c2dm','password'));
+    my $c2dm_type = uri_escape($config->val('c2dm','accounttype'));
+    my $body = 'Email='.$c2dm_email.'&Passwd='.$c2dm_password.'&accountType='.$c2dm_type.'&source=openvehicles-ovms-1&service=ac2dm';
+    AE::log info => "- - - msg c2dm obtaining auth token for notifications";
+    http_request
+      POST => 'https://www.google.com/accounts/ClientLogin',
+      body => $body,
+      headers=>{ "Content-Type" => "application/x-www-form-urlencoded" },
+      sub
+        {
+        my ($data, $headers) = @_;
+        foreach (split /\n/,$data)
+          {
+          $c2dm_auth = $1 if (/^Auth=(.+)/);
+          }
+        if (!defined $c2dm_auth)
+          {
+          AE::log error => "- - - msg c2dm could not authenticate to google ($body)";
+          @c2dm_queue = ();
+          $c2dm_running = 0;
+          return;
+          }
+        $c2dm_running = 2;
+        };
+    }
+  elsif ($c2dm_running == 2)
+    {
+    AE::log info => "- - - msg c2dm auth is '$c2dm_auth'";
+
+    foreach my $rec (@c2dm_queue)
+      {
+      my $vehicleid = $rec->{'vehicleid'};
+      my $alerttype = $rec->{'alerttype'};
+      my $alertmsg = $rec->{'alertmsg'};
+      my $pushkeyvalue = $rec->{'pushkeyvalue'};
+      my $appid = $rec->{'appid'};
+      AE::log info => "#$fn - $vehicleid msg c2dm '$alertmsg' => $pushkeyvalue";
+      my $body = 'registration_id='.uri_escape($pushkeyvalue)
+                .'&data.title='.uri_escape($vehicleid)
+                .'&data.message='.uri_escape($alertmsg)
+                .'&collapse_key='.time;
+      http_request
+        POST=>'https://android.apis.google.com/c2dm/send',
+        body => $body,
+        headers=>{ 'Authorization' => 'GoogleLogin auth='.$c2dm_auth,
+                   "Content-Type" => "application/x-www-form-urlencoded" },
+        sub
+          {
+          my ($data, $headers) = @_;
+          foreach (split /\n/,$data)
+            { AE::log info => "- - - msg c2dm message sent ($_)"; }
+          };
+      }
+    @c2dm_queue = ();
+    $c2dm_running = 0;
     }
   }
