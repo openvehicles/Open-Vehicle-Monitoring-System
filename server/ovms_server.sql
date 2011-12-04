@@ -66,7 +66,7 @@ CREATE TABLE `ovms_notifies` (
   `appid` varchar(128) NOT NULL default '' COMMENT 'Unique App ID',
   `pushtype` varchar(16) NOT NULL default '',
   `pushkeytype` varchar(16) NOT NULL default '',
-  `pushkeyvalue` varchar(128) NOT NULL default '',
+  `pushkeyvalue` varchar(256) NOT NULL default '',
   `lastupdated` datetime NOT NULL default '0000-00-00 00:00:00',
   `active` tinyint(1) NOT NULL default '1',
   PRIMARY KEY  (`vehicleid`,`appid`)
