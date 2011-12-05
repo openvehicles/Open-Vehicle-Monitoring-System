@@ -58,6 +58,7 @@ void net_initialise(void);
 void net_poll(void);
 void net_reset_async(void);
 void net_ticker(void);
+void net_ticker10th(void);
 
 void net_state_enter(unsigned char);
 void net_state_activity(void);

@@ -248,39 +248,47 @@ void net_state_enter(unsigned char newstate)
   switch(net_state)
     {
     case NET_STATE_START:
+      PORTBbits.RB0 = 1;
       net_timeout_goto = NET_STATE_DOINIT;
-      net_timeout_ticks = 10;
+      net_timeout_ticks = 30;
       net_state_vchar = 1;
       net_apps_connected = 0;
       led_act(net_state_vchar);
       net_msg_init();
       break;
     case NET_STATE_SOFTRESET:
+      PORTBbits.RB0 = 1;
+      led_act(0);
+      led_net(0);
       net_timeout_goto = 0;
       break;
     case NET_STATE_HARDRESET:
       net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 10;
+      led_net(0);
       led_act(1);
       net_state_vchar = 0;
       net_apps_connected = 0;
       net_msg_disconnected();
-      delay100(2);
-      net_puts_rom("AT+CFUN=1,1\r"); // This is a nasty hard reset of the modem
+      PORTBbits.RB0 = 0;
       break;
     case NET_STATE_DOINIT:
-      net_timeout_goto = NET_STATE_SOFTRESET;
+      net_timeout_goto = NET_STATE_HARDRESET;
       net_timeout_ticks = 10;
       led_act(0);
+      led_net(0);
       net_puts_rom(NET_INIT);
       break;
     case NET_STATE_DONETINIT:
+      net_watchdog=0; // Disable watchdog, as we have connectivity
+      net_reg = 0x05; // Assume connectivity (as COPS worked)
+      led_net(1);
+      led_act(0);
       p = par_get(PARAM_GPRSAPN);
       if (p[0] != '\0')
         {
         net_timeout_goto = NET_STATE_SOFTRESET;
         net_timeout_ticks = 60;
-        led_act(0);
         net_state_vchar = 0;
         net_apps_connected = 0;
         net_msg_disconnected();
@@ -301,8 +309,10 @@ void net_state_enter(unsigned char newstate)
       break;
     case NET_STATE_COPS:
       delay100(2);
-      net_timeout_goto = NET_STATE_SOFTRESET;
-      net_timeout_ticks = 120;
+      net_timeout_goto = NET_STATE_HARDRESET;
+      net_state_vchar = 0;
+      led_net(net_state_vchar);
+      net_timeout_ticks = 240;
       net_msg_disconnected();
       net_puts_rom(NET_COPS);
       break;
@@ -360,6 +370,7 @@ void net_state_activity()
         {
         // This is a nasty case. The GPRS has locked up.
         // The only solution I can find is a hard reset of the modem
+        led_act(0);
         net_state_enter(NET_STATE_HARDRESET);
         }
       else if ((net_buf_pos >= 2)&&
@@ -409,6 +420,11 @@ void net_state_activity()
             break;
           }
         }
+      else if ((net_buf_pos>=7)&&
+               (memcmppgm2ram(net_buf, (char const rom far*)"+CREG: 0", 8) == 0))
+        { // Lost network connectivity during NETINIT
+        net_state_enter(NET_STATE_SOFTRESET);
+        }
       break;
     case NET_STATE_READY:
       if (memcmppgm2ram(net_buf, (char const rom far*)"+CREG", 5) == 0)
@@ -424,7 +440,7 @@ void net_state_activity()
           }
         else
           {
-          net_watchdog = 60; // We need connectivity within 60 seconds
+          net_watchdog = 120; // We need connectivity within 120 seconds
           led_net(0);
           }
         }
@@ -492,6 +508,11 @@ void net_state_ticker1(void)
       net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
       led_act(net_state_vchar);
       break;
+    case NET_STATE_COPS:
+      net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
+      led_net(net_state_vchar);
+      led_act(net_state_vchar^1);
+      break;
     case NET_STATE_SOFTRESET:
       net_state_enter(NET_STATE_START);
       break;
@@ -508,17 +529,17 @@ void net_state_ticker1(void)
         {
         if (net_msg_notify==1)
           {
+          net_msg_notify = 0;
           delay100(10);
           net_msg_alert();
-          net_msg_notify = 0;
           return;
           }
         if (net_sms_notify==1)
           {
+          net_sms_notify = 0;
           delay100(10);
           p = par_get(PARAM_REGPHONE);
           net_sms_stat(p);
-          net_sms_notify = 0;
           return;
           }
         }
@@ -619,6 +640,23 @@ void net_ticker(void)
   }
 
 ////////////////////////////////////////////////////////////////////////
+// net_ticker10th()
+// This function is an entry point from the main() program loop, and
+// gives the NET framework a ticker call approximately ten times per
+// second. It is used to flash the RED LED when the link is up
+//
+void net_ticker10th(void)
+  {
+  if ((net_state==NET_STATE_READY)&&(net_link==1))
+    {
+    if (TMR0H < 1)
+      led_act(1);
+    else
+      led_act(0);
+    }
+  }
+
+////////////////////////////////////////////////////////////////////////
 // net_initialise()
 // This function is an entry point from the main() program loop, and
 // gives the NET framework an opportunity to initialise itself.
@@ -627,7 +665,7 @@ void net_initialise(void)
   {
   // I/O configuration PORT C
   TRISC = 0x80; // Port C RC0-6 output, RC7 input
-  PORTC = 0x00;
+  PORTBbits.RB0 = 1;
   UARTIntInit();
 
   led_net(0);

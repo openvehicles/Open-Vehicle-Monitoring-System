@@ -79,11 +79,11 @@ char net_apps_connected = 0; // Network apps connected
 
 void main(void)
   {
-  unsigned char x;
+  unsigned char x,y;
 
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter
-  TRISB = 0xFF;
+  TRISB = 0xFE;
 
   // Timer 0 enabled, Fosc/4, 16 bit mode, prescaler 1:256
   // This gives us one tick every 51.2uS before prescale (13.1ms after)
@@ -95,6 +95,7 @@ void main(void)
   net_initialise();
 
   // Proceed to main loop
+  y = 0; // Last TMR0H
   while (1) // Main Loop
     {
     if (RXB0CONbits.RXFUL) can_poll();
@@ -110,6 +111,11 @@ void main(void)
       TMR0H = 0; TMR0L = 0; // Reset timer
       net_ticker();
       can_ticker();
+      }
+    else if (TMR0H != y)
+      {
+      if ((TMR0H % 0x04)==0) net_ticker10th();
+      y = TMR0H;
       }
     }
   }

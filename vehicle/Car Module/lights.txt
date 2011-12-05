@@ -1,0 +1,41 @@
+WHAT THE LIGHTS MEAN
+====================
+
+The RED light is the ACTivity light.
+The GREEN light is the NETwork light.
+
+COMBINATIONS
+============
+
+GREEN light off, RED light slow blinking alternately on and off roughly once a second:
+
+  The system is trying to reset the GSM connection. It has previously lost GSM connectivity, so
+  is now waiting for the modem to stabilise before trying to establish a connection to the
+  network carrier again. This combination should persist for 30 seconds.
+
+GREEN light and RED light slow alternatively blinking roughly once a second:
+
+  The system is trying to establish a GSM connection with the carrier. This combination should
+  persist for at most 240 seconds (and usually much less unless there is a GSM connectivity
+  issue).
+
+RED light fully on, and GREEN light off:
+
+  The system is having problems communicating with the modem and is performing a hard
+  reset. This combination should persist for at most 10 seconds.
+
+RED light completely off (never on) and GREEN light off:
+
+  The system has lost GSM connectivity and is waiting for it to come back. This combination
+  should persist for at most 120 seconds.
+
+RED light completely off (never on) and GREEN light on:
+
+  The GSM network is up. The GPRS link has not been (or is being) established.
+  This is the ideal state if you have not configured GPRS but want just GSM (SMS) control.
+
+RED light short rapid blinks, and GREEN light solid on:
+
+  Both the GSM and GPRS networks are up and connected ok.
+  This is the ideal state if you have configured GPRS.
+
