@@ -56,10 +56,9 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 // ROM Constants
 rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0\r";
-rom char NET_CIPSTATUS[] = "AT+CIPSTATUS\r";
 rom char NET_HANGUP[] = "ATH\r";
-rom char NET_CREG[] = "AT+CREG?\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
+rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS\r";
 
 ////////////////////////////////////////////////////////////////////////
 // The Interrupt Service Routine is standard PIC code
@@ -264,7 +263,7 @@ void net_state_enter(unsigned char newstate)
       break;
     case NET_STATE_HARDRESET:
       net_timeout_goto = NET_STATE_SOFTRESET;
-      net_timeout_ticks = 10;
+      net_timeout_ticks = 2;
       led_net(0);
       led_act(1);
       net_state_vchar = 0;
@@ -438,7 +437,7 @@ void net_state_activity()
           net_watchdog=0; // Disable watchdog, as we have connectivity
           led_net(1);
           }
-        else
+        else if (net_watchdog == 0)
           {
           net_watchdog = 120; // We need connectivity within 120 seconds
           led_net(0);
@@ -567,10 +566,7 @@ void net_state_ticker60(void)
         }
       net_state_vchar = net_state_vchar ^ 1;
       delay100(2);
-      if (net_state_vchar == 0)
-        net_puts_rom(NET_CREG);
-      else
-        net_puts_rom(NET_CIPSTATUS);
+      net_puts_rom(NET_CREG_CIPSTATUS);
       break;
     }
   }
