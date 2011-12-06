@@ -325,7 +325,7 @@ void net_msg_in(char* msg)
     switch (*msg)
       {
       case 'A': // PING
-        strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 Ca");
+        strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 a");
         net_msg_start();
         net_msg_encode_puts();
         net_msg_send();
