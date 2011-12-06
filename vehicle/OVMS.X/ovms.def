@@ -41,3 +41,11 @@
 // The OVMS_CAR_2010 switch should be defined if the vehicle is a 2010 (or
 // later) roadster.
 #define OVMS_CAR_2010
+
+// Prevents the OVMS net_sms module from sending "access denied" SMS
+// (for some operators/plans, SMS are charged on per use basis)
+//#define OVMS_SUPPRESS_ACCESSDENIED_SMS
+
+// Prevents the OVMS net_sms module from sending all SMS messages
+// (useful for data-only plans with expensive SMS rates)
+//#define OVMS_SUPPRESS_OUTGOING_SMS

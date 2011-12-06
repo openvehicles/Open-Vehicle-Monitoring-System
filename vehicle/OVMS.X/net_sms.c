@@ -54,6 +54,14 @@ void net_send_sms_start(char* number)
 
 void net_send_sms_rom(char* number, static const rom char* message)
   {
+#ifdef OVMS_SUPPRESS_ACCESSDENIED_SMS
+    if (message == NET_MSG_DENIED)
+        return;
+#endif
+#ifdef OVMS_SUPPRESS_OUTGOING_SMS
+    return;
+#endif
+    
   net_send_sms_start(number);
   net_puts_rom(message);
   net_puts_rom("\x1a");
@@ -64,6 +72,10 @@ void net_sms_params(char* number)
   unsigned char k;
   char *p;
 
+#ifdef OVMS_SUPPRESS_OUTGOING_SMS
+  return;
+#endif
+  
   net_send_sms_start(number);
   net_puts_rom("Params:");
   for (k=0;k<PARAM_MAX;k++)
@@ -77,6 +89,10 @@ void net_sms_params(char* number)
 
 void net_sms_gps(char* number)
   {
+#ifdef OVMS_SUPPRESS_OUTGOING_SMS
+  return;
+#endif
+
   delay100(2);
   net_send_sms_start(number);
   net_puts_rom(NET_MSG_GOOGLEMAPS);
@@ -91,6 +107,10 @@ void net_sms_gps(char* number)
 void net_sms_stat(char* number)
   {
   char *p;
+
+#ifdef OVMS_SUPPRESS_OUTGOING_SMS
+  return;
+#endif
 
   delay100(2);
   net_send_sms_start(number);

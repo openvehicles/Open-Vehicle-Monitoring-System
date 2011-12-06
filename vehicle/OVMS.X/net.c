@@ -567,6 +567,8 @@ void net_state_ticker1(void)
 //
 void net_state_ticker60(void)
   {
+    char *EEminSOC;
+    int minSOC;
   switch (net_state)
     {
     case NET_STATE_READY:
@@ -583,6 +585,20 @@ void net_state_ticker60(void)
         net_puts_rom(NET_CREG);
       else
         net_puts_rom(NET_CIPSTATUS);
+
+      // check minSOC
+      EEminSOC = par_get(PARAM_MINSOC);
+      // convert 2-digit number in char[] to int 
+      minSOC = (((int) EEminSOC - 0x30) * 10) + (int) ++EEminSOC - 0x30;
+      if ((car_minSOCnotified == 0) && (car_SOC < minSOC))
+      {
+          net_notify_status();
+          car_minSOCnotified = 1;
+      } else if ((car_minSOCnotified == 1) && (car_SOC > minSOC + 2))
+      {
+          // reset the alert sent flag when SOC is 2% point higher than threshold
+          car_minSOCnotified = 0;
+      }
       break;
     }
   }

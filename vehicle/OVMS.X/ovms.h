@@ -57,4 +57,5 @@ extern signed long car_longitude; // Raw GPS Longitude
 extern unsigned char net_reg; // Network registration
 extern unsigned char net_link; // Network link status
 extern char net_apps_connected; // Network apps connected
+extern unsigned char car_minSOCnotified; // minSOC notified flag
 #endif
