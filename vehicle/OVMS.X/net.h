@@ -66,4 +66,6 @@ void net_state_ticker(void);
 
 void net_notify_status(void);
 
+void net_checkminSOC(void);
+
 #endif // #ifndef __OVMS_NET_H

@@ -44,7 +44,8 @@ $AnyEvent::Log::FILTER->level ("info");
 $config = Config::IniFiles->new(-file => 'ovms_server.conf');
 
 # Globals
-my $inactivitytimeout = $config->val('server','inactivitytimeout',720);
+my $timeout_app      = $config->val('server','timeout_app',60*20);
+my $timeout_car      = $config->val('server','timeout_car',60*12);
 
 # A database ticker
 $db = DBI->connect($config->val('db','path'),$config->val('db','user'),$config->val('db','pass'));
@@ -80,8 +81,50 @@ sub io_timeout
   my $fn = $hdl->fh->fileno();
   my $vid = $conns{$fn}{'vehicleid'}; $vid='-' if (!defined $vid);
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
-  AE::log error => "#$fn $clienttype $vid got timeout";
-  &io_terminate($fn,$hdl,$conns{$fn}{'vehicleid'},undef);
+
+  # We've got an N second receive data timeout
+
+  # Let's see if this is the initial welcome message negotiation...
+  if ($clienttype eq '-')
+    {
+    # OK, it has been 60 seconds since the client connected, but still no identification
+    # Time to shut it down...
+    AE::log error => "#$fn $clienttype $vid timeout due to no initial welcome exchange";
+    &io_terminate($fn,$hdl,$vid,undef);
+    return;
+    }
+
+  # At this point, it is either a car or an app - let's handle the timeout
+  my $now = AnyEvent->now;
+  my $lastrx = $conns{$fn}{'lastrx'};
+  my $lastping = $conns{$fn}{'lastping'};
+  if ($clienttype eq 'A')
+    {
+    if (($lastrx+$timeout_app)<$now)
+      {
+      # The APP has been unresponsive for timeout_app seconds - time to disconnect it
+      AE::log error => "#$fn $clienttype $vid timeout app due to inactivity";
+      &io_terminate($fn,$hdl,$vid,undef);
+      return;
+      }
+    }
+  elsif ($clienttype eq 'C')
+    {
+    if (($lastrx+$timeout_car)<$now)
+      {
+      # The CAR has been unresponsive for timeout_car seconds - time to disconnect it
+      AE::log error => "#$fn $clienttype $vid timeout car due to inactivity";
+      &io_terminate($fn,$hdl,$vid,undef);
+      return;
+      }
+    if ( (($lastrx+$timeout_car-60)<$now) && (($lastping+300)<$now) )
+      {
+      # The CAR has been unresponsive for timeout_car-60 seconds - time to ping it
+      AE::log info => "#$fn $clienttype $vid ping car (due to lack of response)"
+      &io_tx($fn, $conns{$fn}{'handle'}, 'A', 'FA');
+      $conns{$fn}{'lastping'} = $now;
+      }
+    }
   }
 
 sub io_line
@@ -93,7 +136,7 @@ sub io_line
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
   AE::log info => "#$fn $clienttype $vid rx $line";
   $hdl->push_read(line => \&io_line);
-  $hdl->rtimeout($inactivitytimeout);
+  $conns{$fn}{'lastrx'} = time;
 
   if ($line =~ /^MP-(\S)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/)
     {
@@ -149,6 +192,7 @@ sub io_line
     $conns{$fn}{'txcipher'} = $txcipher;
     $conns{$fn}{'rxcipher'} = $rxcipher;
     $conns{$fn}{'clienttype'} = $clienttype;
+    $conns{$fn}{'lastping'} = time;
 
     # Send out server welcome message
     AE::log info => "#$fn $clienttype $vehicleid tx MP-S 0 $servertoken $serverdigest";
@@ -164,7 +208,7 @@ sub io_line
     if ($message =~ /^MP-0\s(\S)(.*)/)
       {
       my ($code,$data) = ($1,$2);
-      AE::log info => "#$fn $clienttype $vid rx $code $data";
+      AE::log info => "#$fn $clienttype $vid rx msg $code $data";
       &io_message($fn, $hdl, $conns{$fn}{'vehicleid'}, $vrec, $code, $data);
       }
     else
@@ -274,8 +318,9 @@ sub io_tx
 
   my $vid = $conns{$fn}{'vehicleid'};
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
-  AE::log info => "#$fn $clienttype $vid tx $code $data";
-  $handle->push_write(encode_base64($conns{$fn}{'txcipher'}->RC4("MP-0 $code$data"),'')."\r\n");
+  my $encoded = encode_base64($conns{$fn}{'txcipher'}->RC4("MP-0 $code$data"),'');
+  AE::log info => "#$fn $clienttype $vid tx $encoded ($code $data)";
+  $handle->push_write($encoded."\r\n");
   }
 
 sub io_tx_car
@@ -309,7 +354,7 @@ tcp_server undef, 6867, sub
   $fh->blocking(0);
   my $fn = $fh->fileno();
   AE::log info => "#$fn - new connection from $host:$port";
-  my $handle; $handle = new AnyEvent::Handle(fh => $fh, on_error => \&io_error, on_timeout => \&io_timeout, keepalive => 1, no_delay => 1, rtimeout => $inactivitytimeout);
+  my $handle; $handle = new AnyEvent::Handle(fh => $fh, on_error => \&io_error, on_rtimeout => \&io_timeout, keepalive => 1, no_delay => 1, rtimeout => 30);
   $handle->push_read (line => \&io_line);
 
   $conns{$fn}{'fh'} = $fh;
@@ -422,7 +467,7 @@ sub io_message
         $db->do("UPDATE ovms_carmessages SET m_valid=0 WHERE vehicleid=? AND m_paranoid=1 AND m_ptoken != ?",undef,$vehicleid,$paranoidtoken);
         $db->do("UPDATE ovms_cars SET v_ptoken=? WHERE vehicleid=?",undef,$paranoidtoken,$vehicleid);
         }
-      AE::log error => "#$fn $clienttype $vehicleid paranoid token set '$paranoidtoken'";
+      AE::log info => "#$fn $clienttype $vehicleid paranoid token set '$paranoidtoken'";
       return;
       }
     elsif ($paranoidmsg eq 'M')

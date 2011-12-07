@@ -424,6 +424,10 @@ void net_state_activity()
         { // Lost network connectivity during NETINIT
         net_state_enter(NET_STATE_SOFTRESET);
         }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"+PDP: DEACT", 11) == 0)
+        { // PDP couldn't be activated - try again...
+        net_state_enter(NET_STATE_SOFTRESET);
+        }
       break;
     case NET_STATE_READY:
       if (memcmppgm2ram(net_buf, (char const rom far*)"+CREG", 5) == 0)
@@ -483,22 +487,19 @@ void net_state_activity()
           if ((net_reg == 0x01)||(net_reg == 0x05))
             {
             // We have a GSM network, but CIPSTATUS is not up
+            net_msg_disconnected();
             net_state_enter(NET_STATE_DONETINIT);
             }
           }
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"SEND FAIL", 9) == 0) // AT+CIPSEND FAILED
-      {
-          // Re-initialize GPRS network and TCP socket
-          net_msg_disconnected();
-           net_state_enter(NET_STATE_DONETINIT);
-      }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0) // AT+CIPSEND FAILED
-      {
-          // Re-initialize GPRS network and TCP socket
-          net_msg_disconnected();
-           net_state_enter(NET_STATE_DONETINIT);
-      }
+      else if ( (memcmppgm2ram(net_buf, (char const rom far*)"SEND FAIL", 9) == 0)||
+                (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0)||
+                (memcmppgm2ram(net_buf, (char const rom far*)"+PDP: DEACT", 11) == 0) )
+        { // Various GPRS error results
+        // Re-initialize GPRS network and TCP socket
+        net_msg_disconnected();
+        net_state_enter(NET_STATE_DONETINIT);
+        }
       break;
     }
   }
@@ -566,8 +567,6 @@ void net_state_ticker1(void)
 //
 void net_state_ticker60(void)
   {
-    char *EEminSOC;
-    int minSOC;
   switch (net_state)
     {
     case NET_STATE_READY:
@@ -581,21 +580,7 @@ void net_state_ticker60(void)
       net_state_vchar = net_state_vchar ^ 1;
       delay100(2);
       net_puts_rom(NET_CREG_CIPSTATUS);
-
-      // check minSOC
-      EEminSOC = par_get(PARAM_MINSOC);
-      // convert 2-digit number in char[] to int 
-      minSOC = (((int) EEminSOC - 0x30) * 10) + (int) ++EEminSOC - 0x30;
-      if ((car_minSOCnotified == 0) && (car_SOC < minSOC))
-      {
-          net_notify_status();
-          car_minSOCnotified = 1;
-      } else if ((car_minSOCnotified == 1) && (car_SOC > minSOC + 2))
-      {
-          // reset the alert sent flag when SOC is 2% point higher than threshold
-          car_minSOCnotified = 0;
-      }
-      net_puts_rom(NET_CREG_CIPSTATUS);
+      net_checkminSOC();
       break;
     }
   }
@@ -680,6 +665,34 @@ void net_ticker10th(void)
       led_act(0);
     }
   }
+
+////////////////////////////////////////////////////////////////////////
+// net_checkminSOC()
+// This function compares current SOC and minSOC set in the EEPROM.
+// If current SOC is lower than minSOC, an notification is sent.
+// If SOC is 2 percentage point higher than minSOC, the notification sent
+// flag is reset.
+//
+void net_checkminSOC(void)
+{
+    char *EEminSOC;
+    int minSOC;
+
+      // check minSOC
+    EEminSOC = par_get(PARAM_MINSOC);
+    // convert 2-digit number in char[] to int
+    minSOC = (((int) EEminSOC - 0x30) * 10) + (int) ++EEminSOC - 0x30;
+    if ((car_minSOCnotified == 0) && (car_SOC < minSOC))
+    {
+      net_notify_status();
+      car_minSOCnotified = 1;
+    } else if ((car_minSOCnotified == 1) && (car_SOC > minSOC + 2))
+    {
+      // reset the alert sent flag when SOC is 2% point higher than threshold
+      car_minSOCnotified = 0;
+    }
+
+}
 
 ////////////////////////////////////////////////////////////////////////
 // net_initialise()
