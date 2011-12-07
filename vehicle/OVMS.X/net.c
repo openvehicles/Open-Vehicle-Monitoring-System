@@ -483,9 +483,18 @@ void net_state_activity()
           if ((net_reg == 0x01)||(net_reg == 0x05))
             {
             // We have a GSM network, but CIPSTATUS is not up
+            net_msg_disconnected();
             net_state_enter(NET_STATE_DONETINIT);
             }
           }
+        }
+      else if ( (memcmppgm2ram(net_buf, (char const rom far*)"SEND FAIL", 9) == 0)||
+                (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0)||
+                (memcmppgm2ram(net_buf, (char const rom far*)"+PDP: DEACT", 11) == 0) )
+        { // Various GPRS error results
+        // Re-initialize GPRS network and TCP socket
+        net_msg_disconnected();
+        net_state_enter(NET_STATE_DONETINIT);
         }
       break;
     }
