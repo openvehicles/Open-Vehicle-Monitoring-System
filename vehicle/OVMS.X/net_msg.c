@@ -348,6 +348,24 @@ void net_msg_in(char* msg)
     }
   }
 
+void net_msg_forward_sms(char *caller, char *SMS)
+  {
+    //Server not ready, stop sending
+    //TODO: store this message inside buffer, resend it when server is connected
+    if (serverok == 0)
+        return;
+
+  delay100(2);
+  net_msg_start();
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PA");
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"SMS FROM: ");
+  strcat(net_scratchpad, caller);
+  strcpypgm2ram(net_scratchpad,(char const rom far*)" - MSG: ");
+  strcat(net_scratchpad, SMS);
+  net_msg_encode_puts();
+  net_msg_send();
+  }
+
 void net_msg_alert(void)
   {
   char *p;

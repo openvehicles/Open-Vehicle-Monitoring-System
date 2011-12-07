@@ -258,4 +258,9 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
     else
       net_send_sms_rom(caller,NET_MSG_DENIED);
     }
+  else // SMS didn't match any command pattern, forward to user via net msg
+    {
+        // TODO
+      net_msg_forward_sms(caller, buf);
+    }
   }

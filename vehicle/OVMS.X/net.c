@@ -580,10 +580,7 @@ void net_state_ticker60(void)
         }
       net_state_vchar = net_state_vchar ^ 1;
       delay100(2);
-      if (net_state_vchar == 0)
-        net_puts_rom(NET_CREG);
-      else
-        net_puts_rom(NET_CIPSTATUS);
+      net_puts_rom(NET_CREG_CIPSTATUS);
 
       // check minSOC
       EEminSOC = par_get(PARAM_MINSOC);
