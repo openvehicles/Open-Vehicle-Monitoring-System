@@ -424,6 +424,10 @@ void net_state_activity()
         { // Lost network connectivity during NETINIT
         net_state_enter(NET_STATE_SOFTRESET);
         }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"+PDP: DEACT", 11) == 0)
+        { // PDP couldn't be activated - try again...
+        net_state_enter(NET_STATE_SOFTRESET);
+        }
       break;
     case NET_STATE_READY:
       if (memcmppgm2ram(net_buf, (char const rom far*)"+CREG", 5) == 0)
