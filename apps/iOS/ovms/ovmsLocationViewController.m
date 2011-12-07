@@ -42,7 +42,30 @@
 
 -(void) updateLocation
 {
-  [self displayMYMap];
+  CLLocationCoordinate2D location = [ovmsAppDelegate myRef].car_location;
+  
+  MKCoordinateRegion region = myMapView.region;
+  if ( (region.center.latitude != location.latitude)&&
+       (region.center.longitude != location.longitude) )
+    {
+    // Remove all existing annotations
+    for (int k=0; k < [myMapView.annotations count]; k++)
+      { 
+      if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[TeslaAnnotation class]])
+        {
+        [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
+        }
+      }
+    
+    TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
+    pa.name = @"EV915";
+    pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
+    [myMapView addAnnotation:pa];
+    self.m_car_location = pa;
+
+    region.center=location;
+    [myMapView setRegion:region animated:YES];
+    }
 }
 
 #pragma mark - View lifecycle
@@ -67,7 +90,7 @@
 {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
-  [self updateLocation];
+  [self displayMYMap];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -125,7 +148,7 @@
     [myMapView addAnnotation:pa];
     self.m_car_location = pa;
     }
-
+  
   [myMapView setRegion:region animated:YES]; 
   [myMapView regionThatFits:region]; 
 }
@@ -140,13 +163,15 @@
  
   if([annotation isKindOfClass:[TeslaAnnotation class]]){
     //Try to get an unused annotation, similar to uitableviewcells
-    MKAnnotationView *annotationView=[mapView dequeueReusableAnnotationViewWithIdentifier:teslaAnnotationIdentifier];
+//    MKAnnotationView *annotationView=[mapView dequeueReusableAnnotationViewWithIdentifier:teslaAnnotationIdentifier];
     //If one isn't available, create a new one
-    if(!annotationView){
-      annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:teslaAnnotationIdentifier];
+//    if(!annotationView){
+      MKAnnotationView *annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:teslaAnnotationIdentifier];
       //Here's where the magic happens
-      annotationView.image=[UIImage imageNamed:@"teslapin.png"];
-    }
+      annotationView.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
+      annotationView.contentMode = UIViewContentModeScaleAspectFill;
+      annotationView.bounds = CGRectMake(0, 0, 32, 32);
+//    }
     return annotationView;
   }
   return nil;
