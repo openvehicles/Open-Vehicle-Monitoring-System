@@ -77,7 +77,7 @@ chop $line;
 print STDERR "  Received $line from server\n";
 print STDERR "  Server message decodes to: ",$rxcipher->RC4(decode_base64($line)),"\n";
 
-$encrypted = encode_base64($txcipher->RC4("MP-0 S80,K,220,70,done,standard,280,270"),'');
+$encrypted = encode_base64($txcipher->RC4("MP-0 S80,K,220,70,charging,standard,280,270"),'');
 print STDERR "  Sending message $encrypted\n";
 print $sock "$encrypted\r\n";
 
@@ -85,13 +85,20 @@ $encrypted = encode_base64($txcipher->RC4("MP-0 L22.274165,114.185715"),'');
 print STDERR "  Sending message $encrypted\n";
 print $sock "$encrypted\r\n";
 
-$encrypted = encode_base64($txcipher->RC4("MP-0 PThis is a test of the vehicle transmission system"),'');
-print STDERR "  Sending message $encrypted\n";
-print $sock "$encrypted\r\n";
+#$encrypted = encode_base64($txcipher->RC4("MP-0 PMSonny: This is a 3rd test of the vehicle transmission system"),'');
+#print STDERR "  Sending message $encrypted\n";
+#print $sock "$encrypted\r\n";
 
 while(<$sock>)
   {
   chop; chop;
   print STDERR "  Received $_ from server\n";
-  print STDERR "  Server message decodes to: ",$rxcipher->RC4(decode_base64($_)),"\n";
+  my $line = $rxcipher->RC4(decode_base64($_));
+  print STDERR "  Server message decodes to: ",$line,"\n";
+  if ($line =~ /^MP-0 A/)
+    {
+    $encrypted = encode_base64($txcipher->RC4("MP-0 a"),'');
+    print STDERR "  Sending message $encrypted\n";
+    print $sock "$encrypted\r\n";
+    }
   }
