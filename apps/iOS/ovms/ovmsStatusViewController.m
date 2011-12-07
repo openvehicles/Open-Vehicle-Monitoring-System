@@ -98,13 +98,29 @@
   int hours = minutes/60;
   int days = minutes/(60*24);
   
-  if (connected>0)
+  NSString* c_good;
+  NSString* c_bad;
+  NSString* c_unknown;
+  if ([ovmsAppDelegate myRef].car_paranoid)
     {
-    m_car_connection_image.image=[UIImage imageNamed:@"connection_good.png"];
+    c_good = [[NSString alloc] initWithString:@"connection_good_paranoid.png"];
+    c_bad = [[NSString alloc] initWithString:@"connection_bad_paranoid.png"];
+    c_unknown = [[NSString alloc] initWithString:@"connection_unknown_paranoid.png"];
     }
   else
     {
-    m_car_connection_image.image=[UIImage imageNamed:@"connection_unknown.png"];
+    c_good = [[NSString alloc] initWithString:@"connection_good.png"];
+    c_bad = [[NSString alloc] initWithString:@"connection_bad.png"];
+    c_unknown = [[NSString alloc] initWithString:@"connection_unknown.png"];
+    }
+    
+  if (connected>0)
+    {
+    m_car_connection_image.image=[UIImage imageNamed:c_good];
+    }
+  else
+    {
+    m_car_connection_image.image=[UIImage imageNamed:c_unknown];
     }
   
   if (lastupdated == 0)
@@ -114,7 +130,7 @@
     }
   else if (minutes == 0)
     {
-    m_car_connection_state.text = @"now";
+    m_car_connection_state.text = @"live";
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
   else if (minutes == 1)
@@ -126,19 +142,19 @@
     {
     m_car_connection_state.text = [NSString stringWithFormat:@"%d days",days];
     m_car_connection_state.textColor = [UIColor redColor];
-    m_car_connection_image.image=[UIImage imageNamed:@"connection_bad.png"];
+    m_car_connection_image.image=[UIImage imageNamed:c_bad];
     }
   else if (hours > 1)
     {
     m_car_connection_state.text = [NSString stringWithFormat:@"%d hours",hours];
     m_car_connection_state.textColor = [UIColor redColor];
-    m_car_connection_image.image=[UIImage imageNamed:@"connection_bad.png"];
+    m_car_connection_image.image=[UIImage imageNamed:c_bad];
     }
   else if (minutes >= 20)
     {
     m_car_connection_state.text = [NSString stringWithFormat:@"%d mins",minutes];
     m_car_connection_state.textColor = [UIColor redColor];
-    m_car_connection_image.image=[UIImage imageNamed:@"connection_bad.png"];
+    m_car_connection_image.image=[UIImage imageNamed:c_bad];
     }
   else
     {

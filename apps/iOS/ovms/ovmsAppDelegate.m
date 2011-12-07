@@ -27,6 +27,7 @@
 
 @synthesize car_lastupdated;
 @synthesize car_connected;
+@synthesize car_paranoid;
 
 @synthesize location_delegate;
 @synthesize car_location;
@@ -298,6 +299,7 @@
     {
     self.car_lastupdated = 0;
     self.car_connected = 0;
+    self.car_paranoid = FALSE;
     
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString* ovmsServer = [defaults stringForKey:@"ovmsServer"];
@@ -353,6 +355,7 @@
     {
     // We have a paranoid mode message
     const char *pm = [cmd UTF8String];
+    self.car_paranoid = TRUE;
     if (*pm == 'T')
       {
       // Set the paranoid token
