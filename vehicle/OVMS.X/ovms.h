@@ -46,12 +46,17 @@ extern unsigned char car_chargestate; // 1=charging, 2=top off, 4=done, 13=prepa
 extern unsigned char car_chargemode; // 0=standard, 1=storage, 3=range, 4=performance
 extern unsigned char car_charging; // 1=yes/0=no
 extern unsigned char car_stopped; // 1=yes,0=no
-extern unsigned char car_doors; //
+extern unsigned char car_doors1; //
+extern unsigned char car_doors2; //
 extern unsigned char car_speed; // speed in miles/hour
 extern unsigned char car_SOC; // State of Charge in %
 extern unsigned int car_idealrange; // Ideal Range in miles
 extern unsigned int car_estrange; // Estimated Range
 extern unsigned long car_time; // UTC Time
+extern unsigned char car_vin[18]; // VIN
+extern unsigned char car_tpem; // Tpem
+extern unsigned char car_tmotor; // Tmotor
+extern unsigned char car_tbattery; // Tbattery
 extern signed long car_latitude; // Raw GPS Latitude
 extern signed long car_longitude; // Raw GPS Longitude
 extern unsigned char net_reg; // Network registration
