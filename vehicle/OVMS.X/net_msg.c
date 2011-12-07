@@ -317,6 +317,10 @@ void net_msg_in(char* msg)
     }
 
   // Ok, we've got an encrypted message waiting for work.
+  // The followng is a nasty hack because base64decode doesn't like incoming
+  // messages of length divisible by 4, and is really expecting a CRLF
+  // terminated string, so we give it one...
+  strcatpgm2ram(msg,(char const rom far*)"\r\n");
   k = base64decode(msg,net_scratchpad);
   RC4_crypt(&rx_crypto1, &rx_crypto2, net_scratchpad, k);
   if (memcmppgm2ram(net_scratchpad, (char const rom far*)"MP-0 ", 5) == 0)
