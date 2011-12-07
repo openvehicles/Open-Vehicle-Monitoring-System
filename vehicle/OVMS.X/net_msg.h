@@ -44,6 +44,6 @@ void net_msg_stat(void);
 void net_msg_gps(void);
 void net_msg_in(char* msg);
 void net_msg_alert(void);
-void net_msg_forward_sms(char *caller, char *SMS);
+void net_msg_forward_sms(char* caller, char* SMS);
 
 #endif // #ifndef __OVMS_MSG_H

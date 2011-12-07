@@ -352,7 +352,7 @@ void net_msg_in(char* msg)
     }
   }
 
-void net_msg_forward_sms(char *caller, char *SMS)
+void net_msg_forward_sms(char* caller, char* SMS)
   {
     //Server not ready, stop sending
     //TODO: store this message inside buffer, resend it when server is connected

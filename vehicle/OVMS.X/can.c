@@ -41,6 +41,7 @@
 
 unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
 unsigned char can_databuffer[8];             // A buffer to store the current CAN message
+unsigned char k;
 
 ////////////////////////////////////////////////////////////////////////
 // can_initialise()
@@ -144,15 +145,25 @@ void can_poll(void)
         car_stopped = 1; // Yes Roadster stopped charging, set flag.
         }
       car_charging = (can_databuffer[1] >> 4) & 0x01; //Charging status
-      car_doors = can_databuffer[1]; // Doors
-                                     // bit0 left door opened
-                                     // bit1 right door opened
-                                     // bit2 charge door opened
-                                     // bit4 charging 
+      car_doors1 = can_databuffer[1]; // Doors #1
+      car_doors2 = can_databuffer[2]; // Doors #2
+      break;
+    case 0xA3: // Temperatures
+      car_tpem = can_databuffer[1]; // Tpem
+      car_tmotor = can_databuffer[2]; // Tmotor
+      car_tbattery = can_databuffer[6]; // Tbattery
       break;
     case 0xA4: // 7 VIN bytes i.e. "SFZRE2B"
+      for (k=0;k<7;k++)
+        car_vin[k] = can_databuffer[k+1];
+      break;
     case 0xA5: // 7 VIN bytes i.e. "39A3000"
+      for (k=0;k<7;k++)
+        car_vin[k+7] = can_databuffer[k+1];
     case 0xA6: // 3 VIN bytes i.e. "359"
+      car_vin[14] = can_databuffer[1];
+      car_vin[15] = can_databuffer[2];
+      car_vin[16] = can_databuffer[3];
       break;
     }
   }

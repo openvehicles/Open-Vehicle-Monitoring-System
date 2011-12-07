@@ -65,12 +65,17 @@ unsigned char car_chargestate = 4; // 1=charging, 2=top off, 4=done, 13=preparin
 unsigned char car_chargemode = 0; // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_charging = 0; // 1=yes/0=no
 unsigned char car_stopped = 0; // 1=yes,0=no
-unsigned char car_doors = 0; //
+unsigned char car_doors1 = 0; //
+unsigned char car_doors2 = 0; //
 unsigned char car_speed = 0; // speed in miles/hour
 unsigned char car_SOC = 0; // State of Charge in %
 unsigned int car_idealrange = 0; // Ideal Range in miles
 unsigned int car_estrange = 0; // Estimated Range
 unsigned long car_time; // UTC Time
+unsigned char car_vin[18] = "-----------------"; // VIN
+unsigned char car_tpem = 0; // Tpem
+unsigned char car_tmotor = 0; // Tmotor
+unsigned char car_tbattery = 0; // Tbattery
 signed long car_latitude = 0x16DEC6D9; // Raw GPS Latitude  (52.04246 zero in converted result)
 signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not verified if this is correct)
 unsigned char net_reg = 0; // Network registration

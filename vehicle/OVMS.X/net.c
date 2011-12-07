@@ -681,7 +681,7 @@ void net_checkminSOC(void)
       // check minSOC
     EEminSOC = par_get(PARAM_MINSOC);
     // convert 2-digit number in char[] to int
-    minSOC = (((int) EEminSOC - 0x30) * 10) + (int) ++EEminSOC - 0x30;
+    minSOC = (((int) *EEminSOC - 0x30) * 10) + (int) *++EEminSOC - 0x30;
     if ((car_minSOCnotified == 0) && (car_SOC < minSOC))
     {
       net_notify_status();
