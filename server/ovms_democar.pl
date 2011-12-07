@@ -121,12 +121,16 @@ $encrypted = encode_base64($txcipher->RC4("MP-0 L$lat,$lon"),'');
 print STDERR "  Sending message $encrypted\n";
 print $sock "$encrypted\r\n";
 
+#$encrypted = encode_base64($txcipher->RC4("MP-0 PMWelcome to the Open Vehicle Monitoring System (push notification)"),'');
+#print STDERR "  Sending message $encrypted\n";
+#print $sock "$encrypted\r\n";
+
 srand();
 
 my $handle = new AnyEvent::Handle(fh => $sock, on_error => \&io_error, keepalive => 1, no_delay => 1);
 $handle->push_read (line => \&io_line);
 
-my $tim = AnyEvent->timer (after => 30, interval => 30, cb => \&io_tim);
+my $tim = AnyEvent->timer (after => 120, interval => 120, cb => \&io_tim);
 
 # Main event loop...
 EV::loop();
@@ -183,7 +187,15 @@ sub io_line
   my ($hdl, $line) = @_;
 
   print "  Received $line from server\n";
-  print "  Server message decodes to: ",$rxcipher->RC4(decode_base64($line)),"\n";
+
+  $line = $rxcipher->RC4(decode_base64($line));
+  print "  Server message decodes to: $line\n";
+  if ($line =~ /^MP-0 A/)
+    {
+    my $encrypted = encode_base64($txcipher->RC4("MP-0 a"),'');
+    print STDERR "  Sending message $encrypted\n";
+    print $hdl->push_write("$encrypted\r\n");
+    }
   $hdl->push_read (line => \&io_line);
   }
 
