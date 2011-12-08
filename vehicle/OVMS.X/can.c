@@ -54,13 +54,25 @@ void can_initialise(void)
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
   // We are now in Configuration Mode
-  RXB0CON = 0b00000000; // Receive all valid messages
+  RXB0CON = 0b00000000; // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
 
-  RXF0SIDL = 0b00000000; // Setup Filter and Mask so that only CAN ID 0x100 will be accepted
-  RXF0SIDH = 0b00100000; // Set Filter to 0x100
+  RXM0SIDL = 0b10100000;
+  RXM0SIDH = 0b11111111;	// Set Mask0 to 0x7fd
 
-  RXM0SIDL = 0b11100000;
-  RXM0SIDH = 0b11111111; // Set Mask to 0x7ff
+  RXF0SIDL = 0b00000000;	// Setup Filter0 and Mask so that only CAN ID 0x100 and 0x102 will be accepted
+  RXF0SIDH = 0b00100000;	// Set Filter0 to 0x100
+
+  RXB1CON = 0b00000000;	// RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
+
+  RXM1SIDL = 0b11100000;
+  RXM1SIDH = 0b11111111;	// Set Mask1 to 0x7ff
+
+  RXF2SIDL = 0b10000000;	// Setup Filter2 so that CAN ID 0x344 will be accepted
+  RXF2SIDH = 0b01101000;
+
+  RXF3SIDL = 0b01000000;	// Setup Filter3 so that CAN ID 0x402 will be accepted
+  RXF3SIDH = 0b10000000;
+
 
   BRGCON1 = 0; // SET BAUDRATE to 1 Mbps
   BRGCON2 = 0xD2;
@@ -79,7 +91,7 @@ void can_initialise(void)
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
 //
-void can_poll(void)
+void can_poll0(void)                // CAN ID 100 and 102
   {
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
@@ -167,6 +179,43 @@ void can_poll(void)
       break;
     }
   }
+
+
+void can_poll1(void)                // CAN ID 344 and 402
+{
+  unsigned char CANctrl;
+
+  can_datalength = RXB1DLC & 0x0F; // number of received bytes
+  can_databuffer[0] = RXB1D0;
+  can_databuffer[1] = RXB1D1;
+  can_databuffer[2] = RXB1D2;
+  can_databuffer[3] = RXB1D3;
+  can_databuffer[4] = RXB1D4;
+  can_databuffer[5] = RXB1D5;
+  can_databuffer[6] = RXB1D6;
+  can_databuffer[7] = RXB1D7;
+
+  CANctrl=RXB1CON;		// copy CAN RX1 Control register
+  RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
+
+  if ((CANctrl & 0x07) == 2)    	// Acceptance Filter 2 (RXF2) = CAN ID 344
+  {
+	// TPMS code here
+  }
+  else  				// It must be CAN ID 402
+  {
+    switch (can_databuffer[0])
+    {
+      case 0xFA:			// ODOMETER
+        car_odometer = can_databuffer[5]
+		+ ((unsigned long) can_databuffer[4] << 8)
+                + ((unsigned long) can_databuffer[3] << 16);		// Miles /10
+	car_trip = can_databuffer[7] + ((unsigned int) can_databuffer[6] << 8);	// Miles /10
+	break;
+    }
+  }
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 // can_ticker()

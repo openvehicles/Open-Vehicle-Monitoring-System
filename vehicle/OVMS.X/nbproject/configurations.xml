@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurationDescriptor version="62">
   <logicalFolder name="root" displayName="root" projectFiles="true">
-    <logicalFolder name="f1" displayName="Documentation" projectFiles="true">
-    </logicalFolder>
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
@@ -16,7 +14,6 @@
       <itemPath>net.h</itemPath>
       <itemPath>net_msg.h</itemPath>
       <itemPath>net_sms.h</itemPath>
-      <itemPath>ovms.def</itemPath>
       <itemPath>ovms.h</itemPath>
       <itemPath>params.h</itemPath>
       <itemPath>utils.h</itemPath>
@@ -28,7 +25,6 @@
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
                    projectFiles="true">
-      <itemPath>/Applications/microchip/mplabx/mpasmx/LKR/18f2680_g.lkr</itemPath>
     </logicalFolder>
     <logicalFolder name="ObjectFiles"
                    displayName="Object Files"
@@ -56,6 +52,9 @@
       <itemPath>Makefile</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>.</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="default" type="2">
@@ -63,10 +62,10 @@
         <developmentServer>localhost</developmentServer>
         <targetDevice>PIC18F2680</targetDevice>
         <targetHeader></targetHeader>
-        <platformTool>PICkit3PlatformTool</platformTool>
+        <platformTool>Simulator</platformTool>
         <languageToolchain>C18</languageToolchain>
         <languageToolchainVersion>3.40</languageToolchainVersion>
-        <platform>4</platform>
+        <platform>3</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
@@ -74,9 +73,19 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <makeCustomizationType>
+        <makeCustomizationPreStepEnabled>false</makeCustomizationPreStepEnabled>
+        <makeCustomizationPreStep></makeCustomizationPreStep>
+        <makeCustomizationPostStepEnabled>false</makeCustomizationPostStepEnabled>
+        <makeCustomizationPostStep></makeCustomizationPostStep>
+        <makeCustomizationAlternativeFileToLoadEnabled>false</makeCustomizationAlternativeFileToLoadEnabled>
+        <makeCustomizationAlternativeFileToLoad></makeCustomizationAlternativeFileToLoad>
+        <makeCustomizationUseOfUserID>makeCustomizationUseOfUserID</makeCustomizationUseOfUserID>
+        <makeCustomizationUserID>makeCustomizationUserID</makeCustomizationUserID>
+      </makeCustomizationType>
       <C18>
         <property key="storage-class" value="sca"/>
-        <property key="enable-opa" value="false"/>
+        <property key="enable-opa" value="true"/>
         <property key="enable-all-optimizations" value="true"/>
         <property key="preprocessor-macros" value=""/>
         <property key="default-char-unsigned" value="true"/>
@@ -86,23 +95,33 @@
         <property key="extra-include-directories" value=""/>
         <property key="enable-ow" value="true"/>
         <property key="verbose" value="false"/>
-        <property key="enable-ou" value="false"/>
-        <property key="enable-ot" value="false"/>
+        <property key="enable-ou" value="true"/>
+        <property key="enable-ot" value="true"/>
         <property key="enable-os" value="true"/>
         <property key="data-model" value="Oa-"/>
-        <property key="enable-or" value="false"/>
-        <property key="enable-op" value="false"/>
+        <property key="enable-or" value="true"/>
+        <property key="enable-op" value="true"/>
         <property key="enable-on" value="true"/>
         <property key="enable-om" value="true"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="enable-multi-bank-stack-model" value="false"/>
         <property key="enable-int-promotion" value="false"/>
-        <property key="enable-od" value="false"/>
-        <property key="enable-ob" value="false"/>
+        <property key="enable-od" value="true"/>
+        <property key="enable-ob" value="true"/>
       </C18>
       <C18-AS>
+        <property key="default.radix" value="HEX"/>
+        <property key="hex.output.format" value="INHX32"/>
+        <property key="enable.case.sensitivity" value="false"/>
+        <property key="preprocessor.macros" value=""/>
+        <property key="warning.level" value="0"/>
+        <property key="cross.reference.file" value=""/>
       </C18-AS>
       <C18-LD>
+        <property key="hex-output-format" value="INHX32"/>
+        <property key="cod-file" value="false"/>
+        <property key="map-file" value=""/>
+        <property key="extra-lib-directories" value=""/>
       </C18-LD>
       <C18LanguageToolchain>
         <property key="stack-analysis-mplink" value="false"/>
@@ -113,29 +132,36 @@
         <property key="extended-mode-mpasm" value="false"/>
         <property key="extended-mode-mplink" value="false"/>
       </C18LanguageToolchain>
-      <PICkit3PlatformTool>
-        <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
-        <property key="memories.id" value="false"/>
-        <property key="Freeze Peripherals" value="true"/>
-        <property key="programoptions.preserveeeprom" value="true"/>
-        <property key="programmertogo.imagename" value=""/>
-        <property key="memories.programmemory" value="true"/>
-        <property key="SecureSegment.SegmentProgramming" value="FullChipProgramming"/>
-        <property key="AutoSelectMemRanges" value="auto"/>
-        <property key="hwtoolclock.frcindebug" value="false"/>
-        <property key="programoptions.usehighvoltageonmclr" value="false"/>
-        <property key="memories.eeprom" value="false"/>
-        <property key="ToolFirmwareFilePath"
-                  value="Press to browse for a specific firmware version"/>
-        <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
-        <property key="programoptions.preserveprogramrange.start" value="0x0"/>
-        <property key="voltagevalue" value="5.0"/>
-        <property key="programoptions.preserveprogramrange" value="false"/>
-        <property key="programoptions.eraseb4program" value="true"/>
-        <property key="memories.programmemory.start" value="0x0"/>
-        <property key="memories.programmemory.end" value="0xffff"/>
-        <property key="poweroptions.powerenable" value="false"/>
-      </PICkit3PlatformTool>
+      <Simulator>
+        <property key="uart1io.outputfile" value=""/>
+        <property key="tracecontrol.timestamp" value="2"/>
+        <property key="oscillator.auxfrequencyunit" value="Mega"/>
+        <property key="uart1io.output" value="window"/>
+        <property key="tracecontrol.tracefile" value="C:\Users\Mike\mpdeftrace.log"/>
+        <property key="animationupdates.updatetime" value=""/>
+        <property key="animationupdates.realtimewatchupdates" value="false"/>
+        <property key="breakoptions.stimulusmessages.notes" value="Break"/>
+        <property key="breakoptions.wdtperiod" value=""/>
+        <property key="oscillator.frequencyunit" value="Mega"/>
+        <property key="codecoverage.outputfile" value=""/>
+        <property key="oscillator.auxfrequency" value="120"/>
+        <property key="codecoverage.enabled" value="Disable"/>
+        <property key="tracecontrol.select" value="0"/>
+        <property key="tracecontrol.tracebufmax" value="54600"/>
+        <property key="breakoptions.peripheralerrors" value="Break"/>
+        <property key="breakoptions.stimulusmessags.warnings" value="Break"/>
+        <property key="uart1io.uartioenabled" value="false"/>
+        <property key="breakoptions.wdtwarnings" value="Break"/>
+        <property key="performancedata.show" value="false"/>
+        <property key="breakoptions.stimulusmessags.errors" value="Break"/>
+        <property key="breakoptions.corewarnings" value="Break"/>
+        <property key="tracecontrol.traceresetonrun" value="false"/>
+        <property key="animationupdates.steptime" value=""/>
+        <property key="codecoverage.enableoutputtofile" value="false"/>
+        <property key="breakoptions.peripheralwarnings" value="Break"/>
+        <property key="oscillator.frequency" value="1"/>
+        <property key="breakoptions.coreerrors" value="Break"/>
+      </Simulator>
     </conf>
   </confs>
 </configurationDescriptor>

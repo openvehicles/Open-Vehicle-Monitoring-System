@@ -57,6 +57,8 @@ extern unsigned char car_vin[18]; // VIN
 extern unsigned char car_tpem; // Tpem
 extern unsigned char car_tmotor; // Tmotor
 extern unsigned char car_tbattery; // Tbattery
+extern unsigned int car_trip; // ODO trip in miles /10
+extern unsigned long car_odometer; //Odometer in miles /10
 extern signed long car_latitude; // Raw GPS Latitude
 extern signed long car_longitude; // Raw GPS Longitude
 extern unsigned char net_reg; // Network registration

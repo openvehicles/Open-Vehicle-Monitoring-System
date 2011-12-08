@@ -76,6 +76,8 @@ unsigned char car_vin[18] = "-----------------"; // VIN
 unsigned char car_tpem = 0; // Tpem
 unsigned char car_tmotor = 0; // Tmotor
 unsigned char car_tbattery = 0; // Tbattery
+unsigned int car_trip = 0; // ODO trip in miles /10
+unsigned long car_odometer = 0; //Odometer in miles /10
 signed long car_latitude = 0x16DEC6D9; // Raw GPS Latitude  (52.04246 zero in converted result)
 signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not verified if this is correct)
 unsigned char net_reg = 0; // Network registration
@@ -103,7 +105,8 @@ void main(void)
   y = 0; // Last TMR0H
   while (1) // Main Loop
     {
-    if (RXB0CONbits.RXFUL) can_poll();
+    if (RXB0CONbits.RXFUL) can_poll0();
+    if (RXB1CONbits.RXFUL) can_poll1();
     if((vUARTIntStatus.UARTIntRxError) ||
        (vUARTIntStatus.UARTIntRxOverFlow))
       net_reset_async();
