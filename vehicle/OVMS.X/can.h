@@ -34,7 +34,8 @@
 extern unsigned char can_databuffer[8];
 
 void can_initialise(void);
-void can_poll(void);
+void can_poll0(void);
+void can_poll1(void);
 void can_ticker(void);
 
 #endif // #ifndef __OVMS_CAN_H
