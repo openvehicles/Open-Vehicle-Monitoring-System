@@ -121,6 +121,21 @@ $encrypted = encode_base64($txcipher->RC4("MP-0 L$lat,$lon"),'');
 print STDERR "  Sending message $encrypted\n";
 print $sock "$encrypted\r\n";
 
+$encrypted = encode_base64($txcipher->RC4("MP-0 F1.0,VIN123456789012345,5"),'');
+print STDERR "  Sending message $encrypted\n";
+print $sock "$encrypted\r\n";
+
+my $trip = 0;
+my $odometer = 0;
+
+$encrypted = encode_base64($txcipher->RC4("MP-0 D160,0,5,21,39,24,$trip,$odometer,50"),'');
+print STDERR "  Sending message $encrypted\n";
+print $sock "$encrypted\r\n";
+
+$encrypted = encode_base64($txcipher->RC4("MP-0 W29,21,40,22,29,21,40,23"),'');
+print STDERR "  Sending message $encrypted\n";
+print $sock "$encrypted\r\n";
+
 #$encrypted = encode_base64($txcipher->RC4("MP-0 PMWelcome to the Open Vehicle Monitoring System (push notification)"),'');
 #print STDERR "  Sending message $encrypted\n";
 #print $sock "$encrypted\r\n";
@@ -156,6 +171,8 @@ sub io_tim
     my $newlon = $longitudes[$newdest];
     my $newlat = $latitudes[$newdest];
     my $dist = int(&Haversine($lat, $lon, $newlat, $newlon));
+    $trip += $dist*10;
+    $odometer += $dist*10;
     ($lat,$lon) = ($newlat,$newlon);
     $kmideal = $kmideal-$dist;
     $kmest = int($kmideal*0.9);
@@ -167,6 +184,7 @@ sub io_tim
       }
     $handle->push_write(encode_base64($txcipher->RC4("MP-0 S$soc,K,$volts,$amps,$state,$mode,$kmideal,$kmest"),'')."\r\n");
     $handle->push_write(encode_base64($txcipher->RC4("MP-0 L$lat,$lon"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 D160,0,5,21,39,24,$trip,$odometer,50"),"")."\r\n");
     }
   else
     {
@@ -178,7 +196,9 @@ sub io_tim
       {
       ($travelling,$volts,$amps,$state,$mode) = (1,0,0,"done","standard");
       }
+    $trip = 0;
     $handle->push_write(encode_base64($txcipher->RC4("MP-0 S$soc,K,$volts,$amps,$state,$mode,$kmideal,$kmest"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 D124,0,4,21,39,24,$trip,$odometer,50"),"")."\r\n");
     }
   }
 
