@@ -42,6 +42,29 @@
 @synthesize car_idealrange;
 @synthesize car_estimatedrange;
 
+@synthesize car_delegate;
+@synthesize car_doors1;
+@synthesize car_doors2;
+@synthesize car_lockstate;
+@synthesize car_vin;
+@synthesize car_firmware;
+@synthesize server_firmware;
+@synthesize car_gsmlevel;
+@synthesize car_tpem;
+@synthesize car_tmotor;
+@synthesize car_tbattery;
+@synthesize car_trip;
+@synthesize car_odometer;
+@synthesize car_speed;
+@synthesize car_tpms_fr_pressure;
+@synthesize car_tpms_fr_temp;
+@synthesize car_tpms_rr_pressure;
+@synthesize car_tpms_rr_temp;
+@synthesize car_tpms_fl_pressure;
+@synthesize car_tpms_fl_temp;
+@synthesize car_tpms_rl_pressure;
+@synthesize car_tpms_rl_temp;
+
 + (ovmsAppDelegate *) myRef
 {
   //return self;
@@ -448,6 +471,95 @@
         }
       }
       break;
+    case 'F': // CAR FIRMWARE
+      {
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        {
+        [self.status_delegate updateStatus];
+        }
+      NSArray *lparts = [cmd componentsSeparatedByString:@","];
+      if ([lparts count]>=3)
+        {
+        car_firmware = [lparts objectAtIndex:0];
+        car_vin = [lparts objectAtIndex:1];
+        car_gsmlevel = [[lparts objectAtIndex:2] intValue];
+        // Update the visible status
+        if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+          {
+          [self.car_delegate updateCar];
+          }
+        }
+      }
+      break;
+    case 'f': // SERVER FIRMWARE
+      {
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        {
+        [self.status_delegate updateStatus];
+        }
+      NSArray *lparts = [cmd componentsSeparatedByString:@","];
+      if ([lparts count]>=1)
+        {
+        server_firmware = [lparts objectAtIndex:0];
+        // Update the visible status
+        if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+          {
+          [self.car_delegate updateCar];
+          }
+        }
+      }
+      break;
+    case 'D': // CAR ENVIRONMENT
+      {
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        {
+        [self.status_delegate updateStatus];
+        }
+      NSArray *lparts = [cmd componentsSeparatedByString:@","];
+      if ([lparts count]>=9)
+        {
+        car_doors1 = [[lparts objectAtIndex:0] intValue];
+        car_doors2 = [[lparts objectAtIndex:1] intValue];
+        car_lockstate = [[lparts objectAtIndex:2] intValue];
+        car_tpem = [[lparts objectAtIndex:3] intValue];
+        car_tmotor = [[lparts objectAtIndex:4] intValue];
+        car_tbattery = [[lparts objectAtIndex:5] intValue];
+        car_trip = [[lparts objectAtIndex:6] intValue];
+        car_odometer = [[lparts objectAtIndex:7] intValue];
+        car_speed = [[lparts objectAtIndex:8] intValue];
+        // Update the visible status
+        if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+          {
+          [self.car_delegate updateCar];
+          }
+        }
+      }
+      break;
+    case 'W': // CAR TPMS
+      {
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        {
+        [self.status_delegate updateStatus];
+        }
+      NSArray *lparts = [cmd componentsSeparatedByString:@","];
+      if ([lparts count]>=8)
+        {
+        car_tpms_fr_pressure = [[lparts objectAtIndex:0] intValue];
+        car_tpms_fr_temp = [[lparts objectAtIndex:1] intValue];
+        car_tpms_rr_pressure = [[lparts objectAtIndex:2] intValue];
+        car_tpms_rr_temp = [[lparts objectAtIndex:3] intValue];
+        car_tpms_fl_pressure = [[lparts objectAtIndex:4] intValue];
+        car_tpms_fl_temp = [[lparts objectAtIndex:5] intValue];
+        car_tpms_rl_pressure = [[lparts objectAtIndex:6] intValue];
+        car_tpms_rl_temp = [[lparts objectAtIndex:7] intValue];
+        // Update the visible status
+        if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+          {
+          [self.car_delegate updateCar];
+          }
+        }
+      }
+      break;
   }
 }
 
@@ -568,6 +680,19 @@
   car_chargemode = @"";
   car_idealrange = 0;
   car_estimatedrange = 0;
+  car_doors1 = 0;
+  car_doors2 = 0;
+  car_lockstate = 0;
+  car_vin = @"";
+  car_firmware = @"";
+  server_firmware = @"";
+  car_gsmlevel = 0;
+  car_tpem = 0;
+  car_tmotor = 0;
+  car_tbattery = 0;
+  car_trip = 0;
+  car_odometer = 0;
+  car_speed = 0;
 
   if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
     {
@@ -576,6 +701,10 @@
   if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
     {
     [self.status_delegate updateStatus];
+    }
+  if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+    {
+    [self.car_delegate updateCar];
     }
 }
 
