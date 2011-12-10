@@ -233,6 +233,35 @@ void net_notify_status(void)
     }
   }
 
+
+////////////////////////////////////////////////////////////////////////
+// net_checkminSOC()
+// This function compares current SOC and minSOC set in the EEPROM.
+// If current SOC is lower than minSOC, an notification is sent.
+// If SOC is 2 percentage point higher than minSOC, the notification sent
+// flag is reset.
+//
+void net_checkminSOC(void)
+{
+    char *EEminSOC;
+    int minSOC;
+
+      // check minSOC
+    EEminSOC = par_get(PARAM_MINSOC);
+    // convert 2-digit number in char[] to int
+    minSOC = (((int) *EEminSOC - 0x30) * 10) + (int) *++EEminSOC - 0x30;
+    if ((car_minSOCnotified == 0) && (car_SOC < minSOC))
+    {
+      net_notify_status();
+      car_minSOCnotified = 1;
+    } else if ((car_minSOCnotified == 1) && (car_SOC > minSOC + 2))
+    {
+      // reset the alert sent flag when SOC is 2% point higher than threshold
+      car_minSOCnotified = 0;
+    }
+
+}
+
 ////////////////////////////////////////////////////////////////////////
 // net_state_enter(newstate)
 // State Model: A new state has been entered.
@@ -666,33 +695,6 @@ void net_ticker10th(void)
     }
   }
 
-////////////////////////////////////////////////////////////////////////
-// net_checkminSOC()
-// This function compares current SOC and minSOC set in the EEPROM.
-// If current SOC is lower than minSOC, an notification is sent.
-// If SOC is 2 percentage point higher than minSOC, the notification sent
-// flag is reset.
-//
-void net_checkminSOC(void)
-{
-    char *EEminSOC;
-    int minSOC;
-
-      // check minSOC
-    EEminSOC = par_get(PARAM_MINSOC);
-    // convert 2-digit number in char[] to int
-    minSOC = (((int) *EEminSOC - 0x30) * 10) + (int) *++EEminSOC - 0x30;
-    if ((car_minSOCnotified == 0) && (car_SOC < minSOC))
-    {
-      net_notify_status();
-      car_minSOCnotified = 1;
-    } else if ((car_minSOCnotified == 1) && (car_SOC > minSOC + 2))
-    {
-      // reset the alert sent flag when SOC is 2% point higher than threshold
-      car_minSOCnotified = 0;
-    }
-
-}
 
 ////////////////////////////////////////////////////////////////////////
 // net_initialise()
