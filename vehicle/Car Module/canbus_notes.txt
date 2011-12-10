@@ -100,8 +100,9 @@ Byte pairs are in little endian order (e.g B4*256+B3)
 			bit7 = Car ON (true=1/false=0)
 			
 		B3=
-			bit3 = Trunk (open=1/closed=0)
-			bit2 = Bonnet (open=1/closed=0) 
+			bit7 = Trunk (open=1/closed=0) 
+			bit6 = Bonnet (open=1/closed=0)
+			bit5 = Headlights (on=1/off=0)
 			
 		B4=
 			bit1 = cooling pump (on=1/off=0)
@@ -198,11 +199,17 @@ some other odometer messages have been seen on CAN ID #0x402
 
 	ODOMETER
 		B1=0xFA
-		B4=Odometer MSB   \
-		B5=Odometer        | (miles/10)
-		B6=Odometer LSB   /
-		B7=Trip MSB    \ (miles/10)
-		B8=Trip LSB    /
+		B4=Odometer LSB   \
+		B5=Odometer        | (in 1/10th miles)
+		B6=Odometer MSB   /
+		B7=Trip LSB    \ (in 1/10th miles)
+		B8=Trip MSB    /
 
+some on CAN ID # 0x400
+
+	Dashboard
+		B1=0x02
+		B3=AMPs (dash)
+
+		
 Any additions/corrections are welcome
--mstegen
