@@ -263,6 +263,15 @@ void net_checkminSOC(void)
 }
 
 ////////////////////////////////////////////////////////////////////////
+// net_notify_environment()
+// Emits an environment notification
+//
+void net_notify_environment(void)
+  {
+  net_msg_notifyenvironment = 1;
+  }
+
+////////////////////////////////////////////////////////////////////////
 // net_state_enter(newstate)
 // State Model: A new state has been entered.
 // This should do any initialisation and other actions required on
@@ -568,7 +577,7 @@ void net_state_ticker1(void)
         }
       if ((net_reg == 0x01)||(net_reg == 0x05))
         {
-        if (net_msg_notify==1)
+        if ((net_msg_notify==1)&&(net_msg_serverok==1))
           {
           net_msg_notify = 0;
           delay100(10);
@@ -582,6 +591,14 @@ void net_state_ticker1(void)
           p = par_get(PARAM_REGPHONE);
           net_sms_stat(p);
           return;
+          }
+        if ((net_msg_notifyenvironment==1)&&(net_msg_serverok==1)&&(net_apps_connected>0))
+          {
+          net_msg_notifyenvironment = 0;
+          delay100(10);
+          net_msg_start();
+          net_msg_environment();
+          net_msg_send();
           }
         }
       break;
@@ -604,6 +621,8 @@ void net_state_ticker60(void)
         net_msg_start();
         net_msg_stat();
         net_msg_gps();
+        net_msg_tpms();
+        net_msg_environment();
         net_msg_send();
         }
       net_state_vchar = net_state_vchar ^ 1;
@@ -643,6 +662,8 @@ void net_state_ticker600(void)
         net_msg_start();
         net_msg_stat();
         net_msg_gps();
+        net_msg_tpms();
+        net_msg_environment();
         net_msg_send();
         }
       break;

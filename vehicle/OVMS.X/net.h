@@ -65,6 +65,7 @@ void net_state_activity(void);
 void net_state_ticker(void);
 
 void net_notify_status(void);
+void net_notify_environment(void);
 
 void net_checkminSOC(void);
 

@@ -48,6 +48,7 @@ extern unsigned char car_charging; // 1=yes/0=no
 extern unsigned char car_stopped; // 1=yes,0=no
 extern unsigned char car_doors1; //
 extern unsigned char car_doors2; //
+extern unsigned char car_lockstate; // Lock State
 extern unsigned char car_speed; // speed in miles/hour
 extern unsigned char car_SOC; // State of Charge in %
 extern unsigned int car_idealrange; // Ideal Range in miles
@@ -57,6 +58,8 @@ extern unsigned char car_vin[18]; // VIN
 extern unsigned char car_tpem; // Tpem
 extern unsigned char car_tmotor; // Tmotor
 extern unsigned char car_tbattery; // Tbattery
+extern unsigned char car_tpms_t[4]; // TPMS temperature
+extern unsigned char car_tpms_p[4]; // TPMS pressure
 extern unsigned int car_trip; // ODO trip in miles /10
 extern unsigned long car_odometer; //Odometer in miles /10
 extern signed long car_latitude; // Raw GPS Latitude

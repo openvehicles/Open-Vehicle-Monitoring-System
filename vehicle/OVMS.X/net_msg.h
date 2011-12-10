@@ -34,6 +34,8 @@
 #include "net.h"
 
 extern char net_msg_notify;
+extern char net_msg_notifyenvironment;
+extern char net_msg_serverok;
 
 void net_msg_init(void);
 void net_msg_disconnected(void);
@@ -42,6 +44,9 @@ void net_msg_send(void);
 void net_msg_register(void);
 void net_msg_stat(void);
 void net_msg_gps(void);
+void net_msg_tpms(void);
+void net_msg_firmware(void);
+void net_msg_environment(void);
 void net_msg_in(char* msg);
 void net_msg_alert(void);
 void net_msg_forward_sms(char* caller, char* SMS);

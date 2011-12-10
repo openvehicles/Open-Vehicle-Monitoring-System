@@ -31,5 +31,8 @@
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_pem;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_motor;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_battery;
+@property (strong, nonatomic) IBOutlet UILabel *m_car_temp_pem_l;
+@property (strong, nonatomic) IBOutlet UILabel *m_car_temp_motor_l;
+@property (strong, nonatomic) IBOutlet UILabel *m_car_temp_battery_l;
 
 @end
