@@ -87,13 +87,13 @@
   int car_trip;
   int car_odometer;
   int car_speed;
-  int car_tpms_fr_pressure;
+  float car_tpms_fr_pressure;
   int car_tpms_fr_temp;
-  int car_tpms_rr_pressure;
+  float car_tpms_rr_pressure;
   int car_tpms_rr_temp;
-  int car_tpms_fl_pressure;
+  float car_tpms_fl_pressure;
   int car_tpms_fl_temp;
-  int car_tpms_rl_pressure;
+  float car_tpms_rl_pressure;
   int car_tpms_rl_temp;
 }
 
@@ -140,13 +140,13 @@
 @property (assign) int car_trip;
 @property (assign) int car_odometer;
 @property (assign) int car_speed;
-@property (assign) int car_tpms_fr_pressure;
+@property (assign) float car_tpms_fr_pressure;
 @property (assign) int car_tpms_fr_temp;
-@property (assign) int car_tpms_rr_pressure;
+@property (assign) float car_tpms_rr_pressure;
 @property (assign) int car_tpms_rr_temp;
-@property (assign) int car_tpms_fl_pressure;
+@property (assign) float car_tpms_fl_pressure;
 @property (assign) int car_tpms_fl_temp;
-@property (assign) int car_tpms_rl_pressure;
+@property (assign) float car_tpms_rl_pressure;
 @property (assign) int car_tpms_rl_temp;
 
 + (ovmsAppDelegate *) myRef;
@@ -156,6 +156,7 @@
 - (void)didStopNetworking;
 - (void)serverConnect;
 - (void)serverDisconnect;
+- (void)serverClearState;
 - (void)handleCommand:(char)code command:(NSString*)cmd;
 - (void)switchCar:(NSString*)car;
 

@@ -107,6 +107,11 @@ void can_poll0(void)                // CAN ID 100 and 102
 
   switch (can_databuffer[0])
     {
+    case 0x0E: // Lock/Unlock state on ID#102
+      if (car_lockstate != can_databuffer[1])
+        net_notify_environment();
+      car_lockstate = can_databuffer[1];
+      break;
     case 0x80: // Range / State of Charge
       car_SOC = can_databuffer[1];
       car_idealrange = can_databuffer[2]+(can_databuffer[3]*256);
@@ -157,6 +162,9 @@ void can_poll0(void)                // CAN ID 100 and 102
         car_stopped = 1; // Yes Roadster stopped charging, set flag.
         }
       car_charging = (can_databuffer[1] >> 4) & 0x01; //Charging status
+      if ((car_doors1 != can_databuffer[1])||
+          (car_doors2 != can_databuffer[2]))
+        net_notify_environment();
       car_doors1 = can_databuffer[1]; // Doors #1
       car_doors2 = can_databuffer[2]; // Doors #2
       break;
@@ -180,7 +188,6 @@ void can_poll0(void)                // CAN ID 100 and 102
     }
   }
 
-
 void can_poll1(void)                // CAN ID 344 and 402
 {
   unsigned char CANctrl;
@@ -199,9 +206,29 @@ void can_poll1(void)                // CAN ID 344 and 402
   RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
 
   if ((CANctrl & 0x07) == 2)    	// Acceptance Filter 2 (RXF2) = CAN ID 344
-  {
-	// TPMS code here
-  }
+    {
+    // TPMS code here
+    if (can_databuffer[3]>0) // front-right
+      {
+      car_tpms_p[0] = can_databuffer[2];
+      car_tpms_t[0] = can_databuffer[3];
+      }
+    if (can_databuffer[7]>0) // rear-right
+      {
+      car_tpms_p[1] = can_databuffer[6];
+      car_tpms_t[1] = can_databuffer[7];
+      }
+    if (can_databuffer[1]>0) // front-left
+      {
+      car_tpms_p[2] = can_databuffer[0];
+      car_tpms_t[2] = can_databuffer[1];
+      }
+    if (can_databuffer[5]>0)
+      {
+      car_tpms_p[3] = can_databuffer[4];
+      car_tpms_t[3] = can_databuffer[5];
+      }
+    }
   else  				// It must be CAN ID 402
   {
     switch (can_databuffer[0])

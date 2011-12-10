@@ -364,11 +364,60 @@
     {
     self.car_lastupdated = 0;
     self.car_connected = 0;
-    
+    [self serverClearState];
     [asyncSocket setDelegate:nil delegateQueue:NULL];
     [asyncSocket disconnect];
     [self didStopNetworking];
     asyncSocket = NULL;
+    }
+}
+
+- (void)serverClearState
+{
+  //TODO
+  car_location.latitude = 0;
+  car_location.longitude = 0;
+  car_soc = 0;
+  car_units = @"-";
+  car_linevoltage = 0;
+  car_chargecurrent = 0;
+  car_chargestate = @"";
+  car_chargemode = @"";
+  car_idealrange = 0;
+  car_estimatedrange = 0;
+  car_doors1 = 0;
+  car_doors2 = 0;
+  car_lockstate = 0;
+  car_vin = @"";
+  car_firmware = @"";
+  server_firmware = @"";
+  car_gsmlevel = 0;
+  car_tpem = 0;
+  car_tmotor = 0;
+  car_tbattery = 0;
+  car_trip = 0;
+  car_odometer = 0;
+  car_speed = 0;
+  car_tpms_fr_pressure = 0;
+  car_tpms_fr_temp = 0;
+  car_tpms_rr_pressure = 0;
+  car_tpms_rr_temp = 0;
+  car_tpms_fl_pressure = 0;
+  car_tpms_fl_temp = 0;
+  car_tpms_rl_pressure = 0;
+  car_tpms_rl_temp = 0;
+  
+  if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
+    {
+    [self.location_delegate updateLocation];
+    }
+  if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+    {
+    [self.status_delegate updateStatus];
+    }
+  if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+    {
+    [self.car_delegate updateCar];
     }
 }
 
@@ -544,13 +593,13 @@
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=8)
         {
-        car_tpms_fr_pressure = [[lparts objectAtIndex:0] intValue];
+        car_tpms_fr_pressure = [[lparts objectAtIndex:0] floatValue];
         car_tpms_fr_temp = [[lparts objectAtIndex:1] intValue];
-        car_tpms_rr_pressure = [[lparts objectAtIndex:2] intValue];
+        car_tpms_rr_pressure = [[lparts objectAtIndex:2] floatValue];
         car_tpms_rr_temp = [[lparts objectAtIndex:3] intValue];
-        car_tpms_fl_pressure = [[lparts objectAtIndex:4] intValue];
+        car_tpms_fl_pressure = [[lparts objectAtIndex:4] floatValue];
         car_tpms_fl_temp = [[lparts objectAtIndex:5] intValue];
-        car_tpms_rl_pressure = [[lparts objectAtIndex:6] intValue];
+        car_tpms_rl_pressure = [[lparts objectAtIndex:6] floatValue];
         car_tpms_rl_temp = [[lparts objectAtIndex:7] intValue];
         // Update the visible status
         if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
@@ -669,43 +718,7 @@
 
 - (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err
 {
-  //TODO
-  car_location.latitude = 0;
-  car_location.longitude = 0;
-  car_soc = 0;
-  car_units = @"-";
-  car_linevoltage = 0;
-  car_chargecurrent = 0;
-  car_chargestate = @"";
-  car_chargemode = @"";
-  car_idealrange = 0;
-  car_estimatedrange = 0;
-  car_doors1 = 0;
-  car_doors2 = 0;
-  car_lockstate = 0;
-  car_vin = @"";
-  car_firmware = @"";
-  server_firmware = @"";
-  car_gsmlevel = 0;
-  car_tpem = 0;
-  car_tmotor = 0;
-  car_tbattery = 0;
-  car_trip = 0;
-  car_odometer = 0;
-  car_speed = 0;
-
-  if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
-    {
-    [self.location_delegate updateLocation];
-    }
-  if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-    {
-    [self.status_delegate updateStatus];
-    }
-  if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-    {
-    [self.car_delegate updateCar];
-    }
+  [[ovmsAppDelegate myRef] serverClearState];
 }
 
 /**
