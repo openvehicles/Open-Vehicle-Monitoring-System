@@ -8,31 +8,31 @@
         <scene sceneID="JJ7-hf-7N0">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="BWI-gU-kdJ" sceneMemberID="firstResponder"/>
-                <viewController title="Status" id="KQf-3p-4Zw" customClass="ovmsStatusViewController" sceneMemberID="viewController">
+                <viewController title="Status" id="KQf-3p-4Zw" customClass="ovmsStatusViewControllerPad" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Atv-L5-6cu">
                         <rect key="frame" x="0.0" y="64" width="768" height="911"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="car_roadster_thundergray.png" id="s2N-H5-QE1" userLabel="car_image">
-                                <rect key="frame" x="80" y="-6" width="609" height="282"/>
+                                <rect key="frame" x="20" y="12" width="388" height="180"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="left" image="battery_000.png" id="SL7-PT-bkj" userLabel="battery_back">
-                                <rect key="frame" x="250" y="784" width="268" height="70"/>
+                                <rect key="frame" x="80" y="259" width="268" height="70"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
                                 </accessibility>
                             </imageView>
                             <imageView autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" image="battery_100.png" id="vZC-ps-wlb" userLabel="battery_front">
-                                <rect key="frame" x="250" y="784" width="268" height="70"/>
+                                <rect key="frame" x="80" y="259" width="268" height="70"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
                                 </accessibility>
                             </imageView>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="18" id="sws-Jc-laf" userLabel="car_range">
-                                <rect key="frame" x="77" y="868" width="614" height="29"/>
+                                <rect key="frame" x="20" y="337" width="388" height="29"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="18"/>
@@ -40,7 +40,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="mnC-x1-YJF" userLabel="car_soc">
-                                <rect key="frame" x="286" y="784" width="196" height="70"/>
+                                <rect key="frame" x="116" y="259" width="196" height="70"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="36"/>
@@ -50,7 +50,7 @@
                                 <size key="shadowOffset" width="2" height="2"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="7w4-hx-i9N" userLabel="car_charge_state">
-                                <rect key="frame" x="26" y="303" width="716" height="29"/>
+                                <rect key="frame" x="20" y="191" width="388" height="29"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="24"/>
@@ -58,7 +58,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="sxR-cz-Rl7" userLabel="car_charge_type">
-                                <rect key="frame" x="26" y="340" width="716" height="29"/>
+                                <rect key="frame" x="20" y="215" width="388" height="29"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="18"/>
@@ -70,13 +70,146 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="K2G-Mz-umh" userLabel="car_connection_state">
-                                <rect key="frame" x="184" y="15" width="527" height="29"/>
+                                <rect key="frame" x="648" y="49" width="95" height="29"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <fontDescription key="fontDescription" name="Helvetica-BoldOblique" family="Helvetica" pointSize="14"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" id="Oqg-IH-ZKz">
+                                <rect key="frame" x="20" y="417" width="728" height="474"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="KQf-3p-4Zw" id="rvb-1p-bzU"/>
+                                </connections>
+                            </mapView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="roadster_outline.png" id="sbL-Ne-XZz">
+                                <rect key="frame" x="481" y="41" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            </imageView>
+                            <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" image="roadster_outline_ld.png" id="tP4-cj-G5G">
+                                <rect key="frame" x="481" y="41" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            </imageView>
+                            <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" image="roadster_outline_rd.png" id="9k8-ep-TEb">
+                                <rect key="frame" x="481" y="41" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            </imageView>
+                            <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" image="roadster_outline_hd.png" id="TXw-ky-9Yb">
+                                <rect key="frame" x="481" y="41" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            </imageView>
+                            <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" image="roadster_outline_cp.png" id="MGL-Tq-NVr">
+                                <rect key="frame" x="481" y="41" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            </imageView>
+                            <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" image="roadster_outline_tr.png" id="2rN-id-5WG">
+                                <rect key="frame" x="481" y="41" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="ITH-aK-f0c">
+                                <rect key="frame" x="633" y="93" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="wDP-Tk-4e1">
+                                <rect key="frame" x="633" y="115" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="aVL-dR-z2Y">
+                                <rect key="frame" x="633" y="269" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="rFG-Ei-We6">
+                                <rect key="frame" x="633" y="291" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="9o4-a0-zdM">
+                                <rect key="frame" x="416" y="93" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="LDY-Y5-9DR">
+                                <rect key="frame" x="416" y="115" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="Yoj-z0-WNw">
+                                <rect key="frame" x="416" y="269" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="RZ6-hf-uuA">
+                                <rect key="frame" x="416" y="291" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="kOe-OX-ir7">
+                                <rect key="frame" x="416" y="368" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="86C-kJ-5mk">
+                                <rect key="frame" x="525" y="368" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="npV-Eo-nR5">
+                                <rect key="frame" x="633" y="368" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="PEM" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="9Qs-Y1-eKR">
+                                <rect key="frame" x="416" y="352" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="11"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="MOTOR" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="Cj4-BK-Z7u">
+                                <rect key="frame" x="525" y="352" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="11"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="BATTERY" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="KkB-2z-nGD">
+                                <rect key="frame" x="633" y="352" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="11"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carunlock.png" id="T9f-p1-bGJ">
+                                <rect key="frame" x="525" y="140" width="64" height="96"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                         </subviews>
                         <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -84,40 +217,39 @@
                     <navigationItem key="navigationItem" id="6ol-L2-L2d"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                     <connections>
-                        <outlet property="m_battery_front" destination="vZC-ps-wlb" id="wWi-MH-akZ"/>
-                        <outlet property="m_car_charge_state" destination="7w4-hx-i9N" id="5jT-G8-K6e"/>
-                        <outlet property="m_car_charge_type" destination="sxR-cz-Rl7" id="FqU-iR-Wms"/>
-                        <outlet property="m_car_connection_image" destination="JoM-cn-ghC" id="36M-Fv-y3c"/>
-                        <outlet property="m_car_connection_state" destination="K2G-Mz-umh" id="VF1-K2-XSI"/>
-                        <outlet property="m_car_image" destination="s2N-H5-QE1" id="CeG-RB-cFO"/>
-                        <outlet property="m_car_range" destination="sws-Jc-laf" id="khz-k7-5A7"/>
-                        <outlet property="m_car_soc" destination="mnC-x1-YJF" id="cQl-Fy-1nl"/>
+                        <outlet property="m_battery_front" destination="vZC-ps-wlb" id="wfU-Ba-h1E"/>
+                        <outlet property="m_car_charge_state" destination="7w4-hx-i9N" id="Dus-yT-4yt"/>
+                        <outlet property="m_car_charge_type" destination="sxR-cz-Rl7" id="UDJ-8g-g7B"/>
+                        <outlet property="m_car_connection_image" destination="JoM-cn-ghC" id="wwy-2b-7Tj"/>
+                        <outlet property="m_car_connection_state" destination="K2G-Mz-umh" id="eZl-AY-rsM"/>
+                        <outlet property="m_car_door_cp" destination="MGL-Tq-NVr" id="voM-2r-9Dr"/>
+                        <outlet property="m_car_door_hd" destination="TXw-ky-9Yb" id="2Ae-RC-wX8"/>
+                        <outlet property="m_car_door_ld" destination="tP4-cj-G5G" id="Tzb-Wd-nek"/>
+                        <outlet property="m_car_door_rd" destination="9k8-ep-TEb" id="d8H-XE-Ak5"/>
+                        <outlet property="m_car_door_tr" destination="2rN-id-5WG" id="mnp-Hv-39S"/>
+                        <outlet property="m_car_image" destination="s2N-H5-QE1" id="D3E-3Y-wfh"/>
+                        <outlet property="m_car_lockunlock" destination="T9f-p1-bGJ" id="IOp-wo-rGr"/>
+                        <outlet property="m_car_range" destination="sws-Jc-laf" id="Tik-gw-UBS"/>
+                        <outlet property="m_car_soc" destination="mnC-x1-YJF" id="odn-DM-cEA"/>
+                        <outlet property="m_car_temp_battery" destination="npV-Eo-nR5" id="o97-Qo-K4H"/>
+                        <outlet property="m_car_temp_battery_l" destination="KkB-2z-nGD" id="Xnz-In-s5M"/>
+                        <outlet property="m_car_temp_motor" destination="86C-kJ-5mk" id="Gyx-1H-uZ9"/>
+                        <outlet property="m_car_temp_motor_l" destination="Cj4-BK-Z7u" id="QwP-Bj-C9g"/>
+                        <outlet property="m_car_temp_pem" destination="kOe-OX-ir7" id="k3s-Ox-2aS"/>
+                        <outlet property="m_car_temp_pem_l" destination="9Qs-Y1-eKR" id="PCK-SE-olx"/>
+                        <outlet property="m_car_wheel_fl_pressure" destination="9o4-a0-zdM" id="jDa-Xx-gTE"/>
+                        <outlet property="m_car_wheel_fl_temp" destination="LDY-Y5-9DR" id="nbI-hk-qJC"/>
+                        <outlet property="m_car_wheel_fr_pressure" destination="ITH-aK-f0c" id="pu4-GY-klH"/>
+                        <outlet property="m_car_wheel_fr_temp" destination="wDP-Tk-4e1" id="MmS-x3-abE"/>
+                        <outlet property="m_car_wheel_rl_pressure" destination="Yoj-z0-WNw" id="u0w-qu-nNT"/>
+                        <outlet property="m_car_wheel_rl_temp" destination="RZ6-hf-uuA" id="mHO-nM-gAS"/>
+                        <outlet property="m_car_wheel_rr_pressure" destination="aVL-dR-z2Y" id="dN9-hO-mKZ"/>
+                        <outlet property="m_car_wheel_rr_temp" destination="rFG-Ei-We6" id="Mec-On-G8m"/>
+                        <outlet property="myMapView" destination="Oqg-IH-ZKz" id="LJI-rT-3xU"/>
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="2906" y="-698"/>
-        </scene>
-        <scene sceneID="d9y-sC-jNk">
-            <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="DGU-sg-EEZ" sceneMemberID="firstResponder"/>
-                <viewController title="Location" id="mH6-Nn-Vim" customClass="ovmsLocationViewController" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="8XF-hT-Kwa" customClass="MKMapView">
-                        <rect key="frame" x="0.0" y="64" width="768" height="911"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" red="0.20392158630000001" green="0.32941177490000001" blue="0.53333336109999996" alpha="1" colorSpace="deviceRGB"/>
-                        <connections>
-                            <outlet property="delegate" destination="mH6-Nn-Vim" id="ouJ-uk-SB2"/>
-                        </connections>
-                    </view>
-                    <tabBarItem key="tabBarItem" title="Location" image="74-location.png" id="kUT-2A-jXa"/>
-                    <navigationItem key="navigationItem" id="P0C-AS-s6I"/>
-                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
-                    <connections>
-                        <outlet property="myMapView" destination="8XF-hT-Kwa" id="6lw-dC-cnW"/>
-                    </connections>
-                </viewController>
-            </objects>
-            <point key="canvasLocation" x="2898" y="448"/>
+            <point key="canvasLocation" x="2882" y="-154"/>
         </scene>
         <scene sceneID="LBL-91-hfX">
             <objects>
@@ -132,7 +264,6 @@
                     </tabBar>
                     <connections>
                         <segue destination="rOH-qE-UmW" kind="relationship" relationship="viewControllers" id="ze5-fH-a8k"/>
-                        <segue destination="CHW-Oh-PbA" kind="relationship" relationship="viewControllers" id="BPB-15-xe5"/>
                         <segue destination="aVr-bq-lN6" kind="relationship" relationship="viewControllers" id="jfI-TG-qxk"/>
                     </connections>
                 </tabBarController>
@@ -153,7 +284,7 @@
                     </connections>
                 </navigationController>
             </objects>
-            <point key="canvasLocation" x="2017" y="1643"/>
+            <point key="canvasLocation" x="2001" y="1075"/>
         </scene>
         <scene sceneID="tb7-Sz-gFl">
             <objects>
@@ -220,7 +351,7 @@
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                 </tableViewController>
             </objects>
-            <point key="canvasLocation" x="2898" y="1643"/>
+            <point key="canvasLocation" x="2882" y="1075"/>
         </scene>
         <scene sceneID="NC0-BO-LFr">
             <objects>
@@ -290,24 +421,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="3775" y="1643"/>
-        </scene>
-        <scene sceneID="Ugr-eL-hmQ">
-            <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="LOL-R9-Kgs" userLabel="First Responder" sceneMemberID="firstResponder"/>
-                <navigationController definesPresentationContext="YES" id="CHW-Oh-PbA" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Location" image="74-location.png" id="3PN-4j-kqf"/>
-                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
-                    <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
-                    <navigationBar key="navigationBar" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" barStyle="blackOpaque" id="25N-6f-8Jy">
-                        <autoresizingMask key="autoresizingMask"/>
-                    </navigationBar>
-                    <connections>
-                        <segue destination="mH6-Nn-Vim" kind="relationship" relationship="rootViewController" id="vY1-Py-fm5"/>
-                    </connections>
-                </navigationController>
-            </objects>
-            <point key="canvasLocation" x="2017" y="456"/>
+            <point key="canvasLocation" x="3759" y="1075"/>
         </scene>
         <scene sceneID="057-Rn-1Wh">
             <objects>
@@ -320,21 +434,27 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
-                        <segue destination="KQf-3p-4Zw" kind="relationship" relationship="rootViewController" id="8nD-Ok-4k1"/>
+                        <segue destination="KQf-3p-4Zw" kind="relationship" relationship="rootViewController" id="bp7-10-qhD"/>
                     </connections>
                 </navigationController>
             </objects>
-            <point key="canvasLocation" x="2017" y="-698"/>
+            <point key="canvasLocation" x="2001" y="-154"/>
         </scene>
     </scenes>
     <resources>
         <image name="20-gear2.png" width="26" height="28"/>
         <image name="49-battery.png" width="26" height="14"/>
-        <image name="74-location.png" width="20" height="20"/>
         <image name="battery_000.png" width="268" height="70"/>
         <image name="battery_100.png" width="268" height="70"/>
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
+        <image name="carunlock.png" width="128" height="192"/>
         <image name="connection_good.png" width="64" height="64"/>
+        <image name="roadster_outline.png" width="304" height="606"/>
+        <image name="roadster_outline_cp.png" width="304" height="606"/>
+        <image name="roadster_outline_hd.png" width="304" height="606"/>
+        <image name="roadster_outline_ld.png" width="304" height="606"/>
+        <image name="roadster_outline_rd.png" width="304" height="606"/>
+        <image name="roadster_outline_tr.png" width="304" height="606"/>
     </resources>
     <classes>
         <class className="ovmsCarsFormViewController" superclassName="UIViewController">
@@ -350,23 +470,38 @@
         <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
         </class>
-        <class className="ovmsLocationViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsLocationViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
-            </relationships>
-        </class>
-        <class className="ovmsStatusViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewController.h"/>
+        <class className="ovmsStatusViewControllerPad" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewControllerPad.h"/>
             <relationships>
                 <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_connection_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_door_cp" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_hd" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_ld" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_rd" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_tr" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_lockunlock" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_range" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_battery" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_battery_l" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_motor" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_motor_l" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_pem" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_pem_l" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fl_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fl_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fr_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fr_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rl_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rl_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rr_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rr_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
             </relationships>
         </class>
     </classes>
