@@ -67,6 +67,7 @@ unsigned char car_charging = 0; // 1=yes/0=no
 unsigned char car_stopped = 0; // 1=yes,0=no
 unsigned char car_doors1 = 0; //
 unsigned char car_doors2 = 0; //
+unsigned char car_lockstate = 0; // Lock State
 unsigned char car_speed = 0; // speed in miles/hour
 unsigned char car_SOC = 0; // State of Charge in %
 unsigned int car_idealrange = 0; // Ideal Range in miles
@@ -76,6 +77,8 @@ unsigned char car_vin[18] = "-----------------"; // VIN
 unsigned char car_tpem = 0; // Tpem
 unsigned char car_tmotor = 0; // Tmotor
 unsigned char car_tbattery = 0; // Tbattery
+unsigned char car_tpms_t[4] = {0,0,0,0}; // TPMS temperature
+unsigned char car_tpms_p[4] = {0,0,0,0}; // TPMS pressure
 unsigned int car_trip = 0; // ODO trip in miles /10
 unsigned long car_odometer = 0; //Odometer in miles /10
 signed long car_latitude = 0x16DEC6D9; // Raw GPS Latitude  (52.04246 zero in converted result)

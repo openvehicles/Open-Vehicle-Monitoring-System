@@ -45,12 +45,13 @@
 #define TOKEN_SIZE 22
 #pragma udata
 char net_msg_notify = 0;
+char net_msg_notifyenvironment = 0;
+char net_msg_serverok = 0;
 char token[23] = {0};
 char ptoken[23] = {0};
 char ptokenmade = 0;
 char digest[MD5_SIZE];
 char pdigest[MD5_SIZE];
-char serverok = 0;
 char net_msg_scratchpad[100];
 
 #pragma udata TX_CRYPTO
@@ -70,7 +71,7 @@ void net_msg_init(void)
 
 void net_msg_disconnected(void)
   {
-  serverok = 0;
+  net_msg_serverok = 0;
   }
 
 // Start to send a net msg
@@ -224,6 +225,58 @@ void net_msg_gps(void)
   net_msg_encode_puts();
   }
 
+void net_msg_tpms(void)
+  {
+  char k;
+  long p;
+  int b,a;
+
+  if ((car_tpms_t[0]==0)&&(car_tpms_t[1]==0)&&
+      (car_tpms_t[2]==0)&&(car_tpms_t[3]==0))
+    return; // No TPMS, no report
+
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 W");
+  for (k=0;k<4;k++)
+    {
+    if (car_tpms_t[k]>0)
+      {
+      p = (long)((float)car_tpms_p[k]/0.2755);
+      b = (p / 10);
+      a = (p % 10);
+      sprintf(net_msg_scratchpad, (rom far char*)"%d.%d,%d,",
+              b,a,(int)(car_tpms_t[k]-40));
+      strcat(net_scratchpad,net_msg_scratchpad);
+      }
+    else
+      {
+      strcatpgm2ram(net_scratchpad, (rom far char*)"0,0,");
+      }
+    }
+  net_scratchpad[strlen(net_scratchpad)-1] = 0; // Remove trailing ','
+  net_msg_encode_puts();
+  }
+
+void net_msg_firmware(void)
+  {
+  // TODO: GSM signal level not reported yet
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
+  sprintf(net_msg_scratchpad, (rom far char*)"0.9.0,%s,%d",
+    car_vin,0);
+  strcat(net_scratchpad,net_msg_scratchpad);
+  net_msg_encode_puts();
+  }
+
+void net_msg_environment(void)
+  {
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 D");
+  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d",
+          car_doors1, car_doors2, car_lockstate,
+          car_tpem, car_tmotor, car_tbattery,
+          car_trip, car_odometer, car_speed);
+  strcat(net_scratchpad,net_msg_scratchpad);
+  net_msg_encode_puts();
+  }
+
 void net_msg_server_welcome(char *msg)
   {
   // The server has sent a welcome (token <space> base64digest)
@@ -267,7 +320,7 @@ void net_msg_server_welcome(char *msg)
     RC4_crypt(&tx_crypto1, &tx_crypto2, net_scratchpad, 1);
     }
 
-  serverok = 1;
+  net_msg_serverok = 1;
 
   p = par_get(PARAM_PARANOID);
   if (*p == 'P')
@@ -307,7 +360,7 @@ void net_msg_in(char* msg)
   {
   int k;
 
-  if (serverok == 0)
+  if (net_msg_serverok == 0)
     {
     if (memcmppgm2ram(msg, (char const rom far*)"MP-S 0 ", 7) == 0)
       {
@@ -317,7 +370,7 @@ void net_msg_in(char* msg)
     }
 
   // Ok, we've got an encrypted message waiting for work.
-  // The followng is a nasty hack because base64decode doesn't like incoming
+  // The following is a nasty hack because base64decode doesn't like incoming
   // messages of length divisible by 4, and is really expecting a CRLF
   // terminated string, so we give it one...
   strcatpgm2ram(msg,(char const rom far*)"\r\n");
@@ -341,6 +394,9 @@ void net_msg_in(char* msg)
           net_msg_start();
           net_msg_stat();
           net_msg_gps();
+          net_msg_tpms();
+          net_msg_firmware();
+          net_msg_environment();
           net_msg_send();
           }
         else

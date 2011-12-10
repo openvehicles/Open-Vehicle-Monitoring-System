@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4D04E2E7147E7695007CB190 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 4D04E2E6147E7695007CB190 /* Settings.bundle */; };
+		4D0A96AF14939616000B74FC /* ovmsStatusViewControllerPad.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A96AE14939616000B74FC /* ovmsStatusViewControllerPad.m */; };
 		4D10FCF3147BC9AA0092FAF9 /* GCDAsyncSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D10FCF2147BC9AA0092FAF9 /* GCDAsyncSocket.m */; };
 		4D10FCF5147BCA0C0092FAF9 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D10FCF4147BCA0B0092FAF9 /* CFNetwork.framework */; };
 		4D10FCF7147BCACD0092FAF9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D10FCF6147BCACD0092FAF9 /* Security.framework */; };
@@ -113,6 +114,8 @@
 
 /* Begin PBXFileReference section */
 		4D04E2E6147E7695007CB190 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = Settings.bundle; path = ../Settings.bundle; sourceTree = "<group>"; };
+		4D0A96AD14939616000B74FC /* ovmsStatusViewControllerPad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewControllerPad.h; sourceTree = "<group>"; };
+		4D0A96AE14939616000B74FC /* ovmsStatusViewControllerPad.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsStatusViewControllerPad.m; sourceTree = "<group>"; };
 		4D10FCF1147BC9AA0092FAF9 /* GCDAsyncSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDAsyncSocket.h; sourceTree = "<group>"; };
 		4D10FCF2147BC9AA0092FAF9 /* GCDAsyncSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDAsyncSocket.m; sourceTree = "<group>"; };
 		4D10FCF4147BCA0B0092FAF9 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
@@ -458,6 +461,8 @@
 				4DAB2C731492109C00E1098C /* ovmsBodyViewController.m */,
 				4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */,
 				4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */,
+				4D0A96AD14939616000B74FC /* ovmsStatusViewControllerPad.h */,
+				4D0A96AE14939616000B74FC /* ovmsStatusViewControllerPad.m */,
 				4DAD5323147D301C00949EE8 /* ovmsCarsTableViewController.h */,
 				4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */,
 				4DAD532A147D317300949EE8 /* ovmsCarsFormViewController.h */,
@@ -650,6 +655,7 @@
 				4DE26E63147E83AE00E3161D /* Cars.m in Sources */,
 				4D16EF32148747EC004A80AE /* JHNotificationManager.m in Sources */,
 				4DAB2C741492109C00E1098C /* ovmsBodyViewController.m in Sources */,
+				4D0A96AF14939616000B74FC /* ovmsStatusViewControllerPad.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
