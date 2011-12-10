@@ -29,6 +29,11 @@
 -(void) updateStatus;
 @end
 
+@protocol ovmsCarDelegate
+@required
+-(void) updateCar;
+@end
+
 @interface ovmsAppDelegate : UIResponder <UIApplicationDelegate>
 {
   GCDAsyncSocket *asyncSocket;
@@ -43,6 +48,7 @@
   
   id location_delegate;
   id status_delegate;
+  id car_delegate;
   
   NSString* apns_deviceid;
   NSString* apns_pushkeytype;
@@ -56,6 +62,7 @@
 
   time_t car_lastupdated;
   int car_connected;
+  BOOL car_paranoid;
   
   CLLocationCoordinate2D car_location;
   int car_soc;
@@ -66,6 +73,28 @@
   NSString* car_chargemode;
   int car_idealrange;
   int car_estimatedrange;
+  
+  int car_doors1;
+  int car_doors2;
+  int car_lockstate;
+  NSString* car_vin;
+  NSString* car_firmware;
+  NSString* server_firmware;
+  int car_gsmlevel;
+  int car_tpem;
+  int car_tmotor;
+  int car_tbattery;
+  int car_trip;
+  int car_odometer;
+  int car_speed;
+  int car_tpms_fr_pressure;
+  int car_tpms_fr_temp;
+  int car_tpms_rr_pressure;
+  int car_tpms_rr_temp;
+  int car_tpms_fl_pressure;
+  int car_tpms_fl_temp;
+  int car_tpms_rl_pressure;
+  int car_tpms_rl_temp;
 }
 
 @property (strong, nonatomic) UIWindow *window;
@@ -82,6 +111,7 @@
 
 @property (assign) time_t car_lastupdated;
 @property (assign) int car_connected;
+@property (assign) BOOL car_paranoid;
 
 @property (strong, nonatomic) id location_delegate;
 @property (assign) CLLocationCoordinate2D car_location;
@@ -95,6 +125,29 @@
 @property (strong, nonatomic) NSString* car_chargemode;
 @property (assign) int car_idealrange;
 @property (assign) int car_estimatedrange;
+
+@property (strong, nonatomic) id car_delegate;
+@property (assign) int car_doors1;
+@property (assign) int car_doors2;
+@property (assign) int car_lockstate;
+@property (strong, nonatomic) NSString* car_vin;
+@property (strong, nonatomic) NSString* car_firmware;
+@property (strong, nonatomic) NSString* server_firmware;
+@property (assign) int car_gsmlevel;
+@property (assign) int car_tpem;
+@property (assign) int car_tmotor;
+@property (assign) int car_tbattery;
+@property (assign) int car_trip;
+@property (assign) int car_odometer;
+@property (assign) int car_speed;
+@property (assign) int car_tpms_fr_pressure;
+@property (assign) int car_tpms_fr_temp;
+@property (assign) int car_tpms_rr_pressure;
+@property (assign) int car_tpms_rr_temp;
+@property (assign) int car_tpms_fl_pressure;
+@property (assign) int car_tpms_fl_temp;
+@property (assign) int car_tpms_rl_pressure;
+@property (assign) int car_tpms_rl_temp;
 
 + (ovmsAppDelegate *) myRef;
 - (void)saveContext;

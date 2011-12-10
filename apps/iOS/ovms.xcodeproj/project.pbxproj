@@ -30,6 +30,9 @@
 		4D5AE39714733758002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
 		4D5AE39F14733758002F5F52 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE39D14733758002F5F52 /* InfoPlist.strings */; };
 		4D5AE3A214733758002F5F52 /* ovmsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5AE3A114733758002F5F52 /* ovmsTests.m */; };
+		4D7439F8148F961600090BBA /* connection_good_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F6148F961600090BBA /* connection_good_paranoid.png */; };
+		4D7439F9148F961600090BBA /* connection_bad_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F7148F961600090BBA /* connection_bad_paranoid.png */; };
+		4D7439FC148F9CA400090BBA /* connection_unknown_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */; };
 		4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D90410A147C787F00D9C8E1 /* CoreLocation.framework */; };
 		4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */; };
 		4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */; };
@@ -43,6 +46,15 @@
 		4D91CF081473F33400CBA435 /* 193-location-arrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF071473F33400CBA435 /* 193-location-arrow.png */; };
 		4D91CF0A1473F36000CBA435 /* 00-icons-license.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF091473F36000CBA435 /* 00-icons-license.txt */; };
 		4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D91CF681473FE0900CBA435 /* MapKit.framework */; };
+		4DAB2C6A14920D3600E1098C /* roadster_outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C6514920D3600E1098C /* roadster_outline.png */; };
+		4DAB2C6B14920D3600E1098C /* roadster_outline_rd.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C6614920D3600E1098C /* roadster_outline_rd.png */; };
+		4DAB2C6C14920D3600E1098C /* roadster_outline_ld.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C6714920D3600E1098C /* roadster_outline_ld.png */; };
+		4DAB2C6D14920D3600E1098C /* roadster_outline_tr.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C6814920D3600E1098C /* roadster_outline_tr.png */; };
+		4DAB2C6E14920D3600E1098C /* roadster_outline_hd.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C6914920D3600E1098C /* roadster_outline_hd.png */; };
+		4DAB2C741492109C00E1098C /* ovmsBodyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAB2C731492109C00E1098C /* ovmsBodyViewController.m */; };
+		4DAB2C77149216C000E1098C /* carlock.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C75149216C000E1098C /* carlock.png */; };
+		4DAB2C78149216C000E1098C /* carunlock.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C76149216C000E1098C /* carunlock.png */; };
+		4DAB2C7A14922C3900E1098C /* roadster_outline_cp.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C7914922C3900E1098C /* roadster_outline_cp.png */; };
 		4DAD5325147D301C00949EE8 /* ovmsCarsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */; };
 		4DAD532C147D317300949EE8 /* ovmsCarsFormViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */; };
 		4DBB7930148270A50055769F /* connection_good.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DBB792D148270A50055769F /* connection_good.png */; };
@@ -130,6 +142,9 @@
 		4D5AE39E14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4D5AE3A014733758002F5F52 /* ovmsTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ovmsTests.h; sourceTree = "<group>"; };
 		4D5AE3A114733758002F5F52 /* ovmsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ovmsTests.m; sourceTree = "<group>"; };
+		4D7439F6148F961600090BBA /* connection_good_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_good_paranoid.png; sourceTree = "<group>"; };
+		4D7439F7148F961600090BBA /* connection_bad_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_bad_paranoid.png; sourceTree = "<group>"; };
+		4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_unknown_paranoid.png; sourceTree = "<group>"; };
 		4D90410A147C787F00D9C8E1 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewController.h; sourceTree = "<group>"; };
 		4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsStatusViewController.m; sourceTree = "<group>"; };
@@ -145,6 +160,16 @@
 		4D91CF071473F33400CBA435 /* 193-location-arrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "193-location-arrow.png"; sourceTree = "<group>"; };
 		4D91CF091473F36000CBA435 /* 00-icons-license.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "00-icons-license.txt"; sourceTree = "<group>"; };
 		4D91CF681473FE0900CBA435 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		4DAB2C6514920D3600E1098C /* roadster_outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline.png; sourceTree = "<group>"; };
+		4DAB2C6614920D3600E1098C /* roadster_outline_rd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_rd.png; sourceTree = "<group>"; };
+		4DAB2C6714920D3600E1098C /* roadster_outline_ld.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_ld.png; sourceTree = "<group>"; };
+		4DAB2C6814920D3600E1098C /* roadster_outline_tr.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_tr.png; sourceTree = "<group>"; };
+		4DAB2C6914920D3600E1098C /* roadster_outline_hd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_hd.png; sourceTree = "<group>"; };
+		4DAB2C7014920DB600E1098C /* ovmsBodyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsBodyViewController.h; sourceTree = "<group>"; };
+		4DAB2C731492109C00E1098C /* ovmsBodyViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsBodyViewController.m; sourceTree = "<group>"; };
+		4DAB2C75149216C000E1098C /* carlock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carlock.png; sourceTree = "<group>"; };
+		4DAB2C76149216C000E1098C /* carunlock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carunlock.png; sourceTree = "<group>"; };
+		4DAB2C7914922C3900E1098C /* roadster_outline_cp.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_cp.png; sourceTree = "<group>"; };
 		4DAD5323147D301C00949EE8 /* ovmsCarsTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsTableViewController.h; sourceTree = "<group>"; };
 		4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsTableViewController.m; sourceTree = "<group>"; };
 		4DAD532A147D317300949EE8 /* ovmsCarsFormViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsFormViewController.h; sourceTree = SOURCE_ROOT; };
@@ -317,10 +342,21 @@
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
 			isa = PBXGroup;
 			children = (
+				4DAB2C75149216C000E1098C /* carlock.png */,
+				4DAB2C76149216C000E1098C /* carunlock.png */,
+				4DAB2C6514920D3600E1098C /* roadster_outline.png */,
+				4DAB2C7914922C3900E1098C /* roadster_outline_cp.png */,
+				4DAB2C6614920D3600E1098C /* roadster_outline_rd.png */,
+				4DAB2C6714920D3600E1098C /* roadster_outline_ld.png */,
+				4DAB2C6814920D3600E1098C /* roadster_outline_tr.png */,
+				4DAB2C6914920D3600E1098C /* roadster_outline_hd.png */,
 				4D16EF3414874AE7004A80AE /* notification_background.png */,
 				4DBB792D148270A50055769F /* connection_good.png */,
 				4DBB792E148270A50055769F /* connection_bad.png */,
 				4DBB792F148270A50055769F /* connection_unknown.png */,
+				4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */,
+				4D7439F6148F961600090BBA /* connection_good_paranoid.png */,
+				4D7439F7148F961600090BBA /* connection_bad_paranoid.png */,
 				4DDA222E1476962700BA40AA /* teslapin.png */,
 				4DFAD7F914753D7900416D38 /* battery_000.png */,
 				4DFAD7FA14753D7900416D38 /* battery_100.png */,
@@ -418,6 +454,8 @@
 			children = (
 				4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */,
 				4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */,
+				4DAB2C7014920DB600E1098C /* ovmsBodyViewController.h */,
+				4DAB2C731492109C00E1098C /* ovmsBodyViewController.m */,
 				4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */,
 				4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */,
 				4DAD5323147D301C00949EE8 /* ovmsCarsTableViewController.h */,
@@ -552,6 +590,17 @@
 				4DBB7931148270A50055769F /* connection_bad.png in Resources */,
 				4DBB7932148270A50055769F /* connection_unknown.png in Resources */,
 				4D16EF3514874AE7004A80AE /* notification_background.png in Resources */,
+				4D7439F8148F961600090BBA /* connection_good_paranoid.png in Resources */,
+				4D7439F9148F961600090BBA /* connection_bad_paranoid.png in Resources */,
+				4D7439FC148F9CA400090BBA /* connection_unknown_paranoid.png in Resources */,
+				4DAB2C6A14920D3600E1098C /* roadster_outline.png in Resources */,
+				4DAB2C6B14920D3600E1098C /* roadster_outline_rd.png in Resources */,
+				4DAB2C6C14920D3600E1098C /* roadster_outline_ld.png in Resources */,
+				4DAB2C6D14920D3600E1098C /* roadster_outline_tr.png in Resources */,
+				4DAB2C6E14920D3600E1098C /* roadster_outline_hd.png in Resources */,
+				4DAB2C77149216C000E1098C /* carlock.png in Resources */,
+				4DAB2C78149216C000E1098C /* carunlock.png in Resources */,
+				4DAB2C7A14922C3900E1098C /* roadster_outline_cp.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -600,6 +649,7 @@
 				4DC8B38C147E7BF2007FDFB2 /* Model.xcdatamodeld in Sources */,
 				4DE26E63147E83AE00E3161D /* Cars.m in Sources */,
 				4D16EF32148747EC004A80AE /* JHNotificationManager.m in Sources */,
+				4DAB2C741492109C00E1098C /* ovmsBodyViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
