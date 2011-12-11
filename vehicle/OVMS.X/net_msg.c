@@ -412,7 +412,7 @@ void net_msg_forward_sms(char* caller, char* SMS)
   {
     //Server not ready, stop sending
     //TODO: store this message inside buffer, resend it when server is connected
-    if (serverok == 0)
+    if (net_msg_serverok == 0)
         return;
 
   delay100(2);
