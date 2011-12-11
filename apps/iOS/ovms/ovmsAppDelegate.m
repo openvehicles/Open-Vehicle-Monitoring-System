@@ -426,7 +426,9 @@
   if (code == 'E')
     {
     // We have a paranoid mode message
+    if (cmd == nil) return;
     const char *pm = [cmd UTF8String];
+    if (pm == nil) return;
     self.car_paranoid = TRUE;
     if (*pm == 'T')
       {
