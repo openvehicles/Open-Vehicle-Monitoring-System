@@ -6,6 +6,7 @@
 //  Copyright (c) 2011 Hong Hay Villa. All rights reserved.
 //
 
+#import "UIKit/UIDevice.h"
 #import "ovmsStatusViewControllerPad.h"
 
 @implementation ovmsStatusViewControllerPad
@@ -86,6 +87,22 @@
 {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
+  
+  CGRect bvframe = m_car_temp_pem_l.frame;
+  
+  UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
+  
+  if (orientation == UIInterfaceOrientationLandscapeLeft ||
+      orientation == UIInterfaceOrientationLandscapeRight)
+    {
+    myMapView.frame = CGRectMake(20, bvframe.origin.y+bvframe.size.height+44,
+                                 984, 635-(bvframe.origin.y+bvframe.size.height+44));
+    }
+  else
+    {
+    myMapView.frame = CGRectMake(20, 417, 728, 474);
+    }
+
   [self updateStatus];
   [self displayMYMap];
   [self updateCar];
@@ -134,6 +151,21 @@
 	return YES;
 }
 
+- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
+{
+  CGRect bvframe = m_car_temp_pem_l.frame;
+  
+  if (toInterfaceOrientation == UIInterfaceOrientationLandscapeLeft ||
+      toInterfaceOrientation == UIInterfaceOrientationLandscapeRight)
+    {
+    myMapView.frame = CGRectMake(20, bvframe.origin.y+bvframe.size.height+44,
+                                 984, 635-(bvframe.origin.y+bvframe.size.height+44));
+    }
+  else
+    {
+    myMapView.frame = CGRectMake(20, 417, 728, 474);
+    }
+}
 
 -(void) updateStatus
 {
@@ -262,12 +294,10 @@
 
 -(void) updateCar
 {
-  if ([ovmsAppDelegate myRef].car_lockstate == 4)
+  if ([ovmsAppDelegate myRef].car_doors2 & 0x08)
     m_car_lockunlock.image = [UIImage imageNamed:@"carlock.png"];
-  else if ([ovmsAppDelegate myRef].car_lockstate == 5)
-    m_car_lockunlock.image = [UIImage imageNamed:@"carunlock.png"];
   else
-    m_car_lockunlock.image = nil;
+    m_car_lockunlock.image = [UIImage imageNamed:@"carunlock.png"];
   
   if ([ovmsAppDelegate myRef].car_doors1 & 0x01)
     m_car_door_ld.hidden = 0;
