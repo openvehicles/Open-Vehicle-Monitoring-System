@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Roadster Remote</string>
+    <string name="Loading">Please wait...</string>
+        <string name="Settings">Settings</string>
+    <string name="Range" formatted="false">Range: %s (%s estimated)</string>
+    <string name="LastUpdated" formatted="false">Updated: %1$tD %1$tT</string>
+    <string name="SOC">%s%%</string>
+    <string name="AddCar">+</string>
+    <string name="Cancel">Cancel</string>
+    <string name="Delete">Delete</string>
+    <string name="Save">Save</string>
+    <string name="VehicleID">Vehicle ID</string>
+    <string name="ServerNameOrIP">Server Address (Domain or IP)</string>
+    <string name="NetPass">Server Password</string>
+    <string name="UserPass">User Password (Paranoid Mode)</string>
+    <string name="Quit">Exit Application</string>
+    <string name="Edit">Edit</string>
+    <string name="ClearNotifications">Clear Notifications</string>
+</resources>
