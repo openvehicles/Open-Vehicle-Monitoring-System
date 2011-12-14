@@ -308,6 +308,7 @@ void net_state_enter(unsigned char newstate)
         net_state = NET_STATE_READY;
       // N.B. Drop through without a break
     case NET_STATE_READY:
+      net_msg_sendpending = 0;
       net_timeout_goto = 0;
       net_state_vchar = 0;
       if ((net_reg != 0x01)&&(net_reg != 0x05))
@@ -501,7 +502,12 @@ void net_state_activity()
             }
           }
         }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"SEND OK", 7) == 0)
+        {
+        net_msg_sendpending = 0;
+        }
       else if ( (memcmppgm2ram(net_buf, (char const rom far*)"SEND FAIL", 9) == 0)||
+                (memcmppgm2ram(net_buf, (char const rom far*)"CLOSED", 6) == 0)||
                 (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0)||
                 (memcmppgm2ram(net_buf, (char const rom far*)"+PDP: DEACT", 11) == 0) )
         { // Various GPRS error results
@@ -567,7 +573,10 @@ void net_state_ticker1(void)
           net_sms_stat(p);
           return;
           }
-        if ((net_msg_notifyenvironment==1)&&(net_msg_serverok==1)&&(net_apps_connected>0))
+        if ((net_msg_notifyenvironment==1)&&
+            (net_msg_serverok==1)&&
+            (net_apps_connected>0)&&
+            (net_msg_sendpending==0))
           {
           net_msg_notifyenvironment = 0;
           delay100(10);
@@ -591,6 +600,11 @@ void net_state_ticker60(void)
   switch (net_state)
     {
     case NET_STATE_READY:
+      if (net_msg_sendpending>0)
+        {
+        net_granular_tick -= 5; // Try again in 5 seconds...
+        return;
+        }
       if ((net_link==1)&&(net_apps_connected>0))
         {
         net_msg_start();
@@ -633,12 +647,19 @@ void net_state_ticker600(void)
     case NET_STATE_READY:
       if ((net_link==1)&&(net_apps_connected==0))
         {
-        net_msg_start();
-        net_msg_stat();
-        net_msg_gps();
-        net_msg_tpms();
-        net_msg_environment();
-        net_msg_send();
+        if (net_msg_sendpending>0)
+          {
+          net_granular_tick -= 5; // Try again in 5 seconds...
+          }
+        else
+          {
+          net_msg_start();
+          net_msg_stat();
+          net_msg_gps();
+          net_msg_tpms();
+          net_msg_environment();
+          net_msg_send();
+          }
         }
       break;
     }
