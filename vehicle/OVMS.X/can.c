@@ -37,11 +37,17 @@
 ; Thanks to markwj for further analysis and messages such as Trip, Odometer, TPMS, etc.
 */
 
+#include <stdlib.h>
 #include "ovms.h"
+#include "params.h"
 
+#pragma udata
 unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
 unsigned char can_databuffer[8];             // A buffer to store the current CAN message
 unsigned char k;
+unsigned char can_minSOCnotified = 0;        // minSOC notified flag
+unsigned int  can_granular_tick = 0;         // An internal ticker used to generate 1min, 5min, etc, calls
+#pragma udata
 
 ////////////////////////////////////////////////////////////////////////
 // can_initialise()
@@ -243,6 +249,59 @@ void can_poll1(void)                // CAN ID 344 and 402
   }
 }
 
+////////////////////////////////////////////////////////////////////////
+// can_state_ticker1()
+// State Model: Per-second ticker
+// This function is called approximately once per second, and gives
+// the state a timeslice for activity.
+//
+void can_state_ticker1(void)
+  {
+  }
+
+////////////////////////////////////////////////////////////////////////
+// can_state_ticker60()
+// State Model: Per-minute ticker
+// This function is called approximately once per minute (since state
+// was first entered), and gives the state a timeslice for activity.
+//
+void can_state_ticker60(void)
+  {
+  int minSOC;
+
+  // check minSOC
+  minSOC = atoi(par_get(PARAM_MINSOC));
+  if ((can_minSOCnotified == 0) && (car_SOC < minSOC))
+    {
+    net_notify_status();
+    can_minSOCnotified = 1;
+    }
+  else if ((can_minSOCnotified == 1) && (car_SOC > minSOC + 2))
+    {
+    // reset the alert sent flag when SOC is 2% point higher than threshold
+    can_minSOCnotified = 0;
+    }
+  }
+
+////////////////////////////////////////////////////////////////////////
+// can_state_ticker300()
+// State Model: Per-5-minute ticker
+// This function is called approximately once per five minutes (since
+// state was first entered), and gives the state a timeslice for activity.
+//
+void can_state_ticker300(void)
+  {
+  }
+
+////////////////////////////////////////////////////////////////////////
+// can_state_ticker600()
+// State Model: Per-10-minute ticker
+// This function is called approximately once per ten minutes (since
+// state was first entered), and gives the state a timeslice for activity.
+//
+void can_state_ticker600(void)
+  {
+  }
 
 ////////////////////////////////////////////////////////////////////////
 // can_ticker()
@@ -252,4 +311,14 @@ void can_poll1(void)                // CAN ID 344 and 402
 void can_ticker(void)
   {
   // This ticker is called once every second
+  can_granular_tick++;
+  if ((can_granular_tick % 60)==0)
+    can_state_ticker60();
+  if ((can_granular_tick % 300)==0)
+    can_state_ticker300();
+  if ((can_granular_tick % 600)==0)
+    {
+    can_state_ticker600();
+    can_granular_tick -= 600;
+    }
   }

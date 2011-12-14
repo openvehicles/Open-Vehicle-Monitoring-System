@@ -47,6 +47,7 @@
 char net_msg_notify = 0;
 char net_msg_notifyenvironment = 0;
 char net_msg_serverok = 0;
+char net_msg_sendpending = 0;
 char token[23] = {0};
 char ptoken[23] = {0};
 char ptokenmade = 0;
@@ -86,6 +87,7 @@ void net_msg_start(void)
 void net_msg_send(void)
   {
   net_puts_rom("\x1a");
+  net_msg_sendpending = 1;
   }
 
 // Encode the message in net_scratchpad and start the send process
@@ -260,7 +262,7 @@ void net_msg_firmware(void)
   {
   // TODO: GSM signal level not reported yet
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"0.9.0,%s,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"0.9.2,%s,%d",
     car_vin,0);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
@@ -383,21 +385,27 @@ void net_msg_in(char* msg)
       {
       case 'A': // PING
         strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 a");
-        net_msg_start();
-        net_msg_encode_puts();
-        net_msg_send();
+        if (net_msg_sendpending==0)
+          {
+          net_msg_start();
+          net_msg_encode_puts();
+          net_msg_send();
+          }
         break;
       case 'Z': // PEER connection
         if (msg[1] != '0')
           {
           net_apps_connected = 1;
-          net_msg_start();
-          net_msg_stat();
-          net_msg_gps();
-          net_msg_tpms();
-          net_msg_firmware();
-          net_msg_environment();
-          net_msg_send();
+          if (net_msg_sendpending==0)
+            {
+            net_msg_start();
+            net_msg_stat();
+            net_msg_gps();
+            net_msg_tpms();
+            net_msg_firmware();
+            net_msg_environment();
+            net_msg_send();
+            }
           }
         else
           {
@@ -408,12 +416,12 @@ void net_msg_in(char* msg)
     }
   }
 
-void net_msg_forward_sms(char* caller, char* SMS)
+void net_msg_forward_sms(char *caller, char *SMS)
   {
-    //Server not ready, stop sending
-    //TODO: store this message inside buffer, resend it when server is connected
-    if (net_msg_serverok == 0)
-        return;
+  //Server not ready, stop sending
+  //TODO: store this message inside buffer, resend it when server is connected
+  if ((net_msg_serverok == 0)||(net_msg_sendpending)>0)
+    return;
 
   delay100(2);
   net_msg_start();
@@ -421,6 +429,7 @@ void net_msg_forward_sms(char* caller, char* SMS)
   strcatpgm2ram(net_scratchpad,(char const rom far*)"SMS FROM: ");
   strcat(net_scratchpad, caller);
   strcatpgm2ram(net_scratchpad,(char const rom far*)" - MSG: ");
+  SMS[70]=0; // Hacky limit on the max size of an SMS forwarded
   strcat(net_scratchpad, SMS);
   net_msg_encode_puts();
   net_msg_send();

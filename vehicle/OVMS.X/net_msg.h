@@ -36,6 +36,7 @@
 extern char net_msg_notify;
 extern char net_msg_notifyenvironment;
 extern char net_msg_serverok;
+extern char net_msg_sendpending;
 
 void net_msg_init(void);
 void net_msg_disconnected(void);
@@ -48,6 +49,7 @@ void net_msg_tpms(void);
 void net_msg_firmware(void);
 void net_msg_environment(void);
 void net_msg_in(char* msg);
+void net_msg_forward_sms(char* caller, char* SMS);
 void net_msg_alert(void);
 void net_msg_forward_sms(char* caller, char* SMS);
 
