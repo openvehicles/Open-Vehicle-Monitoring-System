@@ -12,6 +12,7 @@
 @interface ovmsBodyViewController : UIViewController <ovmsCarDelegate>
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_lockunlock;
+@property (strong, nonatomic) IBOutlet UIImageView *m_car_outlineimage;
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_door_ld;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_door_rd;

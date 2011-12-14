@@ -84,7 +84,7 @@
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="roadster_outline.png" id="sbL-Ne-XZz">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="ol_car_roadster_thundergray.png" id="sbL-Ne-XZz">
                                 <rect key="frame" x="481" y="41" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                             </imageView>
@@ -207,7 +207,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carunlock.png" id="T9f-p1-bGJ">
-                                <rect key="frame" x="525" y="140" width="64" height="96"/>
+                                <rect key="frame" x="481" y="41" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                             </imageView>
                         </subviews>
@@ -229,6 +229,7 @@
                         <outlet property="m_car_door_tr" destination="2rN-id-5WG" id="mnp-Hv-39S"/>
                         <outlet property="m_car_image" destination="s2N-H5-QE1" id="D3E-3Y-wfh"/>
                         <outlet property="m_car_lockunlock" destination="T9f-p1-bGJ" id="IOp-wo-rGr"/>
+                        <outlet property="m_car_outlineimage" destination="sbL-Ne-XZz" id="O8D-GO-kIO"/>
                         <outlet property="m_car_range" destination="sws-Jc-laf" id="Tik-gw-UBS"/>
                         <outlet property="m_car_soc" destination="mnC-x1-YJF" id="odn-DM-cEA"/>
                         <outlet property="m_car_temp_battery" destination="npV-Eo-nR5" id="o97-Qo-K4H"/>
@@ -447,9 +448,9 @@
         <image name="battery_000.png" width="268" height="70"/>
         <image name="battery_100.png" width="268" height="70"/>
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
-        <image name="carunlock.png" width="128" height="192"/>
+        <image name="carunlock.png" width="304" height="606"/>
         <image name="connection_good.png" width="64" height="64"/>
-        <image name="roadster_outline.png" width="304" height="606"/>
+        <image name="ol_car_roadster_thundergray.png" width="304" height="606"/>
         <image name="roadster_outline_cp.png" width="304" height="606"/>
         <image name="roadster_outline_hd.png" width="304" height="606"/>
         <image name="roadster_outline_ld.png" width="304" height="606"/>
@@ -485,6 +486,7 @@
                 <relationship kind="outlet" name="m_car_door_tr" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_lockunlock" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_outlineimage" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_car_range" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_temp_battery" candidateClass="UILabel"/>
