@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <EditText
+        android:id="@+id/textCarEditorVehicleID"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/VehicleID" >
+
+        <requestFocus />
+    </EditText>
+
+    <EditText
+        android:id="@+id/textCarEditorServerNameOrIP"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/ServerNameOrIP" />
+
+    <EditText
+        android:id="@+id/textCarEditorNetPass"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/NetPass"
+        android:inputType="textPassword" />
+
+    <EditText
+        android:id="@+id/textCarEditorUserPass"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/UserPass"
+        android:inputType="textPassword" />
+
+    <Spinner
+        android:id="@+id/spinnerCarEditorColor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center" >
+
+        <Button
+            android:id="@+id/btnCarEditorCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/Cancel" />
+
+        <Button
+            android:id="@+id/btnCarEditorDelete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/Delete" />
+
+        <Button
+            android:id="@+id/btnCarEditorSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.22"
+            android:text="@string/Save" />
+
+    </LinearLayout>
+   
+</LinearLayout>
