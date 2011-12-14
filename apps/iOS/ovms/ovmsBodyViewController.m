@@ -10,6 +10,7 @@
 
 @implementation ovmsBodyViewController
 @synthesize m_car_lockunlock;
+@synthesize m_car_outlineimage;
 @synthesize m_car_door_ld;
 @synthesize m_car_door_rd;
 @synthesize m_car_door_hd;
@@ -87,6 +88,7 @@
   [self setM_car_temp_pem_l:nil];
   [self setM_car_temp_motor_l:nil];
   [self setM_car_temp_battery_l:nil];
+  [self setM_car_outlineimage:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -117,21 +119,26 @@
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
   // Return YES for supported orientations
-  if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
-    return (interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown);
-  } else {
+  if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+    {
+    return (interfaceOrientation == UIInterfaceOrientationPortrait);
+    }
+  else
+    {
     return YES;
-  }
+    }
 }
 
 -(void) updateCar
-{  
-  if ([ovmsAppDelegate myRef].car_lockstate == 4)
+{
+  m_car_outlineimage.image=[UIImage
+                            imageNamed:[NSString stringWithFormat:@"ol_%@",
+                                        [ovmsAppDelegate myRef].sel_imagepath]];
+
+  if ([ovmsAppDelegate myRef].car_doors2 & 0x08)
     m_car_lockunlock.image = [UIImage imageNamed:@"carlock.png"];
-  else if ([ovmsAppDelegate myRef].car_lockstate == 5)
-    m_car_lockunlock.image = [UIImage imageNamed:@"carunlock.png"];
   else
-    m_car_lockunlock.image = nil;
+    m_car_lockunlock.image = [UIImage imageNamed:@"carunlock.png"];
 
   if ([ovmsAppDelegate myRef].car_doors1 & 0x01)
     m_car_door_ld.hidden = 0;

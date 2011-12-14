@@ -234,10 +234,10 @@ void can_poll1(void)                // CAN ID 344 and 402
     switch (can_databuffer[0])
     {
       case 0xFA:			// ODOMETER
-        car_odometer = can_databuffer[5]
+        car_odometer = can_databuffer[3]
 		+ ((unsigned long) can_databuffer[4] << 8)
-                + ((unsigned long) can_databuffer[3] << 16);		// Miles /10
-	car_trip = can_databuffer[7] + ((unsigned int) can_databuffer[6] << 8);	// Miles /10
+                + ((unsigned long) can_databuffer[5] << 16);		// Miles /10
+	car_trip = can_databuffer[6] + ((unsigned int) can_databuffer[7] << 8);	// Miles /10
 	break;
     }
   }
