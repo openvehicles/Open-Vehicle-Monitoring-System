@@ -19,6 +19,7 @@
 @synthesize m_car_soc;
 @synthesize m_battery_front;
 @synthesize m_car_range;
+@synthesize m_car_outlineimage;
 
 @synthesize m_car_lockunlock;
 @synthesize m_car_door_ld;
@@ -140,6 +141,7 @@
     [self setM_car_temp_battery_l:nil];
 
   [self setMyMapView:nil];
+  [self setM_car_outlineimage:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -294,6 +296,10 @@
 
 -(void) updateCar
 {
+  m_car_outlineimage.image=[UIImage
+                            imageNamed:[NSString stringWithFormat:@"ol_%@",
+                                        [ovmsAppDelegate myRef].sel_imagepath]];
+
   if ([ovmsAppDelegate myRef].car_doors2 & 0x08)
     m_car_lockunlock.image = [UIImage imageNamed:@"carlock.png"];
   else
