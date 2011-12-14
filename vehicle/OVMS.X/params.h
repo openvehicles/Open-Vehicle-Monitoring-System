@@ -47,6 +47,7 @@
 #define PARAM_MYID     0x08
 #define PARAM_NETPASS1 0x09
 #define PARAM_PARANOID 0x0A
+#define PARAM_MINSOC   0x0B
 
 void par_initialise(void);
 char* par_get(unsigned char param);
