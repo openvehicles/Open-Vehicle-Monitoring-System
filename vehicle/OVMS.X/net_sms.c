@@ -34,6 +34,7 @@
 #include "ovms.h"
 #include "net.h"
 #include "net_sms.h"
+#include "net_msg.h"
 
 #pragma udata
 char net_sms_notify = 0;
@@ -237,5 +238,9 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       }
     else
       net_send_sms_rom(caller,NET_MSG_DENIED);
+    }
+  else // SMS didn't match any command pattern, forward to user via net msg
+    {
+    net_msg_forward_sms(caller, buf);
     }
   }
