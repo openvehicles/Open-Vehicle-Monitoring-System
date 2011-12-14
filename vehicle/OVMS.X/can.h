@@ -32,6 +32,7 @@
 #define __OVMS_CAN_H
 
 extern unsigned char can_databuffer[8];
+extern unsigned char can_minSOCnotified; // minSOC notified flag
 
 void can_initialise(void);
 void can_poll0(void);
