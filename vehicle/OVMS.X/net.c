@@ -282,7 +282,7 @@ void net_state_enter(unsigned char newstate)
       break;
     case NET_STATE_DOINIT:
       net_timeout_goto = NET_STATE_HARDRESET;
-      net_timeout_ticks = 10;
+      net_timeout_ticks = 35;
       led_act(0);
       led_net(0);
       net_puts_rom(NET_INIT);
@@ -529,6 +529,10 @@ void net_state_ticker1(void)
       net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
       led_act(net_state_vchar);
       break;
+    case NET_STATE_DOINIT:
+      if ((net_timeout_ticks==10)&&(net_timeout_ticks==20))
+        net_puts_rom(NET_INIT); // Try again...
+      break;   
     case NET_STATE_COPS:
       net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
       led_net(net_state_vchar);
