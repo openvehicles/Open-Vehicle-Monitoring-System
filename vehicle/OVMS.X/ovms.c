@@ -86,7 +86,6 @@ signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not ver
 unsigned char net_reg = 0; // Network registration
 unsigned char net_link = 0; // Network link status
 char net_apps_connected = 0; // Network apps connected
-unsigned char car_minSOCnotified = 0; // Flag to prevent duplicate minSOC notifications
 
 void main(void)
   {
