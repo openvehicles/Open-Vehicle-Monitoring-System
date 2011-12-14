@@ -55,6 +55,9 @@ void net_send_sms_start(char* number)
 
 void net_send_sms_rom(char* number, static const rom char* message)
   {
+#ifdef OVMS_SUPPRESS_OUTGOING_SMS
+  return;
+#endif
   net_send_sms_start(number);
   net_puts_rom(message);
   net_puts_rom("\x1a");
@@ -64,6 +67,10 @@ void net_sms_params(char* number)
   {
   unsigned char k;
   char *p;
+
+#ifdef OVMS_SUPPRESS_OUTGOING_SMS
+  return;
+#endif
 
   net_send_sms_start(number);
   net_puts_rom("Params:");
@@ -78,6 +85,10 @@ void net_sms_params(char* number)
 
 void net_sms_gps(char* number)
   {
+#ifdef OVMS_SUPPRESS_OUTGOING_SMS
+  return;
+#endif
+
   delay100(2);
   net_send_sms_start(number);
   net_puts_rom(NET_MSG_GOOGLEMAPS);
@@ -92,6 +103,10 @@ void net_sms_gps(char* number)
 void net_sms_stat(char* number)
   {
   char *p;
+
+#ifdef OVMS_SUPPRESS_OUTGOING_SMS
+  return;
+#endif
 
   delay100(2);
   net_send_sms_start(number);
@@ -159,7 +174,11 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       net_send_sms_rom(caller,NET_MSG_REGISTERED);
       }
     else
-      net_send_sms_rom(caller,NET_MSG_DENIED);
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
+        net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
     }
   else if (memcmppgm2ram(buf, (char const rom far*)"PASS ", 5) == 0)
     {
@@ -170,7 +189,11 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       net_send_sms_rom(caller,NET_MSG_PASSWORD);
       }
     else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
       net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
     }
   else if (memcmppgm2ram(buf, (char const rom far*)"GPS ", 4) == 0)
     {
@@ -178,7 +201,11 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
     if (strncmp(p,buf+4,strlen(p))==0)
       net_sms_gps(caller);
     else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
       net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
     }
   else if (memcmppgm2ram(buf, (char const rom far*)"GPS", 3) == 0)
     {
@@ -186,7 +213,11 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
     if (strncmp(p,caller,strlen(p)) == 0)
       net_sms_gps(caller);
     else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
       net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
     }
   else if (memcmppgm2ram(buf, (char const rom far*)"STAT ", 5) == 0)
     {
@@ -194,7 +225,11 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
     if (strncmp(p,buf+5,strlen(p))==0)
       net_sms_stat(caller);
     else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
       net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
     }
   else if (memcmppgm2ram(buf, (char const rom far*)"STAT", 4) == 0)
     {
@@ -202,7 +237,11 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
     if (strncmp(p,caller,strlen(p)) == 0)
       net_sms_stat(caller);
     else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
       net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
     }
   else if (memcmppgm2ram(buf, (char const rom far*)"PARAMS?", 7) == 0)
     {
@@ -210,7 +249,11 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
     if (strncmp(p,caller,strlen(p)) == 0)
       net_sms_params(caller);
     else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
       net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
     }
   else if (memcmppgm2ram(buf, (char const rom far*)"PARAMS ", 7) == 0)
     {
@@ -237,7 +280,11 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       net_state_enter(NET_STATE_SOFTRESET);
       }
     else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
       net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
     }
   else // SMS didn't match any command pattern, forward to user via net msg
     {
