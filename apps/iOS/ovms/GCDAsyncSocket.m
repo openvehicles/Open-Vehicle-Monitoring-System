@@ -2376,7 +2376,7 @@ enum GCDAsyncSocketConfig
         // Getting a linker error here about SSLDisposeContext?
         // You need to add the Security Framework to your application.
 
-        SSLDisposeContext(sslContext);
+//        SSLDisposeContext(sslContext);
         sslContext = NULL;
     }
 	
@@ -5372,9 +5372,9 @@ static OSStatus SSLWriteFunction(SSLConnectionRef connection, const void *data, 
 		
 		// Create SSLContext, and setup IO callbacks and connection ref
 		
-		BOOL isServer = [[tlsSettings objectForKey:(NSString *)kCFStreamSSLIsServer] boolValue];
+//		BOOL isServer = [[tlsSettings objectForKey:(NSString *)kCFStreamSSLIsServer] boolValue];
 		
-		status = SSLNewContext(isServer, &sslContext);
+//		status = SSLNewContext(isServer, &sslContext);
 		if (status != noErr)
 		{
 			[self closeWithError:[self otherError:@"Error in SSLNewContext"]];

@@ -9,6 +9,7 @@
 #import "ovmsAppDelegate.h"
 #import "GCDAsyncSocket.h"
 #import "JHNotificationManager.h"
+#import "Reachability.h"
 #import "Cars.h"
 
 @implementation ovmsAppDelegate
@@ -73,8 +74,6 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    // Override point for customization after application launch.
- 
   // Set the application defaults
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
   NSDictionary *appDefaults = [NSDictionary
@@ -317,6 +316,18 @@
 {
   unsigned char digest[MD5_SIZE];
   unsigned char edigest[MD5_SIZE*2];
+  
+  Reachability* internetReach = [Reachability reachabilityForInternetConnection];
+  NetworkStatus netStatus = [internetReach currentReachabilityStatus];
+  if (netStatus == NotReachable)
+    {
+    UIAlertView *alert = [[UIAlertView alloc]
+                           initWithTitle:@"Connection Error"
+                           message:@"You have a connection failure. OVMS requires a wi-fi or cell network to get an Internet connection."
+                           delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil];
+    [alert show];
+    return;
+    }
   
   if (asyncSocket == NULL)
     {

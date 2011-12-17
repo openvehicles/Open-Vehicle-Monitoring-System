@@ -14,9 +14,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "4D5AE36314733757002F5F52"
-               BuildableName = "ovms.app"
-               BlueprintName = "ovms"
-               ReferencedContainer = "container:ovms.xcodeproj">
+               BuildableName = "Open Vehicle.app"
+               BlueprintName = "Open Vehicle"
+               ReferencedContainer = "container:Open Vehicle.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -32,9 +32,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "4D5AE39214733758002F5F52"
-               BuildableName = "ovmsTests.octest"
-               BlueprintName = "ovmsTests"
-               ReferencedContainer = "container:ovms.xcodeproj">
+               BuildableName = "Open VehicleTests.octest"
+               BlueprintName = "Open VehicleTests"
+               ReferencedContainer = "container:Open Vehicle.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -42,9 +42,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "4D5AE36314733757002F5F52"
-            BuildableName = "ovms.app"
-            BlueprintName = "ovms"
-            ReferencedContainer = "container:ovms.xcodeproj">
+            BuildableName = "Open Vehicle.app"
+            BlueprintName = "Open Vehicle"
+            ReferencedContainer = "container:Open Vehicle.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </TestAction>
@@ -60,9 +60,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "4D5AE36314733757002F5F52"
-            BuildableName = "ovms.app"
-            BlueprintName = "ovms"
-            ReferencedContainer = "container:ovms.xcodeproj">
+            BuildableName = "Open Vehicle.app"
+            BlueprintName = "Open Vehicle"
+            ReferencedContainer = "container:Open Vehicle.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -78,17 +78,17 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "4D5AE36314733757002F5F52"
-            BuildableName = "ovms.app"
-            BlueprintName = "ovms"
-            ReferencedContainer = "container:ovms.xcodeproj">
+            BuildableName = "Open Vehicle.app"
+            BlueprintName = "Open Vehicle"
+            ReferencedContainer = "container:Open Vehicle.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
-      buildConfiguration = "Debug">
+      buildConfiguration = "AppStore Release">
    </AnalyzeAction>
    <ArchiveAction
-      buildConfiguration = "Adhoc Release"
+      buildConfiguration = "Debug"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>
