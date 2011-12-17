@@ -58,8 +58,8 @@ public class TabCar extends Activity {
 
 		TextView tv = (TextView) findViewById(R.id.tabCarTextLastUpdated);
 		Date now = new Date();
-		long lastUpdateSecondsAgo = (now.getDate() - data.Data_LastCarUpdate
-				.getDate()) / 1000;
+		long lastUpdateSecondsAgo = (now.getTime() - data.Data_LastCarUpdate
+				.getTime()) / 1000;
 
 		if (lastUpdateSecondsAgo < 60)
 			tv.setText("live");
@@ -104,17 +104,18 @@ public class TabCar extends Activity {
 			tv.setVisibility(data.Data_TrunkOpen ? View.VISIBLE
 					: View.INVISIBLE);
 
-			tv = (TextView) findViewById(R.id.tabCarTextCarStats);
-			tv.setText(String.format(
-					"PEM: %d°„C\nMotor: %d°„C\nBatt: %d°„C\nSpeed: %dkph",
-					(int) data.Data_TemperaturePEM,
-					(int) data.Data_TemperatureMotor,
-					(int) data.Data_TemperatureBattery, (int) data.Data_Speed)); // \nTrip:
-																					// %d\nOdo:
-																					// %d
-																					// ,
-																					// (int)data.Data_TripMeter,
-																					// (int)data.Data_Odometer
+			tv = (TextView) findViewById(R.id.tabCarTextSpeed);
+			if (data.Data_DistanceUnit.equals("K"))
+				tv.setText((data.Data_Speed > 0) ? String.format("%d kph", (int) (data.Data_Speed * 1.609344)) : "");
+			else
+				tv.setText((data.Data_Speed > 0) ? String.format("%d mph", (int) data.Data_Speed) : "");
+
+			tv = (TextView) findViewById(R.id.tabCarTextPEM);
+			tv.setText(String.format("%d°„C", (int)data.Data_TemperaturePEM));
+			tv = (TextView) findViewById(R.id.tabCarTextMotor);
+			tv.setText(String.format("%d°„C", (int)data.Data_TemperatureMotor));
+			tv = (TextView) findViewById(R.id.tabCarTextBattery);
+			tv.setText(String.format("%d°„C", (int)data.Data_TemperatureBattery));
 
 			String tirePressureDisplayFormat = "%.1fpsi\n%.0f°„C";
 
@@ -131,7 +132,12 @@ public class TabCar extends Activity {
 			tv.setText(String.format(tirePressureDisplayFormat,
 					data.Data_RRWheelPressure, data.Data_RRWheelTemperature));
 
-			ImageView iv = (ImageView) findViewById(R.id.tabCarImageCarChargePortOpen);
+			
+			ImageView iv = (ImageView)findViewById(R.id.tabCarImageCarOutline);
+			int resId = getResources().getIdentifier(String.format("ol_%s", data.VehicleImageDrawable), "drawable", "com.openvehicles.OVMS");
+			iv.setImageResource(resId);
+
+			iv = (ImageView) findViewById(R.id.tabCarImageCarChargePortOpen);
 			iv.setVisibility(data.Data_ChargePortOpen ? View.VISIBLE
 					: View.INVISIBLE);
 			iv = (ImageView) findViewById(R.id.tabCarImageCarHoodOpen);

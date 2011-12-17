@@ -12,8 +12,8 @@
     <string name="Save">Save</string>
     <string name="VehicleID">Vehicle ID</string>
     <string name="ServerNameOrIP">Server Address (Domain or IP)</string>
-    <string name="NetPass">Server Password</string>
-    <string name="UserPass">User Password (Paranoid Mode)</string>
+    <string name="RegPass">Server Password</string>
+    <string name="NetPass">Paranoid Mode Password</string>
     <string name="Quit">Exit Application</string>
     <string name="Edit">Edit</string>
     <string name="ClearNotifications">Clear Notifications</string>

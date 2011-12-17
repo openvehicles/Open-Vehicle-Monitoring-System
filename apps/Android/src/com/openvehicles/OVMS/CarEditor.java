@@ -44,10 +44,10 @@ public class CarEditor extends Activity {
 			originalVehicleID = "";
 		}
 		
-		TextView tv = (TextView) findViewById(R.id.textCarEditorNetPass);
-		tv.setText(car.CarPass);
-		tv = (TextView) findViewById(R.id.textCarEditorUserPass);
-		tv.setText(car.UserPass);
+		TextView tv = (TextView) findViewById(R.id.textCarEditorRegPass);
+		tv.setText(car.RegPass);
+		tv = (TextView) findViewById(R.id.textCarEditorNetPass);
+		tv.setText(car.NetPass);
 		tv = (TextView) findViewById(R.id.textCarEditorServerNameOrIP);
 		tv.setText(car.ServerNameOrIP);
 		tv = (TextView) findViewById(R.id.textCarEditorVehicleID);
@@ -160,10 +160,10 @@ public class CarEditor extends Activity {
 	{
 		TextView tv = (TextView) findViewById(R.id.textCarEditorVehicleID);
 		car.VehicleID = tv.getText().toString().trim();
+		tv = (TextView) findViewById(R.id.textCarEditorRegPass);
+		car.RegPass = tv.getText().toString().trim();
 		tv = (TextView) findViewById(R.id.textCarEditorNetPass);
-		car.CarPass = tv.getText().toString().trim();
-		tv = (TextView) findViewById(R.id.textCarEditorUserPass);
-		car.UserPass = tv.getText().toString().trim();
+		car.NetPass = tv.getText().toString().trim();
 		tv = (TextView) findViewById(R.id.textCarEditorServerNameOrIP);
 		car.ServerNameOrIP = tv.getText().toString().trim();
 

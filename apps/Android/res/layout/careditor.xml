@@ -6,7 +6,7 @@
 
     <EditText
         android:id="@+id/textCarEditorVehicleID"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="@string/VehicleID" >
 
@@ -15,32 +15,33 @@
 
     <EditText
         android:id="@+id/textCarEditorServerNameOrIP"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="@string/ServerNameOrIP" />
-
-    <EditText
+    <EditText
         android:id="@+id/textCarEditorNetPass"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/RegPass"
+        android:inputType="textPassword" />
+
+    
+    <EditText
+        android:id="@+id/textCarEditorRegPass"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="@string/NetPass"
         android:inputType="textPassword" />
 
-    <EditText
-        android:id="@+id/textCarEditorUserPass"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/UserPass"
-        android:inputType="textPassword" />
-
+
     <Spinner
         android:id="@+id/spinnerCarEditorColor"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
 
     <LinearLayout
         android:id="@+id/linearLayout1"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:gravity="center" >
 

@@ -10,8 +10,8 @@ public class CarData implements Serializable {
 	private static final long serialVersionUID = 9069218298370983462L;
 	public String ServerNameOrIP = "www.openvehicles.com";
 	public String VehicleID;
-	public String CarPass; //server secret
-	public String UserPass; //app secret
+	public String RegPass; //app/car secret
+	public String NetPass; //server secret
 	
 	public String VehicleImageDrawable;
 	

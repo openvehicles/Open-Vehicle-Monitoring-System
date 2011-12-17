@@ -55,6 +55,7 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
+rom char NET_DISABLE_ECHO[] = "ATE0\r";
 rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0\r";
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
@@ -285,6 +286,7 @@ void net_state_enter(unsigned char newstate)
       net_timeout_ticks = 35;
       led_act(0);
       led_net(0);
+      net_puts_rom(NET_DISABLE_ECHO);
       net_puts_rom(NET_INIT);
       break;
     case NET_STATE_DONETINIT:

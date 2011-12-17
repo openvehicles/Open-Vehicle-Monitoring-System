@@ -4,7 +4,12 @@ import java.util.Date;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -66,8 +71,7 @@ public class TabInfo extends Activity {
 		
 		TextView tv = (TextView)findViewById(R.id.textLastUpdated);
 		Date now = new Date();
-		long lastUpdateSecondsAgo = (now.getDate() - data.Data_LastCarUpdate.getDate()) / 1000;
-		Log.d("OVMS", "Last updated: " + lastUpdateSecondsAgo + " secs ago");
+		long lastUpdateSecondsAgo = (now.getTime() - data.Data_LastCarUpdate.getTime()) / 1000;
 		
 		if (lastUpdateSecondsAgo < 60)
 			tv.setText("live");

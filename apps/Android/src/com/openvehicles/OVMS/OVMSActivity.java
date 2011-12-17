@@ -1,7 +1,7 @@
 package com.openvehicles.OVMS;
 
-import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.app.TabActivity;
@@ -15,7 +15,6 @@ import android.os.Handler;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,18 +31,12 @@ import java.util.Date;
 import java.util.Random;
 import java.util.UUID;
 
-import javax.crypto.Cipher;
-import javax.crypto.Mac;
 
 import android.os.AsyncTask;
-import android.telephony.TelephonyManager;
-import android.text.ClipboardManager;
-import android.util.Base64;
 import android.util.Log;
 
 import android.widget.*;
 import android.widget.TabHost.OnTabChangeListener;
-import android.util.*;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -77,8 +70,6 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 			startService(registrationIntent);
 			progress.dismiss();
 
-			c2dmReportTimerHandler.postDelayed(reportC2DMRegistrationID, 2000);
-
 			/*
 			 * unregister Intent unregIntent = new
 			 * Intent("com.google.android.c2dm.intent.UNREGISTER");
@@ -101,7 +92,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 		spec = tabHost.newTabSpec("tabInfo");
 		spec.setContent(intent);
 		spec.setIndicator("",
-				getResources().getDrawable(android.R.drawable.ic_menu_info_details));
+				getResources().getDrawable(R.drawable.ic_menu_car));
 		tabHost.addTab(spec);
 
 		intent = new Intent().setClass(this, TabCar.class);
@@ -109,7 +100,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 		spec = tabHost.newTabSpec("tabCar");
 		spec.setContent(intent);
 		spec.setIndicator("",
-				getResources().getDrawable(android.R.drawable.ic_menu_preferences));// ic_menu_zoom
+				getResources().getDrawable(R.drawable.ic_menu_settings));// ic_menu_zoom
 		tabHost.addTab(spec);
 
 		intent = new Intent().setClass(this, TabMap.class);
@@ -117,7 +108,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 		spec = tabHost.newTabSpec("tabMap");
 		spec.setContent(intent);
 		spec.setIndicator("",
- 				getResources().getDrawable(android.R.drawable.ic_menu_compass));// ic_menu_mapmode
+ 				getResources().getDrawable(R.drawable.ic_menu_globe));// ic_menu_mapmode
 		tabHost.addTab(spec);
 
 		intent = new Intent().setClass(this, TabNotifications.class);
@@ -125,7 +116,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 		spec = tabHost.newTabSpec("tabNotifications");
 		spec.setContent(intent);
 		spec.setIndicator("",
- 				getResources().getDrawable(android.R.drawable.ic_menu_agenda));
+ 				getResources().getDrawable(R.drawable.ic_menu_dialog));
 		tabHost.addTab(spec);
 
 		intent = new Intent().setClass(this, TabCars.class);
@@ -133,27 +124,53 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 		spec = tabHost.newTabSpec("tabCars");
 		spec.setContent(intent);
 		spec.setIndicator("",
-				getResources().getDrawable(android.R.drawable.ic_menu_manage));// ic_menu_preferences
+				getResources().getDrawable(R.drawable.ic_menu_database));// ic_menu_preferences
 		tabHost.addTab(spec);
 
 		// tcp task isnow started in the onResume method
 		//tcpTask = new TCPTask(carData);
 		//tcpTask.execute();
 		
-		getTabHost().setOnTabChangedListener(this);
+		getTabHost().setOnTabChangedListener(this);		
+		//getTabHost().setCurrentTabByTag("tabInfo");
 		
-		if (tabHost.getCurrentTabTag() == "")
-			getTabHost().setCurrentTabByTag("tabInfo");
+
 	}
 	
 	@Override
 	public void onNewIntent(Intent launchingIntent)
 	{
+		Log.d("OVMS-Event", "onNewIntent");
 		TabHost tabHost = getTabHost();
-		if ((launchingIntent != null) && launchingIntent.hasExtra("SetTab"))
-			tabHost.setCurrentTabByTag(launchingIntent.getStringExtra("SetTab"));
-		else
-			tabHost.setCurrentTabByTag("tabInfo");
+		if (launchingIntent != null)
+		{
+			if (launchingIntent.hasExtra("VehicleID"))
+			{
+				CarData newCar = null;
+				for (CarData car : allSavedCars)
+				{
+					if (car.VehicleID.equals(launchingIntent.getStringExtra("VehicleID")))
+					{
+						newCar = car;
+						break;
+					}
+				}
+				
+				if (newCar != null)
+				{
+					Log.d("OVMS-Event", "Launching with default car set to: " + newCar.VehicleID);
+
+					if (launchingIntent.hasExtra("SetTab"))
+						this.ChangeCar(newCar, launchingIntent.getStringExtra("SetTab"));
+					else
+						this.ChangeCar(newCar);
+
+				}
+			} else if (launchingIntent.hasExtra("SetTab"))
+				tabHost.setCurrentTabByTag(launchingIntent.getStringExtra("SetTab"));
+			else
+				tabHost.setCurrentTabByTag("tabInfo");
+		}
 	}
 	
 	@Override
@@ -174,7 +191,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 			OVMSNotifications notifications = new OVMSNotifications(this);
 			notifications.Notifications = new ArrayList<NotificationData>();
 			notifications.Save();
-			this.UpdateStatus();
+			this.updateStatus();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -193,16 +210,23 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 	public boolean SuppressServerErrorDialog = false;
 	ProgressDialog progressLogin = null;
 
+	public Runnable mUpdateStatus = new Runnable() {
+		public void run() {
+			updateStatus();
+		}		
+	};
+	
 	private Runnable progressLoginCloseDialog = new Runnable() {
 		public void run() {
-			try {
+			if (progressLogin != null)
 				progressLogin.dismiss();
-			} catch (Exception e)
-			{}
 		}
 	};
 	private Runnable progressLoginShowDialog = new Runnable() {
 		public void run() {
+			if (progressLogin != null)
+				progressLogin.dismiss();
+
 			progressLogin = ProgressDialog.show(OVMSActivity.this, "",
 					"Connecting to OVMS Server...");
 		}
@@ -258,31 +282,33 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 				return;
 			
 			SharedPreferences settings = getSharedPreferences("C2DM", 0);
-			String registrationID = settings.getString("RegID", "");
-			String uuid;
+			String c2DMRegistrationID = settings.getString("RegID", "");
+			String appID;
 
 			if (!settings.contains("UUID")) {
 				// generate a new UUID
-				uuid = UUID.randomUUID().toString();
+				appID = UUID.randomUUID().toString();
 				Editor editor = getSharedPreferences("C2DM",
 						Context.MODE_PRIVATE).edit();
-				editor.putString("UUID", uuid);
+				editor.putString("UUID", appID);
 				editor.commit();
 
-				Log.d("OVMS", "Generated New C2DM UUID: " + uuid);
+				Log.d("OVMS", "Generated New App ID: " + appID);
 			} else {
-				uuid = settings.getString("UUID", "");
-				Log.d("OVMS", "Loaded Saved C2DM UUID: " + uuid);
+				appID = settings.getString("UUID", "");
+				Log.d("OVMS", "Loaded Saved App ID: " + appID);
 			}
 
 			// MP-0
 			// p<appid>,<pushtype>,<pushkeytype>{,<vehicleid>,<netpass>,<pushkeyvalue>}
-			if ((registrationID.length() == 0)
-					|| !tcpTask
+			if (c2DMRegistrationID.length() == 0)
+			{
+				Log.d("C2DM", "C2DM registration ID not found. Re-registration required.");
+			} else if (!tcpTask
 							.SendCommand(String.format(
-									"MP-0 p%s,c2dm,production,%s,%s,%s", uuid,
-									carData.VehicleID, carData.CarPass,
-									registrationID))) {
+									"MP-0 p%s,c2dm,production,%s,%s,%s", appID,
+									carData.VehicleID, carData.NetPass,
+									c2DMRegistrationID))) {
 				// command not successful, reschedule reporting after 5 seconds
 				Log.d("OVMS", "Reporting C2DM ID failed. Rescheduling.");
 				c2dmReportTimerHandler.postDelayed(reportC2DMRegistrationID,
@@ -298,9 +324,15 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 	private void loginComplete() {
 		isLoggedIn = true;
 		this.runOnUiThread(progressLoginCloseDialog);
+		
+		c2dmReportTimerHandler.postDelayed(reportC2DMRegistrationID, 500);
 	}
 
 	public void ChangeCar(CarData car) {
+		ChangeCar(car, "tabInfo");
+	}
+		
+	public void ChangeCar(CarData car, String initialTabTag) {
 		this.runOnUiThread(progressLoginShowDialog);
 		
 		Log.d("OVMS", "Changed car to: " + car.VehicleID);
@@ -325,11 +357,11 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 		tcpTask = new TCPTask(carData);
 		Log.d("TCP", "Starting TCP Connection (ChangeCar())");
 		tcpTask.execute();
-		getTabHost().setCurrentTabByTag("tabInfo");
-		UpdateStatus();
+		getTabHost().setCurrentTabByTag(initialTabTag);
+		this.runOnUiThread(mUpdateStatus);
 	}
-
-	public void UpdateStatus() {
+	
+	private void updateStatus() {
 		Log.d("OVMS", "Status Update");
 		String currentActivityId = getLocalActivityManager().getCurrentId();
 		notifyTabUpdate(currentActivityId);
@@ -374,7 +406,11 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 		super.onResume();
 
 		//getTabHost().setOnTabChangedListener(this);
-		ChangeCar(carData);
+		if (tcpTask == null)
+		{
+			String currentTabTag = getTabHost().getCurrentTabTag(); 
+			ChangeCar(carData, currentTabTag);
+		}
 	}
 
 	@Override
@@ -400,6 +436,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	private void loadCars() {
 		try {
 			Log.d("OVMS", "Loading saved cars from internal storage file: "
@@ -408,6 +445,13 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 			ObjectInputStream is = new ObjectInputStream(fis);
 			allSavedCars = (ArrayList<CarData>) is.readObject();
 			is.close();
+			
+			// check for data integrity
+			for (CarData car : allSavedCars)
+			{
+				if ((car.VehicleID == null) || (car.RegPass == null) || (car.NetPass == null) || (car.ServerNameOrIP == null))
+					initializeSavedCars();
+			}
 
 			SharedPreferences settings = getSharedPreferences("OVMS", 0);
 			String lastVehicleID = settings.getString("LastVehicleID", "")
@@ -435,21 +479,25 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 			e.printStackTrace();
 			Log.d("ERR", e.getMessage());
 
-			Log.d("OVMS", "Invalid save file. Initializing with demo car.");
-			// No settings file found. Initialize settings.
-			allSavedCars = new ArrayList<CarData>();
-			CarData demoCar = new CarData();
-			demoCar.VehicleID = "DEMO";
-			demoCar.CarPass = "DEMO";
-			demoCar.UserPass = "DEMO";
-			demoCar.ServerNameOrIP = "www.openvehicles.com";
-			demoCar.VehicleImageDrawable = "car_models_signaturered";
-			allSavedCars.add(demoCar);
-
-			carData = demoCar;
-			
-			saveCars();
+			initializeSavedCars();
 		}
+	}
+
+	private void initializeSavedCars() {
+		Log.d("OVMS", "Invalid save file. Initializing with demo car.");
+		// No settings file found. Initialize settings.
+		allSavedCars = new ArrayList<CarData>();
+		CarData demoCar = new CarData();
+		demoCar.VehicleID = "DEMO";
+		demoCar.RegPass = "DEMO";
+		demoCar.NetPass = "DEMO";
+		demoCar.ServerNameOrIP = "www.openvehicles.com";
+		demoCar.VehicleImageDrawable = "car_models_signaturered";
+		allSavedCars.add(demoCar);
+
+		carData = demoCar;
+		
+		saveCars();
 	}
 
 	public void saveCars() {
@@ -477,11 +525,11 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 
 		public Socket Sock;
 		private CarData carData;
-		private Cipher txcipher;
-		private Cipher rxcipher;
+		private RC4 txcipher;
+		private RC4 rxcipher;
 
 		private byte[] pmDigest;
-		private Cipher pmcipher;
+		private RC4 pmcipher;
 
 		private PrintWriter Outputstream;
 		private BufferedReader Inputstream;
@@ -504,7 +552,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 				while (Sock.isConnected()) {
 					// if (Inputstream.ready()) {
 					rx = Inputstream.readLine().trim();
-					msg = new String(rxcipher.update(Base64.decode(rx, 0)))
+					msg = new String(rxcipher.rc4(Base64.decode(rx)))
 							.trim();
 					Log.d("OVMS", String.format("RX: %s (%s)", msg, rx));
 					if (msg.substring(0, 5).equals("MP-0 "))
@@ -519,6 +567,8 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 						// ??
 					}
 				}
+			} catch (NullPointerException e) {
+				// connection closed by another process
 			} catch (SocketException e) {
 				// connection lost, attempt to reconnect
 				try {
@@ -551,11 +601,9 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 
 					try {
 						String pmToken = msg.substring(2);
-						Mac pm_hmac = Mac.getInstance("HmacMD5");
-						javax.crypto.spec.SecretKeySpec sk = new javax.crypto.spec.SecretKeySpec(
-								carData.UserPass.getBytes(), "HmacMD5");
-						pm_hmac.init(sk);
-						pmDigest = pm_hmac.doFinal(pmToken.getBytes());
+						HMAC pm_hmac = new HMAC("MD5", carData.RegPass.getBytes()); // car/app secret
+						pm_hmac.update(pmToken.getBytes());
+						pmDigest = pm_hmac.sign();
 						Log.d("OVMS", "Paranoid Mode Token Accepted. Entering Privacy Mode.");
 					} catch (Exception e) {
 						Log.d("ERR", e.getMessage());
@@ -568,22 +616,18 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 					code = msg.charAt(2);
 					cmd = msg.substring(3);
 					
-					byte[] decodedCmd = Base64.decode(cmd,
-							Base64.NO_WRAP);
+					byte[] decodedCmd = Base64.decode(cmd);
 
 					try {
-						pmcipher = Cipher.getInstance("RC4");
-						pmcipher.init(Cipher.DECRYPT_MODE,
-								new javax.crypto.spec.SecretKeySpec(pmDigest,
-										"RC4"));
+						pmcipher = new RC4(pmDigest);
 
 						// prime ciphers
 						String primeData = "";
 						for (int cnt = 0; cnt < 1024; cnt++)
 							primeData += "0";
 
-						pmcipher.update(primeData.getBytes());
-						cmd = new String(pmcipher.update(decodedCmd));
+						pmcipher.rc4(primeData.getBytes());
+						cmd = new String(pmcipher.rc4(decodedCmd));
 					} catch (Exception e) {
 						Log.d("ERR", e.getMessage());
 						e.printStackTrace();
@@ -593,7 +637,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 					if (!carData.ParanoidMode) {
 						Log.d("OVMS", "Paranoid Mode Detected");
 						carData.ParanoidMode = true;
-						OVMSActivity.this.UpdateStatus();
+						OVMSActivity.this.runOnUiThread(mUpdateStatus);
 					}
 				}
 			}
@@ -603,7 +647,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 			case 'Z': // Number of connected cars
 			{
 				carData.Data_CarsConnected = Integer.parseInt(cmd);
-				OVMSActivity.this.UpdateStatus();
+				OVMSActivity.this.runOnUiThread(mUpdateStatus);
 				break;
 			}
 			case 'S': // STATUS
@@ -624,7 +668,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 
 				Log.d("TCP", "Notify Vehicle Status Update: " + carData.VehicleID);
 				if (OVMSActivity.this != null) // OVMSActivity may be null if it is not in foreground
-					OVMSActivity.this.UpdateStatus();
+					OVMSActivity.this.runOnUiThread(mUpdateStatus);
 				break;
 			}
 			case 'T': // TIME
@@ -633,7 +677,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 					carData.Data_LastCarUpdate = new Date(
 							(new Date()).getTime() - Long.parseLong(cmd) * 1000);
 					carData.Data_LastCarUpdate_raw = Long.parseLong(cmd);
-					OVMSActivity.this.UpdateStatus();
+					OVMSActivity.this.runOnUiThread(mUpdateStatus);
 				} else
 					Log.d("TCP", "T MSG Invalid");
 				break;
@@ -646,7 +690,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 					carData.Data_Latitude = Double.parseDouble(dataParts[0]);
 					carData.Data_Longitude = Double.parseDouble(dataParts[1]);
 					// Update the visible location
-					OVMSActivity.this.UpdateStatus();
+					OVMSActivity.this.runOnUiThread(mUpdateStatus);
 				}
 				break;
 			}
@@ -680,7 +724,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 					carData.Data_Speed = Double.parseDouble(dataParts[8]);
 					
 					// Update the displayed tab
-					OVMSActivity.this.UpdateStatus();
+					OVMSActivity.this.runOnUiThread(mUpdateStatus);
 				}
 				break;
 			}
@@ -694,7 +738,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 					carData.Data_CarModuleGSMSignalLevel = dataParts[2].toString();
 					
 					// Update the displayed tab
-					OVMSActivity.this.UpdateStatus();
+					OVMSActivity.this.runOnUiThread(mUpdateStatus);
 				}
 			}
 			case 'f': // OVMS Server Firmware
@@ -705,7 +749,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 					carData.Data_OVMSServerFirmwareVersion = dataParts[0].toString();
 					
 					// Update the displayed tab
-					OVMSActivity.this.UpdateStatus();
+					OVMSActivity.this.runOnUiThread(mUpdateStatus);
 				}
 				break;
 			}
@@ -724,7 +768,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 					carData.Data_RLWheelTemperature = Double.parseDouble(dataParts[7]);
 
 					// Update the displayed tab
-					OVMSActivity.this.UpdateStatus();
+					OVMSActivity.this.runOnUiThread(mUpdateStatus);
 				}
 				break;
 			}
@@ -737,13 +781,14 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 
 		public void Ping() {
 			String msg = "TX: MP-0 A";
-			Outputstream.println(Base64.encodeToString(
-					txcipher.update(msg.getBytes()), Base64.NO_WRAP));
+			Outputstream.println(Base64.encode(
+					txcipher.rc4(msg.getBytes())));
 			Log.d("OVMS", msg);
 		}
 
 		public void ConnClose() {
 			try {
+				OVMSActivity.this.isLoggedIn = false;
 				if ((Sock != null) && Sock.isConnected())
 					Sock.close();
 			} catch (Exception e) {
@@ -759,8 +804,8 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 			}
 
 			try {
-				Outputstream.println(Base64.encodeToString(
-						txcipher.update(command.getBytes()), Base64.NO_WRAP));
+				Outputstream.println(Base64.encode(
+						txcipher.rc4(command.getBytes())));
 			} catch (Exception e) {
 				notifyServerSocketError(e);
 			}
@@ -768,7 +813,7 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 		}
 
 		private void ConnInit() {
-			String shared_secret = carData.CarPass;
+			String shared_secret = carData.NetPass;
 			String vehicleID = carData.VehicleID;
 			String b64tabString = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 			char[] b64tab = b64tabString.toCharArray();
@@ -781,13 +826,11 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 
 			byte[] client_token = client_tokenString.getBytes();
 			try {
-				Mac client_hmac = Mac.getInstance("HmacMD5");
-				javax.crypto.spec.SecretKeySpec sk = new javax.crypto.spec.SecretKeySpec(
-						shared_secret.getBytes(), "HmacMD5");
-				client_hmac.init(sk);
-				byte[] hashedBytes = client_hmac.doFinal(client_token);
-				String client_digest = Base64.encodeToString(hashedBytes,
-						Base64.NO_WRAP);
+				HMAC client_hmac = new HMAC("MD5", shared_secret.getBytes());
+				
+				client_hmac.update(client_token);
+				byte[] hashedBytes = client_hmac.sign();
+				String client_digest = Base64.encode(hashedBytes);
 
 				Sock = new Socket(carData.ServerNameOrIP, 6867);
 
@@ -821,47 +864,43 @@ public class OVMSActivity extends TabActivity implements OnTabChangeListener {
 
 				String server_tokenString = serverWelcomeMsg[2];
 				byte[] server_token = server_tokenString.getBytes();
-				byte[] server_digest = Base64.decode(serverWelcomeMsg[3], 0);
+				byte[] server_digest = Base64.decode(serverWelcomeMsg[3]);
 
-				if (!Arrays.equals(client_hmac.doFinal(server_token),
+				client_hmac.clear();
+				client_hmac.update(server_token);
+				if (!Arrays.equals(client_hmac.sign(),
 						server_digest)) {
 					// server hash failed
 					Log.d("OVMS", String.format(
 							"Server authentication failed. Expected %s Got %s",
-							Base64.encodeToString(client_hmac
-									.doFinal(serverWelcomeMsg[2].getBytes()),
-									Base64.NO_WRAP), serverWelcomeMsg[3]));
+							Base64.encode(client_hmac.sign()), serverWelcomeMsg[3]));
 				} else {
 					Log.d("OVMS", "Server authentication OK.");
 				}
 
 				// generate client_key
+				client_hmac.clear();
 				String server_client_token = server_tokenString
 						+ client_tokenString;
-				byte[] client_key = client_hmac.doFinal(server_client_token
-						.getBytes());
+				client_hmac.update(server_client_token.getBytes());
+				byte[] client_key = client_hmac.sign();
 
 				Log.d("OVMS", String.format(
 						"Client version of the shared key is %s - (%s) %s",
 						server_client_token, toHex(client_key).toLowerCase(),
-						Base64.encodeToString(client_key, Base64.NO_WRAP)));
+						Base64.encode(client_key)));
 
 				// generate ciphers
-				rxcipher = Cipher.getInstance("RC4");
-				rxcipher.init(Cipher.DECRYPT_MODE,
-						new javax.crypto.spec.SecretKeySpec(client_key, "RC4"));
-
-				txcipher = Cipher.getInstance("RC4");
-				txcipher.init(Cipher.ENCRYPT_MODE,
-						new javax.crypto.spec.SecretKeySpec(client_key, "RC4"));
+				rxcipher = new RC4(client_key);
+				txcipher = new RC4(client_key);
 
 				// prime ciphers
 				String primeData = "";
 				for (int cnt = 0; cnt < 1024; cnt++)
 					primeData += "0";
 
-				rxcipher.update(primeData.getBytes());
-				txcipher.update(primeData.getBytes());
+				rxcipher.rc4(primeData.getBytes());
+				txcipher.rc4(primeData.getBytes());
 
 				Log.d("OVMS", String.format(
 						"Connected to %s. Ciphers initialized. Listening...",

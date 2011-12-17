@@ -17,7 +17,7 @@
 
             <LinearLayout
                 android:id="@+id/linearLayout1"
-                android:layout_width="match_parent"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:gravity="right" >
 
@@ -86,8 +86,8 @@
 
             <ImageView
                     android:id="@+id/imgCar"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
                     android:scaleType="center"
                     android:src="@drawable/car_roadster_brilliantyellow" />
         </TableRow>
@@ -96,12 +96,12 @@
             android:id="@+id/tableRow5"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="0.8"
+            android:layout_weight="0.5"
             android:gravity="bottom|center" >
 
             <RelativeLayout
                 android:id="@+id/relativeLayout1"
-                android:layout_width="match_parent"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center" >
 

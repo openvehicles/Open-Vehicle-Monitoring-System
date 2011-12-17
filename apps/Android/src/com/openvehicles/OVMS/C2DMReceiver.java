@@ -127,8 +127,11 @@ public class C2DMReceiver extends BroadcastReceiver {
 		notification.defaults = Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE;
 
 		Intent notificationIntent = new Intent(context, OVMSActivity.class);
-		notificationIntent.putExtra("SetTab", "tabNotifications");
-		PendingIntent launchOVMSIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
+		notificationIntent.putExtra("SetTab", "tabCar");
+		notificationIntent.setAction("com.openvehicles.OVMS.NOTIFICATIONS_CLICK");
+		notificationIntent.putExtra("VehicleID", contentTitle);
+		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		PendingIntent launchOVMSIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		notification.setLatestEventInfo(context, contentTitle, contentText, launchOVMSIntent);
 		
 		mNotificationManager.notify(1, notification);
