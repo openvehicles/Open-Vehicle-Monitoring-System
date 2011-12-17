@@ -556,6 +556,16 @@ void net_state_ticker1(void)
           return;
           }
         }
+      if (net_msg_sendpending>0)
+        {
+        net_msg_sendpending++;
+        if (net_msg_sendpending>60)
+          {
+          // Pending for more than 60 seconds..
+          net_state_enter(NET_STATE_DONETINIT); // Reset GPRS link
+          return;
+          }
+        }
       if ((net_reg == 0x01)||(net_reg == 0x05))
         {
         if ((net_msg_notify==1)&&(net_msg_serverok==1))
