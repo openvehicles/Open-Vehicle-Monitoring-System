@@ -18,6 +18,7 @@
 #define TOKEN_SIZE 22
 
 @class GCDAsyncSocket;
+@class Reachability;
 
 @protocol ovmsLocationDelegate
 @required
@@ -38,6 +39,7 @@
 {
   GCDAsyncSocket *asyncSocket;
   NSInteger networkingCount;
+  
   unsigned char token[TOKEN_SIZE+1];
   RC4_CTX rxCrypto;
   RC4_CTX txCrypto;

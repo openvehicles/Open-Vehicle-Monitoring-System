@@ -62,6 +62,8 @@
 		4DBB7930148270A50055769F /* connection_good.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DBB792D148270A50055769F /* connection_good.png */; };
 		4DBB7931148270A50055769F /* connection_bad.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DBB792E148270A50055769F /* connection_bad.png */; };
 		4DBB7932148270A50055769F /* connection_unknown.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DBB792F148270A50055769F /* connection_unknown.png */; };
+		4DBF3760149B7312002323B5 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DBF375F149B7312002323B5 /* Reachability.m */; };
+		4DBF3762149B7333002323B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DBF3761149B7333002323B5 /* SystemConfiguration.framework */; };
 		4DC8B38C147E7BF2007FDFB2 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 4DC8B38A147E7BF2007FDFB2 /* Model.xcdatamodeld */; };
 		4DDA222F1476962700BA40AA /* teslapin.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDA222E1476962700BA40AA /* teslapin.png */; };
 		4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DE26E5F147E7E3000E3161D /* CoreData.framework */; };
@@ -147,14 +149,14 @@
 		4D16EF30148747EC004A80AE /* JHNotificationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JHNotificationManager.h; sourceTree = "<group>"; };
 		4D16EF31148747EC004A80AE /* JHNotificationManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JHNotificationManager.m; sourceTree = "<group>"; };
 		4D16EF3414874AE7004A80AE /* notification_background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = notification_background.png; sourceTree = "<group>"; };
-		4D5AE36414733757002F5F52 /* ovms.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ovms.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D5AE36414733757002F5F52 /* Open Vehicle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Open Vehicle.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D5AE36814733757002F5F52 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		4D5AE36A14733757002F5F52 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		4D5AE36C14733757002F5F52 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		4D5AE37014733757002F5F52 /* ovms-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ovms-Info.plist"; sourceTree = "<group>"; };
 		4D5AE37214733757002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4D5AE37414733757002F5F52 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		4D5AE37614733758002F5F52 /* ovms-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ovms-Prefix.pch"; sourceTree = "<group>"; };
+		4D5AE37614733758002F5F52 /* Open Vehicle-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Open Vehicle-Prefix.pch"; sourceTree = "<group>"; };
 		4D5AE37714733758002F5F52 /* ovmsAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ovmsAppDelegate.h; sourceTree = "<group>"; };
 		4D5AE37814733758002F5F52 /* ovmsAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ovmsAppDelegate.m; sourceTree = "<group>"; };
 		4D5AE37B14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/MainStoryboard_iPhone.storyboard; sourceTree = "<group>"; };
@@ -163,9 +165,9 @@
 		4D5AE38514733758002F5F52 /* first@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "first@2x.png"; sourceTree = "<group>"; };
 		4D5AE38A14733758002F5F52 /* second.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = second.png; sourceTree = "<group>"; };
 		4D5AE38C14733758002F5F52 /* second@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "second@2x.png"; sourceTree = "<group>"; };
-		4D5AE39314733758002F5F52 /* ovmsTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ovmsTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D5AE39314733758002F5F52 /* Open VehicleTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Open VehicleTests.octest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D5AE39414733758002F5F52 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
-		4D5AE39C14733758002F5F52 /* ovmsTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ovmsTests-Info.plist"; sourceTree = "<group>"; };
+		4D5AE39C14733758002F5F52 /* Open VehicleTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Open VehicleTests-Info.plist"; sourceTree = "<group>"; };
 		4D5AE39E14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4D5AE3A014733758002F5F52 /* ovmsTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ovmsTests.h; sourceTree = "<group>"; };
 		4D5AE3A114733758002F5F52 /* ovmsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ovmsTests.m; sourceTree = "<group>"; };
@@ -205,6 +207,9 @@
 		4DBB792D148270A50055769F /* connection_good.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_good.png; sourceTree = "<group>"; };
 		4DBB792E148270A50055769F /* connection_bad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_bad.png; sourceTree = "<group>"; };
 		4DBB792F148270A50055769F /* connection_unknown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_unknown.png; sourceTree = "<group>"; };
+		4DBF375E149B7312002323B5 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
+		4DBF375F149B7312002323B5 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
+		4DBF3761149B7333002323B5 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		4DC8B38B147E7BF2007FDFB2 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		4DDA222E1476962700BA40AA /* teslapin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teslapin.png; sourceTree = "<group>"; };
 		4DE26E5F147E7E3000E3161D /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -280,6 +285,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4DBF3762149B7333002323B5 /* SystemConfiguration.framework in Frameworks */,
 				4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */,
 				4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */,
 				4D10FCF7147BCACD0092FAF9 /* Security.framework in Frameworks */,
@@ -317,8 +323,8 @@
 		4D5AE36514733757002F5F52 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				4D5AE36414733757002F5F52 /* ovms.app */,
-				4D5AE39314733758002F5F52 /* ovmsTests.octest */,
+				4D5AE36414733757002F5F52 /* Open Vehicle.app */,
+				4D5AE39314733758002F5F52 /* Open VehicleTests.octest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -326,6 +332,7 @@
 		4D5AE36714733757002F5F52 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4DBF3761149B7333002323B5 /* SystemConfiguration.framework */,
 				4DE26E5F147E7E3000E3161D /* CoreData.framework */,
 				4D90410A147C787F00D9C8E1 /* CoreLocation.framework */,
 				4D10FCF6147BCACD0092FAF9 /* Security.framework */,
@@ -344,6 +351,8 @@
 			children = (
 				4D5AE37714733758002F5F52 /* ovmsAppDelegate.h */,
 				4D5AE37814733758002F5F52 /* ovmsAppDelegate.m */,
+				4DBF375E149B7312002323B5 /* Reachability.h */,
+				4DBF375F149B7312002323B5 /* Reachability.m */,
 				4D16EF30148747EC004A80AE /* JHNotificationManager.h */,
 				4D16EF31148747EC004A80AE /* JHNotificationManager.m */,
 				4D5AE37A14733758002F5F52 /* MainStoryboard_iPhone.storyboard */,
@@ -367,7 +376,7 @@
 				4D5AE37014733757002F5F52 /* ovms-Info.plist */,
 				4D5AE37114733757002F5F52 /* InfoPlist.strings */,
 				4D5AE37414733757002F5F52 /* main.m */,
-				4D5AE37614733758002F5F52 /* ovms-Prefix.pch */,
+				4D5AE37614733758002F5F52 /* Open Vehicle-Prefix.pch */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -385,7 +394,7 @@
 		4D5AE39B14733758002F5F52 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				4D5AE39C14733758002F5F52 /* ovmsTests-Info.plist */,
+				4D5AE39C14733758002F5F52 /* Open VehicleTests-Info.plist */,
 				4D5AE39D14733758002F5F52 /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
@@ -555,9 +564,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		4D5AE36314733757002F5F52 /* ovms */ = {
+		4D5AE36314733757002F5F52 /* Open Vehicle */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4D5AE3A514733758002F5F52 /* Build configuration list for PBXNativeTarget "ovms" */;
+			buildConfigurationList = 4D5AE3A514733758002F5F52 /* Build configuration list for PBXNativeTarget "Open Vehicle" */;
 			buildPhases = (
 				4D5AE36014733757002F5F52 /* Sources */,
 				4D5AE36114733757002F5F52 /* Frameworks */,
@@ -567,14 +576,14 @@
 			);
 			dependencies = (
 			);
-			name = ovms;
+			name = "Open Vehicle";
 			productName = ovms;
-			productReference = 4D5AE36414733757002F5F52 /* ovms.app */;
+			productReference = 4D5AE36414733757002F5F52 /* Open Vehicle.app */;
 			productType = "com.apple.product-type.application";
 		};
-		4D5AE39214733758002F5F52 /* ovmsTests */ = {
+		4D5AE39214733758002F5F52 /* Open VehicleTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4D5AE3A814733758002F5F52 /* Build configuration list for PBXNativeTarget "ovmsTests" */;
+			buildConfigurationList = 4D5AE3A814733758002F5F52 /* Build configuration list for PBXNativeTarget "Open VehicleTests" */;
 			buildPhases = (
 				4D5AE38E14733758002F5F52 /* Sources */,
 				4D5AE38F14733758002F5F52 /* Frameworks */,
@@ -586,9 +595,9 @@
 			dependencies = (
 				4D5AE39914733758002F5F52 /* PBXTargetDependency */,
 			);
-			name = ovmsTests;
+			name = "Open VehicleTests";
 			productName = ovmsTests;
-			productReference = 4D5AE39314733758002F5F52 /* ovmsTests.octest */;
+			productReference = 4D5AE39314733758002F5F52 /* Open VehicleTests.octest */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -598,9 +607,9 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0420;
-				ORGANIZATIONNAME = "Hong Hay Villa";
+				ORGANIZATIONNAME = "Open Vehicle Systems";
 			};
-			buildConfigurationList = 4D5AE35E14733757002F5F52 /* Build configuration list for PBXProject "ovms" */;
+			buildConfigurationList = 4D5AE35E14733757002F5F52 /* Build configuration list for PBXProject "Open Vehicle" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -612,8 +621,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				4D5AE36314733757002F5F52 /* ovms */,
-				4D5AE39214733758002F5F52 /* ovmsTests */,
+				4D5AE36314733757002F5F52 /* Open Vehicle */,
+				4D5AE39214733758002F5F52 /* Open VehicleTests */,
 			);
 		};
 /* End PBXProject section */
@@ -761,6 +770,7 @@
 				4D16EF32148747EC004A80AE /* JHNotificationManager.m in Sources */,
 				4DAB2C741492109C00E1098C /* ovmsBodyViewController.m in Sources */,
 				4D0A96AF14939616000B74FC /* ovmsStatusViewControllerPad.m in Sources */,
+				4DBF3760149B7312002323B5 /* Reachability.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -777,7 +787,7 @@
 /* Begin PBXTargetDependency section */
 		4D5AE39914733758002F5F52 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 4D5AE36314733757002F5F52 /* ovms */;
+			target = 4D5AE36314733757002F5F52 /* Open Vehicle */;
 			targetProxy = 4D5AE39814733758002F5F52 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -824,8 +834,8 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Mark Webb-Johnson";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Mark Webb-Johnson";
 				COPY_PHASE_STRIP = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -834,8 +844,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				PROVISIONING_PROFILE = "39FD1127-57A0-470C-89B7-30714C143F54";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "39FD1127-57A0-470C-89B7-30714C143F54";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -846,9 +856,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
+				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Open Vehicle";
 				WRAPPER_EXTENSION = app;
 			};
 			name = "Adhoc Release";
@@ -863,8 +873,8 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
-				INFOPLIST_FILE = "ovmsTests/ovmsTests-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				INFOPLIST_FILE = "ovmsTests/Open VehicleTests-Info.plist";
+				PRODUCT_NAME = "Open VehicleTests";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = octest;
 			};
@@ -876,8 +886,8 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Mark Webb-Johnson";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Mark Webb-Johnson";
 				COPY_PHASE_STRIP = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -886,8 +896,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				PROVISIONING_PROFILE = "39FD1127-57A0-470C-89B7-30714C143F54";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "39FD1127-57A0-470C-89B7-30714C143F54";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -898,9 +908,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
+				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Open Vehicle";
 				WRAPPER_EXTENSION = app;
 			};
 			name = "AppStore Release";
@@ -915,8 +925,8 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
-				INFOPLIST_FILE = "ovmsTests/ovmsTests-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				INFOPLIST_FILE = "ovmsTests/Open VehicleTests-Info.plist";
+				PRODUCT_NAME = "Open VehicleTests";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = octest;
 			};
@@ -928,8 +938,8 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer: Mark Webb-Johnson (CWJDQA6EJQ)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Mark Webb-Johnson (CWJDQA6EJQ)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -944,8 +954,8 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
-				PROVISIONING_PROFILE = "9A7DB02F-E526-4074-AF36-3E9ADECD0A04";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "9A7DB02F-E526-4074-AF36-3E9ADECD0A04";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -955,9 +965,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
+				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Open Vehicle";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -972,8 +982,8 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/ovms-Prefix.pch";
-				INFOPLIST_FILE = "ovmsTests/ovmsTests-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				INFOPLIST_FILE = "ovmsTests/Open VehicleTests-Info.plist";
+				PRODUCT_NAME = "Open VehicleTests";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = octest;
 			};
@@ -982,7 +992,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4D5AE35E14733757002F5F52 /* Build configuration list for PBXProject "ovms" */ = {
+		4D5AE35E14733757002F5F52 /* Build configuration list for PBXProject "Open Vehicle" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4D5AE3A314733758002F5F52 /* Debug */,
@@ -992,7 +1002,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		4D5AE3A514733758002F5F52 /* Build configuration list for PBXNativeTarget "ovms" */ = {
+		4D5AE3A514733758002F5F52 /* Build configuration list for PBXNativeTarget "Open Vehicle" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4D5AE3A614733758002F5F52 /* Debug */,
@@ -1002,7 +1012,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		4D5AE3A814733758002F5F52 /* Build configuration list for PBXNativeTarget "ovmsTests" */ = {
+		4D5AE3A814733758002F5F52 /* Build configuration list for PBXNativeTarget "Open VehicleTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4D5AE3A914733758002F5F52 /* Debug */,
