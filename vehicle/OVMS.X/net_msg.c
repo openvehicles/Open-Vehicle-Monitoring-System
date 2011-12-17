@@ -262,7 +262,7 @@ void net_msg_firmware(void)
   {
   // TODO: GSM signal level not reported yet
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"0.9.3,%s,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.0.0,%s,%d",
     car_vin,0);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
