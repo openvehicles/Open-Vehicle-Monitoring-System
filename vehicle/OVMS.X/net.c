@@ -56,6 +56,7 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 // ROM Constants
 rom char NET_DISABLE_ECHO[] = "ATE0\r";
+rom char NET_SIMCOM_INIT[] = "AT+CIPSPRT=2\r"; //0=no > prompt,1=normal,2=no > prompt and no SEND OK
 rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0\r";
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
@@ -287,6 +288,7 @@ void net_state_enter(unsigned char newstate)
       led_act(0);
       led_net(0);
       net_puts_rom(NET_DISABLE_ECHO);
+      net_puts_rom(NET_SIMCOM_INIT);
       net_puts_rom(NET_INIT);
       break;
     case NET_STATE_DONETINIT:

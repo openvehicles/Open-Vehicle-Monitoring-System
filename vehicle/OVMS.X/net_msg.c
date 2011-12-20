@@ -78,6 +78,7 @@ void net_msg_disconnected(void)
 // Start to send a net msg
 void net_msg_start(void)
   {
+  net_msg_sendpending = 1;
   delay100(5);
   net_puts_rom("AT+CIPSEND\r");
   delay100(2);
@@ -87,7 +88,7 @@ void net_msg_start(void)
 void net_msg_send(void)
   {
   net_puts_rom("\x1a");
-  net_msg_sendpending = 1;
+  net_msg_sendpending = 0;
   }
 
 // Encode the message in net_scratchpad and start the send process
