@@ -39,6 +39,9 @@
 #include "can.h"
 #include "net.h"
 
+#define FEATURES_MAX 8
+#define FEATURE_SPEEDO       0x00 // Speedometer feature
+
 #pragma udata
 extern unsigned int car_linevoltage; // Line Voltage
 extern unsigned char car_chargecurrent; // Charge Current
@@ -67,4 +70,5 @@ extern signed long car_longitude; // Raw GPS Longitude
 extern unsigned char net_reg; // Network registration
 extern unsigned char net_link; // Network link status
 extern char net_apps_connected; // Network apps connected
+extern char sys_features[FEATURES_MAX]; // System features
 #endif

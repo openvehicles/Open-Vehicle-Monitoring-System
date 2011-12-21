@@ -86,10 +86,14 @@ signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not ver
 unsigned char net_reg = 0; // Network registration
 unsigned char net_link = 0; // Network link status
 char net_apps_connected = 0; // Network apps connected
+char sys_features[FEATURES_MAX]; // System features
 
 void main(void)
   {
   unsigned char x,y;
+
+  for (x=0;x<FEATURES_MAX;x++)
+    sys_features[x]=0; // Turn off the features
 
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter
