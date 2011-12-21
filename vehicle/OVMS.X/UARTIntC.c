@@ -50,7 +50,7 @@
 #include "UARTIntC.h"
 
 // target specific file will go here
-#include <p18f452.h>
+#include <p18f2680.h>
 
 // status flags of receive and transmit buffers
 struct status vUARTIntStatus;
@@ -104,8 +104,10 @@ void UARTIntInit(void)
 	#endif	
 	    
     /* Initialising BaudRate value */
-		SPBRG = SPBRG_VAL;
-		TXSTAbits.BRGH = BRGH_VAL;	
+              SPBRG = SPBRG_VAL;
+              TXSTAbits.BRGH = BRGH_VAL;
+
+
 
 	/* Initialising TX/RX port pins */
 	#if	TXON
@@ -148,9 +150,9 @@ void UARTIntInit(void)
 		PIE1bits.RCIE = 1;
 	#endif
 
-	/* Setting Global interrupt pins */	
-	#if ((TX_PRIORITY_ON)|(RX_PRIORITY_ON))
-	INTCONbits.GIEH = 1;
+	/* Setting Global interrupt pins */
+        #if ((TX_PRIORITY_ON)|(RX_PRIORITY_ON))
+	INTCONbits.GIEH = 1;        // Enable Interrupt Priority
 	INTCONbits.GIEL = 1;
 	#else
 	INTCONbits.GIE = 1;

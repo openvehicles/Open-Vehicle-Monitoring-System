@@ -87,7 +87,7 @@ void net_msg_start(void)
 void net_msg_send(void)
   {
   net_puts_rom("\x1a");
-  net_msg_sendpending = 1;
+  net_msg_sendpending = 0;
   }
 
 // Encode the message in net_scratchpad and start the send process
@@ -260,10 +260,10 @@ void net_msg_tpms(void)
 
 void net_msg_firmware(void)
   {
-  // TODO: GSM signal level not reported yet
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
+  // Send firmware version and GSM signal level
+    strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
   sprintf(net_msg_scratchpad, (rom far char*)"1.0.0,%s,%d",
-    car_vin,0);
+    car_vin, net_sq);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -413,6 +413,11 @@ void net_msg_in(char* msg)
           }
         break;
       }
+    }
+  else  // we lost sync, and can not decrypt, reconnect
+    {
+      //net_msg_disconnected();
+      net_state_enter(NET_STATE_DONETINIT);
     }
   }
 
