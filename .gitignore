@@ -1,5 +1,7 @@
 build/
 debug/
 .DS_Store
-apps/iOS/ovms.xcodeproj/xcuserdata/mark.xcuserdatad/xcdebugger/Breakpoints.xcbkptlist
-apps/iOS/ovms.xcodeproj/project.xcworkspace/xcuserdata/mark.xcuserdatad/UserInterfaceState.xcuserstate
+vehicle/OVMS.X/dist/default/
+vehicle/OVMS.X/nbproject/configurations.xml
+apps/iOS/Open Vehicle.xcodeproj/project.xcworkspace/xcuserdata/
+apps/iOS/Open Vehicle.xcodeproj/xcuserdata/
