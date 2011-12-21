@@ -286,6 +286,33 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
 #endif
       }
     }
+  else if (memcmppgm2ram(buf, (char const rom far*)"FEATURE ", 8) == 0)
+    {
+    p = par_get(PARAM_REGPHONE);
+    if (strncmp(p,caller,strlen(p)) == 0)
+      {
+      unsigned char y = 8;
+      unsigned int f;
+      while (y<=(pos+1))
+        {
+        if ((buf[y] == ' ')||(buf[y] == '\0'))
+          {
+          buf[y] = '\0';
+          f = atoi(buf+8);
+          if ((f>=0)&&(f<FEATURES_MAX))
+            sys_features[f] = atoi(buf+y+1);
+          }
+        else
+          y++;
+        }
+      }
+    else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
+      net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
+    }
   else // SMS didn't match any command pattern, forward to user via net msg
     {
     net_msg_forward_sms(caller, buf);
