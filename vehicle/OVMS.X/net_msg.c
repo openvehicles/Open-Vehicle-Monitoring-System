@@ -261,10 +261,10 @@ void net_msg_tpms(void)
 
 void net_msg_firmware(void)
   {
-  // TODO: GSM signal level not reported yet
+  // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.0.0,%s,%d",
-    car_vin,0);
+  sprintf(net_msg_scratchpad, (rom far char*)"1.0.2,%s,%d",
+    car_vin, net_sq);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -414,6 +414,11 @@ void net_msg_in(char* msg)
           }
         break;
       }
+    }
+  else  // we lost sync, and can not decrypt, reconnect
+    {
+      //net_msg_disconnected();
+      net_state_enter(NET_STATE_DONETINIT);
     }
   }
 

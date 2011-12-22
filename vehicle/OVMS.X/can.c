@@ -50,6 +50,30 @@ unsigned int  can_granular_tick = 0;         // An internal ticker used to gener
 #pragma udata
 
 ////////////////////////////////////////////////////////////////////////
+// CAN Interrupt Service Routine (High Priority)
+//
+// Interupts here will interrupt Uart Interrupts
+//
+
+void high_isr(void);
+
+#pragma code can_int_service = 0x08
+void can_int_service(void)
+  {
+  _asm goto high_isr _endasm
+  }
+
+#pragma code
+#pragma	interrupt high_isr
+void high_isr(void)
+  {
+  // High priority CAN interrupt
+    if (RXB0CONbits.RXFUL) can_poll0();
+    if (RXB1CONbits.RXFUL) can_poll1();
+    PIR3=0;     // Clear Interrupt flags
+  }
+
+////////////////////////////////////////////////////////////////////////
 // can_initialise()
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to initialise itself.
@@ -90,6 +114,13 @@ void can_initialise(void)
 #else
   CANCON = 0b01100000; // Listen only mode, Receive bufer 0
 #endif // #ifdef OVMS_CAN_WRITE
+
+  RCONbits.IPEN = 1; // Enable Interrupt Priority
+  PIE3bits.RXB1IE = 1; // CAN Receive Buffer 1 Interrupt Enable bit
+  PIE3bits.RXB0IE = 1; // CAN Receive Buffer 0 Interrupt Enable bit
+  IPR3 = 0b00000011; // high priority interrupts for Buffers 0 and 1
+
+
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -120,8 +151,8 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0x80: // Range / State of Charge
       car_SOC = can_databuffer[1];
-      car_idealrange = can_databuffer[2]+(can_databuffer[3]*256);
-      car_estrange = can_databuffer[6]+(can_databuffer[7]*256);
+      car_idealrange = can_databuffer[2]+((unsigned int) can_databuffer[3] << 8);
+      car_estrange = can_databuffer[6]+((unsigned int) can_databuffer[7] << 8);
       break;
     case 0x81: // Time/ Date UTC
       car_time = can_databuffer[4]
@@ -186,6 +217,7 @@ void can_poll0(void)                // CAN ID 100 and 102
     case 0xA5: // 7 VIN bytes i.e. "39A3000"
       for (k=0;k<7;k++)
         car_vin[k+7] = can_databuffer[k+1];
+      break;
     case 0xA6: // 3 VIN bytes i.e. "359"
       car_vin[14] = can_databuffer[1];
       car_vin[15] = can_databuffer[2];

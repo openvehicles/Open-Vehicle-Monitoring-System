@@ -86,10 +86,15 @@ signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not ver
 unsigned char net_reg = 0; // Network registration
 unsigned char net_link = 0; // Network link status
 char net_apps_connected = 0; // Network apps connected
+char sys_features[FEATURES_MAX]; // System features
+unsigned char net_sq = 0; // GSM Network Signal Quality
 
 void main(void)
   {
   unsigned char x,y;
+
+  for (x=0;x<FEATURES_MAX;x++)
+    sys_features[x]=0; // Turn off the features
 
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter
@@ -108,8 +113,6 @@ void main(void)
   y = 0; // Last TMR0H
   while (1) // Main Loop
     {
-    if (RXB0CONbits.RXFUL) can_poll0();
-    if (RXB1CONbits.RXFUL) can_poll1();
     if((vUARTIntStatus.UARTIntRxError) ||
        (vUARTIntStatus.UARTIntRxOverFlow))
       net_reset_async();

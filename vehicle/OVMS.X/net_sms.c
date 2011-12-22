@@ -140,7 +140,7 @@ void net_sms_stat(char* number)
       net_puts_rom("Charging Stopped"); // Stopped
     }
 
-  net_puts_rom("\rIdeal Range: "); // Ideal Range
+  net_puts_rom(" \rIdeal Range: "); // Ideal Range
   p = par_get(PARAM_MILESKM);
   if (*p == 'M') // Kmh or Miles
     sprintf(net_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
@@ -148,7 +148,7 @@ void net_sms_stat(char* number)
     sprintf(net_scratchpad, (rom far char*)"%u Km", (unsigned int) ((float) car_idealrange * 1.609)); // Kmh
   net_puts_ram(net_scratchpad);
 
-  net_puts_rom("\rSOC: ");
+  net_puts_rom(" \rSOC: ");
   sprintf(net_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
   net_puts_ram(net_scratchpad);
   net_puts_rom("\x1a");
@@ -278,6 +278,33 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
         }
       net_send_sms_rom(caller,NET_MSG_PARAMS);
       net_state_enter(NET_STATE_SOFTRESET);
+      }
+    else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
+      net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
+    }
+  else if (memcmppgm2ram(buf, (char const rom far*)"FEATURE ", 8) == 0)
+    {
+    p = par_get(PARAM_REGPHONE);
+    if (strncmp(p,caller,strlen(p)) == 0)
+      {
+      unsigned char y = 8;
+      unsigned int f;
+      while (y<=(pos+1))
+        {
+        if ((buf[y] == ' ')||(buf[y] == '\0'))
+          {
+          buf[y] = '\0';
+          f = atoi(buf+8);
+          if ((f>=0)&&(f<FEATURES_MAX))
+            sys_features[f] = atoi(buf+y+1);
+          }
+        else
+          y++;
+        }
       }
     else
       {
