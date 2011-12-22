@@ -55,7 +55,9 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
-rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0\r";
+rom char NET_DISABLE_ECHO[] = "ATE0\r";
+rom char NET_SIMCOM_INIT[] = "AT+CIPSPRT=2\r"; //0=no > prompt,1=normal,2=no > prompt and no SEND OK
+rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0\r";   
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
 rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS\r";
@@ -69,7 +71,7 @@ rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS\r";
 void low_isr(void);
 
 // serial interrupt taken as low priority interrupt
-#pragma code uart_int_service = 0x08
+#pragma code uart_int_service = 0x18
 void uart_int_service(void)
   {
   _asm goto low_isr _endasm
@@ -285,6 +287,10 @@ void net_state_enter(unsigned char newstate)
       net_timeout_ticks = 35;
       led_act(0);
       led_net(0);
+      net_puts_rom(NET_DISABLE_ECHO);
+      delay100(2);
+      net_puts_rom(NET_SIMCOM_INIT);
+      delay100(2);
       net_puts_rom(NET_INIT);
       break;
     case NET_STATE_DONETINIT:
@@ -425,6 +431,7 @@ void net_state_activity()
             net_puts_rom("\",\"6867\"\r");
             break;
           case 8:
+            net_puts_rom("AT+CSQ\r");               // Request Signal level
             net_state_enter(NET_STATE_READY);
             break;
           }
@@ -502,6 +509,13 @@ void net_state_activity()
             }
           }
         }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CSQ:", 5) == 0)
+        {
+        // Signal Quality
+          if (net_buf[8]==',')  // two digits
+             net_sq = (net_buf[6]&0x07)*10 + (net_buf[7]&0x07);
+          else net_sq = net_buf[6]&0x07;
+        }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"SEND OK", 7) == 0)
         {
         net_msg_sendpending = 0;
@@ -535,10 +549,12 @@ void net_state_ticker1(void)
       net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
       led_act(net_state_vchar);
       break;
-    case NET_STATE_DOINIT:
-      if ((net_timeout_ticks==10)&&(net_timeout_ticks==20))
-        net_puts_rom(NET_INIT); // Try again...
-      break;   
+
+     // Timeout to short, if not connected within 10 sec
+//    case NET_STATE_DOINIT:
+//      if ((net_timeout_ticks==10)||(net_timeout_ticks==20))
+//        net_puts_rom(NET_INIT); // Try again...
+//      break;
     case NET_STATE_COPS:
       net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
       led_net(net_state_vchar);

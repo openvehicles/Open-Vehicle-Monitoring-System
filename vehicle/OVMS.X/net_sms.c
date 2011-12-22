@@ -140,7 +140,7 @@ void net_sms_stat(char* number)
       net_puts_rom("Charging Stopped"); // Stopped
     }
 
-  net_puts_rom("\rIdeal Range: "); // Ideal Range
+  net_puts_rom(" \rIdeal Range: "); // Ideal Range
   p = par_get(PARAM_MILESKM);
   if (*p == 'M') // Kmh or Miles
     sprintf(net_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
@@ -148,7 +148,7 @@ void net_sms_stat(char* number)
     sprintf(net_scratchpad, (rom far char*)"%u Km", (unsigned int) ((float) car_idealrange * 1.609)); // Kmh
   net_puts_ram(net_scratchpad);
 
-  net_puts_rom("\rSOC: ");
+  net_puts_rom(" \rSOC: ");
   sprintf(net_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
   net_puts_ram(net_scratchpad);
   net_puts_rom("\x1a");

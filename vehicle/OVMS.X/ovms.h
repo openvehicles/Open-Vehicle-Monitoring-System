@@ -71,4 +71,5 @@ extern unsigned char net_reg; // Network registration
 extern unsigned char net_link; // Network link status
 extern char net_apps_connected; // Network apps connected
 extern char sys_features[FEATURES_MAX]; // System features
+extern unsigned char net_sq; // GSM Network Signal Quality
 #endif
