@@ -20,6 +20,7 @@ use URI::Escape;
 
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my %conns;
+my $utilisations;
 my %car_conns;
 my %app_conns;
 my $db;
@@ -62,6 +63,9 @@ my $apnstim = AnyEvent->timer (after => 1, interval => 1, cb => \&apns_tim);
 
 # A C2DM ticker
 my $c2dmtim = AnyEvent->timer (after => 1, interval => 1, cb => \&c2dm_tim);
+
+# A utilisation ticker
+my $utiltim = AnyEvent->timer (after => 60, interval => 60, cb => \&util_tim);
 
 sub io_error
   {
@@ -134,6 +138,9 @@ sub io_line
   my $fn = $hdl->fh->fileno();
   my $vid = $conns{$fn}{'vehicleid'}; $vid='-' if (!defined $vid);
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
+  $utilisations{$vid.'-'.$clienttype}{'rx'} += length($line)+2;
+  $utilisations{$vid.'-'.$clienttype}{'vid'} = $vid;
+  $utilisations{$vid.'-'.$clienttype}{'clienttype'} = $clienttype;
   AE::log info => "#$fn $clienttype $vid rx $line";
   $hdl->push_read(line => \&io_line);
   $conns{$fn}{'lastrx'} = time;
@@ -196,7 +203,15 @@ sub io_line
 
     # Send out server welcome message
     AE::log info => "#$fn $clienttype $vehicleid tx MP-S 0 $servertoken $serverdigest";
-    $hdl->push_write("MP-S 0 $servertoken $serverdigest\r\n");
+    my $towrite = "MP-S 0 $servertoken $serverdigest\r\n";
+    $conns{$fn}{'tx'} += length($towrite);
+    $hdl->push_write($towrite);
+
+    # Account for it...
+    $utilisations{$vehicleid.'-'.$clienttype}{'rx'} += length($line)+2;
+    $utilisations{$vehicleid.'-'.$clienttype}{'tx'} += $towrite;
+    $utilisations{$vehicleid.'-'.$clienttype}{'vid'} = $vid;
+    $utilisations{$vehicleid.'-'.$clienttype}{'clienttype'} = $clienttype;
 
     # Login...
     &io_login($fn,$hdl,$vehicleid,$clienttype);
@@ -320,6 +335,9 @@ sub io_tx
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
   my $encoded = encode_base64($conns{$fn}{'txcipher'}->RC4("MP-0 $code$data"),'');
   AE::log info => "#$fn $clienttype $vid tx $encoded ($code $data)";
+  $utilisations{$vid.'-'.$clienttype}{'tx'} += length($encoded)+2 if ($vid ne '-');
+  $utilisations{$vid.'-'.$clienttype}{'vid'} = $vid;
+  $utilisations{$vid.'-'.$clienttype}{'clienttype'} = $clienttype;
   $handle->push_write($encoded."\r\n");
   }
 
@@ -363,6 +381,39 @@ tcp_server undef, 6867, sub
 
 # Main event loop...
 EV::loop();
+
+sub util_tim
+  {
+  CONN: foreach (keys %utilisations)
+    {
+    my $key = $_;
+    my $vid = $utilisations{$key}{'vid'};
+    my $clienttype = $utilisations{$key}{'clienttype'};
+    next CONN if ((!defined $clienttype)||($clienttype eq '-'));
+    next CONN if (!defined $vid);
+    my $rx = $utilisations{$key}{'rx'}; $rx=0 if (!defined $rx);
+    my $tx = $utilisations{$key}{'tx'}; $tx=0 if (!defined $tx);
+    next CONN if (($rx+$tx)==0);
+    my ($u_c_rx, $u_c_tx, $u_a_rx, $u_a_tx) = (0,0,0,0);
+    if ($clienttype eq 'C')
+      {
+      $u_c_rx += $tx;
+      $u_c_tx += $rx;
+      }
+    elsif ($clienttype eq 'A')
+      {
+      $u_a_rx += $tx;
+      $u_a_tx += $rx;
+      }
+    $db->do('INSERT INTO ovms_utilisation (vehicleid,u_date,u_c_rx,u_c_tx,u_a_rx,u_a_tx) '
+          . 'VALUES (?,UTC_DATE(),?,?,?,?) '
+          . 'ON DUPLICATE KEY UPDATE u_c_rx=u_c_rx+?, u_c_tx=u_c_tx+?, u_a_rx=u_a_rx+?, u_a_tx=u_a_tx+?',
+            undef,
+            $vid, $u_c_rx, $u_c_tx, $u_a_rx, $u_a_tx,
+            $u_c_rx, $u_c_tx, $u_a_rx, $u_a_tx);
+    }
+  %utilisations = ();
+  }
 
 sub db_tim
   {

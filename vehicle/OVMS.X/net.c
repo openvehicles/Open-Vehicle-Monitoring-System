@@ -55,12 +55,10 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
-rom char NET_DISABLE_ECHO[] = "ATE0\r";
-rom char NET_SIMCOM_INIT[] = "AT+CIPSPRT=2\r"; //0=no > prompt,1=normal,2=no > prompt and no SEND OK
-rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0\r";   
+rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
-rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS\r";
+rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
 
 ////////////////////////////////////////////////////////////////////////
 // The Interrupt Service Routine is standard PIC code
@@ -287,10 +285,6 @@ void net_state_enter(unsigned char newstate)
       net_timeout_ticks = 35;
       led_act(0);
       led_net(0);
-      net_puts_rom(NET_DISABLE_ECHO);
-      delay100(2);
-      net_puts_rom(NET_SIMCOM_INIT);
-      delay100(2);
       net_puts_rom(NET_INIT);
       break;
     case NET_STATE_DONETINIT:
@@ -431,7 +425,6 @@ void net_state_activity()
             net_puts_rom("\",\"6867\"\r");
             break;
           case 8:
-            net_puts_rom("AT+CSQ\r");               // Request Signal level
             net_state_enter(NET_STATE_READY);
             break;
           }
@@ -517,6 +510,10 @@ void net_state_activity()
           else net_sq = net_buf[6]&0x07;
         }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"SEND OK", 7) == 0)
+        {
+        net_msg_sendpending = 0;
+        }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"DATA ACCEPT", 11) == 0)
         {
         net_msg_sendpending = 0;
         }
@@ -643,6 +640,8 @@ void net_state_ticker60(void)
       net_state_vchar = net_state_vchar ^ 1;
       delay100(2);
       net_puts_rom(NET_CREG_CIPSTATUS);
+      while(vUARTIntTxBufDataCnt>0) { delay100(1); } // Wait for TX flush
+      delay100(2); // Wait for stable result
       break;
     }
   }
