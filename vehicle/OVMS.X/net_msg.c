@@ -87,7 +87,7 @@ void net_msg_start(void)
 void net_msg_send(void)
   {
   net_puts_rom("\x1a");
-  net_msg_sendpending = 0;
+  net_msg_sendpending = 1;
   }
 
 // Encode the message in net_scratchpad and start the send process
