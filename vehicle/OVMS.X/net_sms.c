@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <usart.h>
 #include <string.h>
+#include <stdlib.h>
 #include "ovms.h"
 #include "net.h"
 #include "net_sms.h"
