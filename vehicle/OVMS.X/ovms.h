@@ -52,7 +52,7 @@ extern unsigned char car_stopped; // 1=yes,0=no
 extern unsigned char car_doors1; //
 extern unsigned char car_doors2; //
 extern unsigned char car_lockstate; // Lock State
-extern unsigned char car_speed; // speed in miles/hour
+extern unsigned char car_speed; // speed in defined units (mph or kph)
 extern unsigned char car_SOC; // State of Charge in %
 extern unsigned int car_idealrange; // Ideal Range in miles
 extern unsigned int car_estrange; // Estimated Range

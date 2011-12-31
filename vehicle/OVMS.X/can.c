@@ -47,6 +47,7 @@ unsigned char can_databuffer[8];             // A buffer to store the current CA
 unsigned char k;
 unsigned char can_minSOCnotified = 0;        // minSOC notified flag
 unsigned int  can_granular_tick = 0;         // An internal ticker used to generate 1min, 5min, etc, calls
+unsigned char can_mileskm = 'M';             // Miles of Kilometers
 #pragma udata
 
 ////////////////////////////////////////////////////////////////////////
@@ -80,6 +81,8 @@ void high_isr(void)
 //
 void can_initialise(void)
   {
+  char *p;
+
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
@@ -103,6 +106,8 @@ void can_initialise(void)
   RXF3SIDL = 0b01000000;	// Setup Filter3 so that CAN ID 0x402 will be accepted
   RXF3SIDH = 0b10000000;
 
+  RXF4SIDL = 0b00000000;        // Setup Filter4 so that CAN ID 0x400 will be accepted
+  RXF4SIDH = 0b10000000;
 
   BRGCON1 = 0; // SET BAUDRATE to 1 Mbps
   BRGCON2 = 0xD2;
@@ -120,7 +125,8 @@ void can_initialise(void)
   PIE3bits.RXB0IE = 1; // CAN Receive Buffer 0 Interrupt Enable bit
   IPR3 = 0b00000011; // high priority interrupts for Buffers 0 and 1
 
-
+  p = par_get(PARAM_MILESKM);
+  can_mileskm = *p;
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -176,7 +182,10 @@ void can_poll0(void)                // CAN ID 100 and 102
       car_chargecurrent = can_databuffer[1];
       break;
     case 0x89: // Charging Voltage / Iavailable
-      car_speed = can_databuffer[1];     // speed in miles/hour
+      if (can_mileskm=='M')
+        car_speed = can_databuffer[1];     // speed in miles/hour
+      else
+        car_speed = (unsigned char)((float)can_databuffer[1]*1.609);     // speed in km/hour
       car_linevoltage = can_databuffer[2]
                         + ((unsigned int) can_databuffer[3] << 8);
       break;
@@ -243,7 +252,32 @@ void can_poll1(void)                // CAN ID 344 and 402
   CANctrl=RXB1CON;		// copy CAN RX1 Control register
   RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
 
-  if ((CANctrl & 0x07) == 2)    	// Acceptance Filter 2 (RXF2) = CAN ID 344
+  if ((CANctrl & 0x07) == 4)           // Acceptance Filter 4 (RXF4) = CAN ID 400
+    {
+    // Experimental speedometer feature - replace AMPS->Dash with speed
+    if ((can_databuffer[0]==0x02)&&
+        (sys_features[FEATURE_SPEEDO]>0)&&
+        (car_speed>=sys_features[FEATURE_SPEEDO])&&
+        (car_speed != can_databuffer[2]))
+      {
+#ifdef OVMS_CAN_WRITE
+      TXB0CON = 0;
+      TXB0SIDL = 0b00000000; // Setup Filter and Mask so that only CAN ID 0x100 will be accepted
+      TXB0SIDH = 0b10000000; // Set Filter to 0x400
+      TXB0D0 = can_databuffer[0];
+      TXB0D1 = can_databuffer[1];
+      TXB0D2 = car_speed;         // Substitute the speed (for AMPS)
+      TXB0D3 = can_databuffer[3];
+      TXB0D4 = can_databuffer[4];
+      TXB0D5 = can_databuffer[5];
+      TXB0D6 = can_databuffer[6];
+      TXB0D7 = can_databuffer[7];
+      TXB0DLC = 0b00001000; // data length (8)
+      TXB0CON = 0b00001000; // mark for transmission
+#endif // #ifdef OVMS_CAN_WRITE
+      }
+    }
+  else if ((CANctrl & 0x07) == 2)    	// Acceptance Filter 2 (RXF2) = CAN ID 344
     {
     // TPMS code here
     if (can_databuffer[3]>0) // front-right
@@ -268,16 +302,16 @@ void can_poll1(void)                // CAN ID 344 and 402
       }
     }
   else  				// It must be CAN ID 402
-  {
-    switch (can_databuffer[0])
     {
+    switch (can_databuffer[0])
+      {
       case 0xFA:			// ODOMETER
         car_odometer = can_databuffer[3]
 		+ ((unsigned long) can_databuffer[4] << 8)
                 + ((unsigned long) can_databuffer[5] << 16);		// Miles /10
 	car_trip = can_databuffer[6] + ((unsigned int) can_databuffer[7] << 8);	// Miles /10
 	break;
-    }
+      }
   }
 }
 
@@ -344,6 +378,7 @@ void can_ticker(void)
   {
   // This ticker is called once every second
   can_granular_tick++;
+  can_state_ticker1();
   if ((can_granular_tick % 60)==0)
     can_state_ticker60();
   if ((can_granular_tick % 300)==0)
