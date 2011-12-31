@@ -78,16 +78,16 @@ void net_msg_disconnected(void)
 // Start to send a net msg
 void net_msg_start(void)
   {
+  net_msg_sendpending = 1;
   delay100(5);
   net_puts_rom("AT+CIPSEND\r");
-  delay100(2);
+  delay100(10);
   }
 
 // Finish sending a net msg
 void net_msg_send(void)
   {
   net_puts_rom("\x1a");
-  net_msg_sendpending = 1;
   }
 
 // Encode the message in net_scratchpad and start the send process
@@ -262,7 +262,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.0.2,%s,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.0.3,%s,%d",
     car_vin, net_sq);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();

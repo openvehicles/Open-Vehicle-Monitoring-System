@@ -55,7 +55,7 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
-rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E1\r";
+rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
 rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
