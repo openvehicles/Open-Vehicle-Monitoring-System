@@ -314,6 +314,20 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
 #endif
       }
     }
+  else if (memcmppgm2ram(buf, (char const rom far*)"RESET", 5) == 0)
+    {
+    p = par_get(PARAM_REGPHONE);
+    if (strncmp(p,caller,strlen(p)) == 0)
+      {
+      net_state_enter(NET_STATE_HARDRESET);
+      }
+    else
+      {
+#ifndef OVMS_SUPPRESS_ACCESSDENIED_SMS
+      net_send_sms_rom(caller,NET_MSG_DENIED);
+#endif
+      }
+    }
   else // SMS didn't match any command pattern, forward to user via net msg
     {
     net_msg_forward_sms(caller, buf);
