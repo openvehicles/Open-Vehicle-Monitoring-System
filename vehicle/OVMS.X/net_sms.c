@@ -302,6 +302,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
           f = atoi(buf+8);
           if ((f>=0)&&(f<FEATURES_MAX))
             sys_features[f] = atoi(buf+y+1);
+          break; // Exit the while loop, as we are done
           }
         else
           y++;
