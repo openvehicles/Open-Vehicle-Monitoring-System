@@ -95,7 +95,7 @@ void main(void)
 
   for (x=0;x<FEATURES_MAX;x++)
     sys_features[x]=0; // Turn off the features
-
+  
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter
   TRISB = 0xFE;
@@ -119,6 +119,8 @@ void main(void)
     if (! vUARTIntStatus.UARTIntRxBufferEmpty)
       net_poll();
 
+    can_idlepoll();
+
     x = TMR0L;
     if (TMR0H >= 0x4c) // Timout ~1sec (actually 996ms)
       {
@@ -128,7 +130,11 @@ void main(void)
       }
     else if (TMR0H != y)
       {
-      if ((TMR0H % 0x04)==0) net_ticker10th();
+      if ((TMR0H % 0x04)==0)
+        {
+        net_ticker10th();
+        can_ticker10th();
+        }
       y = TMR0H;
       }
     }
