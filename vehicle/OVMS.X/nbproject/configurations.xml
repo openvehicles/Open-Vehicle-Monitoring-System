@@ -124,7 +124,7 @@
       </C18LanguageToolchain>
       <PICkit3PlatformTool>
         <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
-        <property key="memories.id" value="false"/>
+        <property key="memories.id" value="true"/>
         <property key="Freeze Peripherals" value="true"/>
         <property key="programoptions.preserveeeprom" value="true"/>
         <property key="programmertogo.imagename" value=""/>
