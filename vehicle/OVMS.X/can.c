@@ -130,6 +130,7 @@ void can_initialise(void)
 
   p = par_get(PARAM_MILESKM);
   can_mileskm = *p;
+  can_lastspeedmsg[0] = 0;
   can_lastspeedrpt = 0;
   }
 
@@ -261,16 +262,16 @@ void can_poll1(void)                // CAN ID 344 and 402
     // Experimental speedometer feature - replace Range->Dash with speed
     if ((can_databuffer[0]==0x02)&&
         (sys_features[FEATURE_SPEEDO]>0)&&
-        (car_speed>=sys_features[FEATURE_SPEEDO])&&
-        (car_speed != can_databuffer[4]))
+        (car_speed>=1)&&
+        (car_speed != can_databuffer[2]))
       {
 #ifdef OVMS_CAN_WRITE
       can_lastspeedmsg[0] = can_databuffer[0];
       can_lastspeedmsg[1] = can_databuffer[1];
-      can_lastspeedmsg[2] = can_databuffer[2];
-      can_lastspeedmsg[3] = can_databuffer[3];
-      can_lastspeedmsg[4] = car_speed;         // Substitute the speed (for Range)
-      can_lastspeedmsg[5] = can_databuffer[5] & 0xf0; // Mask lower nibble (speed always <256)
+      can_lastspeedmsg[2] = car_speed;
+      can_lastspeedmsg[3] = can_databuffer[3] & 0xf0; // Mask lower nibble (speed always <256)
+      can_lastspeedmsg[4] = can_databuffer[4];
+      can_lastspeedmsg[5] = can_databuffer[5];
       can_lastspeedmsg[6] = can_databuffer[6];
       can_lastspeedmsg[7] = can_databuffer[7];
       while (TXB0CONbits.TXREQ) {} // Loop until TX is done
@@ -287,7 +288,7 @@ void can_poll1(void)                // CAN ID 344 and 402
       TXB0D7 = can_lastspeedmsg[7];
       TXB0DLC = 0b00001000; // data length (8)
       TXB0CON = 0b00001000; // mark for transmission
-      can_lastspeedrpt = 4; // Force another four transmissions
+      can_lastspeedrpt = sys_features[FEATURE_SPEEDO]; // Force re-transmissions
 #endif // #ifdef OVMS_CAN_WRITE
       }
     }
@@ -412,6 +413,7 @@ void can_ticker(void)
 //
 void can_ticker10th(void)
   {
+  if (can_lastspeedrpt==0) can_lastspeedrpt=sys_features[FEATURE_SPEEDO];
   }
 
 void can_idlepoll(void)
@@ -422,9 +424,9 @@ void can_idlepoll(void)
   // Experimental speedometer feature - replace Range->Dash with speed
   if ((can_lastspeedmsg[0]==0x02)&&
       (sys_features[FEATURE_SPEEDO]>0)&&
-      (car_speed>=sys_features[FEATURE_SPEEDO]))
+      (car_speed>=1))
     {
-    Delay10KTCYx(1);
+    Delay1KTCYx(1);
     while (TXB0CONbits.TXREQ) {} // Loop until TX is done
     TXB0CON = 0;
     TXB0SIDL = 0b00000000; // Setup Filter and Mask so that only CAN ID 0x100 will be accepted

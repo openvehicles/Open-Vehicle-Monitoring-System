@@ -95,7 +95,7 @@ void main(void)
 
   for (x=0;x<FEATURES_MAX;x++)
     sys_features[x]=0; // Turn off the features
-  
+
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter
   TRISB = 0xFE;
