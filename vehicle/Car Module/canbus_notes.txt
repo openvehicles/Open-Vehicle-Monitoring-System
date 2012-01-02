@@ -206,11 +206,16 @@ some other odometer messages have been seen on CAN ID #0x402
 		B7=Trip LSB    \ (in 1/10th miles)
 		B8=Trip MSB    /
 
-some on CAN ID # 0x400
+Some messages have been seen on CAN ID #0x400
 
-	Dashboard
-		B1=0x02
-		B3=AMPs (dash)
-
+	DASHBOARD
+		B1=0x02 Data to dashboard
+		B2=Battery graph (00-2F is full range, left 2 bits seem to be 10)
+		B3=AMPS LSB
+		B4=AMPS MSB (in LSN), MSN seems to be b1000
+		B5=Range LSB
+		B6=Range MSB (in LSN), MSN seems to be b1000
+		B7=Miles/Km legend switch - known values are 00=miles, 55=km
+		B8=0x00
 		
 Any additions/corrections are welcome

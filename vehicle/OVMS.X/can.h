@@ -38,5 +38,7 @@ void can_initialise(void);
 void can_poll0(void);
 void can_poll1(void);
 void can_ticker(void);
+void can_ticker10th(void);
+void can_idlepoll(void);
 
 #endif // #ifndef __OVMS_CAN_H

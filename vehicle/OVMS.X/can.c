@@ -38,12 +38,15 @@
 */
 
 #include <stdlib.h>
+#include <delays.h>
 #include "ovms.h"
 #include "params.h"
 
 #pragma udata
 unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
 unsigned char can_databuffer[8];             // A buffer to store the current CAN message
+unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
+unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
 unsigned char k;
 unsigned char can_minSOCnotified = 0;        // minSOC notified flag
 unsigned int  can_granular_tick = 0;         // An internal ticker used to generate 1min, 5min, etc, calls
@@ -127,6 +130,7 @@ void can_initialise(void)
 
   p = par_get(PARAM_MILESKM);
   can_mileskm = *p;
+  can_lastspeedrpt = 0;
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -254,26 +258,36 @@ void can_poll1(void)                // CAN ID 344 and 402
 
   if ((CANctrl & 0x07) == 4)           // Acceptance Filter 4 (RXF4) = CAN ID 400
     {
-    // Experimental speedometer feature - replace AMPS->Dash with speed
+    // Experimental speedometer feature - replace Range->Dash with speed
     if ((can_databuffer[0]==0x02)&&
         (sys_features[FEATURE_SPEEDO]>0)&&
         (car_speed>=sys_features[FEATURE_SPEEDO])&&
-        (car_speed != can_databuffer[2]))
+        (car_speed != can_databuffer[4]))
       {
 #ifdef OVMS_CAN_WRITE
+      can_lastspeedmsg[0] = can_databuffer[0];
+      can_lastspeedmsg[1] = can_databuffer[1];
+      can_lastspeedmsg[2] = can_databuffer[2];
+      can_lastspeedmsg[3] = can_databuffer[3];
+      can_lastspeedmsg[4] = car_speed;         // Substitute the speed (for Range)
+      can_lastspeedmsg[5] = can_databuffer[5] & 0xf0; // Mask lower nibble (speed always <256)
+      can_lastspeedmsg[6] = can_databuffer[6];
+      can_lastspeedmsg[7] = can_databuffer[7];
+      while (TXB0CONbits.TXREQ) {} // Loop until TX is done
       TXB0CON = 0;
       TXB0SIDL = 0b00000000; // Setup Filter and Mask so that only CAN ID 0x100 will be accepted
       TXB0SIDH = 0b10000000; // Set Filter to 0x400
-      TXB0D0 = can_databuffer[0];
-      TXB0D1 = can_databuffer[1];
-      TXB0D2 = car_speed;         // Substitute the speed (for AMPS)
-      TXB0D3 = can_databuffer[3];
-      TXB0D4 = can_databuffer[4];
-      TXB0D5 = can_databuffer[5];
-      TXB0D6 = can_databuffer[6];
-      TXB0D7 = can_databuffer[7];
+      TXB0D0 = can_lastspeedmsg[0];
+      TXB0D1 = can_lastspeedmsg[1];
+      TXB0D2 = can_lastspeedmsg[2];
+      TXB0D3 = can_lastspeedmsg[3];
+      TXB0D4 = can_lastspeedmsg[4];
+      TXB0D5 = can_lastspeedmsg[5];
+      TXB0D6 = can_lastspeedmsg[6];
+      TXB0D7 = can_lastspeedmsg[7];
       TXB0DLC = 0b00001000; // data length (8)
       TXB0CON = 0b00001000; // mark for transmission
+      can_lastspeedrpt = 4; // Force another four transmissions
 #endif // #ifdef OVMS_CAN_WRITE
       }
     }
@@ -388,4 +402,44 @@ void can_ticker(void)
     can_state_ticker600();
     can_granular_tick -= 600;
     }
+  }
+
+////////////////////////////////////////////////////////////////////////
+// can_ticker10th()
+// This function is an entry point from the main() program loop, and
+// gives the CAN framework a ticker call approximately ten times per
+// second.
+//
+void can_ticker10th(void)
+  {
+  }
+
+void can_idlepoll(void)
+  {
+  if (can_lastspeedrpt == 0) return;
+
+#ifdef OVMS_CAN_WRITE
+  // Experimental speedometer feature - replace Range->Dash with speed
+  if ((can_lastspeedmsg[0]==0x02)&&
+      (sys_features[FEATURE_SPEEDO]>0)&&
+      (car_speed>=sys_features[FEATURE_SPEEDO]))
+    {
+    Delay10KTCYx(1);
+    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+    TXB0CON = 0;
+    TXB0SIDL = 0b00000000; // Setup Filter and Mask so that only CAN ID 0x100 will be accepted
+    TXB0SIDH = 0b10000000; // Set Filter to 0x400
+    TXB0D0 = can_lastspeedmsg[0];
+    TXB0D1 = can_lastspeedmsg[1];
+    TXB0D2 = can_lastspeedmsg[2];
+    TXB0D3 = can_lastspeedmsg[3];
+    TXB0D4 = can_lastspeedmsg[4];
+    TXB0D5 = can_lastspeedmsg[5];
+    TXB0D6 = can_lastspeedmsg[6];
+    TXB0D7 = can_lastspeedmsg[7];
+    TXB0DLC = 0b00001000; // data length (8)
+    TXB0CON = 0b00001000; // mark for transmission
+    }
+#endif // #ifdef OVMS_CAN_WRITE
+  can_lastspeedrpt--;
   }
