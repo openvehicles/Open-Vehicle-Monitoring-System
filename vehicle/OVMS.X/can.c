@@ -218,6 +218,19 @@ void can_poll0(void)                // CAN ID 100 and 102
         net_notify_environment();
       car_doors1 = can_databuffer[1]; // Doors #1
       car_doors2 = can_databuffer[2]; // Doors #2
+      if (((car_doors1 & 0x80)==0)&&  // Car is not ON
+          (car_parktime == 0)&&       // Parktime was not previously set
+          (car_time != 0))            // We know the car time
+        {
+        car_parktime = car_time;
+        net_notify_environment();
+        }
+      else if ((car_doors1 & 0x80)&&  // Car is ON
+               (car_parktime != 0))   // Parktime was previously set
+        {
+        car_parktime = 0;
+        net_notify_environment();
+        }
       break;
     case 0xA3: // Temperatures
       car_tpem = can_databuffer[1]; // Tpem

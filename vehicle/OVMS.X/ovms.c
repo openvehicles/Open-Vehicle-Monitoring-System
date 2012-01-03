@@ -72,7 +72,8 @@ unsigned char car_speed = 0; // speed in defined units (mph or kph)
 unsigned char car_SOC = 0; // State of Charge in %
 unsigned int car_idealrange = 0; // Ideal Range in miles
 unsigned int car_estrange = 0; // Estimated Range
-unsigned long car_time; // UTC Time
+unsigned long car_time = 0; // UTC Time
+unsigned long car_parktime = 0; // UTC time car was parked (or 0 if not)
 unsigned char car_vin[18] = "-----------------"; // VIN
 unsigned char car_tpem = 0; // Tpem
 unsigned char car_tmotor = 0; // Tmotor

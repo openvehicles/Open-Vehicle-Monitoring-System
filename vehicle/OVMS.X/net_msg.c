@@ -270,11 +270,18 @@ void net_msg_firmware(void)
 
 void net_msg_environment(void)
   {
+  unsigned long park;
+
+  if (car_parktime == 0)
+    park = 0;
+  else
+    park = car_time - car_parktime;
+
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 D");
-  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d,%lu",
           car_doors1, car_doors2, car_lockstate,
           car_tpem, car_tmotor, car_tbattery,
-          car_trip, car_odometer, car_speed);
+          car_trip, car_odometer, car_speed, park);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }

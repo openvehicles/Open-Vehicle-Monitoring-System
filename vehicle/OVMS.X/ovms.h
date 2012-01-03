@@ -57,6 +57,7 @@ extern unsigned char car_SOC; // State of Charge in %
 extern unsigned int car_idealrange; // Ideal Range in miles
 extern unsigned int car_estrange; // Estimated Range
 extern unsigned long car_time; // UTC Time
+extern unsigned long car_parktime; // UTC time car was parked (or 0 if not)
 extern unsigned char car_vin[18]; // VIN
 extern unsigned char car_tpem; // Tpem
 extern unsigned char car_tmotor; // Tmotor
