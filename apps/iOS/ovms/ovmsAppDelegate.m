@@ -57,6 +57,7 @@
 @synthesize car_trip;
 @synthesize car_odometer;
 @synthesize car_speed;
+@synthesize car_parktime;
 @synthesize car_tpms_fr_pressure;
 @synthesize car_tpms_fr_temp;
 @synthesize car_tpms_rr_pressure;
@@ -589,10 +590,18 @@
         car_trip = [[lparts objectAtIndex:6] intValue];
         car_odometer = [[lparts objectAtIndex:7] intValue];
         car_speed = [[lparts objectAtIndex:8] intValue];
+        if ([lparts count] >= 10)
+          car_parktime = [[lparts objectAtIndex:9] intValue];
+        else
+          car_parktime = 0;
         // Update the visible status
         if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
           {
           [self.car_delegate updateCar];
+          }
+        if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+          {
+          [self.status_delegate updateStatus];
           }
         }
       }

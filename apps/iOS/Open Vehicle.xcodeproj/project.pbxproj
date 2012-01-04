@@ -41,6 +41,7 @@
 		4D7439F8148F961600090BBA /* connection_good_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F6148F961600090BBA /* connection_good_paranoid.png */; };
 		4D7439F9148F961600090BBA /* connection_bad_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F7148F961600090BBA /* connection_bad_paranoid.png */; };
 		4D7439FC148F9CA400090BBA /* connection_unknown_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */; };
+		4D8E597C14B3CB4C00426260 /* parking.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D8E597B14B3CB4C00426260 /* parking.png */; };
 		4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D90410A147C787F00D9C8E1 /* CoreLocation.framework */; };
 		4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */; };
 		4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */; };
@@ -181,6 +182,7 @@
 		4D7439F6148F961600090BBA /* connection_good_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_good_paranoid.png; sourceTree = "<group>"; };
 		4D7439F7148F961600090BBA /* connection_bad_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_bad_paranoid.png; sourceTree = "<group>"; };
 		4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_unknown_paranoid.png; sourceTree = "<group>"; };
+		4D8E597B14B3CB4C00426260 /* parking.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = parking.png; sourceTree = "<group>"; };
 		4D90410A147C787F00D9C8E1 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewController.h; sourceTree = "<group>"; };
 		4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsStatusViewController.m; sourceTree = "<group>"; };
@@ -420,6 +422,7 @@
 				4D7439F6148F961600090BBA /* connection_good_paranoid.png */,
 				4D7439F7148F961600090BBA /* connection_bad_paranoid.png */,
 				4DDA222E1476962700BA40AA /* teslapin.png */,
+				4D8E597B14B3CB4C00426260 /* parking.png */,
 				4DFAD7F914753D7900416D38 /* battery_000.png */,
 				4DFAD7FA14753D7900416D38 /* battery_100.png */,
 				4D91CEFB1473F26D00CBA435 /* 49-battery.png */,
@@ -720,6 +723,7 @@
 				4DF2FF3E1498253300E488F2 /* ol_car_models_sierrablack.png in Resources */,
 				4DF2FF3F1498253300E488F2 /* ol_car_models_signaturered.png in Resources */,
 				4DF2FF401498253300E488F2 /* ol_car_models_tiburongrey.png in Resources */,
+				4D8E597C14B3CB4C00426260 /* parking.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
