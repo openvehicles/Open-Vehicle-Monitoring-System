@@ -253,7 +253,7 @@
     }
   
   int parktime = [ovmsAppDelegate myRef].car_parktime;
-  if (parktime > 0) parktime += seconds;
+  if ((parktime > 0)&&(lastupdated>0)) parktime += seconds;
   
   if (parktime == 0)
     {
