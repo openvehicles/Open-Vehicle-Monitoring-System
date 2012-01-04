@@ -146,7 +146,7 @@ void net_sms_stat(char* number)
   if (*p == 'M') // Kmh or Miles
     sprintf(net_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
   else
-    sprintf(net_scratchpad, (rom far char*)"%u Km", (unsigned int) ((float) car_idealrange * 1.609)); // Kmh
+    sprintf(net_scratchpad, (rom far char*)"%u Km", (unsigned int) (((float) car_idealrange * 1.609))+0.5); // Kmh
   net_puts_ram(net_scratchpad);
 
   net_puts_rom(" \rSOC: ");
