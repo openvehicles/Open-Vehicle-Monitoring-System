@@ -36,7 +36,7 @@
 // also give it the ability to transmit messages on the CAN bus.
 // Not defining OVMS_CAN_WRITE is obviously less likely to interfere with
 // the vehicle normal operations.
-//#define OVMS_CAN_WRITE
+#define OVMS_CAN_WRITE
 
 // The OVMS_CAR_2010 switch should be defined if the vehicle is a 2010 (or
 // later) roadster.
