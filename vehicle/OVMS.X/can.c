@@ -218,6 +218,19 @@ void can_poll0(void)                // CAN ID 100 and 102
         net_notify_environment();
       car_doors1 = can_databuffer[1]; // Doors #1
       car_doors2 = can_databuffer[2]; // Doors #2
+      if (((car_doors1 & 0x80)==0)&&  // Car is not ON
+          (car_parktime == 0)&&       // Parktime was not previously set
+          (car_time != 0))            // We know the car time
+        {
+        car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
+        net_notify_environment();
+        }
+      else if ((car_doors1 & 0x80)&&  // Car is ON
+               (car_parktime != 0))   // Parktime was previously set
+        {
+        car_parktime = 0;
+        net_notify_environment();
+        }
       break;
     case 0xA3: // Temperatures
       car_tpem = can_databuffer[1]; // Tpem
@@ -260,10 +273,10 @@ void can_poll1(void)                // CAN ID 344 and 402
   if ((CANctrl & 0x07) == 4)           // Acceptance Filter 4 (RXF4) = CAN ID 400
     {
     // Experimental speedometer feature - replace Range->Dash with speed
-    if ((can_databuffer[0]==0x02)&&
-        (sys_features[FEATURE_SPEEDO]>0)&&
-        (car_speed>=1)&&
-        (car_speed != can_databuffer[2]))
+    if ((can_databuffer[0]==0x02)&&         // The SPEEDO AMPS message
+        (sys_features[FEATURE_SPEEDO]>0)&&  // The SPEEDO feature is on
+        (car_doors1 & 0x80)&&               // The car is on
+        (car_speed != can_databuffer[2]))   // The speed != Amps
       {
 #ifdef OVMS_CAN_WRITE
       can_lastspeedmsg[0] = can_databuffer[0];
@@ -422,9 +435,9 @@ void can_idlepoll(void)
 
 #ifdef OVMS_CAN_WRITE
   // Experimental speedometer feature - replace Range->Dash with speed
-  if ((can_lastspeedmsg[0]==0x02)&&
-      (sys_features[FEATURE_SPEEDO]>0)&&
-      (car_speed>=1))
+  if ((can_lastspeedmsg[0]==0x02)&&        // It is a valid AMPS message
+      (sys_features[FEATURE_SPEEDO]>0)&&   // The SPEEDO feature is enabled
+      (car_doors1 & 0x80))                 // The car is on
     {
     Delay1KTCYx(1);
     while (TXB0CONbits.TXREQ) {} // Loop until TX is done

@@ -19,6 +19,36 @@ Bytes are numbered B1 to B8 not B0-B7
 bits are numbered bit0 to bit7
 Byte pairs are in little endian order (e.g B4*256+B3)
 
+Note: This is now the full list of messages seen on a 2011 Tesla Roadster 2.x, RHD. There are still quite a few
+      messages whose function is unknown, and these should be consider 'target' for further analysis.
+
+Here are some target information that should be on the bus, but are still unknown:
+
+		0. TRIP -> odometer
+		1. Direction (N, S, E, W, etc - as shown on VDS)
+		2. Ambient temperature
+		3. Other temperatures
+		4. Battery voltages, current, balancing, etc
+		5. Voltages and current on the different power lines
+		6. Gear (P, R, N, D)
+
+Tesla Roadster CAN Bus analysis:
+
+	UNKNOWN
+		B1=0x07
+			Samples:
+		         0.8604 100 07 64                      ->VDS (message to VDS 07)
+		         6.1950 100 07 64                      ->VDS (message to VDS 07)
+		        11.8922 100 07 64                      ->VDS (message to VDS 07)
+		        16.8903 100 07 64                      ->VDS (message to VDS 07)
+		        22.5657 100 07 64                      ->VDS (message to VDS 07)
+
+	UNKNOWN
+		B1=0x12
+			Samples:
+		       110.5122 100 12 03                      ->VDS (message to VDS 12)
+		       146.3122 100 12 03                      ->VDS (message to VDS 12)
+
 	Range
 		B1=0x80
 		B2=State of charge
@@ -38,6 +68,15 @@ Byte pairs are in little endian order (e.g B4*256+B3)
 		B6=Utime GMT 
 		B7=Utime GMT 
 		B8=Utime GMT MSB
+
+	UNKNOWN
+		B1=0x82
+			Samples:
+		         0.8106 100 82 16                      ->VDS (message to VDS 82)
+		        10.8894 100 82 16                      ->VDS (message to VDS 82)
+		        20.9295 100 82 16                      ->VDS (message to VDS 82)
+		        31.0004 100 82 16                      ->VDS (message to VDS 82)
+		        41.0706 100 82 16                      ->VDS (message to VDS 82)
 
 	GPS_latitude
 		B1=0x83
@@ -60,6 +99,33 @@ Byte pairs are in little endian order (e.g B4*256+B3)
 		B5=Longitude 
 		B5=Longitude MSB
 
+	UNKNOWN
+		B1=0x85
+			Samples:
+		         0.8595 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
+		         2.8696 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
+		         4.9093 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
+		         6.9094 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
+		         8.9098 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
+
+	UNKNOWN
+		B1=0x86
+			Samples:
+		         0.8119 100 86 00 88 01 10 FF FF FF    ->VDS (message to VDS 86)
+		        10.8908 100 86 03 87 01 59 F8 FF FF    ->VDS (message to VDS 86)
+		        20.9309 100 86 07 85 01 8D EC FF FF    ->VDS (message to VDS 86)
+		        31.0019 100 86 06 85 01 1F EE FF FF    ->VDS (message to VDS 86)
+		        41.0719 100 86 01 87 01 AE FD FF FF    ->VDS (message to VDS 86)
+
+	UNKNOWN
+		B1=0x87
+			Samples:
+		         0.8122 100 87 81 FF FF 00 00 00 00    ->VDS (message to VDS 87)
+		        10.8911 100 87 83 C3 02 40 1D F7 03    ->VDS (message to VDS 87)
+		        20.9312 100 87 83 91 07 5F 26 DE 0F    ->VDS (message to VDS 87)
+		        31.0022 100 87 83 73 06 1C 24 0F C1    ->VDS (message to VDS 87)
+		        41.0722 100 87 83 63 01 F0 08 DE 0F    ->VDS (message to VDS 87)
+
 	Charger settings
 		B1=0x88
 		B2=Charging current
@@ -76,6 +142,42 @@ Byte pairs are in little endian order (e.g B4*256+B3)
 		B4=Vline MSB
 		B5=0x12-0x16 ?? 
 		B6=Iavailable(from pilot PWM)
+
+	UNKNOWN
+		B1=0x8B
+			Samples:
+		         0.8124 100 8B 01 E8 7E 18 22 19 2C    ->VDS (message to VDS 8B)
+		        10.8913 100 8B 10 C1 7E 18 22 19 2C    ->VDS (message to VDS 8B)
+		        20.9315 100 8B 01 20 7E 18 22 19 2C    ->VDS (message to VDS 8B)
+		        31.0025 100 8B 05 21 7E 18 22 19 2C    ->VDS (message to VDS 8B)
+		        41.0725 100 8B 10 C1 7E 18 22 19 2C    ->VDS (message to VDS 8B)
+
+	UNKNOWN
+		B1=0x8D
+			Samples:
+		         0.8127 100 8D 00 88 01 C3 00 C3 00    ->VDS (message to VDS 8D)
+		        10.8916 100 8D 00 87 01 C4 00 C1 00    ->VDS (message to VDS 8D)
+		        20.9317 100 8D 00 85 01 C2 00 C1 00    ->VDS (message to VDS 8D)
+		        31.0029 100 8D 00 85 01 C3 00 C0 00    ->VDS (message to VDS 8D)
+		        41.0727 100 8D 00 87 01 EA 00 9B 00    ->VDS (message to VDS 8D)
+
+	UNKNOWN
+		B1=0x93
+			Samples:
+		         4.2326 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+		        10.9878 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+		        17.6880 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+		        24.4145 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+		        31.1291 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+
+	UNKNOWN
+		B1=0x94
+			Samples:
+		         0.8133 100 94 00                      ->VDS (message to VDS 94)
+		        10.8921 100 94 00                      ->VDS (message to VDS 94)
+		        20.9323 100 94 00                      ->VDS (message to VDS 94)
+		        31.0034 100 94 00                      ->VDS (message to VDS 94)
+		        41.0733 100 94 00                      ->VDS (message to VDS 94)
 
 	Charger V1.5
 		B1=0x95
@@ -117,10 +219,28 @@ Byte pairs are in little endian order (e.g B4*256+B3)
 		B6=Odometer       | (in 1/10th miles)
 		B7=Odometer MSB  /
 
+	UNKNOWN
+		B1=0x9B
+			Samples:
+		         0.8599 100 9B F9 01 41 08 FE 34 07    ->VDS (message to VDS 9B)
+		         6.1947 100 9B F9 01 41 0B FE 34 07    ->VDS (message to VDS 9B)
+		        11.8920 100 9B F9 01 41 05 FF 34 07    ->VDS (message to VDS 9B)
+		        16.8899 100 9B F9 01 41 08 00 35 07    ->VDS (message to VDS 9B)
+		        22.5656 100 9B F9 01 41 08 02 35 07    ->VDS (message to VDS 9B)
+
 	Trip
 		B1=0x9C
 		B3=Trip LSB  \ (in 1/10th miles)
 		B4=Trip MSB  /
+
+	UNKNOWN
+		B1=0x9D
+			Samples:
+		         0.8137 100 9D 00 7C 00 0D 17 01 00    ->VDS (message to VDS 9D)
+		        10.8926 100 9D 00 7C 00 0D 17 01 00    ->VDS (message to VDS 9D)
+		        20.9327 100 9D 00 7C 00 0D 17 01 00    ->VDS (message to VDS 9D)
+		        31.0041 100 9D 00 7C 00 0D 17 01 00    ->VDS (message to VDS 9D)
+		        41.0737 100 9D 00 7C 00 0D 17 01 00    ->VDS (message to VDS 9D)
 
 	Temps
 		B1=0xA3
@@ -162,6 +282,15 @@ messages from the VDS are sent on CAN ID # 0x102.
 		B7=0x00
 		B8=0x00
 
+	UNKNOWN
+		B1=0x06
+			Samples:
+		         0.4166 102 06 10 27 00 10 00 00 00    VDS-> (message from VDS 06)
+		         5.9171 102 06 10 27 00 10 00 00 00    VDS-> (message from VDS 06)
+		        11.4773 102 06 10 27 00 10 00 00 00    VDS-> (message from VDS 06)
+		        17.0587 102 06 10 27 00 10 00 00 00    VDS-> (message from VDS 06)
+		        22.5380 102 06 10 27 00 10 00 00 00    VDS-> (message from VDS 06)
+
 	Lock/Unlock
 		B1=0x0B
 		B2=	0x00 = Activate Valet mode
@@ -183,6 +312,86 @@ messages from the VDS are sent on CAN ID # 0x102.
 	Lock/Unlock result
 		B1=0x0E
 		B2=result (0x04=locked, 0x05=unlocked)
+
+Other miscelaneous messages seen on the bus:
+
+
+	ID# 0x1A0, samples:
+	         4.4623 1A0 00 00 00 00                      
+	         5.4829 1A0 00 00 00 00                      
+	         6.5070 1A0 00 00 00 00                      
+	         8.3517 1A0 00 00 BB 02                      
+	         8.5421 1A0 00 00 BB 02 
+
+	ID# 0x280, samples:
+	         0.2078 280 00 00 03 00 00 00 00 00          
+	         0.4112 280 00 00 03 00 00 00 00 00          
+	         1.4106 280 00 00 03 00 00 00 00 00          
+	         2.6618 280 00 00 0E 00 00 00 00 00          
+	         3.4418 280 00 00 0C 00 00 00 00 00          
+
+	ID# 0x343, samples:
+	         0.0942 343 00 00 04 00 00 0A 20 F0          
+	         1.2422 343 00 00 04 00 00 0A 20 F0          
+	         2.5029 343 00 00 04 00 00 0B 20 F0          
+	         3.5395 343 00 00 04 00 00 0A 20 F0          
+	         4.6872 343 00 00 04 00 00 0A 20 F0          
+
+	ID# 0x345, samples:
+	         0.0963 345 00 00 00 00 00 00 00 00          
+	         1.2444 345 00 00 00 00 00 00 00 00          
+	         2.5049 345 00 00 01 01 00 00 00 00          
+	         3.5416 345 00 00 00 01 00 00 00 00          
+	         4.6893 345 00 00 00 01 00 00 00 00          
+
+	ID# 0x420, samples:
+	         0.2064 420 00 90 90                         
+	         0.4099 420 00 90 90                         
+	         1.4100 420 00 90 90                         
+	         2.6611 420 00 90 90                         
+	         3.4405 420 00 90 90                         
+		...
+	        77.7055 420 00 90 90                         
+	        78.5770 420 00 90 90                         
+	        79.7439 420 00 8E 8E                         
+	        80.6290 420 00 8E 8E                         
+	        81.7542 420 00 8E 8E                         
+	        82.6665 420 00 8E 8E                         
+	        83.6554 420 00 8E 8E                         
+	        84.8489 420 00 8E 8E                         
+	        85.6947 420 00 90 90                         
+	        86.7171 420 00 8E 8E                         
+
+	ID# 0x588, samples:
+	         0.2070 588 00 00 84                         
+	         0.4105 588 00 00 84                         
+	         1.4103 588 00 00 84                         
+	         2.6615 588 00 00 84                         
+	         3.4412 588 00 00 84                         
+
+	ID# 0x590, samples:
+	         0.2097 590 01 00 00 00 00 00 00 00          
+	         0.4124 590 01 00 00 00 00 00 00 00          
+	         1.4112 590 01 00 00 00 00 00 00 00          
+	         2.6625 590 01 00 00 00 00 00 00 00          
+	         3.4430 590 01 00 00 00 00 00 00 00          
+		...
+	        57.4447 590 01 00 BB 02 00 00 00 00          
+	        58.1744 590 01 00 A4 03 00 00 00 00          
+	        59.4840 590 01 00 8D 04 00 00 00 00          
+	        60.2158 590 01 00 76 05 00 00 00 00          
+	        61.5043 590 01 00 76 05 00 00 00 00          
+	        62.6636 590 01 00 76 05 00 00 00 00          
+	        63.2745 590 01 00 5F 06 00 00 00 00          
+	        64.6831 590 01 00 76 05 00 00 00 00          
+	        65.5769 590 01 00 5F 06 00 00 00 00          
+	        66.6634 590 01 00 76 05 00 00 00 00          
+	        67.5746 590 01 00 5F 06 00 00 00 00          
+	        68.3660 590 01 00 5F 06 00 00 00 00          
+	        69.5945 590 01 00 76 05 00 00 00 00          
+	        70.4104 590 01 00 76 05 00 00 00 00          
+	        71.6246 590 01 00 76 05 00 00 00 00          
+	        73.2812 590 01 00 76 05 00 00 00 00          
 
 messages from the TPMS are sent on CAN ID #0x344
 
@@ -208,6 +417,15 @@ some other odometer messages have been seen on CAN ID #0x402
 
 Some messages have been seen on CAN ID #0x400
 
+	UNKNOWN
+		B1=0x01
+			Samples:
+		         0.0484 400 01 01 00 00 00 00 4C 1D          
+		         0.1487 400 01 01 00 00 00 00 4C 1D          
+		         0.2486 400 01 01 00 00 00 00 4C 1D          
+		         0.3486 400 01 01 00 00 00 00 4C 1D          
+		         0.4486 400 01 01 00 00 00 00 4C 1D          
+
 	DASHBOARD
 		B1=0x02 Data to dashboard
 		B2=Battery graph (00-2F is full range, left 2 bits seem to be 10)
@@ -217,5 +435,14 @@ Some messages have been seen on CAN ID #0x400
 		B6=Range MSB (in LSN), MSN seems to be b1000
 		B7=Miles/Km legend switch - known values are 00=miles, 55=km
 		B8=0x00
-		
+
+	UNKNOWN
+		B1=0x03
+			Samples:
+		         0.5484 400 03 29 6C 00 00 00 77 00          
+		         2.5990 400 03 29 6C 00 00 00 77 00          
+		         4.6386 400 03 29 6C 00 00 00 77 00          
+		         6.6384 400 03 29 6C 00 00 00 77 00          
+		         8.6605 400 03 29 6C 00 00 00 77 00          
+
 Any additions/corrections are welcome
