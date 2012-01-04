@@ -17,6 +17,8 @@
 @synthesize m_car_soc;
 @synthesize m_battery_front;
 @synthesize m_car_range;
+@synthesize m_car_parking_image;
+@synthesize m_car_parking_state;
 
 - (void)didReceiveMemoryWarning
 {
@@ -47,6 +49,8 @@
     [self setM_car_range:nil];
     [self setM_car_connection_state:nil];
     [self setM_car_connection_image:nil];
+    [self setM_car_parking_image:nil];
+    [self setM_car_parking_state:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -97,6 +101,7 @@
   
   int connected = [ovmsAppDelegate myRef].car_connected;
   time_t lastupdated = [ovmsAppDelegate myRef].car_lastupdated;
+  int seconds = (time(0)-lastupdated);
   int minutes = (time(0)-lastupdated)/60;
   int hours = minutes/60;
   int days = minutes/(60*24);
@@ -165,6 +170,37 @@
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
   
+  int parktime = [ovmsAppDelegate myRef].car_parktime;
+  if ((parktime > 0)&&(lastupdated>0)) parktime += seconds;
+
+  if (parktime == 0)
+    {
+    m_car_parking_image.hidden = 1;
+    m_car_parking_state.text = @"";
+    }
+  else if (parktime < 120)
+    {
+    m_car_parking_image.hidden = 0;
+    m_car_parking_state.text = @"just now";
+    }
+  else if (parktime < (3600*2))
+    {
+    m_car_parking_image.hidden = 0;
+    m_car_parking_state.text = [NSString stringWithFormat:@"%d mins",parktime/60];
+    }
+  else if (parktime < (3600*24))
+    {
+    m_car_parking_image.hidden = 0;
+    m_car_parking_state.text = [NSString stringWithFormat:@"%02d:%02d",
+                                parktime/3600,
+                                (parktime%3600)/60];
+    }
+  else
+    {
+    m_car_parking_image.hidden = 0;
+    m_car_parking_state.text = [NSString stringWithFormat:@"%d hours",parktime/3600];
+    }
+
   m_car_image.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
   m_car_soc.text = [NSString stringWithFormat:@"%d%%",[ovmsAppDelegate myRef].car_soc];
   m_car_range.text = [NSString stringWithFormat:@"Range: %d%s (%d%s estimated)",

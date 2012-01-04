@@ -19,5 +19,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *m_car_soc;
 @property (strong, nonatomic) IBOutlet UIImageView *m_battery_front;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_range;
+@property (strong, nonatomic) IBOutlet UIImageView *m_car_parking_image;
+@property (strong, nonatomic) IBOutlet UILabel *m_car_parking_state;
 
 @end
