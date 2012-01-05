@@ -29,6 +29,10 @@ CREATE TABLE `ovms_cars` (
   `userpass` varchar(255) NOT NULL default '' COMMENT 'User password (optional)',
   `cryptscheme` varchar(1) NOT NULL default '0',
   `v_ptoken` varchar(32) NOT NULL default '',
+  `v_server` varchar(32) NOT NULL default '*',
+  `v_type` varchar(10) NOT NULL default 'CAR',
+  `deleted` char(1) NOT NULL default '0',
+  `changed` datetime NOT NULL default '0000-00-00 00:00:00',
   `v_lastupdate` datetime NOT NULL default '0000-00-00 00:00:00' COMMENT 'Car last update received',
   PRIMARY KEY  (`vehicleid`),
   KEY `owner` (`owner`)
@@ -101,4 +105,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2011-12-23 12:55:04
+-- Dump completed on 2012-01-05 15:07:10
