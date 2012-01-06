@@ -190,7 +190,7 @@ void can_poll0(void)                // CAN ID 100 and 102
       if (can_mileskm=='M')
         car_speed = can_databuffer[1];     // speed in miles/hour
       else
-        car_speed = (unsigned char)(((float)can_databuffer[1]*1.609)+0.5);     // speed in km/hour
+        car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1609)+500)/1000);     // speed in km/hour
       car_linevoltage = can_databuffer[2]
                         + ((unsigned int) can_databuffer[3] << 8);
       break;
