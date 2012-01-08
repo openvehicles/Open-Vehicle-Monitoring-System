@@ -606,6 +606,17 @@ void net_state_ticker1(void)
           net_msg_start();
           net_msg_environment();
           net_msg_send();
+          return;
+          }
+        if ((car_speed>0)&&
+            (sys_features[FEATURE_STREAM]>0)&&
+            (net_msg_sendpending==0)&&
+            (net_apps_connected>0))
+          { // Car moving, and streaming on, apps connected, and not sending
+          delay100(2);
+          net_msg_start();
+          net_msg_gps();
+          net_msg_send();
           }
         }
       break;
