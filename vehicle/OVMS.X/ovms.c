@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "ovms.h"
 
 // Configuration settings
@@ -93,9 +94,16 @@ unsigned char net_sq = 0; // GSM Network Signal Quality
 void main(void)
   {
   unsigned char x,y;
+  char *p;
 
-  for (x=0;x<FEATURES_MAX;x++)
+  for (x=0;x<FEATURES_MAP_PARAM;x++)
     sys_features[x]=0; // Turn off the features
+
+  // The top N features are persistent
+  for (x=FEATURES_MAP_PARAM;x<FEATURES_MAX;x++)
+    {
+    sys_features[x] = atoi(par_get(PARAM_FEATURE_S+(x-FEATURES_MAP_PARAM)));
+    }
 
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter

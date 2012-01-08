@@ -301,7 +301,11 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
           buf[y] = '\0';
           f = atoi(buf+8);
           if ((f>=0)&&(f<FEATURES_MAX))
+            {
             sys_features[f] = atoi(buf+y+1);
+            if (f>=FEATURES_MAP_PARAM) // Top N features are persistent
+              par_set(PARAM_FEATURE_S+(f-FEATURES_MAP_PARAM), buf+y+1);
+            }
           break; // Exit the while loop, as we are done
           }
         else
