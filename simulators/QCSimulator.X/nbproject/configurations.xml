@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="62">
+  <logicalFolder name="root" displayName="root" projectFiles="true">
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="LibraryFiles"
+                   displayName="Library Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="LinkerScript"
+                   displayName="Linker Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="ObjectFiles"
+                   displayName="Object Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <itemPath>main.c</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="default" type="2">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <targetDevice>PIC18F2680</targetDevice>
+        <targetHeader></targetHeader>
+        <platformTool>PICkit3PlatformTool</platformTool>
+        <languageToolchain>C18</languageToolchain>
+        <languageToolchainVersion>3.40</languageToolchainVersion>
+        <platform>3</platform>
+      </toolsSet>
+      <compileType>
+        <linkerTool>
+          <linkerLibItems>
+          </linkerLibItems>
+        </linkerTool>
+      </compileType>
+      <C18>
+      </C18>
+      <C18-AS>
+      </C18-AS>
+      <C18-LD>
+      </C18-LD>
+      <C18LanguageToolchain>
+      </C18LanguageToolchain>
+      <PICkit3PlatformTool>
+        <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
+        <property key="memories.id" value="false"/>
+        <property key="Freeze Peripherals" value="true"/>
+        <property key="programoptions.preserveeeprom" value="false"/>
+        <property key="programmertogo.imagename" value=""/>
+        <property key="memories.programmemory" value="true"/>
+        <property key="SecureSegment.SegmentProgramming" value="FullChipProgramming"/>
+        <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="hwtoolclock.frcindebug" value="false"/>
+        <property key="programoptions.usehighvoltageonmclr" value="false"/>
+        <property key="memories.eeprom" value="false"/>
+        <property key="ToolFirmwareFilePath"
+                  value="Press to browse for a specific firmware version"/>
+        <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
+        <property key="programoptions.preserveprogramrange.start" value="0x0"/>
+        <property key="voltagevalue" value="5.0"/>
+        <property key="programoptions.preserveprogramrange" value="false"/>
+        <property key="programoptions.eraseb4program" value="true"/>
+        <property key="memories.programmemory.start" value="0x0"/>
+        <property key="memories.programmemory.end" value="0xffff"/>
+        <property key="poweroptions.powerenable" value="true"/>
+      </PICkit3PlatformTool>
+      <Simulator>
+      </Simulator>
+    </conf>
+  </confs>
+</configurationDescriptor>
