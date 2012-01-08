@@ -206,12 +206,12 @@ void net_msg_stat(void)
   if (*p == 'M') // Kmh or Miles
     sprintf(net_msg_scratchpad, (rom far char*)"%u,", car_idealrange);
   else
-    sprintf(net_msg_scratchpad, (rom far char*)"%u,", (unsigned int) ((float) car_idealrange * 1.609));
+    sprintf(net_msg_scratchpad, (rom far char*)"%u,", (((car_idealrange << 4)+5)/10));
   strcat(net_scratchpad,net_msg_scratchpad);
   if (*p == 'M') // Kmh or Miles
     sprintf(net_msg_scratchpad, (rom far char*)"%u", car_estrange);
   else
-    sprintf(net_msg_scratchpad, (rom far char*)"%u", (unsigned int) ((float) car_estrange * 1.609));
+    sprintf(net_msg_scratchpad, (rom far char*)"%u", (((car_estrange << 4)+5)/10));
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -262,7 +262,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.0.7,%s,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.0.9,%s,%d",
     car_vin, net_sq);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
@@ -489,7 +489,7 @@ void net_msg_alert(void)
   if (*p == 'M') // Kmh or Miles
     sprintf(net_msg_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
   else
-    sprintf(net_msg_scratchpad, (rom far char*)"%u Km", (unsigned int) ((float) car_idealrange * 1.609)); // Kmh
+    sprintf(net_msg_scratchpad, (rom far char*)"%u Km", (((car_idealrange << 4)+5)/10)); // Kmh
   strcat((char*)net_scratchpad,net_msg_scratchpad);
 
   strcatpgm2ram(net_scratchpad,(char const rom far *)" SOC: ");

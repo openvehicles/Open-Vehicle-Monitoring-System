@@ -23,6 +23,7 @@ my %conns;
 my $utilisations;
 my %car_conns;
 my %app_conns;
+my $svr_conns;
 my $db;
 my $config;
 
@@ -47,6 +48,7 @@ $config = Config::IniFiles->new(-file => 'ovms_server.conf');
 # Globals
 my $timeout_app      = $config->val('server','timeout_app',60*20);
 my $timeout_car      = $config->val('server','timeout_car',60*12);
+my $timeout_svr      = $config->val('server','timeout_svr',60*60);
 
 # A database ticker
 $db = DBI->connect($config->val('db','path'),$config->val('db','user'),$config->val('db','pass'));
@@ -66,6 +68,25 @@ my $c2dmtim = AnyEvent->timer (after => 1, interval => 1, cb => \&c2dm_tim);
 
 # A utilisation ticker
 my $utiltim = AnyEvent->timer (after => 60, interval => 60, cb => \&util_tim);
+
+# Server PUSH tickers
+my $svrtim = AnyEvent->timer (after => 30, interval => 30, cb => \&svr_tim);
+my $svrtim2 = AnyEvent->timer (after => 300, interval => 300, cb => \&svr_tim2);
+
+# A server client
+my $svr_handle;
+my $svr_client_token;
+my $svr_client_digest;
+my $svr_txcipher;
+my $svr_rxcipher;
+my $svr_server   = $config->val('master','server');
+my $svr_port     = $config->val('master','port',6867);
+my $svr_vehicle  = $config->val('master','vehicle');
+my $svr_pass     = $config->val('master','password');
+if (defined $svr_server)
+  {
+  &svr_client();
+  }
 
 sub io_error
   {
@@ -112,6 +133,16 @@ sub io_timeout
       return;
       }
     }
+  elsif ($clienttype eq 'S')
+    {
+    if (($lastrx+$timeout_svr)<$now)
+      {
+      # The SVR has been unresponsive for timeout_svr seconds - time to disconnect it
+      AE::log error => "#$fn $clienttype $vid timeout svr due to inactivity";
+      &io_terminate($fn,$hdl,$vid,undef);
+      return;
+      }
+    }
   elsif ($clienttype eq 'C')
     {
     if (($lastrx+$timeout_car)<$now)
@@ -145,9 +176,9 @@ sub io_line
   $hdl->push_read(line => \&io_line);
   $conns{$fn}{'lastrx'} = time;
 
-  if ($line =~ /^MP-(\S)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/)
+  if ($line =~ /^MP-(\S)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.+))?/)
     {
-    my ($clienttype,$protscheme,$clienttoken,$clientdigest,$vehicleid) = ($1,$2,$3,$4,$5);
+    my ($clienttype,$protscheme,$clienttoken,$clientdigest,$vehicleid,$rest) = ($1,$2,$3,$4,$5,$7);
     if ($protscheme ne '0')
       {
       &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Unsupported protection scheme - aborting connection");
@@ -167,6 +198,13 @@ sub io_line
     if ($serverhmac->digest() ne $dclientdigest)
       {
       &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Incorrect client authentication - aborting connection");
+      return;
+      }
+
+    # Check server permissions
+    if (($clienttype eq 'S')&&($vrec->{'v_type'} ne 'SERVER'))
+      {
+      &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Can't authenticate a car as a server - aborting connection");
       return;
       }
 
@@ -214,7 +252,7 @@ sub io_line
     $utilisations{$vehicleid.'-'.$clienttype}{'clienttype'} = $clienttype;
 
     # Login...
-    &io_login($fn,$hdl,$vehicleid,$clienttype);
+    &io_login($fn,$hdl,$vehicleid,$clienttype,$rest);
     }
   elsif (defined $conns{$fn}{'vehicleid'})
     {
@@ -240,7 +278,7 @@ sub io_line
 
 sub io_login
   {
-  my ($fn,$hdl,$vehicleid,$clienttype) = @_;
+  my ($fn,$hdl,$vehicleid,$clienttype,$rest) = @_;
 
   if ($clienttype eq 'A')
     {
@@ -274,6 +312,18 @@ sub io_login
         }
       }
     &io_tx($fn, $hdl, 'T', $vrec->{'v_lastupdatesecs'});
+    }
+  elsif ($clienttype eq 'S')
+    {
+    # An SVR login
+    if (defined $svr_conns{$vehicleid})
+      {
+      # Server is already logged in - terminate it
+      &io_terminate($svr_conns{$vehicleid},$conns{$svr_conns{$vehicleid}}{'handle'},$vehicleid, "#$svr_conns{$vehicleid} $vehicleid error - duplicate server login - clearing first connection");
+      }
+    $svr_conns{$vehicleid} = $fn;
+    $conns{$fn}{'svrupdate'} = $rest;
+    &svr_push($fn,$vehicleid);
     }
   elsif ($clienttype eq 'C')
     {
@@ -311,13 +361,17 @@ sub io_terminate
       }
     elsif ($conns{$fn}{'clienttype'} eq 'A')
       {
-      delete $app_conns{$vehicleid}{$fn};
+      delete $app_conns{$vehicleid};
       # Notify any listening cars
       my $cfn = $car_conns{$vehicleid};
       if (defined $cfn)
         {
         &io_tx($cfn, $conns{$cfn}{'handle'}, 'Z', scalar keys %{$app_conns{$vehicleid}});
         }
+      }
+    elsif ($conns{$fn}{'clienttype'} eq 'S')
+      {
+      delete $svr_conns{$vehicleid};
       }
     }
 
@@ -434,7 +488,7 @@ sub db_get_vehicle
   {
   my ($vehicleid) = @_;
 
-  my $sth = $db->prepare('SELECT *,TIME_TO_SEC(TIMEDIFF(UTC_TIMESTAMP(),v_lastupdate)) as v_lastupdatesecs FROM ovms_cars WHERE vehicleid=?');
+  my $sth = $db->prepare('SELECT *,TIME_TO_SEC(TIMEDIFF(UTC_TIMESTAMP(),v_lastupdate)) as v_lastupdatesecs FROM ovms_cars WHERE vehicleid=? AND deleted="0"');
   $sth->execute($vehicleid);
   my $row = $sth->fetchrow_hashref();
 
@@ -557,6 +611,162 @@ sub io_message
     # Send it on to the car...
     &io_tx_car($vehicleid, $code, $data);
     }
+  }
+
+sub svr_tim
+  {
+  return if (scalar keys %svr_conns == 0);
+
+  my %last;
+  my $sth = $db->prepare('SELECT v_server,MAX(changed) AS lu FROM ovms_cars WHERE v_type="CAR" GROUP BY v_server');
+  $sth->execute();
+  while (my $row = $sth->fetchrow_hashref())
+    {
+    $last{$row->{'v_server'}} = $row->{'lu'};
+    }
+
+  foreach (keys %svr_conns)
+    {
+    my $vehicleid = $_;
+    my $fn = $svr_conns{$vehicleid};
+    my $svrupdate = $conns{$fn}{'svrupdate'};
+    my $lw = $last{'*'}; $lw='0000-00-00 00:00:00' if (!defined $lw);
+    my $ls = $last{$vehicleid}; $ls='0000-00-00 00:00:00' if (!defined $ls);
+    if (($lw gt $svrupdate)||($ls gt $svrupdate))
+      {
+      &svr_push($fn,$vehicleid);
+      }
+    }
+  }
+
+sub svr_tim2
+  {
+  if ((!defined $svr_handle)&&(defined $svr_server))
+    {
+    &svr_client();
+    }
+  }
+
+sub svr_push
+  {
+  my ($fn,$vehicleid) = @_;
+
+  # Push updated cars to the specified server
+  return if (!defined $svr_conns{$vehicleid}); # Make sure it is a server
+
+  my $sth = $db->prepare('SELECT * FROM ovms_cars WHERE v_type="CAR" AND v_server IN ("*",?) AND changed>? ORDER BY changed');
+  $sth->execute($vehicleid,$conns{$fn}{'svrupdate'});
+  while (my $row = $sth->fetchrow_hashref())
+    {
+    &io_tx($fn, $conns{$fn}{'handle'}, 'R', 
+            join(',',$row->{'vehicleid'},$row->{'owner'},$row->{'carpass'},
+                     $row->{'v_server'},$row->{'deleted'},$row->{'changed'}));
+    $conns{$fn}{'svrupdate'} = $row->{'changed'};
+    }
+  }
+
+sub svr_client
+  {
+  tcp_connect $svr_server, $svr_port, sub
+    {
+    my ($fh) = @_;
+
+    $svr_handle = new AnyEvent::Handle(fh => $fh, on_error => \&svr_error, on_rtimeout => \&svr_timeout, keepalive => 1, no_delay => 1, rtimeout => 60*60);
+    $svr_handle->push_read (line => \&svr_welcome);
+
+    my $sth = $db->prepare('SELECT MAX(changed) AS mc FROM ovms_cars WHERE v_type="CAR"');
+    $sth->execute();
+    my $row = $sth->fetchrow_hashref();
+    my $last = $row->{'mc'}; $last = '0000-00-00 00:00:00' if (!defined $last);
+
+    $svr_client_token = '';
+    foreach (0 .. 21)
+      { $svr_client_token .= substr($b64tab,rand(64),1); }
+    my $client_hmac = Digest::HMAC->new($svr_pass, "Digest::MD5");
+    $client_hmac->add($svr_client_token);
+    $svr_client_digest = $client_hmac->b64digest();
+    $svr_handle->push_write("MP-S 0 $svr_client_token $svr_client_digest $svr_vehicle $last\r\n");
+    }
+  }
+
+sub svr_welcome
+  {
+  my ($hdl, $line) = @_;
+
+  AE::log info => "#$fn - - svr welcome $line";
+
+  my $fn = $hdl->fh->fileno();
+
+  my ($welcome,$crypt,$server_token,$server_digest) = split /\s+/,$line;
+
+  my $d_server_digest = decode_base64($server_digest);
+  my $client_hmac = Digest::HMAC->new($svr_pass, "Digest::MD5");
+  $client_hmac->add($server_token);
+  if ($client_hmac->digest() ne $d_server_digest)
+    {
+    AE::log error => "#$fn - - svr server digest is invalid - aborting";
+    undef $svr_handle;
+    return;
+    }
+
+  $client_hmac = Digest::HMAC->new($svr_pass, "Digest::MD5");
+  $client_hmac->add($server_token);
+  $client_hmac->add($svr_client_token);
+  my $client_key = $client_hmac->digest;
+
+  $svr_txcipher = Crypt::RC4::XS->new($client_key);
+  $svr_txcipher->RC4(chr(0) x 1024); # Prime the cipher
+  $svr_rxcipher = Crypt::RC4::XS->new($client_key);
+  $svr_rxcipher->RC4(chr(0) x 1024); # Prime the cipher
+
+  $svr_handle->push_read (line => \&svr_line);
+  }
+
+sub svr_line
+  {
+  my ($hdl, $line) = @_;
+  my $fn = $hdl->fh->fileno();
+
+  $svr_handle->push_read (line => \&svr_line)
+
+  my $dline = $svr_rxcipher->RC4(decode_base64($line));
+  AE::log info => "#$fn - - svr got $dline";
+
+  if ($dline =~ /^MP-0 A/)
+    {
+    $svr_handle->push_write(encode_base64($svr_txcipher->RC4("MP-0 a"),''));
+    }
+  elsif ($dline =~ /MP-0 R(.+)/)
+    {
+    my ($vehicleid,$owner,$carpass,$v_server,$deleted,$changed) = split(/,/,$1);
+    AE::log info => "#$fn - - svr got record update $vehicleid ($changed)";
+
+    $db->do('INSERT INTO ovms_cars (vehicleid,owner,carpass,v_server,deleted,changed,v_lastupdate) '
+          . 'VALUES (?,?,?,?,?,?,NOW()) '
+          . 'ON DUPLICATE KEY UPDATE owner=?, carpass=?, v_server=?, deleted=?, changed=?',
+            undef,
+            $vehicleid,$owner,$carpass,$v_server,$deleted,$changed,$owner,$carpass,$v_server,$deleted,$changed);
+    }
+  }
+
+sub svr_error
+  {
+  my ($hdl, $fatal, $msg) = @_;
+  my $fn = $hdl->fh->fileno();
+
+  AE::log info => "#$fn - - svr got disconnect from remote";
+
+  undef $svr_handle;  
+  }
+
+sub svr_timeout
+  {
+  my ($hdl) = @_;
+  my $fn = $hdl->fh->fileno();
+
+  AE::log info => "#$fn - - svr got timeout from remote";
+
+  undef $svr_handle;
   }
 
 sub push_queuenotify

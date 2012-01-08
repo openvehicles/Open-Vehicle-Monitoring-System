@@ -39,8 +39,10 @@
 #include "can.h"
 #include "net.h"
 
-#define FEATURES_MAX 8
+#define FEATURES_MAX 16
+#define FEATURES_MAP_PARAM 8
 #define FEATURE_SPEEDO       0x00 // Speedometer feature
+#define FEATURE_STREAM       0x08 // Location streaming feature
 
 #pragma udata
 extern unsigned int car_linevoltage; // Line Voltage
