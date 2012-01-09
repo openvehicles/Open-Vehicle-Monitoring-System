@@ -105,6 +105,12 @@ void main(void)
     sys_features[x] = atoi(par_get(PARAM_FEATURE_S+(x-FEATURES_MAP_PARAM)));
     }
 
+  // DEBUG =============
+  // turn on SPEEDO and STREAM features
+  sys_features[FEATURE_SPEEDO] = 1;
+  sys_features[FEATURE_STREAM] = 1;
+  // END DEBUG =============
+
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter
   TRISB = 0xFE;
