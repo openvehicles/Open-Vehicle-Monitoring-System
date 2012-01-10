@@ -34,8 +34,13 @@
 // EEprom data
 // The following data can be changed by sending SMS commands, and will survive a reboot
 #pragma romdata eedata=0xf00000
+#ifdef OVMS_QC
 rom char EEparam[PARAM_MAX][PARAM_MAX_LENGTH]
-  = {"MARKPHONE","OVMS","K","","","","","","",""};
+  = {"NOPHONE","OVMS","K","IP","202.52.42.80","imobile.three.com.hk","","","QC","QCPASS"};
+#else
+rom char EEparam[PARAM_MAX][PARAM_MAX_LENGTH]
+  = {"NOPHONE","OVMS","K","","","","","","",""};
+#endif //#ifdef OVMS_QC
 #pragma romdata
 
 #pragma udata

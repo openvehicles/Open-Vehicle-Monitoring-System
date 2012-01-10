@@ -272,6 +272,7 @@ void can_poll1(void)                // CAN ID 344 and 402
 
   if ((CANctrl & 0x07) == 4)           // Acceptance Filter 4 (RXF4) = CAN ID 400
     {
+#ifdef OVMS_SPEEDO_EXPERIMENT
     // Experimental speedometer feature - replace Range->Dash with speed
     if ((can_databuffer[0]==0x02)&&         // The SPEEDO AMPS message
         (sys_features[FEATURE_SPEEDO]>0)&&  // The SPEEDO feature is on
@@ -304,6 +305,7 @@ void can_poll1(void)                // CAN ID 344 and 402
       can_lastspeedrpt = sys_features[FEATURE_SPEEDO]; // Force re-transmissions
 #endif // #ifdef OVMS_CAN_WRITE
       }
+#endif // #ifdef OVMS_SPEEDO_EXPERIMENT
     }
   else if ((CANctrl & 0x07) == 2)    	// Acceptance Filter 2 (RXF2) = CAN ID 344
     {
@@ -426,13 +428,16 @@ void can_ticker(void)
 //
 void can_ticker10th(void)
   {
+#ifdef OVMS_SPEEDO_EXPERIMENT
   if (can_lastspeedrpt==0) can_lastspeedrpt=sys_features[FEATURE_SPEEDO];
+#endif // #ifdef OVMS_SPEEDO_EXPERIMENT
   }
 
 void can_idlepoll(void)
   {
   if (can_lastspeedrpt == 0) return;
 
+#ifdef OVMS_SPEEDO_EXPERIMENT
 #ifdef OVMS_CAN_WRITE
   // Experimental speedometer feature - replace Range->Dash with speed
   if ((can_lastspeedmsg[0]==0x02)&&        // It is a valid AMPS message
@@ -456,5 +461,6 @@ void can_idlepoll(void)
     TXB0CON = 0b00001000; // mark for transmission
     }
 #endif // #ifdef OVMS_CAN_WRITE
+#endif //#ifdef OVMS_SPEEDO_EXPERIMENT
   can_lastspeedrpt--;
   }
