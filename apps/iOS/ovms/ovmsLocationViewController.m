@@ -22,6 +22,11 @@
   return self;
 }
 
+-(void)setCoordinate:(CLLocationCoordinate2D)newCoordinate
+{
+  _coordinate=newCoordinate;
+}
+
 -(void) dealloc{
   self.name = nil;
   self.description = nil;
@@ -48,21 +53,28 @@
   if ( (region.center.latitude != location.latitude)&&
        (region.center.longitude != location.longitude) )
     {
-    // Remove all existing annotations
-    for (int k=0; k < [myMapView.annotations count]; k++)
-      { 
-      if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[TeslaAnnotation class]])
-        {
-        [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
+    if (self.m_car_location != nil)
+      {
+      [self.m_car_location setCoordinate: location];
+      }
+    else
+      {
+        // Remove all existing annotations
+      for (int k=0; k < [myMapView.annotations count]; k++)
+        { 
+        if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[TeslaAnnotation class]])
+          {
+          [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
+          }
         }
+    
+      TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
+      pa.name = @"EV915";
+      pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
+      [myMapView addAnnotation:pa];
+      self.m_car_location = pa;
       }
     
-    TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
-    pa.name = @"EV915";
-    pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
-    [myMapView addAnnotation:pa];
-    self.m_car_location = pa;
-
     region.center=location;
     [myMapView setRegion:region animated:YES];
     }

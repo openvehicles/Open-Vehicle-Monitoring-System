@@ -590,6 +590,47 @@ sub io_message
       }
     }
 
+  # Check for App<->Server<->Car command and response messages...
+  if ($m_code eq 'C')
+    {
+    if ($clienttype ne 'A')
+      {
+      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'C' message from non-App";
+      return;
+      }
+    if (($m_code eq $code)&&($data =~ /^(\d+)(,(.+))?$/)&&($1 == 30))
+      {
+      # Special case of an app requesting (non-paranoid) the GPRS data
+      my $sth = $db->prepare('SELECT * FROM ovms_utilisation WHERE vehicleid=? ORDER BY u_date DESC LIMIT 90');
+      $sth->execute($vehicleid);
+      my $rows = $sth->rows;
+      my $k = 0;
+      while (my $row = $sth->fetchrow_hashref())
+        {
+        $k++;
+        &io_tx($fn, $handle, 'c', sprintf('30,0,%d,%d,%s,%d,%d,%d,%d',$k,$rows,
+               $row->{'u_date'},$row->{'u_c_rx'},$row->{'u_c_tx'},$row->{'u_a_rx'},$row->{'u_a_tx'}));
+        }
+      if ($rows == 0)
+        {
+        &io_tx($fn, $handle, 'c', '30,1,No GPRS utilisation data available');
+        }
+      return;
+      }
+    &io_tx_car($vehicleid, $code, $data); # Send it on to the car
+    return;
+    }
+  elsif ($m_code eq 'c')
+    {
+    if ($clienttype ne 'C')
+      {
+      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'c' message from non-Car";
+      return;
+      }
+    &io_tx_apps($vehicleid, $code, $data); # Send it on to the apps
+    return;
+    }
+
   if ($clienttype eq 'C')
     {
     # Let's store the data in the database...
@@ -727,7 +768,7 @@ sub svr_line
   my ($hdl, $line) = @_;
   my $fn = $hdl->fh->fileno();
 
-  $svr_handle->push_read (line => \&svr_line)
+  $svr_handle->push_read (line => \&svr_line);
 
   my $dline = $svr_rxcipher->RC4(decode_base64($line));
   AE::log info => "#$fn - - svr got $dline";

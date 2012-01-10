@@ -21,6 +21,7 @@
 @property (nonatomic, readonly) CLLocationCoordinate2D coordinate;
 
 -(id) initWithCoordinate:(CLLocationCoordinate2D) coordinate;
+-(void)setCoordinate:(CLLocationCoordinate2D)newCoordinate;
 
 @end
 
