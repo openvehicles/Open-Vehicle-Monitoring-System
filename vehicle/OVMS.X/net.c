@@ -55,6 +55,7 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
+rom char NET_WAKEUP[] = "AT\r";
 rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
@@ -359,6 +360,12 @@ void net_state_activity()
 
   switch (net_state)
     {
+    case NET_STATE_START:
+      if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
+        {
+        net_state_enter(NET_STATE_DOINIT);
+        }
+      break;
     case NET_STATE_DOINIT:
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         {
@@ -545,6 +552,8 @@ void net_state_ticker1(void)
     case NET_STATE_START:
       net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
       led_act(net_state_vchar);
+      if (net_timeout_ticks%4 == 0) // Every four seconds, try to wake up
+        net_puts_rom(NET_WAKEUP);
       break;
 
      // Timeout to short, if not connected within 10 sec
