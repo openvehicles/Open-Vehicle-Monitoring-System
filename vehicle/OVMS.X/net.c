@@ -581,6 +581,11 @@ void net_state_ticker1(void)
         }
       if ((net_reg == 0x01)||(net_reg == 0x05))
         {
+        if ((net_msg_cmd_code!=0)&&(net_msg_serverok==1)&&(net_msg_sendpending==0))
+          {
+          net_msg_cmd_do();
+          return;
+          }
         if ((net_msg_notify==1)&&(net_msg_serverok==1))
           {
           net_msg_notify = 0;

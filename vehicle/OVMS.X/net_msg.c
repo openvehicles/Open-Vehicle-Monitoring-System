@@ -55,6 +55,10 @@ char digest[MD5_SIZE];
 char pdigest[MD5_SIZE];
 char net_msg_scratchpad[100];
 
+#pragma udata Q_CMD
+int  net_msg_cmd_code = 0;
+char net_msg_cmd_msg[100];
+
 #pragma udata TX_CRYPTO
 RC4_CTX2 tx_crypto2;
 #pragma udata RX_CRYPTO
@@ -68,6 +72,7 @@ RC4_CTX1 pm_crypto1;
 
 void net_msg_init(void)
   {
+  net_msg_cmd_code = 0;
   }
 
 void net_msg_disconnected(void)
@@ -262,7 +267,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.0.9,%s,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.1.0,%s,%d",
     car_vin, net_sq);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
@@ -385,47 +390,161 @@ void net_msg_in(char* msg)
   strcatpgm2ram(msg,(char const rom far*)"\r\n");
   k = base64decode(msg,net_scratchpad);
   RC4_crypt(&rx_crypto1, &rx_crypto2, net_scratchpad, k);
-  if (memcmppgm2ram(net_scratchpad, (char const rom far*)"MP-0 ", 5) == 0)
+  if (memcmppgm2ram(net_scratchpad, (char const rom far*)"MP-0 ", 5) != 0)
     {
-    msg = net_scratchpad+5;
-    switch (*msg)
+    net_state_enter(NET_STATE_DONETINIT);
+    return;
+    }
+  msg = net_scratchpad+5;
+
+  if ((*msg == 'E')&&(msg[1]=='M'))
+    {
+    // A paranoid-mode message from the server (or, more specifically, app)
+    // The following is a nasty hack because base64decode doesn't like incoming
+    // messages of length divisible by 4, and is really expecting a CRLF
+    // terminated string, so we give it one...
+    msg += 2; // Now pointing to the code just before encrypted paranoid message
+    strcatpgm2ram(msg,(char const rom far*)"\r\n");
+    k = base64decode(msg+1,net_msg_scratchpad+1);
+    RC4_setup(&pm_crypto1, &pm_crypto2, pdigest, MD5_SIZE);
+    for (k=0;k<1024;k++)
       {
-      case 'A': // PING
-        strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 a");
+      net_scratchpad[0] = 0;
+      RC4_crypt(&pm_crypto1, &pm_crypto2, net_scratchpad, 1);
+      }
+    RC4_crypt(&pm_crypto1, &pm_crypto2, net_msg_scratchpad+1, k);
+    net_msg_scratchpad[0] = *msg; // The code
+    // The message is now out of paranoid mode...
+    msg = net_msg_scratchpad;
+    }
+
+  switch (*msg)
+    {
+    case 'A': // PING
+      strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 a");
+      if (net_msg_sendpending==0)
+        {
+        net_msg_start();
+        net_msg_encode_puts();
+        net_msg_send();
+        }
+      break;
+    case 'Z': // PEER connection
+      if (msg[1] != '0')
+        {
+        net_apps_connected = 1;
         if (net_msg_sendpending==0)
           {
           net_msg_start();
-          net_msg_encode_puts();
+          net_msg_stat();
+          net_msg_gps();
+          net_msg_tpms();
+          net_msg_firmware();
+          net_msg_environment();
           net_msg_send();
           }
-        break;
-      case 'Z': // PEER connection
-        if (msg[1] != '0')
-          {
-          net_apps_connected = 1;
-          if (net_msg_sendpending==0)
-            {
-            net_msg_start();
-            net_msg_stat();
-            net_msg_gps();
-            net_msg_tpms();
-            net_msg_firmware();
-            net_msg_environment();
-            net_msg_send();
-            }
-          }
-        else
-          {
-          net_apps_connected = 0;
-          }
-        break;
-      }
+        }
+      else
+        {
+        net_apps_connected = 0;
+        }
+      break;
+    case 'C': // COMMAND
+      net_msg_cmd_in(msg+1);
+      if (net_msg_sendpending==0) net_msg_cmd_do();
+      break;
     }
-  else  // we lost sync, and can not decrypt, reconnect
+  }
+
+void net_msg_cmd_in(char* msg)
+  {
+  // We have received a command message (pointed to by <msg>)
+  char *d;
+  int k;
+
+  for (d=msg;(*d != 0)&&(*d != ',');d++) ;
+  if (*d == ',')
+    *d++ = 0;
+  // At this point, <msg> points to the command, and <d> to the first param (if any)
+  net_msg_cmd_code = atoi(msg);
+  strcpy(net_msg_cmd_msg,d);
+  }
+
+void net_msg_cmd_do(void)
+  {
+  int k;
+  char *p;
+
+  delay100(2);
+  net_msg_start();
+  switch (net_msg_cmd_code)
     {
-      //net_msg_disconnected();
-      net_state_enter(NET_STATE_DONETINIT);
+    case 1: // Request feature list (params unused)
+      for (k=0;k<FEATURES_MAX;k++)
+        {
+        sprintf(net_scratchpad, (rom far char*)"MP-0 c1,0,%d,%d,%d",
+                k,FEATURES_MAX,sys_features[k]);
+        net_msg_encode_puts();
+        }
+      break;
+    case 2: // Set feature (params: feature number, value)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    case 3: // Request parameter list (params unused)
+      for (k=0;k<PARAM_MAX;k++)
+        {
+        p = par_get(k);
+        if (k==PARAM_NETPASS1) *p=0; // Don't show netpass1
+        sprintf(net_scratchpad, (rom far char*)"MP-0 c3,0,%d,%d,%s",
+                k,PARAM_MAX,p);
+        net_msg_encode_puts();
+        }
+      break;
+    case 4: // Set parameter (params: param number, value)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    case 5: // Reboot (params unused)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    case 10: // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    case 11: // Start charge (params unused)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    case 12: // Stop charge (params unused)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    case 20: // Lock car (params pin)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    case 21: // Activate valet mode (params pin)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    case 22: // Unlock car (params pin)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    case 23: // Deactivate valet mode (params pin)
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
+    default:
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,3",net_msg_cmd_code);
+      net_msg_encode_puts();
+      break;
     }
+  net_msg_send();
+  net_msg_cmd_code = 0;
+  net_msg_cmd_msg[0] = 0;
   }
 
 void net_msg_forward_sms(char *caller, char *SMS)
