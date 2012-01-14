@@ -43,6 +43,7 @@
 #define FEATURES_MAP_PARAM 8
 #define FEATURE_SPEEDO       0x00 // Speedometer feature
 #define FEATURE_STREAM       0x08 // Location streaming feature
+#define FEATURE_MINSOC       0x09 // Minimum SOC feature
 
 #pragma udata
 extern unsigned int car_linevoltage; // Line Voltage

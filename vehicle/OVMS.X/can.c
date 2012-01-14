@@ -366,7 +366,7 @@ void can_state_ticker60(void)
   int minSOC;
 
   // check minSOC
-  minSOC = atoi(par_get(PARAM_MINSOC));
+  minSOC = sys_features[FEATURE_MINSOC];
   if ((can_minSOCnotified == 0) && (car_SOC < minSOC))
     {
     net_notify_status();
