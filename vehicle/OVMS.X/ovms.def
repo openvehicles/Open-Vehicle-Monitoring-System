@@ -28,29 +28,6 @@
 ; THE SOFTWARE.
 */
 
-// The OVMS_CAN_WRITE switch controls the CAN mode of the OVMS system
-// Leaving it undefined (the default) will put the CAN bus in LISTEN mode. It
-// will not be written to and no acnkowledgements will be issued on the bus.
-// Defining it will put the CAN bus in NORMAL mode. This will allow the
-// system to co-operate with the CAN bus (eg; issuing acknowledgements) and
-// also give it the ability to transmit messages on the CAN bus.
-// Not defining OVMS_CAN_WRITE is obviously less likely to interfere with
-// the vehicle normal operations.
-//#define OVMS_CAN_WRITE
-
-// The OVMS_CAR_2010 switch should be defined if the vehicle is a 2010 (or
-// later) roadster.
-#define OVMS_CAR_2010
-
-// The OVMS_SUPPRESS_ACCESSDENIED_SMS switch prevents the OVMS net_sms module
-// from sending "access denied" SMS (for some operators/plans, SMS are charged
-// on per use basis)
-//#define OVMS_SUPPRESS_ACCESSDENIED_SMS
-
-// The OVMS_SUPPRESS_OUTGOING_SMS switch prevents the OVMS net_sms module from
-// sending all SMS messages (useful for data-only plans with expensive SMS rates)
-//#define OVMS_SUPPRESS_OUTGOING_SMS
-
 // The OVMS_SPEEDO_EXPERIMENT switch is a highly experimental feature to
 // change the dashboard Amps display in the Tesla Roadster to show speed.
 // Please take extreme care with this and consider it extremely experimental -

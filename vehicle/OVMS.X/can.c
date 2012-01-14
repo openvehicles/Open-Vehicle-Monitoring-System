@@ -117,11 +117,14 @@ void can_initialise(void)
   BRGCON3 = 0x02;
 
   CIOCON = 0b00100000; // CANTX pin will drive VDD when recessive
-#ifdef OVMS_CAN_WRITE
-  CANCON = 0b00000000;  // Normal mode
-#else
-  CANCON = 0b01100000; // Listen only mode, Receive bufer 0
-#endif // #ifdef OVMS_CAN_WRITE
+  if (sys_features[FEATURE_CANWRITE]>0)
+    {
+    CANCON = 0b00000000;  // Normal mode
+    }
+  else
+    {
+    CANCON = 0b01100000; // Listen only mode, Receive bufer 0
+    }
 
   RCONbits.IPEN = 1; // Enable Interrupt Priority
   PIE3bits.RXB1IE = 1; // CAN Receive Buffer 1 Interrupt Enable bit
@@ -196,11 +199,10 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0x95: // Charging mode
       car_chargestate = can_databuffer[1];
-#ifdef OVMS_CAR_2010
-      car_chargemode = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
-#else
-      car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
-#endif // #ifdef OVMS_CAR_2010
+      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_2008) // A 2010+ roadster?
+        car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
+      else
+        car_chargemode = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
       if (car_stopped) // Stopped charging?
         {
         car_stopped = 0;
@@ -277,9 +279,9 @@ void can_poll1(void)                // CAN ID 344 and 402
     if ((can_databuffer[0]==0x02)&&         // The SPEEDO AMPS message
         (sys_features[FEATURE_SPEEDO]>0)&&  // The SPEEDO feature is on
         (car_doors1 & 0x80)&&               // The car is on
-        (car_speed != can_databuffer[2]))   // The speed != Amps
+        (car_speed != can_databuffer[2])&&  // The speed != Amps
+        (sys_features[FEATURE_CANWRITE]>0)) // The CAN bus can be written to
       {
-#ifdef OVMS_CAN_WRITE
       can_lastspeedmsg[0] = can_databuffer[0];
       can_lastspeedmsg[1] = can_databuffer[1];
       can_lastspeedmsg[2] = car_speed;
@@ -303,7 +305,6 @@ void can_poll1(void)                // CAN ID 344 and 402
       TXB0DLC = 0b00001000; // data length (8)
       TXB0CON = 0b00001000; // mark for transmission
       can_lastspeedrpt = sys_features[FEATURE_SPEEDO]; // Force re-transmissions
-#endif // #ifdef OVMS_CAN_WRITE
       }
 #endif // #ifdef OVMS_SPEEDO_EXPERIMENT
     }
@@ -438,11 +439,11 @@ void can_idlepoll(void)
   if (can_lastspeedrpt == 0) return;
 
 #ifdef OVMS_SPEEDO_EXPERIMENT
-#ifdef OVMS_CAN_WRITE
   // Experimental speedometer feature - replace Range->Dash with speed
   if ((can_lastspeedmsg[0]==0x02)&&        // It is a valid AMPS message
       (sys_features[FEATURE_SPEEDO]>0)&&   // The SPEEDO feature is enabled
-      (car_doors1 & 0x80))                 // The car is on
+      (car_doors1 & 0x80)&&                // The car is on
+      (sys_features[FEATURE_CANWRITE]>0))  // The CAN bus can be written to
     {
     Delay1KTCYx(1);
     while (TXB0CONbits.TXREQ) {} // Loop until TX is done
@@ -460,7 +461,6 @@ void can_idlepoll(void)
     TXB0DLC = 0b00001000; // data length (8)
     TXB0CON = 0b00001000; // mark for transmission
     }
-#endif // #ifdef OVMS_CAN_WRITE
 #endif //#ifdef OVMS_SPEEDO_EXPERIMENT
   can_lastspeedrpt--;
   }
