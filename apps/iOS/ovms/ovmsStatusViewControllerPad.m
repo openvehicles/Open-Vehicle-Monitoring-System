@@ -142,10 +142,11 @@
     [self setM_car_temp_motor_l:nil];
     [self setM_car_temp_battery_l:nil];
 
-  [self setMyMapView:nil];
-  [self setM_car_outlineimage:nil];
+    [self setMyMapView:nil];
+    [self setM_car_outlineimage:nil];
     [self setM_car_parking_image:nil];
     [self setM_car_parking_state:nil];
+  
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -463,7 +464,7 @@
   if ( (region.center.latitude != location.latitude)&&
       (region.center.longitude != location.longitude) )
     {
-    if (self.m_car_location != nil)
+    if (self.m_car_location)
       {
       [self.m_car_location setCoordinate: location];
       }

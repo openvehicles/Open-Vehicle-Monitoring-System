@@ -43,6 +43,24 @@
 #define FEATURES_MAP_PARAM 8
 #define FEATURE_SPEEDO       0x00 // Speedometer feature
 #define FEATURE_STREAM       0x08 // Location streaming feature
+#define FEATURE_MINSOC       0x09 // Minimum SOC feature
+#define FEATURE_CARBITS      0x0E // Various ON/OFF features (bitmap)
+#define FEATURE_CANWRITE     0x0F // CAN bus can be written to
+
+// The FEATURE_CARBITS feature is a set of ON/OFF bits to control different
+// miscelaneous aspects of the system. The following bits are defined:
+#define FEATURE_CB_2008      0x01 // Set to 1 to mark the car as 2008/2009
+#define FEATURE_CB_SAD_SMS   0x02 // Set to 1 to suppress "Access Denied" SMS
+#define FEATURE_CB_SOUT_SMS  0x04 // Set to 1 to suppress all outbound SMS
+
+// The FEATURE_CANWRITE feature controls the CAN mode of the OVMS system
+// Leaving it 0 (the default) will put the CAN bus in LISTEN mode. It
+// will not be written to and no acknowledgements will be issued on the bus.
+// Defining it >0 will put the CAN bus in NORMAL mode. This will allow the
+// system to co-operate with the CAN bus (eg; issuing acknowledgements) and
+// also give it the ability to transmit messages on the CAN bus.
+// Leaving FEATURE_CANWRITE=0 is obviously less likely to interfere with
+// the vehicle normal operations.
 
 #pragma udata
 extern unsigned int car_linevoltage; // Line Voltage

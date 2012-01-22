@@ -16,7 +16,7 @@ RM=rm -f
 CP=cp 
 
 # Macros
-CND_CONF=default
+CND_CONF=Production
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 IMAGE_TYPE=debug
 FINAL_IMAGE=dist/${CND_CONF}/${IMAGE_TYPE}/OVMS.X.${IMAGE_TYPE}.cof
@@ -65,7 +65,7 @@ MP_AR_DIR=C:\\Program\ Files\\Microchip\\mplabc18\\v3.40\\bin
 MP_CPP=C:/Program\ Files/Microchip/MPLABX/mplab_ide/mplab_ide/modules/../../bin/mplab-cpp
 
 .build-conf: ${BUILD_SUBPROJECTS}
-	${MAKE}  -f nbproject/Makefile-default.mk dist/${CND_CONF}/${IMAGE_TYPE}/OVMS.X.${IMAGE_TYPE}.cof
+	${MAKE}  -f nbproject/Makefile-Production.mk dist/${CND_CONF}/${IMAGE_TYPE}/OVMS.X.${IMAGE_TYPE}.cof
 
 MP_PROCESSOR_OPTION=18F2680
 MP_PROCESSOR_OPTION_LD=18f2680
@@ -410,8 +410,8 @@ endif
 
 # Clean Targets
 .clean-conf:
-	${RM} -r build/default
-	${RM} -r dist/default
+	${RM} -r build/Production
+	${RM} -r dist/Production
 
 # Enable dependency checking
 .dep.inc: .depcheck-impl

@@ -53,7 +53,7 @@
   if ( (region.center.latitude != location.latitude)&&
        (region.center.longitude != location.longitude) )
     {
-    if (self.m_car_location != nil)
+    if (self.m_car_location)
       {
       [self.m_car_location setCoordinate: location];
       }
