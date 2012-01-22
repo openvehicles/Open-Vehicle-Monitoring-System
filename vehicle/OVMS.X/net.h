@@ -43,6 +43,7 @@
 #define NET_STATE_START      0x01  // Initialise and get ready to go
 #define NET_STATE_SOFTRESET  0x02  // Reset and re-initialise the network
 #define NET_STATE_HARDRESET  0x03  // Hard Reset the modem, then start again
+#define NET_STATE_GRACERESET 0x04  // Gracefully closes the TCP and hard resets the modem
 #define NET_STATE_DOINIT     0x10  // Initialise the GSM network
 #define NET_STATE_READY      0x20  // READY and handling calls
 #define NET_STATE_COPS       0x21  // GSM COPS carrier selection

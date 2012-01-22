@@ -60,6 +60,7 @@ rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSP
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
 rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
+rom char NET_CLOSETCP[] = "AT+CIPCLOSE\r";
 
 ////////////////////////////////////////////////////////////////////////
 // The Interrupt Service Routine is standard PIC code
@@ -326,6 +327,14 @@ void net_state_enter(unsigned char newstate)
       net_msg_disconnected();
       net_puts_rom(NET_COPS);
       break;
+    case NET_STATE_GRACERESET:
+      net_timeout_goto = NET_STATE_HARDRESET;
+      net_timeout_ticks = 5; // allow 5 seconds for TCP shutdown
+      led_act(0);
+      led_net(0);
+      net_puts_rom(NET_CLOSETCP);
+      break;
+
     }
   }
 

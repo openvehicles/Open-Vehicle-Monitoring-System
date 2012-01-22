@@ -508,6 +508,7 @@ void net_msg_cmd_do(void)
     case 5: // Reboot (params unused)
       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
       net_msg_encode_puts();
+      net_state_enter(NET_STATE_GRACERESET);
       break;
     case 10: // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance)
       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
