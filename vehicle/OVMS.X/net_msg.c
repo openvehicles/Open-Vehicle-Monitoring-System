@@ -501,6 +501,7 @@ void net_msg_cmd_do(void)
         k = atoi(net_msg_cmd_msg);
         sys_features[k] = p;
       }
+      break;
     case 3: // Request parameter list (params unused)
       for (k=0;k<PARAM_MAX;k++)
         {
@@ -514,6 +515,17 @@ void net_msg_cmd_do(void)
     case 4: // Set parameter (params: param number, value)
       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
       net_msg_encode_puts();
+
+      for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
+
+      // check if a value exists and is separated by a comma
+      if (*p == ',')
+      {
+        *p++ = 0;
+        // At this point, <net_msg_cmd_msg> points to the command, and <p> to the param value
+        k = atoi(net_msg_cmd_msg);
+        par_set((char)k, p);
+      }
       break;
     case 5: // Reboot (params unused)
       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
