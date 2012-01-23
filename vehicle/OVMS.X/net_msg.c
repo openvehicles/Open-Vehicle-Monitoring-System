@@ -267,8 +267,8 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp1,%s,%d",
-    car_vin, net_sq);
+  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp2,%s,%d,%d",
+    car_vin, net_sq, sys_features[FEATURE_CANWRITE]);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -506,8 +506,9 @@ void net_msg_cmd_do(void)
       net_msg_encode_puts();
       break;
     case 5: // Reboot (params unused)
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,0",net_msg_cmd_code);
       net_msg_encode_puts();
+      net_state_enter(NET_STATE_HARDSTOP);
       break;
     case 10: // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance)
       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);

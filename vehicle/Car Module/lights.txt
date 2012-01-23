@@ -39,3 +39,7 @@ RED light short rapid blinks, and GREEN light solid on:
   Both the GSM and GPRS networks are up and connected ok.
   This is the ideal state if you have configured GPRS.
 
+RED light and GREEN light both solid on:
+
+  The system is being RESET as a result of a remote command to do so. This should last for
+  less than 10 seconds, then the system will restart automatically.
