@@ -31,6 +31,12 @@
 #include <stdio.h>
 #include "ovms.h"
 
+// Reset the cpu
+void reset_cpu(void)
+  {
+  _asm reset _endasm
+  }
+
 // Delay in 100ms increments
 // N.B. Async interrupts will still be handled, and queued,
 // but can bus messages might be lost

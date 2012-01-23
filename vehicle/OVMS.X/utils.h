@@ -31,6 +31,7 @@
 #ifndef __OVMS_UTILS_H
 #define __OVMS_UTILS_H
 
+void reset_cpu(void);              // Reset the cpu
 void delay100(unsigned char n);    // Delay in 100ms increments
 void led_net(unsigned char led);   // Change NET led
 void led_act(unsigned char led);   // Change ACT led
