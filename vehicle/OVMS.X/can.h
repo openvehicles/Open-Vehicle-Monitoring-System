@@ -34,6 +34,10 @@
 extern unsigned char can_databuffer[8];
 extern unsigned char can_minSOCnotified; // minSOC notified flag
 
+void can_tx_setchargemode(unsigned char mode);
+void can_tx_startstopcharge(unsigned char start);
+void can_tx_lockunlockcar(unsigned char mode, char *pin);
+
 void can_initialise(void);
 void can_poll0(void);
 void can_poll1(void);

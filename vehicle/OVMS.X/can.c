@@ -39,6 +39,7 @@
 
 #include <stdlib.h>
 #include <delays.h>
+#include <string.h>
 #include "ovms.h"
 #include "params.h"
 
@@ -463,4 +464,65 @@ void can_idlepoll(void)
     }
 #endif //#ifdef OVMS_SPEEDO_EXPERIMENT
   can_lastspeedrpt--;
+  }
+
+void can_tx_setchargemode(unsigned char mode)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b10000000; // Setup 0x102
+  TXB0D0 = 0x05;
+  TXB0D1 = 0x19;
+  TXB0D2 = 0x00;
+  TXB0D3 = 0x00;
+  TXB0D4 = mode;
+  TXB0D5 = 0x00;
+  TXB0D6 = 0x00;
+  TXB0D7 = 0x00;
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
+void can_tx_startstopcharge(unsigned char start)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b10000000; // Setup 0x102
+  TXB0D0 = 0x05;
+  TXB0D1 = 0x03;
+  TXB0D2 = 0x00;
+  TXB0D3 = 0x00;
+  TXB0D4 = start;
+  TXB0D5 = 0x00;
+  TXB0D6 = 0x00;
+  TXB0D7 = 0x00;
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
+void can_tx_lockunlockcar(unsigned char mode, char *pin)
+  {
+  // Mode is 0=valet, 1=novalet, 2=lock, 3=unlock
+  long lpin;
+  lpin = atol(pin);
+  
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b10000000; // Setup 0x102
+  TXB0D0 = 0x0B;
+  TXB0D1 = mode;
+  TXB0D2 = 0x00;
+  TXB0D3 = 0x00;
+  TXB0D4 = lpin & 0xff;
+  TXB0D5 = (lpin>>8) & 0xff;
+  TXB0D6 = (lpin>>16) & 0xff;
+  TXB0D7 = (strlen(pin)<<4) + ((lpin>>24) & 0x0f);
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   }
