@@ -70,6 +70,11 @@ RC4_CTX1 tx_crypto1;
 RC4_CTX1 rx_crypto1;
 RC4_CTX1 pm_crypto1;
 
+rom char NET_MSG_OK[] = "MP-0 c%d,0";
+rom char NET_MSG_INVALIDSYNTAX[] = "MP-0 c%d,1,Invalid syntax";
+rom char NET_MSG_NOCANWRITE[] = "MP-0 c%d,1,No write access to CAN";
+rom char NET_MSG_INVALIDRANGE[] = "MP-0 c%d,1,Parameter out of range";
+
 void net_msg_init(void)
   {
   net_msg_cmd_code = 0;
@@ -267,7 +272,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp2,%s,%d,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp3,%s,%d,%d",
     car_vin, net_sq, sys_features[FEATURE_CANWRITE]);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
@@ -500,16 +505,16 @@ void net_msg_cmd_do(void)
           sys_features[k] = atoi(p);
           if (k>=FEATURES_MAP_PARAM) // Top N features are persistent
             par_set(PARAM_FEATURE_S+(k-FEATURES_MAP_PARAM), p);
-          sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,0",net_msg_cmd_code);
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
           }
         else
           {
-          sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,1,Feature out of range",net_msg_cmd_code);
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDRANGE,net_msg_cmd_code);
           }
         }
       else
         {
-        sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,1,Invalid syntax",net_msg_cmd_code);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
         }
       net_msg_encode_puts();
       break;
@@ -534,50 +539,106 @@ void net_msg_cmd_do(void)
         if ((k>=0)&&(k<PARAM_FEATURE_S))
           {
           par_set(k, p);
-          sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,0",net_msg_cmd_code);
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
           }
         else
           {
-          sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,1,Parameter out of range",net_msg_cmd_code);
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDRANGE,net_msg_cmd_code);
           }
         }
       else
         {
-        sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,1,Invalid syntax",net_msg_cmd_code);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
         }
       net_msg_encode_puts();
       break;
     case 5: // Reboot (params unused)
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,0",net_msg_cmd_code);
+      sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
       net_msg_encode_puts();
       net_state_enter(NET_STATE_HARDSTOP);
       break;
     case 10: // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance)
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_setchargemode(atoi(net_msg_cmd_msg));
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
       net_msg_encode_puts();
       break;
     case 11: // Start charge (params unused)
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_startstopcharge(1);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
       net_msg_encode_puts();
       break;
     case 12: // Stop charge (params unused)
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_startstopcharge(0);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
       net_msg_encode_puts();
       break;
     case 20: // Lock car (params pin)
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_lockunlockcar(2, net_msg_cmd_msg);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
       net_msg_encode_puts();
       break;
     case 21: // Activate valet mode (params pin)
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_lockunlockcar(0, net_msg_cmd_msg);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
       net_msg_encode_puts();
       break;
     case 22: // Unlock car (params pin)
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_lockunlockcar(3, net_msg_cmd_msg);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
       net_msg_encode_puts();
       break;
     case 23: // Deactivate valet mode (params pin)
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,2",net_msg_cmd_code);
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_lockunlockcar(1, net_msg_cmd_msg);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
       net_msg_encode_puts();
       break;
     default:
