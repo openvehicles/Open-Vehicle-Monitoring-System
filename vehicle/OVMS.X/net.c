@@ -282,6 +282,29 @@ void net_state_enter(unsigned char newstate)
       net_msg_disconnected();
       PORTBbits.RB0 = 0;
       break;
+    case NET_STATE_HARDSTOP:
+      net_timeout_goto = NET_STATE_HARDSTOP2;
+      net_timeout_ticks = 10;
+      net_state_vchar = 0;
+      net_apps_connected = 0;
+      net_msg_disconnected();
+      delay100(10);
+      net_puts_rom("AT+CIPSHUT\r");
+      led_net(1);
+      led_act(1);
+      break;
+    case NET_STATE_HARDSTOP2:
+      net_timeout_goto = NET_STATE_STOP;
+      net_timeout_ticks = 2;
+      net_state_vchar = 0;
+      PORTBbits.RB0 = 0;
+      break;
+    case NET_STATE_STOP:
+      PORTBbits.RB0 = 1;
+      led_act(0);
+      led_net(0);
+      reset_cpu();
+      break;
     case NET_STATE_DOINIT:
       net_timeout_goto = NET_STATE_HARDRESET;
       net_timeout_ticks = 35;
