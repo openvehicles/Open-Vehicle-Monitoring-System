@@ -58,9 +58,9 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 rom char NET_WAKEUP[] = "AT\r";
 rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 rom char NET_HANGUP[] = "ATH\r";
-rom char NET_COPS[] = "AT+COPS=0\r";
+//TODO: Note (Sonny): I'm having a COPS problem so the semi-auto network selection mode is used for now.
+rom char NET_COPS[] = "AT+COPS=4,0,\"3(2G)\"\r"; 
 rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
-rom char NET_CLOSETCP[] = "AT+CIPCLOSE\r";
 
 ////////////////////////////////////////////////////////////////////////
 // The Interrupt Service Routine is standard PIC code
@@ -131,6 +131,10 @@ void net_poll(void)
         {
         net_buf_pos--;
         net_buf[net_buf_pos] = 0; // mark end of string for string search functions.
+
+        if ((sys_features[FEATURE_DEBUGMODEM] > 0) && (net_buf_pos > 1))
+            net_msg_forward_modem_message(net_buf);
+        
         if ((net_buf_pos>=4)&&
             (net_buf[0]=='+')&&(net_buf[1]=='C')&&
             (net_buf[2]=='M')&&(net_buf[3]=='T'))
@@ -350,14 +354,6 @@ void net_state_enter(unsigned char newstate)
       net_msg_disconnected();
       net_puts_rom(NET_COPS);
       break;
-    case NET_STATE_GRACERESET:
-      net_timeout_goto = NET_STATE_HARDRESET;
-      net_timeout_ticks = 5; // allow 5 seconds for TCP shutdown
-      led_act(0);
-      led_net(0);
-      net_puts_rom(NET_CLOSETCP);
-      break;
-
     }
   }
 
@@ -407,7 +403,8 @@ void net_state_activity()
     case NET_STATE_COPS:
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         net_state_enter(NET_STATE_DONETINIT); // COPS reconnect was OK
-      else if ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R'))
+      else if ( ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R')) ||
+              (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0) )
         net_state_enter(NET_STATE_SOFTRESET); // Reset the entire async
       break;
     case NET_STATE_DONETINIT:
@@ -802,7 +799,17 @@ void net_initialise(void)
   {
   // I/O configuration PORT C
   TRISC = 0x80; // Port C RC0-6 output, RC7 input
+
+
+  // wait for the modem to boot
+  delay100(20); // 2 sec
+  // wake up the modem
   PORTBbits.RB0 = 1;
+  delay100(5);
+  PORTBbits.RB0 = 0;
+  delay100(15); // pull PWRKEY down 1.5s
+  PORTBbits.RB0 = 1;
+  delay100(2000); // pull up 2s
   UARTIntInit();
 
   led_net(0);

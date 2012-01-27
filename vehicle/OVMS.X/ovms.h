@@ -42,6 +42,7 @@
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
 #define FEATURE_SPEEDO       0x00 // Speedometer feature
+#define FEATURE_DEBUGMODEM   0x07 // Forwards modem responses to network clients
 #define FEATURE_STREAM       0x08 // Location streaming feature
 #define FEATURE_MINSOC       0x09 // Minimum SOC feature
 #define FEATURE_CARBITS      0x0E // Various ON/OFF features (bitmap)

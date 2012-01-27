@@ -272,7 +272,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp3,%s,%d,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp4,%s,%d,%d",
     car_vin, net_sq, sys_features[FEATURE_CANWRITE]);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
@@ -498,7 +498,7 @@ void net_msg_cmd_do(void)
       if (*p == ',')
         {
         *p++ = 0;
-        // At this point, <net_msg_cmd_msg> points to the command, and <p> to the param value
+        // At this point, <net_msg_cmd_msg> points to the feature number, and <p> to the param value
         k = atoi(net_msg_cmd_msg);
         if ((k>=0)&&(k<FEATURES_MAX))
           {
@@ -534,7 +534,7 @@ void net_msg_cmd_do(void)
       if (*p == ',')
         {
         *p++ = 0;
-        // At this point, <net_msg_cmd_msg> points to the command, and <p> to the param value
+        // At this point, <net_msg_cmd_msg> points to the param number, and <p> to the param value
         k = atoi(net_msg_cmd_msg);
         if ((k>=0)&&(k<PARAM_FEATURE_S))
           {
@@ -641,6 +641,27 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       break;
+    case 40: // Send SMS (params: phone number, SMS message)
+      for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
+      // check if a value exists and is separated by a comma
+      if (*p == ',')
+      {
+        *p++ = 0;
+        // At this point, <net_msg_cmd_msg> points to the phone number, and <p> to the SMS message
+        net_send_sms_start(net_msg_cmd_msg);
+        net_puts_ram(p);
+        net_puts_rom("\x1a");
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      } else
+      {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
+      }
+      break;
+    case 49: // Send raw AT command (param: raw AT command)
+      net_puts_ram(net_msg_cmd_msg);
+      net_puts_rom("\n");
+      sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      break;
     default:
       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,3",net_msg_cmd_code);
       net_msg_encode_puts();
@@ -651,11 +672,24 @@ void net_msg_cmd_do(void)
   net_msg_cmd_msg[0] = 0;
   }
 
+void net_msg_forward_modem_message(char *message)
+{
+  //Server not ready, stop sending
+  //TODO: store this message inside buffer, resend it when server is connected
+  if ((net_msg_serverok == 0)||(net_msg_sendpending>0)||(net_apps_connected<=0))
+    return;
+
+  net_msg_start();
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 c49,D,");
+  strcat(net_scratchpad, message);
+  net_msg_encode_puts();
+  net_msg_send();
+}
 void net_msg_forward_sms(char *caller, char *SMS)
   {
   //Server not ready, stop sending
   //TODO: store this message inside buffer, resend it when server is connected
-  if ((net_msg_serverok == 0)||(net_msg_sendpending)>0)
+  if ((net_msg_serverok == 0)||(net_msg_sendpending>0))
     return;
 
   delay100(2);

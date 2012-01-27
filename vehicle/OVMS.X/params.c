@@ -101,3 +101,4 @@ void par_set(unsigned char param, char* value)
     EECON1bits.WREN = 0; // disable write to EEPROM
     }
   }
+
