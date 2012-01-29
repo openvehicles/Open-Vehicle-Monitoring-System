@@ -35,6 +35,7 @@
 #include "ovms.h"
 #include "net_sms.h"
 #include "net_msg.h"
+#include "utils.h"
 
 // NET data
 #pragma udata
@@ -56,11 +57,13 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 // ROM Constants
 rom char NET_WAKEUP[] = "AT\r";
-rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
+rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 rom char NET_HANGUP[] = "ATH\r";
 //TODO: Note (Sonny): I'm having a COPS problem so the semi-auto network selection mode is used for now.
-rom char NET_COPS[] = "AT+COPS=4,0,\"3(2G)\"\r"; 
+rom char NET_COPS[] = "AT+COPS=4,0,\"3(2G)\"\r";
+//rom char NET_COPS[] = "AT+COPS=0\r";
 rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
+rom char NET_IPR_SET[] = "AT+IPR=9600\r"; // sets fixed baud rate for the modem
 
 ////////////////////////////////////////////////////////////////////////
 // The Interrupt Service Routine is standard PIC code
@@ -262,21 +265,20 @@ void net_state_enter(unsigned char newstate)
   switch(net_state)
     {
     case NET_STATE_START:
-      PORTBbits.RB0 = 1;
-      net_timeout_goto = NET_STATE_DOINIT;
-      net_timeout_ticks = 30;
+      net_timeout_goto = NET_STATE_HARDRESET;//NET_STATE_DOINIT;
+      net_timeout_ticks = 12; // modem cold start takes 5 secs, warm restart takes 2 secs, 3 secs required for autobuad sync, 12 secs should be sufficient for everything
       net_state_vchar = 1;
       net_apps_connected = 0;
       led_act(net_state_vchar);
       net_msg_init();
       break;
     case NET_STATE_SOFTRESET:
-      PORTBbits.RB0 = 1;
       led_act(0);
       led_net(0);
       net_timeout_goto = 0;
       break;
     case NET_STATE_HARDRESET:
+      modem_reboot();
       net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 2;
       led_net(0);
@@ -284,7 +286,6 @@ void net_state_enter(unsigned char newstate)
       net_state_vchar = 0;
       net_apps_connected = 0;
       net_msg_disconnected();
-      PORTBbits.RB0 = 0;
       break;
     case NET_STATE_HARDSTOP:
       net_timeout_goto = NET_STATE_HARDSTOP2;
@@ -301,10 +302,10 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_STOP;
       net_timeout_ticks = 2;
       net_state_vchar = 0;
-      PORTBbits.RB0 = 0;
+      modem_reboot;
       break;
     case NET_STATE_STOP:
-      PORTBbits.RB0 = 1;
+      //PORTBbits.RB0 = 1;
       led_act(0);
       led_net(0);
       reset_cpu();
@@ -395,7 +396,13 @@ void net_state_activity()
         }
       break;
     case NET_STATE_DOINIT:
-      if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
+      if ((net_buf_pos >= 6)&&(net_buf[0] == '+')&&(net_buf[1] == 'I')&&(net_buf[2] == 'P')&&(net_buf[3] == 'R')&&(net_buf[6] != '9'))
+      {
+          // +IPR != 9600
+          // SET IPR (baudrate)
+          net_puts_rom(NET_IPR_SET);
+      }
+      else if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         {
         net_state_enter(NET_STATE_COPS);
         }
@@ -410,21 +417,30 @@ void net_state_activity()
     case NET_STATE_DONETINIT:
       if ((net_buf_pos >= 2)&&
                (net_buf[0] == 'E')&&
-               (net_buf[1] == 'R')&&
-               (net_state_vchar == 5)) // ERROR response to AT+CIFSR
+               (net_buf[1] == 'R'))
+      {
+        if ((net_state_vchar == 2)||
+                (net_state_vchar == 3))// ERROR response to AT+CSTT OR AT+CIICR
         {
-        // This is a nasty case. The GPRS has locked up.
-        // The only solution I can find is a hard reset of the modem
-        led_act(0);
-        net_state_enter(NET_STATE_HARDRESET);
+            // try setting up GPRS again
+            led_act(0);
+            net_state_enter(NET_STATE_SOFTRESET);
+        } else if (net_state_vchar == 5) // ERROR response to AT+CIFSR
+        {
+            // This is a nasty case. The GPRS has locked up.
+            // The only solution I can find is a hard reset of the modem
+            led_act(0);
+            net_state_enter(NET_STATE_HARDRESET);
         }
+
+      }
       else if ((net_buf_pos >= 2)&&
           (((net_buf[0] == 'O')&&(net_buf[1] == 'K')))|| // OK
           (((net_buf[0] == 'S')&&(net_buf[1] == 'H')))||  // SHUT OK
           (net_state_vchar == 5)) // Local IP address
         {
         net_buf_pos = 0;
-        net_timeout_ticks = 60;
+        net_timeout_ticks = 30;
         net_link = 0;
         delay100(1);
         switch (++net_state_vchar)
@@ -581,8 +597,8 @@ void net_state_ticker1(void)
     case NET_STATE_START:
       net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
       led_act(net_state_vchar);
-      if (net_timeout_ticks%4 == 0) // Every four seconds, try to wake up
-        net_puts_rom(NET_WAKEUP);
+      //if ((net_timeout_ticks%2 == 0)&&(net_timeout_ticks<13))
+      net_puts_rom(NET_WAKEUP); // send AT to check if modem is up
       break;
 
      // Timeout to short, if not connected within 10 sec
@@ -799,17 +815,6 @@ void net_initialise(void)
   {
   // I/O configuration PORT C
   TRISC = 0x80; // Port C RC0-6 output, RC7 input
-
-
-  // wait for the modem to boot
-  delay100(20); // 2 sec
-  // wake up the modem
-  PORTBbits.RB0 = 1;
-  delay100(5);
-  PORTBbits.RB0 = 0;
-  delay100(15); // pull PWRKEY down 1.5s
-  PORTBbits.RB0 = 1;
-  delay100(2000); // pull up 2s
   UARTIntInit();
 
   led_net(0);

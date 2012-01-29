@@ -107,8 +107,10 @@ void main(void)
 
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter
-  TRISB = 0xFE;
+  TRISB = 0xFE; // SET RB0 to output (connected to modem PWRKEY)
 
+  PORTBbits.RB0 = 0; // pull modem PWRKEY low for the modem's initial power up
+  
   // Timer 0 enabled, Fosc/4, 16 bit mode, prescaler 1:256
   // This gives us one tick every 51.2uS before prescale (13.1ms after)
   T0CON = 0b10000111; // @ 5Mhz => 51.2uS

@@ -63,6 +63,22 @@ void led_act(unsigned char led)
   PORTCbits.RC4 = led;
   }
 
+// Cold restart the SIM900 modem
+void modem_reboot()
+  {
+  // pull PWRKEY up if it's not already pulled up
+  if (PORTBbits.RB0 == 0)
+  {
+    PORTBbits.RB0 = 1;
+    delay100(5);
+  }
+
+  // send the reset signal by pulling down PWRKEY >1s
+  PORTBbits.RB0 = 0;
+  delay100(12);
+  PORTBbits.RB0 = 1;
+  }
+
 // Format a Latitude/Longitude as a string
 // <dest> must have room to receive the output
 void format_latlon(long latlon, char* dest)
