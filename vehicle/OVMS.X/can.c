@@ -239,9 +239,9 @@ void can_poll0(void)                // CAN ID 100 and 102
         }
       break;
     case 0xA3: // Temperatures
-      car_tpem = can_databuffer[1]; // Tpem
-      car_tmotor = can_databuffer[2]; // Tmotor
-      car_tbattery = can_databuffer[6]; // Tbattery
+      car_tpem = (signed char)can_databuffer[1]; // Tpem
+      car_tmotor = (signed char)can_databuffer[2]; // Tmotor
+      car_tbattery = (signed char)can_databuffer[6]; // Tbattery
       break;
     case 0xA4: // 7 VIN bytes i.e. "SFZRE2B"
       for (k=0;k<7;k++)
@@ -318,22 +318,22 @@ void can_poll1(void)                // CAN ID 344 and 402
     if (can_databuffer[3]>0) // front-right
       {
       car_tpms_p[0] = can_databuffer[2];
-      car_tpms_t[0] = can_databuffer[3];
+      car_tpms_t[0] = (signed char)can_databuffer[3];
       }
     if (can_databuffer[7]>0) // rear-right
       {
       car_tpms_p[1] = can_databuffer[6];
-      car_tpms_t[1] = can_databuffer[7];
+      car_tpms_t[1] = (signed char)can_databuffer[7];
       }
     if (can_databuffer[1]>0) // front-left
       {
       car_tpms_p[2] = can_databuffer[0];
-      car_tpms_t[2] = can_databuffer[1];
+      car_tpms_t[2] = (signed char)can_databuffer[1];
       }
     if (can_databuffer[5]>0)
       {
       car_tpms_p[3] = can_databuffer[4];
-      car_tpms_t[3] = can_databuffer[5];
+      car_tpms_t[3] = (signed char)can_databuffer[5];
       }
     }
   else  				// It must be CAN ID 402

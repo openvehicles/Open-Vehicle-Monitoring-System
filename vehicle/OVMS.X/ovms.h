@@ -80,10 +80,10 @@ extern unsigned long car_time; // UTC Time
 extern unsigned long car_parktime; // UTC time car was parked (or 0 if not)
 extern signed char car_ambient_temp; // Ambient Temperature (celcius)
 extern unsigned char car_vin[18]; // VIN
-extern unsigned char car_tpem; // Tpem
-extern unsigned char car_tmotor; // Tmotor
-extern unsigned char car_tbattery; // Tbattery
-extern unsigned char car_tpms_t[4]; // TPMS temperature
+extern signed char car_tpem; // Tpem
+extern signed char car_tmotor; // Tmotor
+extern signed char car_tbattery; // Tbattery
+extern signed char car_tpms_t[4]; // TPMS temperature
 extern unsigned char car_tpms_p[4]; // TPMS pressure
 extern unsigned int car_trip; // ODO trip in miles /10
 extern unsigned long car_odometer; //Odometer in miles /10
