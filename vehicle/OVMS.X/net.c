@@ -35,6 +35,7 @@
 #include "ovms.h"
 #include "net_sms.h"
 #include "net_msg.h"
+#include "utils.h"
 
 // NET data
 #pragma udata
@@ -56,10 +57,11 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 // ROM Constants
 rom char NET_WAKEUP[] = "AT\r";
-rom char NET_INIT[] = "AT+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
+rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
 rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
+rom char NET_IPR_SET[] = "AT+IPR=9600\r"; // sets fixed baud rate for the modem
 
 ////////////////////////////////////////////////////////////////////////
 // The Interrupt Service Routine is standard PIC code
@@ -257,21 +259,20 @@ void net_state_enter(unsigned char newstate)
   switch(net_state)
     {
     case NET_STATE_START:
-      PORTBbits.RB0 = 1;
-      net_timeout_goto = NET_STATE_DOINIT;
-      net_timeout_ticks = 30;
+      net_timeout_goto = NET_STATE_HARDRESET;
+      net_timeout_ticks = 12; // modem cold start takes 5 secs, warm restart takes 2 secs, 3 secs required for autobuad sync, 12 secs should be sufficient for everything
       net_state_vchar = 1;
       net_apps_connected = 0;
       led_act(net_state_vchar);
       net_msg_init();
       break;
     case NET_STATE_SOFTRESET:
-      PORTBbits.RB0 = 1;
       led_act(0);
       led_net(0);
       net_timeout_goto = 0;
       break;
     case NET_STATE_HARDRESET:
+      modem_reboot();
       net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 2;
       led_net(0);
@@ -279,7 +280,6 @@ void net_state_enter(unsigned char newstate)
       net_state_vchar = 0;
       net_apps_connected = 0;
       net_msg_disconnected();
-      PORTBbits.RB0 = 0;
       break;
     case NET_STATE_HARDSTOP:
       net_timeout_goto = NET_STATE_HARDSTOP2;
@@ -296,10 +296,9 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_STOP;
       net_timeout_ticks = 2;
       net_state_vchar = 0;
-      PORTBbits.RB0 = 0;
+      modem_reboot();
       break;
     case NET_STATE_STOP:
-      PORTBbits.RB0 = 1;
       led_act(0);
       led_net(0);
       reset_cpu();
@@ -390,7 +389,13 @@ void net_state_activity()
         }
       break;
     case NET_STATE_DOINIT:
-      if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
+      if ((net_buf_pos >= 6)&&(net_buf[0] == '+')&&(net_buf[1] == 'I')&&(net_buf[2] == 'P')&&(net_buf[3] == 'R')&&(net_buf[6] != '9'))
+        {
+        // +IPR != 9600
+        // SET IPR (baudrate)
+        net_puts_rom(NET_IPR_SET);
+        }
+      else if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         {
         net_state_enter(NET_STATE_COPS);
         }
@@ -398,19 +403,29 @@ void net_state_activity()
     case NET_STATE_COPS:
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         net_state_enter(NET_STATE_DONETINIT); // COPS reconnect was OK
-      else if ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R'))
+      else if ( ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R')) ||
+              (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0) )
         net_state_enter(NET_STATE_SOFTRESET); // Reset the entire async
       break;
     case NET_STATE_DONETINIT:
       if ((net_buf_pos >= 2)&&
                (net_buf[0] == 'E')&&
-               (net_buf[1] == 'R')&&
-               (net_state_vchar == 5)) // ERROR response to AT+CIFSR
+               (net_buf[1] == 'R'))
         {
-        // This is a nasty case. The GPRS has locked up.
-        // The only solution I can find is a hard reset of the modem
-        led_act(0);
-        net_state_enter(NET_STATE_HARDRESET);
+        if ((net_state_vchar == 2)||
+                (net_state_vchar == 3))// ERROR response to AT+CSTT OR AT+CIICR
+          {
+          // try setting up GPRS again
+          led_act(0);
+          net_state_enter(NET_STATE_DONETINIT);
+          }
+        else if (net_state_vchar == 5) // ERROR response to AT+CIFSR
+          {
+          // This is a nasty case. The GPRS has locked up.
+          // The only solution I can find is a hard reset of the modem
+          led_act(0);
+          net_state_enter(NET_STATE_HARDRESET);
+          }
         }
       else if ((net_buf_pos >= 2)&&
           (((net_buf[0] == 'O')&&(net_buf[1] == 'K')))|| // OK
@@ -418,9 +433,9 @@ void net_state_activity()
           (net_state_vchar == 5)) // Local IP address
         {
         net_buf_pos = 0;
-        net_timeout_ticks = 60;
+        net_timeout_ticks = 30;
         net_link = 0;
-        delay100(1);
+        delay100(2);
         switch (++net_state_vchar)
           {
           case 1:
@@ -575,8 +590,7 @@ void net_state_ticker1(void)
     case NET_STATE_START:
       net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
       led_act(net_state_vchar);
-      if (net_timeout_ticks%4 == 0) // Every four seconds, try to wake up
-        net_puts_rom(NET_WAKEUP);
+      net_puts_rom(NET_WAKEUP);
       break;
 
      // Timeout to short, if not connected within 10 sec
@@ -661,6 +675,33 @@ void net_state_ticker1(void)
   }
 
 ////////////////////////////////////////////////////////////////////////
+// net_state_ticker30()
+// State Model: 30-second ticker
+// This function is called approximately once per 30 seconds (since state
+// was first entered), and gives the state a timeslice for activity.
+//
+void net_state_ticker30(void)
+  {
+  switch (net_state)
+    {
+    case NET_STATE_READY:
+      if (net_msg_sendpending>0)
+        {
+        net_granular_tick -= 5; // Try again in 5 seconds...
+        return;
+        }
+      if ((net_granular_tick % 60) != 0)
+        {
+        delay100(2);
+        net_puts_rom(NET_CREG_CIPSTATUS);
+        while(vUARTIntTxBufDataCnt>0) { delay100(1); } // Wait for TX flush
+        delay100(2); // Wait for stable result
+        }
+      break;
+    }
+  }
+
+////////////////////////////////////////////////////////////////////////
 // net_state_ticker60()
 // State Model: Per-minute ticker
 // This function is called approximately once per minute (since state
@@ -686,10 +727,6 @@ void net_state_ticker60(void)
         net_msg_send();
         }
       net_state_vchar = net_state_vchar ^ 1;
-      delay100(2);
-      net_puts_rom(NET_CREG_CIPSTATUS);
-      while(vUARTIntTxBufDataCnt>0) { delay100(1); } // Wait for TX flush
-      delay100(2); // Wait for stable result
       break;
     }
   }
@@ -756,6 +793,8 @@ void net_ticker(void)
     {
     net_state_ticker1();
     }
+  if ((net_granular_tick % 30)==0)
+    net_state_ticker30();
   if ((net_granular_tick % 60)==0)
     net_state_ticker60();
   if ((net_granular_tick % 300)==0)
@@ -793,7 +832,6 @@ void net_initialise(void)
   {
   // I/O configuration PORT C
   TRISC = 0x80; // Port C RC0-6 output, RC7 input
-  PORTBbits.RB0 = 1;
   UARTIntInit();
 
   led_net(0);
