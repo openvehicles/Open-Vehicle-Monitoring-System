@@ -175,6 +175,9 @@ void can_poll0(void)                // CAN ID 100 and 102
                  + ((unsigned long) can_databuffer[6] << 16)
                  + ((unsigned long) can_databuffer[7] << 24);
       break;
+    case 0x82: // Ambient Temperature
+      car_ambient_temp = (signed char)can_databuffer[1];
+      break;
     case 0x83: // GPS Latitude
       car_latitude = can_databuffer[4]
                      + ((unsigned long) can_databuffer[5] << 8)

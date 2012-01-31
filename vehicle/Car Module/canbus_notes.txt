@@ -69,14 +69,9 @@ Tesla Roadster CAN Bus analysis:
 		B7=Utime GMT 
 		B8=Utime GMT MSB
 
-	UNKNOWN
+	Ambient Temperature
 		B1=0x82
-			Samples:
-		         0.8106 100 82 16                      ->VDS (message to VDS 82)
-		        10.8894 100 82 16                      ->VDS (message to VDS 82)
-		        20.9295 100 82 16                      ->VDS (message to VDS 82)
-		        31.0004 100 82 16                      ->VDS (message to VDS 82)
-		        41.0706 100 82 16                      ->VDS (message to VDS 82)
+                B2=Ambient Temperature (Celcius)
 
 	GPS_latitude
 		B1=0x83

@@ -71,6 +71,10 @@ LINE: while(<>)
         my $cartime = hex($d[7].$d[6].$d[5].$d[4]);
         $msg .= " (time ".scalar gmtime($cartime).")";
         }
+      elsif ($d[0] eq '82')
+        {
+        $msg .= "Ambient Temperature (" . $d[1] . " celcius)";
+        }
       elsif ($d[0] eq '83')
         {
         $msg .= "GPS latitude";
