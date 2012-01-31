@@ -94,7 +94,7 @@
                     </view>
                     <tabBarItem key="tabBarItem" title="Status" image="49-battery.png" id="eHK-35-AMI"/>
                     <navigationItem key="navigationItem" id="4y7-LI-Dwy">
-                        <barButtonItem key="rightBarButtonItem" tag="42" enabled="NO" title="Controls" id="K7V-fz-d9g">
+                        <barButtonItem key="rightBarButtonItem" tag="42" title="Controls" id="K7V-fz-d9g">
                             <connections>
                                 <segue destination="SsU-0d-yX8" kind="modal" modalTransitionStyle="flipHorizontal" id="6TL-uG-ue6"/>
                             </connections>
@@ -131,7 +131,7 @@
                     </view>
                     <tabBarItem key="tabBarItem" title="Location" image="74-location.png" id="6"/>
                     <navigationItem key="navigationItem" id="OPu-VM-BCk">
-                        <barButtonItem key="rightBarButtonItem" tag="42" enabled="NO" title="Controls" id="ucH-Bd-llj">
+                        <barButtonItem key="rightBarButtonItem" tag="42" title="Controls" id="ucH-Bd-llj">
                             <connections>
                                 <segue destination="SsU-0d-yX8" kind="modal" modalTransitionStyle="flipHorizontal" id="HDC-p9-1eU"/>
                             </connections>
@@ -508,7 +508,7 @@
                     </view>
                     <tabBarItem key="tabBarItem" title="Car" image="54-lock.png" id="bim-Rd-70t"/>
                     <navigationItem key="navigationItem" id="la3-Bx-lIa">
-                        <barButtonItem key="rightBarButtonItem" tag="42" enabled="NO" title="Controls" id="xBr-GK-uG7">
+                        <barButtonItem key="rightBarButtonItem" tag="42" title="Controls" id="xBr-GK-uG7">
                             <connections>
                                 <segue destination="SsU-0d-yX8" kind="modal" modalTransitionStyle="flipHorizontal" id="fhs-F5-9Hg"/>
                             </connections>
@@ -762,7 +762,7 @@
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="fhs-F5-9Hg"/>
+        <segue reference="HDC-p9-1eU"/>
         <segue reference="X9h-Z2-0t4"/>
     </inferredMetricsTieBreakers>
 </document>
