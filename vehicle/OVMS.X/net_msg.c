@@ -36,6 +36,7 @@
 #include "net.h"
 #include "can.h"
 #include "net_msg.h"
+#include "net_sms.h"
 #include "crypt_base64.h"
 #include "crypt_md5.h"
 #include "crypt_hmac.h"
