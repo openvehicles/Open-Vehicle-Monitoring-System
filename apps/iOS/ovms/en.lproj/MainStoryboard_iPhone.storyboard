@@ -93,7 +93,13 @@
                         <color key="backgroundColor" red="0.086274512112140656" green="0.14509804546833038" blue="0.25098040699958801" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="Status" image="49-battery.png" id="eHK-35-AMI"/>
-                    <navigationItem key="navigationItem" id="4y7-LI-Dwy"/>
+                    <navigationItem key="navigationItem" id="4y7-LI-Dwy">
+                        <barButtonItem key="rightBarButtonItem" tag="42" enabled="NO" title="Controls" id="K7V-fz-d9g">
+                            <connections>
+                                <segue destination="SsU-0d-yX8" kind="modal" modalTransitionStyle="flipHorizontal" id="6TL-uG-ue6"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
                         <outlet property="m_battery_front" destination="CKU-Hj-ZF9" id="O1T-SI-yN0"/>
@@ -124,7 +130,13 @@
                         </connections>
                     </view>
                     <tabBarItem key="tabBarItem" title="Location" image="74-location.png" id="6"/>
-                    <navigationItem key="navigationItem" id="OPu-VM-BCk"/>
+                    <navigationItem key="navigationItem" id="OPu-VM-BCk">
+                        <barButtonItem key="rightBarButtonItem" tag="42" enabled="NO" title="Controls" id="ucH-Bd-llj">
+                            <connections>
+                                <segue destination="SsU-0d-yX8" kind="modal" modalTransitionStyle="flipHorizontal" id="HDC-p9-1eU"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <connections>
                         <outlet property="myMapView" destination="17" id="D7r-5K-gLy"/>
                     </connections>
@@ -484,13 +496,27 @@
                                 <rect key="frame" x="84" y="8" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="Ktq-Dz-PKA">
+                                <rect key="frame" x="128" y="20" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="Car" image="54-lock.png" id="bim-Rd-70t"/>
-                    <navigationItem key="navigationItem" id="la3-Bx-lIa"/>
+                    <navigationItem key="navigationItem" id="la3-Bx-lIa">
+                        <barButtonItem key="rightBarButtonItem" tag="42" enabled="NO" title="Controls" id="xBr-GK-uG7">
+                            <connections>
+                                <segue destination="SsU-0d-yX8" kind="modal" modalTransitionStyle="flipHorizontal" id="fhs-F5-9Hg"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
+                        <outlet property="m_car_ambient_temp" destination="Ktq-Dz-PKA" id="AWJ-hv-TR6"/>
                         <outlet property="m_car_door_cp" destination="sLP-2x-CjX" id="hkb-k7-G7R"/>
                         <outlet property="m_car_door_hd" destination="72a-c3-rKG" id="itb-GX-kHE"/>
                         <outlet property="m_car_door_ld" destination="Gj2-y1-rHO" id="bPe-Yt-OeC"/>
@@ -517,6 +543,137 @@
             </objects>
             <point key="canvasLocation" x="1074" y="135"/>
         </scene>
+        <scene sceneID="3Qb-bc-MYS">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="aaS-jK-xbS" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <viewController id="SsU-0d-yX8" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="LDM-Dw-lTh">
+                        <rect key="frame" x="0.0" y="20" width="320" height="460"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <navigationBar contentMode="scaleToFill" barStyle="blackOpaque" id="J0l-GB-Jfc">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <items>
+                                    <navigationItem title="Title" id="xzE-8M-oP5">
+                                        <barButtonItem key="leftBarButtonItem" title="Done" id="TOS-Sb-ygs"/>
+                                    </navigationItem>
+                                </items>
+                            </navigationBar>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="8NQ-TI-CRi">
+                                <rect key="frame" x="20" y="64" width="125" height="37"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="Start Charging">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="llc-GA-Q8J">
+                                <rect key="frame" x="175" y="64" width="125" height="37"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="Stop Charging">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="yn5-ba-rGK">
+                                <rect key="frame" x="20" y="164" width="280" height="37"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="  Lock/Unlock Car" image="54-lock.png">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="11x-bb-Zur">
+                                <rect key="frame" x="20" y="203" width="280" height="40"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="  Valet Mode On/Off" image="54-lock.png">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="mHX-1w-gLc">
+                                <rect key="frame" x="20" y="269" width="280" height="37"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="Features">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="Cq8-P6-GXr">
+                                <rect key="frame" x="20" y="309" width="280" height="37"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="Parameters">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="Nm9-lh-ngf">
+                                <rect key="frame" x="20" y="349" width="280" height="37"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="Cellular Usage">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="bar" selectedSegmentIndex="0" id="svL-h0-dxf">
+                                <rect key="frame" x="20" y="109" width="280" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <segments>
+                                    <segment title="Standard"/>
+                                    <segment title="Storage"/>
+                                    <segment title="Range"/>
+                                    <segment title="Perform"/>
+                                </segments>
+                            </segmentedControl>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="kcW-Ln-Gei">
+                                <rect key="frame" x="20" y="409" width="280" height="37"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="Reset OVMS Module">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="0Q6-oV-Bz0"/>
+                </viewController>
+            </objects>
+            <point key="canvasLocation" x="1507" y="-183"/>
+        </scene>
     </scenes>
     <resources>
         <image name="20-gear2.png" width="26" height="28"/>
@@ -536,12 +693,76 @@
         <image name="roadster_outline_rd.png" width="304" height="606"/>
         <image name="roadster_outline_tr.png" width="304" height="606"/>
     </resources>
+    <classes>
+        <class className="ovmsBodyViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsBodyViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="m_car_ambient_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_door_cp" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_hd" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_ld" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_rd" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_tr" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_lockunlock" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_outlineimage" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_temp_battery" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_battery_l" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_motor" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_motor_l" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_pem" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_pem_l" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fl_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fl_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fr_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fr_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rl_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rl_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rr_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rr_temp" candidateClass="UILabel"/>
+            </relationships>
+        </class>
+        <class className="ovmsCarsFormViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
+                <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
+            </relationships>
+        </class>
+        <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
+        </class>
+        <class className="ovmsLocationViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsLocationViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
+            </relationships>
+        </class>
+        <class className="ovmsStatusViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_connection_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_parking_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_parking_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_range" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
+            </relationships>
+        </class>
+    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
+        <segue reference="fhs-F5-9Hg"/>
         <segue reference="X9h-Z2-0t4"/>
     </inferredMetricsTieBreakers>
 </document>

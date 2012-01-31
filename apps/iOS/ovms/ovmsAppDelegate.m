@@ -58,6 +58,7 @@
 @synthesize car_odometer;
 @synthesize car_speed;
 @synthesize car_parktime;
+@synthesize car_ambient_temp;
 @synthesize car_tpms_fr_pressure;
 @synthesize car_tpms_fr_temp;
 @synthesize car_tpms_rr_pressure;
@@ -407,6 +408,7 @@
   car_tpem = 0;
   car_tmotor = 0;
   car_tbattery = 0;
+  car_ambient_temp = -127;
   car_trip = 0;
   car_odometer = 0;
   car_speed = 0;
@@ -594,6 +596,11 @@
           car_parktime = [[lparts objectAtIndex:9] intValue];
         else
           car_parktime = 0;
+        if ([lparts count] >= 11)
+          car_ambient_temp = [[lparts objectAtIndex:10] intValue];
+        else
+          car_ambient_temp = -127;
+        
         // Update the visible status
         if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
           {

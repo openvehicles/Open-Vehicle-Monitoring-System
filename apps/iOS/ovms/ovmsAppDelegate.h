@@ -90,6 +90,7 @@
   int car_odometer;
   int car_speed;
   int car_parktime;
+  int car_ambient_temp;
   float car_tpms_fr_pressure;
   int car_tpms_fr_temp;
   float car_tpms_rr_pressure;
@@ -144,6 +145,7 @@
 @property (assign) int car_odometer;
 @property (assign) int car_speed;
 @property (assign) int car_parktime;
+@property (assign) int car_ambient_temp;
 @property (assign) float car_tpms_fr_pressure;
 @property (assign) int car_tpms_fr_temp;
 @property (assign) float car_tpms_rr_pressure;
