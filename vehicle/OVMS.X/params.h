@@ -47,6 +47,7 @@
 #define PARAM_MYID      0x08
 #define PARAM_NETPASS1  0x09
 #define PARAM_PARANOID  0x0A
+#define PARAM_S_GROUP   0x0B
 
 #define PARAM_FEATURE_S 0x18
 #define PARAM_FEATURE8  0x18

@@ -50,6 +50,7 @@ void net_msg_gps(void);
 void net_msg_tpms(void);
 void net_msg_firmware(void);
 void net_msg_environment(void);
+void net_msg_group(char *groupname);
 void net_msg_in(char* msg);
 void net_msg_cmd_in(char* msg);
 void net_msg_cmd_do(void);

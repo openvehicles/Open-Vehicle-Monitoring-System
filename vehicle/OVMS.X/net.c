@@ -56,10 +56,13 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
-rom char NET_WAKEUP[] = "AT\r";
 rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
-rom char NET_HANGUP[] = "ATH\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
+//rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E1\r";
+//rom char NET_COPS[] = "AT+COPS=4,0,\"3(2G)\"\r";
+
+rom char NET_WAKEUP[] = "AT\r";
+rom char NET_HANGUP[] = "ATH\r";
 rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
 rom char NET_IPR_SET[] = "AT+IPR=9600\r"; // sets fixed baud rate for the modem
 
@@ -709,6 +712,8 @@ void net_state_ticker30(void)
 //
 void net_state_ticker60(void)
   {
+  char *p;
+
   switch (net_state)
     {
     case NET_STATE_READY:
@@ -719,7 +724,9 @@ void net_state_ticker60(void)
         }
       if ((net_link==1)&&(net_apps_connected>0))
         {
+        p = par_get(PARAM_S_GROUP);
         net_msg_start();
+        if (*p != 0) net_msg_group(p);
         net_msg_stat();
         net_msg_gps();
         net_msg_tpms();
@@ -752,6 +759,8 @@ void net_state_ticker300(void)
 //
 void net_state_ticker600(void)
   {
+  char *p;
+
   switch (net_state)
     {
     case NET_STATE_READY:
@@ -763,7 +772,9 @@ void net_state_ticker600(void)
           }
         else
           {
+          p = par_get(PARAM_S_GROUP);
           net_msg_start();
+          if (*p != 0) net_msg_group(p);
           net_msg_stat();
           net_msg_gps();
           net_msg_tpms();

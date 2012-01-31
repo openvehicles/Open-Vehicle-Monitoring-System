@@ -111,6 +111,7 @@ void net_msg_encode_puts(void)
       (net_scratchpad[5]!='E')&&
       (net_scratchpad[5]!='A')&&
       (net_scratchpad[5]!='a')&&
+      (net_scratchpad[5]!='g')&&
       (net_scratchpad[5]!='P'))
     {
     // We must convert the message to a paranoid one...
@@ -273,7 +274,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp4,%s,%d,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp5,%s,%d,%d",
     car_vin, net_sq, sys_features[FEATURE_CANWRITE]);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
@@ -289,10 +290,26 @@ void net_msg_environment(void)
     park = car_time - car_parktime;
 
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 D");
-  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d,%lu",
+  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d,%lu,%d",
           car_doors1, car_doors2, car_lockstate,
           car_tpem, car_tmotor, car_tbattery,
-          car_trip, car_odometer, car_speed, park);
+          car_trip, car_odometer, car_speed, park,
+          car_ambient_temp);
+  strcat(net_scratchpad,net_msg_scratchpad);
+  net_msg_encode_puts();
+  }
+
+void net_msg_group(char *groupname)
+  {
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 g");
+  sprintf(net_msg_scratchpad, (rom far char*)"%s,%d,%d,",
+          groupname, car_SOC, car_speed);
+  strcat(net_scratchpad,net_msg_scratchpad);
+
+  format_latlon(car_latitude,net_msg_scratchpad);
+  strcat(net_scratchpad,net_msg_scratchpad);
+  strcatpgm2ram(net_scratchpad,(char const rom far*)",");
+  format_latlon(car_longitude,net_msg_scratchpad);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
