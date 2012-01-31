@@ -37,17 +37,29 @@ void reset_cpu(void)
   _asm reset _endasm
   }
 
+void delay100b(void)
+  {
+  unsigned char count = 0;
+
+  T2CON=0b01111100;
+  TMR2=0;
+  PR2=255;
+  while (count<122)
+    {
+    while (!PIR1bits.TMR2IF);
+    PIR1bits.TMR2IF=0;
+    count++;
+    }
+  }
+
 // Delay in 100ms increments
-// N.B. Async interrupts will still be handled, and queued,
-// but can bus messages might be lost
+// N.B. Interrupts (async and can) will still be handled, and queued
 void delay100(unsigned char n)
   {
-  unsigned char x = TMR0L;
-  unsigned char y = TMR0H + (n*0x08);
-  while (1)
+  while(n>0)
     {
-    x = TMR0L;
-    if (TMR0H >= y) return;
+    delay100b();
+    n--;
     }
   }
 
@@ -61,6 +73,22 @@ void led_net(unsigned char led)
 void led_act(unsigned char led)
   {
   PORTCbits.RC4 = led;
+  }
+
+// Cold restart the SIM900 modem
+void modem_reboot(void)
+  {
+  // pull PWRKEY up if it's not already pulled up
+  if (PORTBbits.RB0 == 0)
+  {
+    PORTBbits.RB0 = 1;
+    delay100(5);
+  }
+
+  // send the reset signal by pulling down PWRKEY >1s
+  PORTBbits.RB0 = 0;
+  delay100(12);
+  PORTBbits.RB0 = 1;
   }
 
 // Format a Latitude/Longitude as a string
