@@ -272,7 +272,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp3,%s,%d,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp4,%s,%d,%d",
     car_vin, net_sq, sys_features[FEATURE_CANWRITE]);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
