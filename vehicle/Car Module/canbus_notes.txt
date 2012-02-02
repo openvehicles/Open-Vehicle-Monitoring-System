@@ -94,14 +94,16 @@ Tesla Roadster CAN Bus analysis:
 		B5=Longitude 
 		B5=Longitude MSB
 
-	UNKNOWN
+	GPS_lock (suspected)
 		B1=0x85
-			Samples:
-		         0.8595 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
-		         2.8696 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
-		         4.9093 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
-		         6.9094 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
-		         8.9098 100 85 01 47 01 72 00          ->VDS (message to VDS 85)
+                B2=          00=nolock
+                             01=goodlock (based on gps satellite lock status)
+                B3=Direction LSB
+                B4=Direction MSB
+                B5=Altitude LSB
+                B6=     bits 0..6: Altitude MSB
+                        bit 7:     0=altitude valid (>3 satellites locked)
+                                   1=altitude invalid (only 3 satellites locked)
 
 	UNKNOWN
 		B1=0x86
