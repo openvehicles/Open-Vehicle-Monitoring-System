@@ -31,7 +31,7 @@
 #ifndef __OVMS_NET_H
 #define __OVMS_NET_H
 
-#define NET_BUF_MAX 100
+#define NET_BUF_MAX 200
 #define NET_TEL_MAX 20
 
 // NET_BUF_MODES

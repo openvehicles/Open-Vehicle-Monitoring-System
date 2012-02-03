@@ -274,7 +274,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp5,%s,%d,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp6,%s,%d,%d",
     car_vin, net_sq, sys_features[FEATURE_CANWRITE]);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
@@ -499,7 +499,11 @@ void net_msg_cmd_do(void)
   char *p;
 
   delay100(2);
-  net_msg_start();
+  
+  // command 40-49 are special AT commands, thus, disable net_msg here
+  if ((net_msg_cmd_code < 40) || (net_msg_cmd_code > 49))
+    net_msg_start();
+
   switch (net_msg_cmd_code)
     {
     case 1: // Request feature list (params unused)
@@ -669,23 +673,45 @@ void net_msg_cmd_do(void)
         net_send_sms_start(net_msg_cmd_msg);
         net_puts_ram(p);
         net_puts_rom("\x1a");
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        //delay100(10);
+        //net_msg_start();
+        //sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        //net_msg_send();
       } else
       {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
+        //net_msg_start();
+        //sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
+        //net_msg_send();
       }
+      break;
+    case 41: // Send MMI/USSD Codes (param: USSD_CODE)
+      net_puts_rom("AT+CUSD=1,\"");
+      net_puts_ram(net_msg_cmd_msg);
+      net_puts_rom("\",15\r");
+      // sleep 3 secs to allow operator processing
+      //delay100(30);
+      //net_puts_rom("AT+CUSD=2\r"); // gracefully shut down the USSD session
+      //delay100(10);
+      //net_msg_start();
+      //sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      //net_msg_send();
       break;
     case 49: // Send raw AT command (param: raw AT command)
       net_puts_ram(net_msg_cmd_msg);
-      net_puts_rom("\n");
-      sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      net_puts_rom("\r");
+      //delay100(10);
+      //net_msg_start();
+      //sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      //net_msg_send();
       break;
     default:
       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,3",net_msg_cmd_code);
       net_msg_encode_puts();
       break;
     }
-  net_msg_send();
+  // command 40-49 are special AT commands, thus, disable net_msg here
+  if ((net_msg_cmd_code < 40) || (net_msg_cmd_code > 49))
+    net_msg_send();
   net_msg_cmd_code = 0;
   net_msg_cmd_msg[0] = 0;
   }
@@ -716,7 +742,7 @@ void net_msg_forward_sms(char *caller, char *SMS)
   strcatpgm2ram(net_scratchpad,(char const rom far*)"SMS FROM: ");
   strcat(net_scratchpad, caller);
   strcatpgm2ram(net_scratchpad,(char const rom far*)" - MSG: ");
-  SMS[70]=0; // Hacky limit on the max size of an SMS forwarded
+  SMS[160]=0; // Hacky limit on the max size of an SMS forwarded
   strcat(net_scratchpad, SMS);
   net_msg_encode_puts();
   net_msg_send();

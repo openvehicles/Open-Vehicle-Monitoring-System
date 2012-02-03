@@ -57,9 +57,9 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 // ROM Constants
 rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
-rom char NET_COPS[] = "AT+COPS=0\r";
+//rom char NET_COPS[] = "AT+COPS=0\r";
 //rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E1\r";
-//rom char NET_COPS[] = "AT+COPS=4,0,\"3(2G)\"\r";
+rom char NET_COPS[] = "AT+COPS=4,0,\"3(2G)\"\r";
 
 rom char NET_WAKEUP[] = "AT\r";
 rom char NET_HANGUP[] = "ATH\r";
