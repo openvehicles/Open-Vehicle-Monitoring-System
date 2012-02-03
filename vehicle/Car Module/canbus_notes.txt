@@ -25,9 +25,9 @@ Note: This is now the full list of messages seen on a 2011 Tesla Roadster 2.x, R
 Here are some target information that should be on the bus, but are still unknown:
 
 		0. TRIP -> odometer
-		1. Direction (N, S, E, W, etc - as shown on VDS)
-		2. Ambient temperature
-		3. Other temperatures
+		1. Direction (N, S, E, W, etc - as shown on VDS)       [ Got: MWJ Feb 2012 ]
+		2. Ambient temperature                                 [ Got: MS Jan 2012 ]
+		3. Other temperatures                                  [ Some got: MWJ Feb 2012 ]
 		4. Battery voltages, current, balancing, etc
 		5. Voltages and current on the different power lines
 		6. Gear (P, R, N, D)
@@ -216,6 +216,16 @@ Tesla Roadster CAN Bus analysis:
 		B5=Odometer LSB  \
 		B6=Odometer       | (in 1/10th miles)
 		B7=Odometer MSB  /
+
+	HVAC
+		B1=0x9A
+                B2=?
+                B3=?
+                B4=?
+                B5=?
+                B6=? [ seems to be refrigerent pressure (scaled with ~/4) but not certain ]
+                B7=TcabinOutlet (celcius)
+                B8=? [ seems to be outside temperature (celcius) ]
 
 	UNKNOWN
 		B1=0x9B
