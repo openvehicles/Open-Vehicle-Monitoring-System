@@ -94,16 +94,17 @@ Tesla Roadster CAN Bus analysis:
 		B5=Longitude 
 		B5=Longitude MSB
 
-	GPS_lock (suspected)
+	GPS_lock
 		B1=0x85
                 B2=          00=nolock
                              01=goodlock (based on gps satellite lock status)
-                B3=Direction LSB
+                B3=Direction LSB (unsigned 16bit integer, 0..360, in degrees)
                 B4=Direction MSB
-                B5=Altitude LSB
-                B6=     bits 0..6: Altitude MSB
-                        bit 7:     0=altitude valid (>3 satellites locked)
-                                   1=altitude invalid (only 3 satellites locked)
+                B5=Altitude LSB (signed 16bit integer, in metres)
+                B6=Altitude MSB
+
+                N.B. Altitude is in metres, and may be negative. Car rounds to nearest 10m and has a floor of 0m.
+                     Directions 0 and 360 are the same (North) - seems to be a bug in the car's VMS, so treat 360 as 0.
 
 	UNKNOWN
 		B1=0x86

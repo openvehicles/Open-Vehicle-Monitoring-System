@@ -89,7 +89,7 @@ LINE: while(<>)
         }
       elsif ($d[0] eq '85')
         {
-        $msg .= "???GPS status???";
+        $msg .= "GPS status";
         my $lock = hex($d[1]);
         if ($lock == 0)
           {
@@ -100,7 +100,7 @@ LINE: while(<>)
           $msg .= sprintf(" (direction %d deg)",hex($d[3].$d[2]));
           if ($d[5] ne 'FF')
             {
-            $msg .= sprintf(" (altitude %d)",hex($d[5].$d[4]));
+            $msg .= sprintf(" (altitude %dm)",hex($d[5].$d[4]));
             }
           }
         }
