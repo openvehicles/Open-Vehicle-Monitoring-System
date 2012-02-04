@@ -33,7 +33,7 @@
 
 #define NET_BUF_MAX 200
 #define NET_TEL_MAX 20
-
+#define NET_SMS_BUF_MAX 200
 // NET_BUF_MODES
 #define NET_BUF_SMS          0xfe  // net_buf is waiting for 2nd line of SMS
 #define NET_BUF_CRLF         0xff  // net_buf is waiting for CRLF line

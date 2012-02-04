@@ -46,13 +46,17 @@ unsigned char net_timeout_goto = 0;         // State to auto-transition to, afte
 unsigned int  net_timeout_ticks = 0;        // Number of seconds before timeout auto-transition
 unsigned int  net_granular_tick = 0;        // An internal ticker used to generate 1min, 5min, etc, calls
 unsigned int  net_watchdog = 0;             // Second count-down for network connectivity
+unsigned int  net_sms_multiline_state = 0;  // Indicates whether net_poll is waiting for an incoming multi-line SMS message to complete
 char net_caller[NET_TEL_MAX] = {0};         // The telephone number of the caller
 char net_scratchpad[100];                   // A general-purpose scratchpad
 
 unsigned char net_buf_pos = 0;              // Current position (aka length) in the network buffer
 unsigned char net_buf_mode = NET_BUF_CRLF;  // Mode of the buffer (CRLF, SMS or MSG)
+
 #pragma udata NETBUF
 char net_buf[NET_BUF_MAX];                  // The network buffer itself
+#pragma udata SMSBUF
+char sms_buf[NET_SMS_BUF_MAX];              // The multi-line SMS buffer
 #pragma udata
 
 // ROM Constants
@@ -111,6 +115,21 @@ void net_reset_async(void)
 // This function is also the dispatcher for net_state_activity(),
 // to pass the incoming data to the current state for handling.
 //
+
+void net_sms_recv_complete(void)
+{
+    // multi-line SMS completed
+    net_sms_multiline_state = 0;
+    // copy sms_buf to net_buf
+    strncpy(net_buf,sms_buf,NET_BUF_MAX);
+
+    // process the SMS
+    net_state_activity();
+    net_buf_pos = 0;
+    sms_buf[0] = '\0'; // clear sms_buf
+    net_buf_mode = NET_BUF_CRLF;
+}
+
 void net_poll(void)
   {
   unsigned char x;
@@ -118,9 +137,12 @@ void net_poll(void)
   while(UARTIntGetChar(&x))
     {
     if ((net_buf_mode==NET_BUF_SMS)||(net_buf_mode==NET_BUF_CRLF))
-      { // CRLF (either normal or SMS second line) mode
-      if (x == 0x0d) continue; // Skip 0x0d (CR)
-      net_buf[net_buf_pos++] = x;
+      { // CRLF (either normal or SMS multi-line) mode
+      if ((net_sms_multiline_state == 0) && (x == 0x0d)) continue; // Skip 0x0d (CR)
+      // in the multi-line SMS state, CR represents EOF
+      else if ((x != 0x0d))
+        net_buf[net_buf_pos++] = x;
+      
       if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
       if ((x == ':')&&(net_buf_pos>=6)&&
           (net_buf[0]=='+')&&(net_buf[1]=='I')&&
@@ -131,7 +153,7 @@ void net_poll(void)
         net_buf_pos = 0;
         continue; // We have switched to IPD mode
         }
-      if (x == 0x0A) // Newline?
+      if ((x == 0x0d) || (x == 0x0A)) // Newline?
         {
         net_buf_pos--;
         net_buf[net_buf_pos] = 0; // mark end of string for string search functions.
@@ -139,21 +161,45 @@ void net_poll(void)
             (net_buf[0]=='+')&&(net_buf[1]=='C')&&
             (net_buf[2]=='M')&&(net_buf[3]=='T'))
           {
-          x = 7;
-          while ((net_buf[x++] != '\"') && (x < net_buf_pos)); // Search for start of Phone number
-          net_buf[x - 1] = '\0'; // mark end of string
-          net_caller[0] = '\0';
-          strncpy(net_caller,net_buf+7,NET_TEL_MAX);
-          net_caller[NET_TEL_MAX-1] = '\0';
-          net_buf_pos = 0;
-          net_buf_mode = NET_BUF_SMS;
-          continue;
+              if (net_sms_multiline_state == 1)
+                  net_sms_recv_complete(); // complete the previous SMS message
+
+              x = 7;
+              while ((net_buf[x++] != '\"') && (x < net_buf_pos)); // Search for start of Phone number
+              net_buf[x - 1] = '\0'; // mark end of string
+              net_caller[0] = '\0';
+              strncpy(net_caller,net_buf+7,NET_TEL_MAX);
+              net_caller[NET_TEL_MAX-1] = '\0';
+              net_buf_pos = 0;
+              net_buf_mode = NET_BUF_SMS;
+              net_sms_multiline_state = 1; // trigger multi-line SMS state
+              sms_buf[0] = '\0'; // clear sms_buf
+          } else if ((net_sms_multiline_state == 1) && (x == 0x0d)) // CR - end of SMS
+          {
+              // multi-line SMS completed
+              strcat(sms_buf,net_buf);
+              net_sms_recv_complete();
+          } else if (net_sms_multiline_state == 1)
+          {
+              // check for buffer overflow
+              if (strlen(sms_buf) + strlen(net_buf) > NET_SMS_BUF_MAX)
+              {
+                  net_sms_recv_complete(); // skip the rest of the SMS
+              }
+              else
+              {
+                  // continued multi-line SMS content
+                  strcat(sms_buf,net_buf);
+                  net_buf_pos = 0;
+              }
+          } else
+          {
+            net_state_activity();
+            net_buf_pos = 0;
+            net_buf_mode = NET_BUF_CRLF;
           }
-        net_state_activity();
-        net_buf_pos = 0;
-        net_buf_mode = NET_BUF_CRLF;
-        }
-      }
+        } // if (x == 0x0A)
+      } // if ((net_buf_mode==NET_BUF_SMS)||(net_buf_mode==NET_BUF_CRLF))
     else
       { // IP data mode
       if (x != 0x0d)
@@ -175,7 +221,7 @@ void net_poll(void)
         net_buf_mode = NET_BUF_CRLF;
         }
       }
-    }
+    } // while
   }
 
 ////////////////////////////////////////////////////////////////////////
