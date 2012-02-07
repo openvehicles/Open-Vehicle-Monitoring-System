@@ -200,15 +200,19 @@ Tesla Roadster CAN Bus analysis:
 			bit7 = Car ON (true=1/false=0)
 			
 		B3=
+			bit0 = always 0
+			bit1 = always 0
+			bit2 = always 0
+			bit3 = Lock status (locked=1/unlocked=0)
+			bit4 = Valet status (activated=1/unactivated=0)
 			bit5 = Headlights (on=1/off=0)
 			bit6 = Bonnet (open=1/closed=0) 
 			bit7 = Trunk (open=1/closed=0)
-
 			
 		B4=
 			bit1 = cooling pump (on=1/off=0)
 			
-		B5=0x21 /0xA1
+		B5=0x21 0xA1
 		B6=0x18 pump starting 0x38 pump running
 
 	Odometer
