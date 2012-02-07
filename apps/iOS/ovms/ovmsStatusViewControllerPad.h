@@ -16,12 +16,17 @@
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_image;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_charge_state;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_charge_type;
+@property (strong, nonatomic) IBOutlet UILabel *m_car_charge_mode;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_soc;
 @property (strong, nonatomic) IBOutlet UIImageView *m_battery_front;
-@property (strong, nonatomic) IBOutlet UILabel *m_car_range;
+@property (strong, nonatomic) IBOutlet UIImageView *m_battery_charging;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_outlineimage;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_parking_image;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_parking_state;
+@property (strong, nonatomic) IBOutlet UIImageView *m_charger_plug;
+@property (strong, nonatomic) IBOutlet UIImageView *m_charger_button;
+@property (strong, nonatomic) IBOutlet UILabel *m_car_range_ideal;
+@property (strong, nonatomic) IBOutlet UILabel *m_car_range_estimated;
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_lockunlock;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_door_ld;
@@ -44,6 +49,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_motor_l;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_battery_l;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_ambient_temp;
+@property (strong, nonatomic) IBOutlet UIImageView *m_car_valetonoff;
 
 @property (strong, nonatomic) IBOutlet MKMapView *myMapView;
 @property (nonatomic, retain) TeslaAnnotation *m_car_location;
