@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.0" toolsVersion="1938" systemVersion="11C74" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" initialViewController="yen-VS-8ek">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.0" toolsVersion="1938" systemVersion="11D50b" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" initialViewController="yen-VS-8ek">
     <dependencies>
         <development defaultVersion="4200" identifier="xcode"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="933"/>
@@ -13,6 +13,10 @@
                         <rect key="frame" x="0.0" y="64" width="768" height="911"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="tirepress_letterbox.png" id="hKP-Qg-Iag">
+                                <rect key="frame" x="424" y="89" width="267" height="305"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" id="Oqg-IH-ZKz">
                                 <rect key="frame" x="20" y="417" width="728" height="474"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
@@ -21,56 +25,32 @@
                                 </connections>
                             </mapView>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="car_roadster_thundergray.png" id="s2N-H5-QE1" userLabel="car_image">
-                                <rect key="frame" x="20" y="12" width="388" height="180"/>
+                                <rect key="frame" x="20" y="0.0" width="388" height="180"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="left" image="battery_000.png" id="SL7-PT-bkj" userLabel="battery_back">
-                                <rect key="frame" x="80" y="259" width="268" height="70"/>
+                                <rect key="frame" x="65" y="271" width="268" height="70"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
                                 </accessibility>
                             </imageView>
                             <imageView autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" image="battery_100.png" id="vZC-ps-wlb" userLabel="battery_front">
-                                <rect key="frame" x="80" y="259" width="268" height="70"/>
+                                <rect key="frame" x="65" y="271" width="268" height="70"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
                                 </accessibility>
                             </imageView>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="18" id="sws-Jc-laf" userLabel="car_range">
-                                <rect key="frame" x="20" y="337" width="388" height="29"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="18"/>
-                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="mnC-x1-YJF" userLabel="car_soc">
-                                <rect key="frame" x="116" y="259" width="196" height="70"/>
+                                <rect key="frame" x="101" y="271" width="196" height="70"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="36"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="24"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                                 <color key="shadowColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <size key="shadowOffset" width="2" height="2"/>
-                            </label>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="7w4-hx-i9N" userLabel="car_charge_state">
-                                <rect key="frame" x="20" y="191" width="388" height="29"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="24"/>
-                                <color key="textColor" red="0.0" green="1" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="sxR-cz-Rl7" userLabel="car_charge_type">
-                                <rect key="frame" x="20" y="215" width="388" height="29"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="18"/>
-                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                <nil key="highlightedColor"/>
                             </label>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="connection_good.png" id="JoM-cn-ghC">
                                 <rect key="frame" x="719" y="12" width="35" height="35"/>
@@ -121,98 +101,98 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="ITH-aK-f0c">
-                                <rect key="frame" x="633" y="93" width="64" height="21"/>
+                                <rect key="frame" x="641" y="89" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="wDP-Tk-4e1">
-                                <rect key="frame" x="633" y="115" width="64" height="21"/>
+                                <rect key="frame" x="641" y="108" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="aVL-dR-z2Y">
-                                <rect key="frame" x="633" y="269" width="64" height="21"/>
+                                <rect key="frame" x="641" y="271" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="rFG-Ei-We6">
-                                <rect key="frame" x="633" y="291" width="64" height="21"/>
+                                <rect key="frame" x="641" y="291" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="9o4-a0-zdM">
-                                <rect key="frame" x="416" y="93" width="64" height="21"/>
+                                <rect key="frame" x="425" y="89" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="LDY-Y5-9DR">
-                                <rect key="frame" x="416" y="115" width="64" height="21"/>
+                                <rect key="frame" x="425" y="108" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
-                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="Yoj-z0-WNw">
-                                <rect key="frame" x="416" y="269" width="64" height="21"/>
+                                <rect key="frame" x="424.5" y="271" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="RZ6-hf-uuA">
-                                <rect key="frame" x="416" y="291" width="64" height="21"/>
+                                <rect key="frame" x="425" y="291" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="kOe-OX-ir7">
-                                <rect key="frame" x="416" y="368" width="64" height="21"/>
+                                <rect key="frame" x="425" y="375" width="55" height="19"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="86C-kJ-5mk">
-                                <rect key="frame" x="525" y="368" width="64" height="21"/>
+                                <rect key="frame" x="531" y="375" width="50" height="19"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="npV-Eo-nR5">
-                                <rect key="frame" x="633" y="368" width="64" height="21"/>
+                                <rect key="frame" x="633" y="375" width="58" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="PEM" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="9Qs-Y1-eKR">
-                                <rect key="frame" x="416" y="352" width="64" height="21"/>
+                                <rect key="frame" x="416" y="355" width="64" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="11"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="MOTOR" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="Cj4-BK-Z7u">
-                                <rect key="frame" x="525" y="352" width="64" height="21"/>
+                                <rect key="frame" x="525" y="355" width="64" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="11"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="BATTERY" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="KkB-2z-nGD">
-                                <rect key="frame" x="633" y="352" width="64" height="21"/>
+                                <rect key="frame" x="633" y="355" width="64" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="11"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -222,10 +202,91 @@
                                 <rect key="frame" x="481" y="41" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                             </imageView>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="M0c-0x-SFf">
-                                <rect key="frame" x="525" y="53" width="64" height="21"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carvaletoff.png" id="Cxa-IJ-9Om">
+                                <rect key="frame" x="480" y="41" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="M0c-0x-SFf">
+                                <rect key="frame" x="424" y="201" width="56" height="19"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="charger_plug.png" id="mDO-4f-x0R">
+                                <rect key="frame" x="0.0" y="175" width="343" height="70"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="charger_button.png" id="qjg-O1-K0o">
+                                <rect key="frame" x="231" y="197" width="47" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="STANDARD" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="cxp-Ri-Hbt" userLabel="car_charge_state">
+                                <rect key="frame" x="168" y="194" width="60" height="13"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="10"/>
+                                <color key="textColor" red="0.0" green="1" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="220V @70A" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="PAB-B9-2QB" userLabel="car_charge_type">
+                                <rect key="frame" x="169" y="206" width="60" height="13"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="10"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <imageView hidden="YES" autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" image="battery_coppertops.png" id="7ZY-WZ-8jd" userLabel="battery_charging">
+                                <rect key="frame" x="65" y="271" width="268" height="70"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <accessibility key="accessibilityConfiguration">
+                                    <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
+                                </accessibility>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="STANDARD" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="AXn-eT-0IG" userLabel="car_charge_mode">
+                                <rect key="frame" x="104" y="317" width="201" height="19"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="12"/>
+                                <color key="textColor" red="0.94117653369903564" green="0.4901961088180542" blue="0.0" alpha="1" colorSpace="deviceRGB"/>
+                                <nil key="highlightedColor"/>
+                                <color key="shadowColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <size key="shadowOffset" width="0.0" height="0.0"/>
+                            </label>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="battery_textbox.png" id="DJ8-Ku-WSA">
+                                <rect key="frame" x="78" y="356" width="233" height="38"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="14" id="RXX-Ys-N7e" userLabel="car_range_ideal">
+                                <rect key="frame" x="78" y="375" width="103" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="14"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="14" id="Ktx-XD-P0K" userLabel="car_range_estimated">
+                                <rect key="frame" x="208" y="375" width="103" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="14"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="IDEAL RANGE" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="EGL-Y8-XFf">
+                                <rect key="frame" x="83" y="356" width="98" height="19"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="10"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="ESTIMATED RANGE" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="11H-Am-RVv">
+                                <rect key="frame" x="210" y="356" width="101" height="19"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="10"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
@@ -236,10 +297,12 @@
                     <navigationItem key="navigationItem" id="6ol-L2-L2d"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                     <connections>
+                        <outlet property="m_battery_charging" destination="7ZY-WZ-8jd" id="oTS-WH-3t0"/>
                         <outlet property="m_battery_front" destination="vZC-ps-wlb" id="wfU-Ba-h1E"/>
                         <outlet property="m_car_ambient_temp" destination="M0c-0x-SFf" id="ihj-KW-64f"/>
-                        <outlet property="m_car_charge_state" destination="7w4-hx-i9N" id="Dus-yT-4yt"/>
-                        <outlet property="m_car_charge_type" destination="sxR-cz-Rl7" id="UDJ-8g-g7B"/>
+                        <outlet property="m_car_charge_mode" destination="AXn-eT-0IG" id="HRK-lt-qag"/>
+                        <outlet property="m_car_charge_state" destination="cxp-Ri-Hbt" id="AUl-Eh-ruI"/>
+                        <outlet property="m_car_charge_type" destination="PAB-B9-2QB" id="MFZ-dV-1hh"/>
                         <outlet property="m_car_connection_image" destination="JoM-cn-ghC" id="wwy-2b-7Tj"/>
                         <outlet property="m_car_connection_state" destination="K2G-Mz-umh" id="eZl-AY-rsM"/>
                         <outlet property="m_car_door_cp" destination="MGL-Tq-NVr" id="voM-2r-9Dr"/>
@@ -252,7 +315,8 @@
                         <outlet property="m_car_outlineimage" destination="sbL-Ne-XZz" id="O8D-GO-kIO"/>
                         <outlet property="m_car_parking_image" destination="B4F-mA-2Od" id="60r-4N-U1k"/>
                         <outlet property="m_car_parking_state" destination="UZp-2x-G6t" id="1B9-o9-tXx"/>
-                        <outlet property="m_car_range" destination="sws-Jc-laf" id="Tik-gw-UBS"/>
+                        <outlet property="m_car_range_estimated" destination="Ktx-XD-P0K" id="qU3-qP-Xpe"/>
+                        <outlet property="m_car_range_ideal" destination="RXX-Ys-N7e" id="5un-D3-rwP"/>
                         <outlet property="m_car_soc" destination="mnC-x1-YJF" id="odn-DM-cEA"/>
                         <outlet property="m_car_temp_battery" destination="npV-Eo-nR5" id="o97-Qo-K4H"/>
                         <outlet property="m_car_temp_battery_l" destination="KkB-2z-nGD" id="Xnz-In-s5M"/>
@@ -260,6 +324,7 @@
                         <outlet property="m_car_temp_motor_l" destination="Cj4-BK-Z7u" id="QwP-Bj-C9g"/>
                         <outlet property="m_car_temp_pem" destination="kOe-OX-ir7" id="k3s-Ox-2aS"/>
                         <outlet property="m_car_temp_pem_l" destination="9Qs-Y1-eKR" id="PCK-SE-olx"/>
+                        <outlet property="m_car_valetonoff" destination="Cxa-IJ-9Om" id="pIt-qI-RGH"/>
                         <outlet property="m_car_wheel_fl_pressure" destination="9o4-a0-zdM" id="jDa-Xx-gTE"/>
                         <outlet property="m_car_wheel_fl_temp" destination="LDY-Y5-9DR" id="nbI-hk-qJC"/>
                         <outlet property="m_car_wheel_fr_pressure" destination="ITH-aK-f0c" id="pu4-GY-klH"/>
@@ -268,6 +333,8 @@
                         <outlet property="m_car_wheel_rl_temp" destination="RZ6-hf-uuA" id="mHO-nM-gAS"/>
                         <outlet property="m_car_wheel_rr_pressure" destination="aVL-dR-z2Y" id="dN9-hO-mKZ"/>
                         <outlet property="m_car_wheel_rr_temp" destination="rFG-Ei-We6" id="Mec-On-G8m"/>
+                        <outlet property="m_charger_button" destination="qjg-O1-K0o" id="rIx-Dw-HW6"/>
+                        <outlet property="m_charger_plug" destination="mDO-4f-x0R" id="vR0-by-wfZ"/>
                         <outlet property="myMapView" destination="Oqg-IH-ZKz" id="LJI-rT-3xU"/>
                     </connections>
                 </viewController>
@@ -469,8 +536,13 @@
         <image name="49-battery.png" width="26" height="14"/>
         <image name="battery_000.png" width="268" height="70"/>
         <image name="battery_100.png" width="268" height="70"/>
+        <image name="battery_coppertops.png" width="268" height="70"/>
+        <image name="battery_textbox.png" width="233" height="38"/>
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
         <image name="carunlock.png" width="304" height="606"/>
+        <image name="carvaletoff.png" width="304" height="606"/>
+        <image name="charger_button.png" width="47" height="21"/>
+        <image name="charger_plug.png" width="268" height="70"/>
         <image name="connection_good.png" width="64" height="64"/>
         <image name="ol_car_roadster_thundergray.png" width="304" height="606"/>
         <image name="parking.png" width="300" height="300"/>
@@ -479,60 +551,8 @@
         <image name="roadster_outline_ld.png" width="304" height="606"/>
         <image name="roadster_outline_rd.png" width="304" height="606"/>
         <image name="roadster_outline_tr.png" width="304" height="606"/>
+        <image name="tirepress_letterbox.png" width="267" height="305"/>
     </resources>
-    <classes>
-        <class className="ovmsCarsFormViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
-                <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
-            </relationships>
-        </class>
-        <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
-        </class>
-        <class className="ovmsStatusViewControllerPad" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewControllerPad.h"/>
-            <relationships>
-                <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_ambient_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_connection_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_door_cp" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_hd" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_ld" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_rd" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_tr" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_lockunlock" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_outlineimage" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_parking_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_parking_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_range" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_battery" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_battery_l" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_motor" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_motor_l" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_pem" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_pem_l" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fl_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fl_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fr_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fr_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rl_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rl_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rr_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rr_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
-            </relationships>
-        </class>
-    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar" statusBarStyle="blackTranslucent"/>
         <simulatedOrientationMetrics key="orientation"/>

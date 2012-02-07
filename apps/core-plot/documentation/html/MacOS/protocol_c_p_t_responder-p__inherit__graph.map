@@ -1,0 +1,28 @@
+<map id="G" name="G">
+<area shape="rect" id="node5" href="$interface_c_p_t_layer.html" title="Base class for all Core Animation layers in Core Plot." alt="" coords="369,509,450,539"/>
+<area shape="rect" id="node51" href="$interface_c_p_t_plot_space.html" title="Defines the coordinate system of a plot." alt="" coords="355,645,463,675"/>
+<area shape="rect" id="node2" href="doxygen-cocoa-tags.xml$http://developer.apple.com/documentation/Cocoa/Reference/Foundation/Protocols/NSObject_Protocol/Reference/NSObject.html" title="\&lt;NSObject&#45;p\&gt;" alt="" coords="5,618,123,649"/>
+<area shape="rect" id="node7" href="$interface_c_p_t_annotation_host_layer.html" title="A container layer for annotations." alt="" coords="513,263,695,294"/>
+<area shape="rect" id="node33" href="$interface_c_p_t_axis.html" title="An abstract axis class." alt="" coords="567,345,641,375"/>
+<area shape="rect" id="node37" href="$interface_c_p_t_axis_label_group.html" title="A container layer for the axis labels." alt="" coords="530,399,678,430"/>
+<area shape="rect" id="node39" href="$interface_c_p_t_axis_set.html" title="A container layer for the set of axes for a graph." alt="" coords="557,454,651,485"/>
+<area shape="rect" id="node43" href="$interface_c_p_t_grid_line_group.html" title="A group of grid line layers." alt="" coords="534,509,674,539"/>
+<area shape="rect" id="node45" href="$interface_c_p_t_grid_lines.html" title="An abstract class that draws grid lines for an axis." alt="" coords="550,563,658,594"/>
+<area shape="rect" id="node47" href="$interface_c_p_t_plot_group.html" title="Defines the coordinate system of a plot." alt="" coords="549,618,659,649"/>
+<area shape="rect" id="node49" href="$interface_c_p_t_text_layer.html" title="A Core Animation layer that displays text drawn in a uniform style." alt="" coords="549,673,659,703"/>
+<area shape="rect" id="node9" href="$interface_c_p_t_bordered_layer.html" title="A layer with a border line and background fill." alt="" coords="744,87,883,118"/>
+<area shape="rect" id="node19" href="$interface_c_p_t_plot.html" title="An abstract plot class." alt="" coords="778,250,849,281"/>
+<area shape="rect" id="node31" href="$interface_c_p_t_plot_area.html" title="A layer representing the actual plotting area of a graph." alt="" coords="763,305,863,335"/>
+<area shape="rect" id="node11" href="$interface_c_p_t_graph.html" title="An abstract graph class." alt="" coords="968,5,1053,35"/>
+<area shape="rect" id="node15" href="$interface_c_p_t_legend.html" title="A graph legend." alt="" coords="964,59,1057,90"/>
+<area shape="rect" id="node17" href="$interface_c_p_t_plot_area_frame.html" title="A layer drawn on top of the graph layer and behind all plot elements." alt="" coords="941,114,1081,145"/>
+<area shape="rect" id="node13" href="$interface_c_p_t_x_y_graph.html" title="A graph using a cartesian (X&#45;Y) plot space." alt="" coords="1140,5,1242,35"/>
+<area shape="rect" id="node21" href="$interface_c_p_t_bar_plot.html" title="A two&#45;dimensional bar plot." alt="" coords="965,169,1056,199"/>
+<area shape="rect" id="node23" href="$interface_c_p_t_pie_chart.html" title="A pie chart." alt="" coords="961,223,1061,254"/>
+<area shape="rect" id="node25" href="$interface_c_p_t_range_plot.html" title="A plot class representing a range of values in one coordinate, such as typically used to show errors..." alt="" coords="955,278,1066,309"/>
+<area shape="rect" id="node27" href="$interface_c_p_t_scatter_plot.html" title="A two&#45;dimensional scatter plot." alt="" coords="953,333,1068,363"/>
+<area shape="rect" id="node29" href="$interface_c_p_t_trading_range_plot.html" title="A trading range financial plot." alt="" coords="930,387,1091,418"/>
+<area shape="rect" id="node35" href="$interface_c_p_t_x_y_axis.html" title="A 2&#45;dimensional cartesian (X&#45;Y) axis class." alt="" coords="768,359,859,390"/>
+<area shape="rect" id="node41" href="$interface_c_p_t_x_y_axis_set.html" title="A set of cartesian (X&#45;Y) axes." alt="" coords="758,454,869,485"/>
+<area shape="rect" id="node53" href="$interface_c_p_t_x_y_plot_space.html" title="A plot space using a two&#45;dimensional cartesian coordinate system." alt="" coords="542,727,666,758"/>
+</map>

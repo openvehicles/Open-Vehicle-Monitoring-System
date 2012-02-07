@@ -16,12 +16,17 @@
 @synthesize m_car_image;
 @synthesize m_car_charge_state;
 @synthesize m_car_charge_type;
+@synthesize m_car_charge_mode;
 @synthesize m_car_soc;
 @synthesize m_battery_front;
-@synthesize m_car_range;
 @synthesize m_car_outlineimage;
 @synthesize m_car_parking_image;
 @synthesize m_car_parking_state;
+@synthesize m_charger_plug;
+@synthesize m_charger_button;
+@synthesize m_car_range_ideal;
+@synthesize m_car_range_estimated;
+@synthesize m_battery_charging;
 
 @synthesize m_car_lockunlock;
 @synthesize m_car_door_ld;
@@ -44,6 +49,7 @@
 @synthesize m_car_temp_motor_l;
 @synthesize m_car_temp_battery_l;
 @synthesize m_car_ambient_temp;
+@synthesize m_car_valetonoff;
 
 @synthesize myMapView;
 @synthesize m_car_location;
@@ -121,7 +127,6 @@
     [self setM_car_charge_type:nil];
     [self setM_car_soc:nil];
     [self setM_battery_front:nil];
-    [self setM_car_range:nil];
     [self setM_car_lockunlock:nil];
     [self setM_car_door_ld:nil];
     [self setM_car_door_rd:nil];
@@ -149,6 +154,13 @@
     [self setM_car_parking_state:nil];
   
     [self setM_car_ambient_temp:nil];
+    [self setM_car_charge_mode:nil];
+    [self setM_battery_charging:nil];
+  [self setM_charger_plug:nil];
+  [self setM_charger_button:nil];
+  [self setM_car_range_estimated:nil];
+  [self setM_car_range_ideal:nil];
+  [self setM_car_valetonoff:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -288,11 +300,12 @@
 
   m_car_image.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
   m_car_soc.text = [NSString stringWithFormat:@"%d%%",[ovmsAppDelegate myRef].car_soc];
-  m_car_range.text = [NSString stringWithFormat:@"Range: %d%s (%d%s estimated)",
-                      [ovmsAppDelegate myRef].car_idealrange,
-                      [units UTF8String],
-                      [ovmsAppDelegate myRef].car_estimatedrange,
-                      [units UTF8String]];
+  m_car_range_ideal.text = [NSString stringWithFormat:@"%d%s",
+                            [ovmsAppDelegate myRef].car_idealrange,
+                            [units UTF8String]];
+  m_car_range_estimated.text = [NSString stringWithFormat:@"%d%s",
+                                [ovmsAppDelegate myRef].car_estimatedrange,
+                                [units UTF8String]];
   CGRect bounds = m_battery_front.bounds;
   CGPoint center = m_battery_front.center;
   CGFloat oldwidth = bounds.size.width;
@@ -302,36 +315,77 @@
   m_battery_front.bounds = bounds;
   m_battery_front.center = center;
   bounds = m_battery_front.bounds;
+
+  if ([ovmsAppDelegate myRef].car_doors1 & 0x04)
+    {
+    m_charger_plug.hidden = 0;
+    m_charger_button.hidden = 0;
+    m_car_charge_state.hidden = 0;
+    m_car_charge_type.hidden = 0;
+    }
+  else
+    {
+    m_charger_plug.hidden = 1;
+    m_charger_button.hidden = 1;
+    m_car_charge_state.hidden = 1;
+    m_car_charge_type.hidden = 1;
+    }
+  
   if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"charging"])
     {
-    m_car_charge_state.text = [NSString stringWithFormat:@"Charging (%@)", [ovmsAppDelegate myRef].car_chargemode];
+    m_car_charge_state.text = @"CHARGING";
     m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
                               [ovmsAppDelegate myRef].car_linevoltage,
                               [ovmsAppDelegate myRef].car_chargecurrent];
+    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_battery_charging.hidden = 0;
+    m_car_charge_mode.hidden = 0;
     }
   else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"topoff"])
     {
-    m_car_charge_state.text = @"Topping off";
+    m_car_charge_state.text = @"TOP OFF";
     m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
                               [ovmsAppDelegate myRef].car_linevoltage,
                               [ovmsAppDelegate myRef].car_chargecurrent];
+    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_battery_charging.hidden = 0;
+    m_car_charge_mode.hidden = 0;
+    }
+  else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"prepare"])
+    {
+    m_car_charge_state.text = @"PREPARE";
+    m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
+                              [ovmsAppDelegate myRef].car_linevoltage,
+                              [ovmsAppDelegate myRef].car_chargecurrent];
+    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_battery_charging.hidden = 0;
+    m_car_charge_mode.hidden = 0;
     }
   else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"done"])
     {
-    m_car_charge_state.text = @"";
+    m_car_charge_state.text = @"DONE";
     m_car_charge_type.text = @"";
+    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_battery_charging.hidden = 1;
+    m_car_charge_mode.hidden = 1;
     }
   else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"stopped"])
     {
-    m_car_charge_state.text = @"Charging stopped";
+    m_car_charge_state.text = @"STOPPED";
     m_car_charge_type.text = @"";
+    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_battery_charging.hidden = 1;
+    m_car_charge_mode.hidden = 1;
     }
   else
     {
     m_car_charge_state.text = @"";
     m_car_charge_type.text = @"";
+    m_car_charge_mode.text = @"";
+    m_battery_charging.hidden = 1;
+    m_car_charge_mode.hidden = 1;
     }
-}
+  }
 
 -(void) updateCar
 {
@@ -344,6 +398,11 @@
   else
     m_car_lockunlock.image = [UIImage imageNamed:@"carunlock.png"];
   
+  if ([ovmsAppDelegate myRef].car_doors2 & 0x10)
+    m_car_valetonoff.image = [UIImage imageNamed:@"carvaleton.png"];
+  else
+    m_car_valetonoff.image = [UIImage imageNamed:@"carvaletoff.png"];
+
   if ([ovmsAppDelegate myRef].car_doors1 & 0x01)
     m_car_door_ld.hidden = 0;
   else
