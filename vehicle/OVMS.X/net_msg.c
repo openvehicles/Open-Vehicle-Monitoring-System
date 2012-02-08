@@ -195,6 +195,9 @@ void net_msg_stat(void)
     case 0x04:
       strcatpgm2ram(net_scratchpad,(char const rom far*)"done,"); // Done
       break;
+    case 0x0d:
+      strcatpgm2ram(net_scratchpad,(char const rom far*)"prepare,"); // Preparing
+      break;
     default:
       strcatpgm2ram(net_scratchpad,(char const rom far*)"stopped,"); // Stopped
     }
@@ -719,6 +722,9 @@ void net_msg_alert(void)
       break;
     case 0x04:
       strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Done"); // Done
+      break;
+    case 0x0d:
+      strcatpgm2ram(net_scratchpad,(char const rom far *)"Preparing"); // Preparing
       break;
     default:
       strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Stopped"); // Stopped
