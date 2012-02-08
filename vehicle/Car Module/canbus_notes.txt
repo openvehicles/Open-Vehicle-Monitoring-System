@@ -179,11 +179,11 @@ Tesla Roadster CAN Bus analysis:
 
 	Charger V1.5
 		B1=0x95
-		B2=State 			(1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging)
+		B2=State 		(0x01=charging, 0x02=top off, 0x04=done, 0x0d=preparing to charge, 0x15-0x19=stopped charging)
 		B3=Sub State 		(2=scheduled start, 3=by request, 7=connect power cable, 9=xxMinutes-yyKWHrs,)
 		B4=0x64 ??
 		B5=Mode 2008 		(0=standard, 1=storage,3=range,4=performance)
-		B6=Mode 2010 roadster (0x= standard, 1x=storage,3x=range,4x=performance)
+		B6=Mode 2010 roadster	(0x= standard, 1x=storage,3x=range,4x=performance)
 		B7=0x16	??
 		B8=Total KWhrs Charged
 
