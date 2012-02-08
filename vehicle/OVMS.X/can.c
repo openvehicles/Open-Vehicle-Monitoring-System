@@ -474,7 +474,7 @@ void can_tx_setchargemode(unsigned char mode)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
-  TXB0SIDH = 0b10000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
   TXB0D0 = 0x05;
   TXB0D1 = 0x19;
   TXB0D2 = 0x00;
@@ -493,7 +493,7 @@ void can_tx_startstopcharge(unsigned char start)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
-  TXB0SIDH = 0b10000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
   TXB0D0 = 0x05;
   TXB0D1 = 0x03;
   TXB0D2 = 0x00;
@@ -516,7 +516,7 @@ void can_tx_lockunlockcar(unsigned char mode, char *pin)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
-  TXB0SIDH = 0b10000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
   TXB0D0 = 0x0B;
   TXB0D1 = mode;
   TXB0D2 = 0x00;
