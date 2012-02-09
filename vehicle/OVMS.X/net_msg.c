@@ -742,7 +742,7 @@ void net_msg_forward_sms(char *caller, char *SMS)
   strcatpgm2ram(net_scratchpad,(char const rom far*)"SMS FROM: ");
   strcat(net_scratchpad, caller);
   strcatpgm2ram(net_scratchpad,(char const rom far*)" - MSG: ");
-  SMS[160]=0; // Hacky limit on the max size of an SMS forwarded
+  SMS[190]=0; // Hacky limit on the max size of an SMS forwarded
   strcat(net_scratchpad, SMS);
   net_msg_encode_puts();
   net_msg_send();

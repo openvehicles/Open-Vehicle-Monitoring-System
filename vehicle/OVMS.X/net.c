@@ -126,6 +126,7 @@ void net_sms_recv_complete(void)
     // process the SMS
     net_state_activity();
     net_buf_pos = 0;
+    net_buf[0] = '\0'; // clear net_buf
     sms_buf[0] = '\0'; // clear sms_buf
     net_buf_mode = NET_BUF_CRLF;
 }
@@ -140,8 +141,8 @@ void net_poll(void)
       { // CRLF (either normal or SMS multi-line) mode
       if ((net_sms_multiline_state == 0) && (x == 0x0d)) continue; // Skip 0x0d (CR)
       // in the multi-line SMS state, CR represents EOF
-      else if ((x != 0x0d))
-        net_buf[net_buf_pos++] = x;
+      
+      net_buf[net_buf_pos++] = x;
       
       if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
       if ((x == ':')&&(net_buf_pos>=6)&&
@@ -161,9 +162,6 @@ void net_poll(void)
             (net_buf[0]=='+')&&(net_buf[1]=='C')&&
             (net_buf[2]=='M')&&(net_buf[3]=='T'))
           {
-              if (net_sms_multiline_state == 1)
-                  net_sms_recv_complete(); // complete the previous SMS message
-
               x = 7;
               while ((net_buf[x++] != '\"') && (x < net_buf_pos)); // Search for start of Phone number
               net_buf[x - 1] = '\0'; // mark end of string
@@ -190,6 +188,7 @@ void net_poll(void)
               {
                   // continued multi-line SMS content
                   strcat(sms_buf,net_buf);
+                  strcatpgm2ram(sms_buf,(char const rom far*)" ");
                   net_buf_pos = 0;
               }
           } else
