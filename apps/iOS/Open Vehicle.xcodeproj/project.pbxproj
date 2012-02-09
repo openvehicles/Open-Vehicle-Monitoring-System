@@ -81,6 +81,7 @@
 		4DBF3762149B7333002323B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DBF3761149B7333002323B5 /* SystemConfiguration.framework */; };
 		4DC8B38C147E7BF2007FDFB2 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 4DC8B38A147E7BF2007FDFB2 /* Model.xcdatamodeld */; };
 		4DDA222F1476962700BA40AA /* teslapin.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDA222E1476962700BA40AA /* teslapin.png */; };
+		4DDF384714E4246000B4ACC0 /* carlights.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDF384614E4246000B4ACC0 /* carlights.png */; };
 		4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DE26E5F147E7E3000E3161D /* CoreData.framework */; };
 		4DE26E63147E83AE00E3161D /* Cars.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DE26E62147E83AE00E3161D /* Cars.m */; };
 		4DF2FF2014981FB900E488F2 /* ol_car_roadster_arcticwhite.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DF2FF1214981FB900E488F2 /* ol_car_roadster_arcticwhite.png */; };
@@ -261,6 +262,7 @@
 		4DBF3761149B7333002323B5 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		4DC8B38B147E7BF2007FDFB2 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		4DDA222E1476962700BA40AA /* teslapin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teslapin.png; sourceTree = "<group>"; };
+		4DDF384614E4246000B4ACC0 /* carlights.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carlights.png; sourceTree = "<group>"; };
 		4DE26E5F147E7E3000E3161D /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		4DE26E61147E83AE00E3161D /* Cars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Cars.h; path = ../Cars.h; sourceTree = "<group>"; };
 		4DE26E62147E83AE00E3161D /* Cars.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Cars.m; path = ../Cars.m; sourceTree = "<group>"; };
@@ -464,6 +466,7 @@
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
 			isa = PBXGroup;
 			children = (
+				4DDF384614E4246000B4ACC0 /* carlights.png */,
 				4D69A85B14DFCB0D00CF0F74 /* charger_button.png */,
 				4D69A85C14DFCB0E00CF0F74 /* charger_plug.png */,
 				4D69A85914DFC6F400CF0F74 /* tirepress_letterbox.png */,
@@ -824,6 +827,7 @@
 				4D69A85A14DFC6F400CF0F74 /* tirepress_letterbox.png in Resources */,
 				4D69A85D14DFCB0E00CF0F74 /* charger_button.png in Resources */,
 				4D69A85E14DFCB0E00CF0F74 /* charger_plug.png in Resources */,
+				4DDF384714E4246000B4ACC0 /* carlights.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

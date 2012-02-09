@@ -445,6 +445,10 @@
                                 <rect key="frame" x="84" y="8" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="carlights.png" id="cuU-21-cm1">
+                                <rect key="frame" x="84" y="1" width="152" height="317"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carlock.png" id="8IY-yH-cja">
                                 <rect key="frame" x="84" y="8" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -575,6 +579,7 @@
                         <outlet property="m_car_door_ld" destination="Gj2-y1-rHO" id="bPe-Yt-OeC"/>
                         <outlet property="m_car_door_rd" destination="982-WB-UWS" id="90j-kp-zHK"/>
                         <outlet property="m_car_door_tr" destination="MO1-D4-O0F" id="AFe-Hs-p6i"/>
+                        <outlet property="m_car_lights" destination="cuU-21-cm1" id="4Ql-iQ-gJp"/>
                         <outlet property="m_car_lockunlock" destination="8IY-yH-cja" id="yyp-iR-JVi"/>
                         <outlet property="m_car_outlineimage" destination="yy1-Al-VLM" id="RU9-12-oiZ"/>
                         <outlet property="m_car_temp_battery" destination="Hvm-f7-boq" id="jZr-fc-vyS"/>
@@ -927,6 +932,7 @@
         <image name="battery_coppertops.png" width="268" height="70"/>
         <image name="battery_textbox.png" width="233" height="38"/>
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
+        <image name="carlights.png" width="304" height="634"/>
         <image name="carlock.png" width="304" height="606"/>
         <image name="carvaletoff.png" width="304" height="606"/>
         <image name="charger_button.png" width="47" height="21"/>
@@ -948,6 +954,6 @@
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
         <segue reference="X9h-Z2-0t4"/>
-        <segue reference="ViB-aJ-Vm9"/>
+        <segue reference="ICY-BZ-u8B"/>
     </inferredMetricsTieBreakers>
 </document>

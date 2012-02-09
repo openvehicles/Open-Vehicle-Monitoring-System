@@ -11,6 +11,7 @@
 @implementation ovmsBodyViewController
 @synthesize m_car_lockunlock;
 @synthesize m_car_outlineimage;
+@synthesize m_car_lights;
 @synthesize m_car_valetonoff;
 @synthesize m_car_door_ld;
 @synthesize m_car_door_rd;
@@ -93,6 +94,7 @@
   [self setM_car_outlineimage:nil];
   [self setM_car_ambient_temp:nil];
     [self setM_car_valetonoff:nil];
+    [self setM_car_lights:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -148,6 +150,11 @@
     m_car_valetonoff.image = [UIImage imageNamed:@"carvaleton.png"];
   else
     m_car_valetonoff.image = [UIImage imageNamed:@"carvaletoff.png"];
+
+  if ([ovmsAppDelegate myRef].car_doors2 & 0x20)
+    m_car_lights.hidden = 0;
+  else
+    m_car_lights.hidden = 1;
 
   if ([ovmsAppDelegate myRef].car_doors1 & 0x01)
     m_car_door_ld.hidden = 0;

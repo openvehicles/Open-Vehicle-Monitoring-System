@@ -29,6 +29,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *m_car_range_estimated;
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_lockunlock;
+@property (strong, nonatomic) IBOutlet UIImageView *m_car_lights;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_door_ld;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_door_rd;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_door_hd;

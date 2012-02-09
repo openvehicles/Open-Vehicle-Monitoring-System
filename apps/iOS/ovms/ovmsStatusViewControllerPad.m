@@ -26,6 +26,7 @@
 @synthesize m_charger_button;
 @synthesize m_car_range_ideal;
 @synthesize m_car_range_estimated;
+@synthesize m_car_lights;
 @synthesize m_battery_charging;
 
 @synthesize m_car_lockunlock;
@@ -161,6 +162,7 @@
   [self setM_car_range_estimated:nil];
   [self setM_car_range_ideal:nil];
   [self setM_car_valetonoff:nil];
+    [self setM_car_lights:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -402,6 +404,11 @@
     m_car_valetonoff.image = [UIImage imageNamed:@"carvaleton.png"];
   else
     m_car_valetonoff.image = [UIImage imageNamed:@"carvaletoff.png"];
+
+  if ([ovmsAppDelegate myRef].car_doors2 & 0x20)
+    m_car_lights.hidden = 0;
+  else
+    m_car_lights.hidden = 1;
 
   if ([ovmsAppDelegate myRef].car_doors1 & 0x01)
     m_car_door_ld.hidden = 0;

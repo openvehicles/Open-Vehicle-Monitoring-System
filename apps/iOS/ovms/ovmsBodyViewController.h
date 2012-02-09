@@ -13,6 +13,7 @@
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_lockunlock;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_valetonoff;
+@property (strong, nonatomic) IBOutlet UIImageView *m_car_lights;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_outlineimage;
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_door_ld;
