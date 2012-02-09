@@ -8,8 +8,9 @@
 
 #import <UIKit/UIKit.h>
 #import "ovmsAppDelegate.h"
+#import "ovmsControlPINEntry.h"
 
-@interface ovmsControlViewController : UIViewController
+@interface ovmsControlViewController : UIViewController <ovmsControlPINEntryDelegate, ovmsCommandDelegate>
 
 @property (strong, nonatomic) IBOutlet UISegmentedControl *m_chargemode;
 

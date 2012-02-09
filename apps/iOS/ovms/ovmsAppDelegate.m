@@ -473,6 +473,18 @@
 
   switch(code)
   {
+    case 'c': // Command response
+      {
+      NSArray *lparts = [cmd componentsSeparatedByString:@","];
+      if (command_delegate != nil)
+        {
+        if ([command_delegate conformsToProtocol:@protocol(ovmsCommandDelegate)])
+          {
+          [command_delegate commandResult:lparts];
+          }
+        }
+      }
+      break;
     case 'Z': // Number of connected cars
       {
       self.car_connected = [cmd intValue];
@@ -748,6 +760,36 @@
 - (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err
 {
   [[ovmsAppDelegate myRef] serverClearState];
+}
+
+- (BOOL)commandIsFree
+{
+  return (command_delegate==nil);
+}
+
+- (void)commandRegister:(NSString*)command callback:(id)cb
+{
+  if (command_delegate != nil) return; // Cancel any pending delegate
+  
+  command_delegate = cb;
+  
+  char buf[1024];
+  char output[1024];
+  NSString* cmd = [NSString stringWithFormat:@"MP-0 C%@",command];
+  strcpy(buf, [cmd UTF8String]);
+  int len = strlen(buf);
+  RC4_crypt(&txCrypto, (uint8_t*)buf, (uint8_t*)buf, len);
+  base64encode((uint8_t*)buf, len, (uint8_t*)output);
+  NSString *pushStr = [NSString stringWithFormat:@"%s\r\n",output];
+  NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
+  [asyncSocket writeData:pushData withTimeout:-1 tag:0];
+  [self didStartNetworking];
+}
+
+- (void)commandCancel
+{
+  command_delegate = nil;
+  [self didStopNetworking];
 }
 
 /**

@@ -9,9 +9,17 @@
 #import "ovmsControlPINEntry.h"
 
 @implementation ovmsControlPINEntry
+
+@synthesize delegate;
+
+@synthesize instructions = _instructions;
+@synthesize heading = _heading;
+@synthesize function = _function;
+
 @synthesize m_pin;
 @synthesize m_done;
-@synthesize m_message;
+@synthesize m_message = _m_message;
+@synthesize m_navbar = _m_navbar;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -51,8 +59,8 @@
 {
   [self setM_pin:nil];
   [self setM_done:nil];
-  [self setM_done:nil];
   [self setM_message:nil];
+  [self setM_navbar:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -68,19 +76,31 @@
 {
   [super viewWillAppear:animated];
   [m_pin becomeFirstResponder];
-  m_message.text = @"Please enter the vehicle PIN code to unlock";
-  m_done.title = @"Unlock";
+  self.m_message.text = _instructions;
+  m_done.title = _function;
+  self.m_navbar.topItem.title = _heading;
 }
 
 - (IBAction)Edited:(id)sender {
-  [self dismissModalViewControllerAnimated:YES];
 }
 
 - (IBAction)Cancel:(id)sender {
+
+  if ([self.delegate conformsToProtocol:@protocol(ovmsControlPINEntryDelegate)])
+    {
+    [self.delegate omvsControlPINEntryDelegateDidCancel:_function];
+    }
+
   [self dismissModalViewControllerAnimated:YES];
 }
 
 - (IBAction)Done:(id)sender {
+
+  if ([self.delegate conformsToProtocol:@protocol(ovmsControlPINEntryDelegate)])
+    {
+    [self.delegate omvsControlPINEntryDelegateDidSave:_function pin:m_pin.text];
+    }
+
   [self dismissModalViewControllerAnimated:YES];
 }
 @end

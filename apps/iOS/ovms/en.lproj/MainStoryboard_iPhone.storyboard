@@ -449,7 +449,7 @@
                                 <rect key="frame" x="84" y="8" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carvaletoff.png" id="Nol-jU-v3m">
+                            <imageView contentMode="scaleAspectFit" image="carvaletoff.png" id="Nol-jU-v3m">
                                 <rect key="frame" x="84" y="8" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
@@ -647,7 +647,7 @@
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
                                 <connections>
-                                    <segue destination="cgm-Vv-Biu" kind="modal" modalTransitionStyle="crossDissolve" id="ICY-BZ-u8B"/>
+                                    <segue destination="cgm-Vv-Biu" kind="modal" identifier="LockUnlock" modalTransitionStyle="crossDissolve" id="ICY-BZ-u8B"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="11x-bb-Zur">
@@ -662,7 +662,7 @@
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
                                 <connections>
-                                    <segue destination="cgm-Vv-Biu" kind="modal" modalTransitionStyle="crossDissolve" id="ViB-aJ-Vm9"/>
+                                    <segue destination="cgm-Vv-Biu" kind="modal" identifier="ValetMode" modalTransitionStyle="crossDissolve" id="ViB-aJ-Vm9"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="mHX-1w-gLc">
@@ -815,11 +815,13 @@
                     <navigationItem key="navigationItem" title="Vehicle PIN" id="0sB-iI-UEb"/>
                     <connections>
                         <outlet property="m_done" destination="wTb-Dr-ISr" id="ahV-Mr-0s0"/>
+                        <outlet property="m_message" destination="GCa-iu-ACU" id="lGL-1d-hYG"/>
+                        <outlet property="m_navbar" destination="GjN-y7-rTR" id="xPC-wr-x8Q"/>
                         <outlet property="m_pin" destination="K2Y-m2-99Q" id="v9d-1k-zne"/>
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="2277" y="-183"/>
+            <point key="canvasLocation" x="2354" y="-163"/>
         </scene>
         <scene sceneID="Z5c-Qj-YRV">
             <objects>
@@ -945,7 +947,7 @@
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="ICY-BZ-u8B"/>
         <segue reference="X9h-Z2-0t4"/>
+        <segue reference="ViB-aJ-Vm9"/>
     </inferredMetricsTieBreakers>
 </document>
