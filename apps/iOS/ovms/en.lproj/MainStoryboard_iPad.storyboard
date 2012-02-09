@@ -222,6 +222,13 @@
                                 <rect key="frame" x="481" y="41" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                             </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="M0c-0x-SFf">
+                                <rect key="frame" x="525" y="53" width="64" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -230,6 +237,7 @@
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                     <connections>
                         <outlet property="m_battery_front" destination="vZC-ps-wlb" id="wfU-Ba-h1E"/>
+                        <outlet property="m_car_ambient_temp" destination="M0c-0x-SFf" id="ihj-KW-64f"/>
                         <outlet property="m_car_charge_state" destination="7w4-hx-i9N" id="Dus-yT-4yt"/>
                         <outlet property="m_car_charge_type" destination="sxR-cz-Rl7" id="UDJ-8g-g7B"/>
                         <outlet property="m_car_connection_image" destination="JoM-cn-ghC" id="wwy-2b-7Tj"/>
@@ -490,6 +498,7 @@
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewControllerPad.h"/>
             <relationships>
                 <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_ambient_temp" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>

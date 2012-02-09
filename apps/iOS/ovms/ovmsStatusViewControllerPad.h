@@ -43,6 +43,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_pem_l;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_motor_l;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_battery_l;
+@property (strong, nonatomic) IBOutlet UILabel *m_car_ambient_temp;
 
 @property (strong, nonatomic) IBOutlet MKMapView *myMapView;
 @property (nonatomic, retain) TeslaAnnotation *m_car_location;

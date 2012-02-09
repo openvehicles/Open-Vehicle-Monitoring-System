@@ -87,6 +87,23 @@ LINE: while(<>)
         my $longitude = (hex($d[7].$d[6].$d[5].$d[4]))/2048/3600;
         $msg .= " (longitude ".sprintf("%0.6f",$longitude).")";
         }
+      elsif ($d[0] eq '85')
+        {
+        $msg .= "???GPS status???";
+        my $lock = hex($d[1]);
+        if ($lock == 0)
+          {
+          $msg .= " (no gps lock)";
+          }
+        else
+          {
+          $msg .= sprintf(" (direction %d deg)",hex($d[3].$d[2]));
+          if ($d[5] ne 'FF')
+            {
+            $msg .= sprintf(" (altitude %d)",hex($d[5].$d[4]));
+            }
+          }
+        }
       elsif ($d[0] eq '88')
         {
         $msg .= "Charger settings";

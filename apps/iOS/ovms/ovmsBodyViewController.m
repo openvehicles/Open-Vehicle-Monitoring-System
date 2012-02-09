@@ -30,6 +30,7 @@
 @synthesize m_car_temp_pem_l;
 @synthesize m_car_temp_motor_l;
 @synthesize m_car_temp_battery_l;
+@synthesize m_car_ambient_temp;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -89,9 +90,10 @@
   [self setM_car_temp_motor_l:nil];
   [self setM_car_temp_battery_l:nil];
   [self setM_car_outlineimage:nil];
-    [super viewDidUnload];
-    // Release any retained subviews of the main view.
-    // e.g. self.myOutlet = nil;
+  [self setM_car_ambient_temp:nil];
+  [super viewDidUnload];
+  // Release any retained subviews of the main view.
+  // e.g. self.myOutlet = nil;
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -201,6 +203,16 @@
     m_car_temp_battery.text = @"";
     }
 
+  if ([ovmsAppDelegate myRef].car_ambient_temp > -127)
+    {
+    m_car_ambient_temp.text = [NSString stringWithFormat:@"%dºC",
+                               [ovmsAppDelegate myRef].car_ambient_temp];
+    }
+  else
+    {
+    m_car_ambient_temp.text = @"";
+    }
+  
   if ([ovmsAppDelegate myRef].car_tpms_fr_temp > 0)
     {
     m_car_wheel_fr_pressure.text = [NSString stringWithFormat:@"%0.1fpsi",
