@@ -469,6 +469,18 @@ void can_idlepoll(void)
   can_lastspeedrpt--;
   }
 
+void can_tx_wakeup(void)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x0a;
+  TXB0DLC = 0b00000001; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
 void can_tx_setchargemode(unsigned char mode)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
@@ -486,6 +498,8 @@ void can_tx_setchargemode(unsigned char mode)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+
+  can_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void can_tx_startstopcharge(unsigned char start)
@@ -505,6 +519,8 @@ void can_tx_startstopcharge(unsigned char start)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+
+  can_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void can_tx_lockunlockcar(unsigned char mode, char *pin)
