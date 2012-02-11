@@ -67,6 +67,7 @@ unsigned char car_chargecurrent = 0; // Charge Current
 unsigned char car_chargelimit = 0; // Charge Limit (amps)
 unsigned int car_chargeduration = 0; // Charge Duration (minutes)
 unsigned char car_chargestate = 4; // 1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging
+unsigned char car_chargesubstate = 0;
 unsigned char car_chargemode = 0; // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_charging = 0; // 1=yes/0=no
 unsigned char car_charge_b4 = 0; // B4 byte of charge state

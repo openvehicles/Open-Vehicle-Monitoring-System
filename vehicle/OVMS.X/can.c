@@ -227,6 +227,7 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0x95: // Charging mode
       car_chargestate = can_databuffer[1];
+      car_chargesubstate = can_databuffer[2];
       if (sys_features[FEATURE_CARBITS]&FEATURE_CB_2008) // A 2010+ roadster?
         car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
       else
