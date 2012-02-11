@@ -198,6 +198,9 @@ void net_msg_stat(void)
     case 0x0d:
       strcatpgm2ram(net_scratchpad,(char const rom far*)"prepare,"); // Preparing
       break;
+    case 0x0f:
+      strcatpgm2ram(net_scratchpad,(char const rom far*)"heating,"); // Heating
+      break;
     default:
       strcatpgm2ram(net_scratchpad,(char const rom far*)"stopped,"); // Stopped
     }
