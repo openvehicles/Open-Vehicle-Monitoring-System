@@ -79,6 +79,7 @@ unsigned long car_time = 0; // UTC Time
 unsigned long car_parktime = 0; // UTC time car was parked (or 0 if not)
 signed char car_ambient_temp = -127; // Ambient Temperature (celcius)
 unsigned char car_vin[18] = "-----------------"; // VIN
+unsigned char car_type[3]; // Car Type
 signed char car_tpem = 0; // Tpem
 signed char car_tmotor = 0; // Tmotor
 signed char car_tbattery = 0; // Tbattery

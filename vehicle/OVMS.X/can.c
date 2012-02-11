@@ -87,6 +87,10 @@ void can_initialise(void)
   {
   char *p;
 
+  car_type[0] = 'T'; // Car is type TR - Tesla Roadster
+  car_type[1] = 'R';
+  car_type[2] = 0;
+
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
