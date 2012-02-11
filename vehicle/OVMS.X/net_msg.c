@@ -238,6 +238,10 @@ void net_msg_gps(void)
   strcatpgm2ram(net_scratchpad,(char const rom far*)",");
   format_latlon(car_longitude,net_msg_scratchpad);
   strcat(net_scratchpad,net_msg_scratchpad);
+  sprintf(net_msg_scratchpad, (rom far char*)",%d,%d,%d",
+          car_direction, car_altitude, car_gpslock);
+  strcat(net_scratchpad,net_msg_scratchpad);
+
   net_msg_encode_puts();
   }
 
@@ -304,8 +308,9 @@ void net_msg_environment(void)
 void net_msg_group(char *groupname)
   {
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 g");
-  sprintf(net_msg_scratchpad, (rom far char*)"%s,%d,%d,",
-          groupname, car_SOC, car_speed);
+  sprintf(net_msg_scratchpad, (rom far char*)"%s,%d,%d,%d,%d,%d",
+          groupname, car_SOC, car_speed,
+          car_direction, car_altitude, car_gpslock);
   strcat(net_scratchpad,net_msg_scratchpad);
 
   format_latlon(car_latitude,net_msg_scratchpad);

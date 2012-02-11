@@ -194,6 +194,15 @@ void can_poll0(void)                // CAN ID 100 and 102
                       + ((unsigned long) can_databuffer[6] << 16)
                       + ((unsigned long) can_databuffer[7] << 24);
       break;
+    case 0x85: // GPS direction and altitude
+      car_gpslock = can_databuffer[1];
+      car_direction = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
+      if (car_direction==360) car_direction=0; // Bug-fix for Tesla VMS bug
+      if (can_databuffer[5]&0xf0)
+        car_altitude = 0;
+      else
+        car_altitude = ((unsigned int)can_databuffer[5]<<8)+(can_databuffer[4]);
+      break;
     case 0x88: // Charging Current / Duration
       car_chargecurrent = can_databuffer[1];
       break;

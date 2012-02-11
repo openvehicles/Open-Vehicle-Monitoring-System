@@ -90,6 +90,9 @@ extern unsigned int car_trip; // ODO trip in miles /10
 extern unsigned long car_odometer; //Odometer in miles /10
 extern signed long car_latitude; // Raw GPS Latitude
 extern signed long car_longitude; // Raw GPS Longitude
+extern unsigned int car_direction; // GPS direction of the car
+extern signed int car_altitude; // GPS altitude of the car
+extern unsigned char car_gpslock; // GPS lock status
 extern unsigned char net_reg; // Network registration
 extern unsigned char net_link; // Network link status
 extern char net_apps_connected; // Network apps connected
