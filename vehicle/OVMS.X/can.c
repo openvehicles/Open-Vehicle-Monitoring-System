@@ -227,6 +227,8 @@ void can_poll0(void)                // CAN ID 100 and 102
         car_stopped = 0;
         net_notify_status();
         }
+      car_charge_b4 = can_databuffer[3];
+      car_chargekwh = can_databuffer[7];
       break;
     case 0x96: // Doors / Charging yes/no
       if ((car_charging) && !(can_databuffer[1] & 0x10)) // Already Charging? Stopped?

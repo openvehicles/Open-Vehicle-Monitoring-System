@@ -223,11 +223,13 @@ void net_msg_stat(void)
     sprintf(net_msg_scratchpad, (rom far char*)"%u,", (((car_idealrange << 4)+5)/10));
   strcat(net_scratchpad,net_msg_scratchpad);
   if (*p == 'M') // Kmh or Miles
-    sprintf(net_msg_scratchpad, (rom far char*)"%u", car_estrange);
+    sprintf(net_msg_scratchpad, (rom far char*)"%u,", car_estrange);
   else
-    sprintf(net_msg_scratchpad, (rom far char*)"%u", (((car_estrange << 4)+5)/10));
+    sprintf(net_msg_scratchpad, (rom far char*)"%u,", (((car_estrange << 4)+5)/10));
   strcat(net_scratchpad,net_msg_scratchpad);
-  sprintf(net_msg_scratchpad,(rom far char*)",%d,%u",car_chargelimit,car_chargeduration);
+  sprintf(net_msg_scratchpad,(rom far char*)"%d,%u,%d,%d",
+          car_chargelimit,car_chargeduration,
+          car_charge_b4, car_chargekwh);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
