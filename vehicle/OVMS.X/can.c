@@ -197,7 +197,7 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0x85: // GPS direction and altitude
       car_gpslock = can_databuffer[1];
-      if (gpslock)
+      if (car_gpslock)
         {
         car_direction = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
         if (car_direction==360) car_direction=0; // Bug-fix for Tesla VMS bug

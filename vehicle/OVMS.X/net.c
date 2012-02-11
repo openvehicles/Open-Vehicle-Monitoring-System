@@ -319,7 +319,7 @@ void net_state_enter(unsigned char newstate)
       led_net(1);
       led_act(0);
       p = par_get(PARAM_GPRSAPN);
-      if (p[0] != '\0')
+      if ((p[0] != '\0')&&(PORTAbits.RA0)) // APN defined AND switch is set to GPRS mode
         {
         net_timeout_goto = NET_STATE_SOFTRESET;
         net_timeout_ticks = 60;

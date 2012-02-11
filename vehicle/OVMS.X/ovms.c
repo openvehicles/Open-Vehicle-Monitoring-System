@@ -123,6 +123,7 @@ void main(void)
 
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter
+  TRISA = 0xFF;
   TRISB = 0xFE;
 
   // Timer 0 enabled, Fosc/4, 16 bit mode, prescaler 1:256
