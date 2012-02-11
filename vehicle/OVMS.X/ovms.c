@@ -97,6 +97,10 @@ signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not ver
 unsigned int car_direction = 0; // GPS direction of the car
 signed int car_altitude = 0; // GPS altitude of the car
 unsigned char car_gpslock = 0; // GPS lock status
+signed char car_stale_ambient = -1; // 0 = Ambient temperature is stale
+signed char car_stale_temps = -1; // 0 = Powertrain temperatures are stale
+signed char car_stale_gps = -1; // 0 = gps is stale
+signed char car_stale_tpms = -1; // 0 = tpms is stale
 unsigned char net_reg = 0; // Network registration
 unsigned char net_link = 0; // Network link status
 char net_apps_connected = 0; // Network apps connected

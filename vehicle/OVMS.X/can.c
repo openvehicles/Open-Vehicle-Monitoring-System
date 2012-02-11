@@ -181,6 +181,7 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0x82: // Ambient Temperature
       car_ambient_temp = (signed char)can_databuffer[1];
+      car_stale_ambient = 120; // Reset stale indicator
       break;
     case 0x83: // GPS Latitude
       car_latitude = can_databuffer[4]
@@ -196,12 +197,20 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0x85: // GPS direction and altitude
       car_gpslock = can_databuffer[1];
-      car_direction = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
-      if (car_direction==360) car_direction=0; // Bug-fix for Tesla VMS bug
-      if (can_databuffer[5]&0xf0)
-        car_altitude = 0;
+      if (gpslock)
+        {
+        car_direction = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
+        if (car_direction==360) car_direction=0; // Bug-fix for Tesla VMS bug
+        if (can_databuffer[5]&0xf0)
+          car_altitude = 0;
+        else
+          car_altitude = ((unsigned int)can_databuffer[5]<<8)+(can_databuffer[4]);
+        car_stale_gps = 120; // Reset stale indicator
+        }
       else
-        car_altitude = ((unsigned int)can_databuffer[5]<<8)+(can_databuffer[4]);
+        {
+        car_stale_gps = 0; // Reset stale indicator
+        }
       break;
     case 0x88: // Charging Current / Duration
       car_chargecurrent = can_databuffer[1];
@@ -261,6 +270,7 @@ void can_poll0(void)                // CAN ID 100 and 102
       car_tpem = (signed char)can_databuffer[1]; // Tpem
       car_tmotor = (signed char)can_databuffer[2]; // Tmotor
       car_tbattery = (signed char)can_databuffer[6]; // Tbattery
+      car_stale_temps = 120; // Reset stale indicator
       break;
     case 0xA4: // 7 VIN bytes i.e. "SFZRE2B"
       for (k=0;k<7;k++)
@@ -354,6 +364,7 @@ void can_poll1(void)                // CAN ID 344 and 402
       car_tpms_p[3] = can_databuffer[4];
       car_tpms_t[3] = (signed char)can_databuffer[5];
       }
+    car_stale_tpms = 120; // Reset stale indicator
     }
   else  				// It must be CAN ID 402
     {
@@ -377,6 +388,10 @@ void can_poll1(void)                // CAN ID 344 and 402
 //
 void can_state_ticker1(void)
   {
+  if (car_stale_ambient>0) car_stale_ambient--;
+  if (car_stale_temps>0)   car_stale_temps--;
+  if (car_stale_gps>0)     car_stale_gps--;
+  if (car_stale_tpms>0)    car_stale_tpms--;
   }
 
 ////////////////////////////////////////////////////////////////////////

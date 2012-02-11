@@ -242,8 +242,8 @@ void net_msg_gps(void)
   strcatpgm2ram(net_scratchpad,(char const rom far*)",");
   format_latlon(car_longitude,net_msg_scratchpad);
   strcat(net_scratchpad,net_msg_scratchpad);
-  sprintf(net_msg_scratchpad, (rom far char*)",%d,%d,%d",
-          car_direction, car_altitude, car_gpslock);
+  sprintf(net_msg_scratchpad, (rom far char*)",%d,%d,%d,%d",
+          car_direction, car_altitude, car_gpslock,car_stale_gps);
   strcat(net_scratchpad,net_msg_scratchpad);
 
   net_msg_encode_puts();
@@ -276,7 +276,8 @@ void net_msg_tpms(void)
       strcatpgm2ram(net_scratchpad, (rom far char*)"0,0,");
       }
     }
-  net_scratchpad[strlen(net_scratchpad)-1] = 0; // Remove trailing ','
+  sprintf(net_msg_scratchpad, (rom far char*)"%d",car_stale_tpms);
+  strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
 
@@ -300,11 +301,12 @@ void net_msg_environment(void)
     park = car_time - car_parktime;
 
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 D");
-  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d,%lu,%d,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d,%lu,%d,%d,%d,%d",
           car_doors1, car_doors2, car_lockstate,
           car_tpem, car_tmotor, car_tbattery,
           car_trip, car_odometer, car_speed, park,
-          car_ambient_temp, car_doors3);
+          car_ambient_temp, car_doors3,
+          car_stale_temps, car_stale_ambient);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -312,9 +314,9 @@ void net_msg_environment(void)
 void net_msg_group(char *groupname)
   {
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 g");
-  sprintf(net_msg_scratchpad, (rom far char*)"%s,%d,%d,%d,%d,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"%s,%d,%d,%d,%d,%d,%d,",
           groupname, car_SOC, car_speed,
-          car_direction, car_altitude, car_gpslock);
+          car_direction, car_altitude, car_gpslock, car_stale_gps);
   strcat(net_scratchpad,net_msg_scratchpad);
 
   format_latlon(car_latitude,net_msg_scratchpad);

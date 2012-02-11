@@ -98,6 +98,10 @@ extern signed long car_longitude; // Raw GPS Longitude
 extern unsigned int car_direction; // GPS direction of the car
 extern signed int car_altitude; // GPS altitude of the car
 extern unsigned char car_gpslock; // GPS lock status
+extern signed char car_stale_ambient; // 0 = Ambient temperature is stale
+extern signed char car_stale_temps; // 0 = Powertrain temperatures are stale
+extern signed char car_stale_gps; // 0 = gps is stale
+extern signed char car_stale_tpms; // 0 = tpms is stale
 extern unsigned char net_reg; // Network registration
 extern unsigned char net_link; // Network link status
 extern char net_apps_connected; // Network apps connected
