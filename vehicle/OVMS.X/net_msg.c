@@ -625,6 +625,30 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       break;
+    case 18: // Wakeup car
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_wakeup();
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
+      net_msg_encode_puts();
+      break;
+    case 19: // Wakeup temperature subsystem
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_wakeuptemps();
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
+      net_msg_encode_puts();
+      break;
     case 20: // Lock car (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
