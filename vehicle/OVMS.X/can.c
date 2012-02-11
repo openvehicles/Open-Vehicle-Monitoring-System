@@ -237,10 +237,12 @@ void can_poll0(void)                // CAN ID 100 and 102
         }
       car_charging = (can_databuffer[1] >> 4) & 0x01; //Charging status
       if ((car_doors1 != can_databuffer[1])||
-          (car_doors2 != can_databuffer[2]))
+          (car_doors2 != can_databuffer[2])||
+          (car_doors3 != can_databuffer[3]))
         net_notify_environment();
       car_doors1 = can_databuffer[1]; // Doors #1
       car_doors2 = can_databuffer[2]; // Doors #2
+      car_doors3 = can_databuffer[3]; // Doors #3
       if (((car_doors1 & 0x80)==0)&&  // Car is not ON
           (car_parktime == 0)&&       // Parktime was not previously set
           (car_time != 0))            // We know the car time
