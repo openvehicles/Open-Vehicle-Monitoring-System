@@ -66,6 +66,7 @@
 extern unsigned int car_linevoltage; // Line Voltage
 extern unsigned char car_chargecurrent; // Charge Current
 extern unsigned char car_chargelimit; // Charge Limit (amps)
+extern unsigned int car_chargeduration; // Charge Duration (minutes)
 extern unsigned char car_chargestate; // 1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging
 extern unsigned char car_chargemode; // 0=standard, 1=storage, 3=range, 4=performance
 extern unsigned char car_charging; // 1=yes/0=no

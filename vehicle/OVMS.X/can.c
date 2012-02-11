@@ -206,6 +206,7 @@ void can_poll0(void)                // CAN ID 100 and 102
     case 0x88: // Charging Current / Duration
       car_chargecurrent = can_databuffer[1];
       car_chargelimit = can_databuffer[6];
+      car_chargeduration = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
       break;
     case 0x89: // Charging Voltage / Iavailable
       if (can_mileskm=='M')
