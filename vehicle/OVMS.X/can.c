@@ -521,6 +521,27 @@ void can_tx_setchargemode(unsigned char mode)
   can_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
+void can_tx_setchargecurrent(unsigned char current)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x05;
+  TXB0D1 = 0x02;
+  TXB0D2 = 0x00;
+  TXB0D3 = 0x00;
+  TXB0D4 = current;
+  TXB0D5 = 0x00;
+  TXB0D6 = 0x00;
+  TXB0D7 = 0x00;
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+
+  can_tx_wakeup(); // Also, wakeup the car if necessary
+  }
+
 void can_tx_startstopcharge(unsigned char start)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done

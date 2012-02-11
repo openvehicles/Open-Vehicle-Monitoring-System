@@ -613,6 +613,18 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       break;
+    case 15: // Set charge current (params: current in amps)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_setchargecurrent(atoi(net_msg_cmd_msg));
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
+      net_msg_encode_puts();
+      break;
     case 20: // Lock car (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
