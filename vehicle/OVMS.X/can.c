@@ -481,6 +481,25 @@ void can_tx_wakeup(void)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   }
 
+void can_tx_wakeuptemps(void)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x06;
+  TXB0D1 = 0x2c;
+  TXB0D2 = 0x01;
+  TXB0D3 = 0x00;
+  TXB0D4 = 0x00;
+  TXB0D5 = 0x09;
+  TXB0D6 = 0x10;
+  TXB0D7 = 0x00;
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
 void can_tx_setchargemode(unsigned char mode)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
