@@ -282,7 +282,15 @@ messages from the VDS are sent on CAN ID # 0x102.
 	Set Charge mode
 		B1=0x05 ??
 		B2=0x19
+		B3=0x00
+		B4=0x00
 		B5=Mode (0=standard, 1=storage,3=range,4=performance)
+		B6=0x00
+		B7=0x00
+		B8=0x00
+
+		N.B. Range mode warning message is "Range Mode limits power. Frequent use will reduce long-term battery life. Continue?"
+		N.B. Performance mode warning message is "Frequent use of Performance Mode will reduce long-term battery life. Continue?"
 
 	Start/Stop charge
 		B1=0x05
@@ -294,6 +302,21 @@ messages from the VDS are sent on CAN ID # 0x102.
 		B7=0x00
 		B8=0x00
 
+	Set Charge Currrent
+		B1=0x05
+		B2=0x02
+		B3=0x00
+		B4=0x00
+		B5=current (10..…70 in decimal)
+		B6=0x00
+		B7=0x00
+		B8=0x00
+
+		N.B. Normal increments are 10,13,16,24,32,40,48,56,63,70
+
+	Wake Up car				Should car be sleeping (pump off), this will wake it up
+		B1=0x0A
+
 	UNKNOWN
 		B1=0x06
 			Samples:
@@ -302,6 +325,23 @@ messages from the VDS are sent on CAN ID # 0x102.
 		        11.4773 102 06 10 27 00 10 00 00 00    VDS-> (message from VDS 06)
 		        17.0587 102 06 10 27 00 10 00 00 00    VDS-> (message from VDS 06)
 		        22.5380 102 06 10 27 00 10 00 00 00    VDS-> (message from VDS 06)
+
+			On switch to TRIP screen:
+				102,06,10,27,00,00,09,10,00
+				102,06,D0,07,00,00,01,80,00
+			On switch to TEMP screen:
+				102,06,10,27,00,00,01,80,00
+				102,06,2C,01,00,00,09,10,00
+			On switch to BATTERY screen
+				102,06,10,27,00,00,09,10,00
+				102,06,E8,03,00,00,01,00,00
+			On switch to GRAPH energy use screen
+				102,06,10,27,00,00,01,00,00
+				102,06,64,00,00,40,00,00,00
+
+			Investigating:
+			Car seems to suppress the id#100 B1=A3 temperature message until the TEMP screen is brought up.
+			Tried to send the 102,06,D0,07,00,00,01,80,00 message, and that appeared to start id#100 B1=A3 temperature message transmission.
 
 	Lock/Unlock
 		B1=0x0B
@@ -324,6 +364,21 @@ messages from the VDS are sent on CAN ID # 0x102.
 	Lock/Unlock result
 		B1=0x0E
 		B2=result (0x04=locked, 0x05=unlocked)
+
+	Sequence Notes:
+		Some unusual behavior was noticed when trying to send a START CHARGE command to a sleeping car.
+		The car got into a mode where the VDS said "Preparing to charge" and "CONNECT POWER CABLE" and charge would not start.
+		Waking up the car (either VDS or pressing a door handle) would start the charge.
+		It appears that with the car plugged in but not charging, the VMS (or some other part of the car) can go to sleep
+		(signified by the cooling pump being off) while the VDS is still on. Sending the START CHARGE command in such a mode
+		causes the problem. Observing the VDS behavior when starting a charge on a sleeping car we find:
+			0ms   id#102 0x05, 0x03, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
+			150ms id#102 0A
+		Sending id#102 B1=0x0A (a single byte message) on the bus indeed wakes up the car (pump starts).
+		So, the sequence for START CHARGE should be:
+			0ms   id#102 0x05, 0x03, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
+			150ms id#102 0x0A
+		For STOP CHARGE, this should not be necessary (as the car should already be awake if it is charging).
 
 Other miscelaneous messages seen on the bus:
 
