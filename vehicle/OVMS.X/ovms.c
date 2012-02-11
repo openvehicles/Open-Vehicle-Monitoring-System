@@ -64,6 +64,7 @@
 #pragma udata
 unsigned int car_linevoltage = 0; // Line Voltage
 unsigned char car_chargecurrent = 0; // Charge Current
+unsigned char car_chargelimit; // Charge Limit (amps)
 unsigned char car_chargestate = 4; // 1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging
 unsigned char car_chargemode = 0; // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_charging = 0; // 1=yes/0=no
