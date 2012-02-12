@@ -51,6 +51,7 @@ LINE: while(<>)
   while (/[\r\n]$/) { chop; }
   tr/a-z/A-z/;
   my ($type,$time,$id,@d) = split /[,\s]+/;
+  foreach (@d) { $_ = '0'.$_ if (length($_)==1); }
   my $msg = '';
   my $msgt = '';
   if ($type eq 'RD11')
@@ -73,7 +74,7 @@ LINE: while(<>)
         }
       elsif ($d[0] eq '82')
         {
-        $msg .= "Ambient Temperature (" . $d[1] . " celcius)";
+        $msg .= "Ambient Temperature (" . hex($d[1]) . " celcius)";
         }
       elsif ($d[0] eq '83')
         {
@@ -89,7 +90,7 @@ LINE: while(<>)
         }
       elsif ($d[0] eq '85')
         {
-        $msg .= "???GPS status???";
+        $msg .= "GPS status";
         my $lock = hex($d[1]);
         if ($lock == 0)
           {
@@ -100,7 +101,7 @@ LINE: while(<>)
           $msg .= sprintf(" (direction %d deg)",hex($d[3].$d[2]));
           if ($d[5] ne 'FF')
             {
-            $msg .= sprintf(" (altitude %d)",hex($d[5].$d[4]));
+            $msg .= sprintf(" (altitude %dm)",hex($d[5].$d[4]));
             }
           }
         }
@@ -155,6 +156,11 @@ LINE: while(<>)
         my $miles = sprintf("%0.1f",hex($d[6].$d[5].$d[4])/10);
         my $km = sprintf("%0.1f",$miles*1.609344);
         $msg .= " (miles: ".$miles." km: ".$km.")";
+        }
+      elsif ($d[0] eq '9A')
+        {
+        $msg .= 'HVAC ';
+        $msg .= " (TcabinOutlet ".hex($d[6])." celcius)";
         }
       elsif ($d[0] eq '9C')
         {

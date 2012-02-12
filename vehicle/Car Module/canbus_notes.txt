@@ -25,9 +25,9 @@ Note: This is now the full list of messages seen on a 2011 Tesla Roadster 2.x, R
 Here are some target information that should be on the bus, but are still unknown:
 
 		0. TRIP -> odometer
-		1. Direction (N, S, E, W, etc - as shown on VDS)
-		2. Ambient temperature
-		3. Other temperatures
+		1. Direction (N, S, E, W, etc - as shown on VDS)       [ Got: MWJ Feb 2012 ]
+		2. Ambient temperature                                 [ Got: MS Jan 2012 ]
+		3. Other temperatures                                  [ Some got: MWJ Feb 2012 ]
 		4. Battery voltages, current, balancing, etc
 		5. Voltages and current on the different power lines
 		6. Gear (P, R, N, D)
@@ -94,16 +94,17 @@ Tesla Roadster CAN Bus analysis:
 		B5=Longitude 
 		B5=Longitude MSB
 
-	GPS_lock (suspected)
+	GPS_lock
 		B1=0x85
                 B2=          00=nolock
                              01=goodlock (based on gps satellite lock status)
-                B3=Direction LSB
+                B3=Direction LSB (unsigned 16bit integer, 0..360, in degrees)
                 B4=Direction MSB
-                B5=Altitude LSB
-                B6=     bits 0..6: Altitude MSB
-                        bit 7:     0=altitude valid (>3 satellites locked)
-                                   1=altitude invalid (only 3 satellites locked)
+                B5=Altitude LSB (signed 16bit integer, in metres)
+                B6=Altitude MSB
+
+                N.B. Altitude is in metres, and may be negative. Car rounds to nearest 10m and has a floor of 0m.
+                     Directions 0 and 360 are the same (North) - seems to be a bug in the car's VMS, so treat 360 as 0.
 
 	UNKNOWN
 		B1=0x86
@@ -178,11 +179,11 @@ Tesla Roadster CAN Bus analysis:
 
 	Charger V1.5
 		B1=0x95
-		B2=State 			(1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging)
+		B2=State 		(0x01=charging, 0x02=top off, 0x04=done, 0x0d=preparing to charge, 0x15-0x19=stopped charging)
 		B3=Sub State 		(2=scheduled start, 3=by request, 7=connect power cable, 9=xxMinutes-yyKWHrs,)
 		B4=0x64 ??
 		B5=Mode 2008 		(0=standard, 1=storage,3=range,4=performance)
-		B6=Mode 2010 roadster (0x= standard, 1x=storage,3x=range,4x=performance)
+		B6=Mode 2010 roadster	(0x= standard, 1x=storage,3x=range,4x=performance)
 		B7=0x16	??
 		B8=Total KWhrs Charged
 
@@ -199,15 +200,19 @@ Tesla Roadster CAN Bus analysis:
 			bit7 = Car ON (true=1/false=0)
 			
 		B3=
+			bit0 = always 0
+			bit1 = always 0
+			bit2 = always 0
+			bit3 = Lock status (locked=1/unlocked=0)
+			bit4 = Valet status (activated=1/unactivated=0)
 			bit5 = Headlights (on=1/off=0)
 			bit6 = Bonnet (open=1/closed=0) 
 			bit7 = Trunk (open=1/closed=0)
-
 			
 		B4=
 			bit1 = cooling pump (on=1/off=0)
 			
-		B5=0x21 /0xA1
+		B5=0x21 0xA1
 		B6=0x18 pump starting 0x38 pump running
 
 	Odometer
@@ -215,6 +220,16 @@ Tesla Roadster CAN Bus analysis:
 		B5=Odometer LSB  \
 		B6=Odometer       | (in 1/10th miles)
 		B7=Odometer MSB  /
+
+	HVAC
+		B1=0x9A
+                B2=?
+                B3=?
+                B4=?
+                B5=?
+                B6=? [ seems to be refrigerent pressure (scaled with ~/4) but not certain ]
+                B7=TcabinOutlet (celcius)
+                B8=? [ seems to be outside temperature (celcius) ]
 
 	UNKNOWN
 		B1=0x9B

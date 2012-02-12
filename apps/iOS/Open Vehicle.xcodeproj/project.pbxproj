@@ -38,6 +38,20 @@
 		4D6734BA1497898100F7919F /* roadster_outline_cp.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D6734B91497898100F7919F /* roadster_outline_cp.png */; };
 		4D6734BC1497898A00F7919F /* roadster_outline_ce.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D6734BB1497898A00F7919F /* roadster_outline_ce.png */; };
 		4D6734C01497927500F7919F /* roadster_outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D6734BF1497927400F7919F /* roadster_outline.png */; };
+		4D69A82214DA85E400CF0F74 /* ovmsControlViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D69A82114DA85E400CF0F74 /* ovmsControlViewController.m */; };
+		4D69A82614DAC93700CF0F74 /* ovmsControlCellularUsageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D69A82514DAC93700CF0F74 /* ovmsControlCellularUsageViewController.m */; };
+		4D69A82914DACAF500CF0F74 /* ovmsControlFeaturesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D69A82814DACAF500CF0F74 /* ovmsControlFeaturesViewController.m */; };
+		4D69A82C14DACB0900CF0F74 /* ovmsControlParametersViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D69A82B14DACB0900CF0F74 /* ovmsControlParametersViewController.m */; };
+		4D69A84714DAD85000CF0F74 /* libCorePlot-CocoaTouch.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D69A84414DAD81F00CF0F74 /* libCorePlot-CocoaTouch.a */; };
+		4D69A84914DADA4400CF0F74 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D69A84814DADA4400CF0F74 /* QuartzCore.framework */; };
+		4D69A85014DBB11F00CF0F74 /* ovmsControlPINEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D69A84F14DBB11F00CF0F74 /* ovmsControlPINEntry.m */; };
+		4D69A85314DFC00900CF0F74 /* carvaletoff.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85114DFC00900CF0F74 /* carvaletoff.png */; };
+		4D69A85414DFC00900CF0F74 /* carvaleton.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85214DFC00900CF0F74 /* carvaleton.png */; };
+		4D69A85614DFC14E00CF0F74 /* battery_coppertops.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85514DFC14D00CF0F74 /* battery_coppertops.png */; };
+		4D69A85814DFC20300CF0F74 /* battery_textbox.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85714DFC20200CF0F74 /* battery_textbox.png */; };
+		4D69A85A14DFC6F400CF0F74 /* tirepress_letterbox.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85914DFC6F400CF0F74 /* tirepress_letterbox.png */; };
+		4D69A85D14DFCB0E00CF0F74 /* charger_button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85B14DFCB0D00CF0F74 /* charger_button.png */; };
+		4D69A85E14DFCB0E00CF0F74 /* charger_plug.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85C14DFCB0E00CF0F74 /* charger_plug.png */; };
 		4D7439F8148F961600090BBA /* connection_good_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F6148F961600090BBA /* connection_good_paranoid.png */; };
 		4D7439F9148F961600090BBA /* connection_bad_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F7148F961600090BBA /* connection_bad_paranoid.png */; };
 		4D7439FC148F9CA400090BBA /* connection_unknown_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */; };
@@ -67,6 +81,7 @@
 		4DBF3762149B7333002323B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DBF3761149B7333002323B5 /* SystemConfiguration.framework */; };
 		4DC8B38C147E7BF2007FDFB2 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 4DC8B38A147E7BF2007FDFB2 /* Model.xcdatamodeld */; };
 		4DDA222F1476962700BA40AA /* teslapin.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDA222E1476962700BA40AA /* teslapin.png */; };
+		4DDF384714E4246000B4ACC0 /* carlights.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDF384614E4246000B4ACC0 /* carlights.png */; };
 		4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DE26E5F147E7E3000E3161D /* CoreData.framework */; };
 		4DE26E63147E83AE00E3161D /* Cars.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DE26E62147E83AE00E3161D /* Cars.m */; };
 		4DF2FF2014981FB900E488F2 /* ol_car_roadster_arcticwhite.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DF2FF1214981FB900E488F2 /* ol_car_roadster_arcticwhite.png */; };
@@ -137,6 +152,20 @@
 			remoteGlobalIDString = 4D5AE36314733757002F5F52;
 			remoteInfo = ovms;
 		};
+		4D69A84314DAD81F00CF0F74 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = BC9B83470FB8A0A40035D8DA;
+			remoteInfo = "CorePlot-CocoaTouch";
+		};
+		4D69A84514DAD82D00CF0F74 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = BC9B83460FB8A0A40035D8DA;
+			remoteInfo = "CorePlot-CocoaTouch";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -179,6 +208,25 @@
 		4D6734B91497898100F7919F /* roadster_outline_cp.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_cp.png; sourceTree = "<group>"; };
 		4D6734BB1497898A00F7919F /* roadster_outline_ce.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_ce.png; sourceTree = "<group>"; };
 		4D6734BF1497927400F7919F /* roadster_outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline.png; sourceTree = "<group>"; };
+		4D69A82014DA85E400CF0F74 /* ovmsControlViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsControlViewController.h; sourceTree = "<group>"; };
+		4D69A82114DA85E400CF0F74 /* ovmsControlViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsControlViewController.m; sourceTree = "<group>"; };
+		4D69A82414DAC93700CF0F74 /* ovmsControlCellularUsageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsControlCellularUsageViewController.h; sourceTree = "<group>"; };
+		4D69A82514DAC93700CF0F74 /* ovmsControlCellularUsageViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsControlCellularUsageViewController.m; sourceTree = "<group>"; };
+		4D69A82714DACAF500CF0F74 /* ovmsControlFeaturesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsControlFeaturesViewController.h; sourceTree = "<group>"; };
+		4D69A82814DACAF500CF0F74 /* ovmsControlFeaturesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsControlFeaturesViewController.m; sourceTree = "<group>"; };
+		4D69A82A14DACB0900CF0F74 /* ovmsControlParametersViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsControlParametersViewController.h; sourceTree = "<group>"; };
+		4D69A82B14DACB0900CF0F74 /* ovmsControlParametersViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsControlParametersViewController.m; sourceTree = "<group>"; };
+		4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "CorePlot-CocoaTouch.xcodeproj"; path = "../core-plot/framework/CorePlot-CocoaTouch.xcodeproj"; sourceTree = "<group>"; };
+		4D69A84814DADA4400CF0F74 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		4D69A84E14DBB11F00CF0F74 /* ovmsControlPINEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsControlPINEntry.h; sourceTree = "<group>"; };
+		4D69A84F14DBB11F00CF0F74 /* ovmsControlPINEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsControlPINEntry.m; sourceTree = "<group>"; };
+		4D69A85114DFC00900CF0F74 /* carvaletoff.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carvaletoff.png; sourceTree = "<group>"; };
+		4D69A85214DFC00900CF0F74 /* carvaleton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carvaleton.png; sourceTree = "<group>"; };
+		4D69A85514DFC14D00CF0F74 /* battery_coppertops.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = battery_coppertops.png; sourceTree = "<group>"; };
+		4D69A85714DFC20200CF0F74 /* battery_textbox.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = battery_textbox.png; sourceTree = "<group>"; };
+		4D69A85914DFC6F400CF0F74 /* tirepress_letterbox.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tirepress_letterbox.png; sourceTree = "<group>"; };
+		4D69A85B14DFCB0D00CF0F74 /* charger_button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = charger_button.png; sourceTree = "<group>"; };
+		4D69A85C14DFCB0E00CF0F74 /* charger_plug.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = charger_plug.png; sourceTree = "<group>"; };
 		4D7439F6148F961600090BBA /* connection_good_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_good_paranoid.png; sourceTree = "<group>"; };
 		4D7439F7148F961600090BBA /* connection_bad_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_bad_paranoid.png; sourceTree = "<group>"; };
 		4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_unknown_paranoid.png; sourceTree = "<group>"; };
@@ -214,6 +262,7 @@
 		4DBF3761149B7333002323B5 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		4DC8B38B147E7BF2007FDFB2 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		4DDA222E1476962700BA40AA /* teslapin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teslapin.png; sourceTree = "<group>"; };
+		4DDF384614E4246000B4ACC0 /* carlights.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carlights.png; sourceTree = "<group>"; };
 		4DE26E5F147E7E3000E3161D /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		4DE26E61147E83AE00E3161D /* Cars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Cars.h; path = ../Cars.h; sourceTree = "<group>"; };
 		4DE26E62147E83AE00E3161D /* Cars.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Cars.m; path = ../Cars.m; sourceTree = "<group>"; };
@@ -287,6 +336,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D69A84914DADA4400CF0F74 /* QuartzCore.framework in Frameworks */,
+				4D69A84714DAD85000CF0F74 /* libCorePlot-CocoaTouch.a in Frameworks */,
 				4DBF3762149B7333002323B5 /* SystemConfiguration.framework in Frameworks */,
 				4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */,
 				4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */,
@@ -315,6 +366,8 @@
 		4D5AE35914733757002F5F52 = {
 			isa = PBXGroup;
 			children = (
+				4D69A84814DADA4400CF0F74 /* QuartzCore.framework */,
+				4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */,
 				4D5AE36E14733757002F5F52 /* ovms */,
 				4D5AE39A14733758002F5F52 /* ovmsTests */,
 				4D5AE36714733757002F5F52 /* Frameworks */,
@@ -402,9 +455,25 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		4D69A83B14DAD81F00CF0F74 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4D69A84414DAD81F00CF0F74 /* libCorePlot-CocoaTouch.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
 			isa = PBXGroup;
 			children = (
+				4DDF384614E4246000B4ACC0 /* carlights.png */,
+				4D69A85B14DFCB0D00CF0F74 /* charger_button.png */,
+				4D69A85C14DFCB0E00CF0F74 /* charger_plug.png */,
+				4D69A85914DFC6F400CF0F74 /* tirepress_letterbox.png */,
+				4D69A85714DFC20200CF0F74 /* battery_textbox.png */,
+				4D69A85514DFC14D00CF0F74 /* battery_coppertops.png */,
+				4D69A85114DFC00900CF0F74 /* carvaletoff.png */,
+				4D69A85214DFC00900CF0F74 /* carvaleton.png */,
 				4DAB2C75149216C000E1098C /* carlock.png */,
 				4DAB2C76149216C000E1098C /* carunlock.png */,
 				4D6734BF1497927400F7919F /* roadster_outline.png */,
@@ -520,9 +589,9 @@
 				4DFAD7F714752F0F00416D38 /* Default-Landscape~ipad.png */,
 				4DFAD7F514752ECD00416D38 /* Default-Portrait~ipad.png */,
 				4DFAD7EF14752CFB00416D38 /* Default.png */,
+				4DFAD7EA14752B8800416D38 /* Icon.png */,
 				4DFAD7F314752D4E00416D38 /* icon72x72.png */,
 				4DFAD7ED14752BA100416D38 /* icon114x114.png */,
-				4DFAD7EA14752B8800416D38 /* Icon.png */,
 			);
 			name = Icons;
 			sourceTree = "<group>";
@@ -560,6 +629,16 @@
 				4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */,
 				4DAD532A147D317300949EE8 /* ovmsCarsFormViewController.h */,
 				4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */,
+				4D69A82014DA85E400CF0F74 /* ovmsControlViewController.h */,
+				4D69A82114DA85E400CF0F74 /* ovmsControlViewController.m */,
+				4D69A82414DAC93700CF0F74 /* ovmsControlCellularUsageViewController.h */,
+				4D69A82514DAC93700CF0F74 /* ovmsControlCellularUsageViewController.m */,
+				4D69A82714DACAF500CF0F74 /* ovmsControlFeaturesViewController.h */,
+				4D69A82814DACAF500CF0F74 /* ovmsControlFeaturesViewController.m */,
+				4D69A82A14DACB0900CF0F74 /* ovmsControlParametersViewController.h */,
+				4D69A82B14DACB0900CF0F74 /* ovmsControlParametersViewController.m */,
+				4D69A84E14DBB11F00CF0F74 /* ovmsControlPINEntry.h */,
+				4D69A84F14DBB11F00CF0F74 /* ovmsControlPINEntry.m */,
 			);
 			name = Tabs;
 			sourceTree = "<group>";
@@ -578,6 +657,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				4D69A84614DAD82D00CF0F74 /* PBXTargetDependency */,
 			);
 			name = "Open Vehicle";
 			productName = ovms;
@@ -622,6 +702,12 @@
 			mainGroup = 4D5AE35914733757002F5F52;
 			productRefGroup = 4D5AE36514733757002F5F52 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 4D69A83B14DAD81F00CF0F74 /* Products */;
+					ProjectRef = 4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				4D5AE36314733757002F5F52 /* Open Vehicle */,
@@ -629,6 +715,16 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		4D69A84414DAD81F00CF0F74 /* libCorePlot-CocoaTouch.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libCorePlot-CocoaTouch.a";
+			remoteRef = 4D69A84314DAD81F00CF0F74 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		4D5AE36214733757002F5F52 /* Resources */ = {
@@ -724,6 +820,14 @@
 				4DF2FF3F1498253300E488F2 /* ol_car_models_signaturered.png in Resources */,
 				4DF2FF401498253300E488F2 /* ol_car_models_tiburongrey.png in Resources */,
 				4D8E597C14B3CB4C00426260 /* parking.png in Resources */,
+				4D69A85314DFC00900CF0F74 /* carvaletoff.png in Resources */,
+				4D69A85414DFC00900CF0F74 /* carvaleton.png in Resources */,
+				4D69A85614DFC14E00CF0F74 /* battery_coppertops.png in Resources */,
+				4D69A85814DFC20300CF0F74 /* battery_textbox.png in Resources */,
+				4D69A85A14DFC6F400CF0F74 /* tirepress_letterbox.png in Resources */,
+				4D69A85D14DFCB0E00CF0F74 /* charger_button.png in Resources */,
+				4D69A85E14DFCB0E00CF0F74 /* charger_plug.png in Resources */,
+				4DDF384714E4246000B4ACC0 /* carlights.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -775,6 +879,11 @@
 				4DAB2C741492109C00E1098C /* ovmsBodyViewController.m in Sources */,
 				4D0A96AF14939616000B74FC /* ovmsStatusViewControllerPad.m in Sources */,
 				4DBF3760149B7312002323B5 /* Reachability.m in Sources */,
+				4D69A82214DA85E400CF0F74 /* ovmsControlViewController.m in Sources */,
+				4D69A82614DAC93700CF0F74 /* ovmsControlCellularUsageViewController.m in Sources */,
+				4D69A82914DACAF500CF0F74 /* ovmsControlFeaturesViewController.m in Sources */,
+				4D69A82C14DACB0900CF0F74 /* ovmsControlParametersViewController.m in Sources */,
+				4D69A85014DBB11F00CF0F74 /* ovmsControlPINEntry.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -793,6 +902,11 @@
 			isa = PBXTargetDependency;
 			target = 4D5AE36314733757002F5F52 /* Open Vehicle */;
 			targetProxy = 4D5AE39814733758002F5F52 /* PBXContainerItemProxy */;
+		};
+		4D69A84614DAD82D00CF0F74 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "CorePlot-CocoaTouch";
+			targetProxy = 4D69A84514DAD82D00CF0F74 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -861,7 +975,9 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
+				HEADER_SEARCH_PATHS = "../core-plot/framework/**";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "Open Vehicle";
 				WRAPPER_EXTENSION = app;
 			};
@@ -913,7 +1029,9 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
+				HEADER_SEARCH_PATHS = "../core-plot/framework/**";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "Open Vehicle";
 				WRAPPER_EXTENSION = app;
 			};
@@ -970,7 +1088,9 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
+				HEADER_SEARCH_PATHS = "../core-plot/framework/**";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "Open Vehicle";
 				WRAPPER_EXTENSION = app;
 			};

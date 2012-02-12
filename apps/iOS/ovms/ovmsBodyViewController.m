@@ -11,6 +11,8 @@
 @implementation ovmsBodyViewController
 @synthesize m_car_lockunlock;
 @synthesize m_car_outlineimage;
+@synthesize m_car_lights;
+@synthesize m_car_valetonoff;
 @synthesize m_car_door_ld;
 @synthesize m_car_door_rd;
 @synthesize m_car_door_hd;
@@ -91,6 +93,8 @@
   [self setM_car_temp_battery_l:nil];
   [self setM_car_outlineimage:nil];
   [self setM_car_ambient_temp:nil];
+    [self setM_car_valetonoff:nil];
+    [self setM_car_lights:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -141,6 +145,16 @@
     m_car_lockunlock.image = [UIImage imageNamed:@"carlock.png"];
   else
     m_car_lockunlock.image = [UIImage imageNamed:@"carunlock.png"];
+
+  if ([ovmsAppDelegate myRef].car_doors2 & 0x10)
+    m_car_valetonoff.image = [UIImage imageNamed:@"carvaleton.png"];
+  else
+    m_car_valetonoff.image = [UIImage imageNamed:@"carvaletoff.png"];
+
+  if ([ovmsAppDelegate myRef].car_doors2 & 0x20)
+    m_car_lights.hidden = 0;
+  else
+    m_car_lights.hidden = 1;
 
   if ([ovmsAppDelegate myRef].car_doors1 & 0x01)
     m_car_door_ld.hidden = 0;
@@ -215,7 +229,7 @@
   
   if ([ovmsAppDelegate myRef].car_tpms_fr_temp > 0)
     {
-    m_car_wheel_fr_pressure.text = [NSString stringWithFormat:@"%0.1fpsi",
+    m_car_wheel_fr_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_fr_pressure];
     m_car_wheel_fr_temp.text = [NSString stringWithFormat:@"%dºC",
                                 [ovmsAppDelegate myRef].car_tpms_fr_temp];
@@ -228,7 +242,7 @@
 
   if ([ovmsAppDelegate myRef].car_tpms_rr_temp > 0)
     {
-    m_car_wheel_rr_pressure.text = [NSString stringWithFormat:@"%0.1fpsi",
+    m_car_wheel_rr_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_rr_pressure];
     m_car_wheel_rr_temp.text = [NSString stringWithFormat:@"%dºC",
                                 [ovmsAppDelegate myRef].car_tpms_rr_temp];
@@ -241,7 +255,7 @@
 
   if ([ovmsAppDelegate myRef].car_tpms_fl_temp > 0)
     {
-    m_car_wheel_fl_pressure.text = [NSString stringWithFormat:@"%0.1fpsi",
+    m_car_wheel_fl_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_fl_pressure];
     m_car_wheel_fl_temp.text = [NSString stringWithFormat:@"%dºC",
                                 [ovmsAppDelegate myRef].car_tpms_fl_temp];
@@ -254,7 +268,7 @@
   
   if ([ovmsAppDelegate myRef].car_tpms_rl_temp > 0)
     {
-    m_car_wheel_rl_pressure.text = [NSString stringWithFormat:@"%0.1fpsi",
+    m_car_wheel_rl_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_rl_pressure];
     m_car_wheel_rl_temp.text = [NSString stringWithFormat:@"%dºC",
                                 [ovmsAppDelegate myRef].car_tpms_rl_temp];

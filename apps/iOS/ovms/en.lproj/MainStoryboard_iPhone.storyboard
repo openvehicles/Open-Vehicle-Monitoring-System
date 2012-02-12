@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.0" toolsVersion="1938" systemVersion="11C74" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="4">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.0" toolsVersion="1938" systemVersion="11D50b" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="4">
     <dependencies>
         <development defaultVersion="4200" identifier="xcode"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="933"/>
@@ -13,55 +13,75 @@
                         <rect key="frame" x="0.0" y="64" width="320" height="367"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="charger_plug.png" id="Geg-T8-Lqj">
+                                <rect key="frame" x="-31" y="143" width="343" height="70"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="charger_button.png" id="rlv-Wy-337">
+                                <rect key="frame" x="200" y="165" width="47" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="battery_textbox.png" id="L42-Cm-yFc">
+                                <rect key="frame" x="45" y="318" width="233" height="38"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="center" image="car_roadster_thundergray.png" id="feQ-Vi-h8L" userLabel="car_image">
                                 <rect key="frame" x="0.0" y="12" width="320" height="130"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="left" image="battery_000.png" id="fN9-TR-Ojm" userLabel="battery_back">
-                                <rect key="frame" x="26" y="240" width="268" height="70"/>
+                                <rect key="frame" x="37" y="240" width="268" height="70"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
                                 </accessibility>
                             </imageView>
                             <imageView autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" image="battery_100.png" id="CKU-Hj-ZF9" userLabel="battery_front">
-                                <rect key="frame" x="26" y="240" width="268" height="70"/>
+                                <rect key="frame" x="37" y="240" width="268" height="70"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
                                 </accessibility>
                             </imageView>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="18" id="kQB-dH-EY6" userLabel="car_range">
-                                <rect key="frame" x="0.0" y="323" width="320" height="29"/>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="100km" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="14" id="kQB-dH-EY6" userLabel="car_range_ideal">
+                                <rect key="frame" x="45" y="337" width="103" height="18"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="18"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="14"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="zYR-tz-88R" userLabel="car_soc">
-                                <rect key="frame" x="89" y="240" width="142" height="70"/>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="55km" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="14" id="Sun-nV-rnJ" userLabel="car_range_estimated">
+                                <rect key="frame" x="175" y="337" width="103" height="18"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="36"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="14"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="80%" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="zYR-tz-88R" userLabel="car_soc">
+                                <rect key="frame" x="59" y="240" width="206" height="70"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="24"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                                 <color key="shadowColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <size key="shadowOffset" width="2" height="2"/>
                             </label>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="as8-eT-6NH" userLabel="car_charge_state">
-                                <rect key="frame" x="26" y="174" width="268" height="29"/>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="STANDARD" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="as8-eT-6NH" userLabel="car_charge_state">
+                                <rect key="frame" x="137" y="162" width="60" height="13"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="24"/>
+                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="10"/>
                                 <color key="textColor" red="0.0" green="1" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="8Nu-Np-kIL" userLabel="car_charge_type">
-                                <rect key="frame" x="26" y="203" width="268" height="29"/>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="220V @70A" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="8Nu-Np-kIL" userLabel="car_charge_type">
+                                <rect key="frame" x="138" y="174" width="60" height="13"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="18"/>
+                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="10"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
@@ -89,20 +109,49 @@
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="IDEAL RANGE" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="sHt-db-HgM">
+                                <rect key="frame" x="50" y="318" width="98" height="19"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="10"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="ESTIMATED RANGE" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="XRU-KJ-5a2">
+                                <rect key="frame" x="177" y="318" width="101" height="19"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="10"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <imageView hidden="YES" autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" image="battery_coppertops.png" id="C4i-5V-3e1" userLabel="battery_charging">
+                                <rect key="frame" x="37" y="240" width="268" height="70"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <accessibility key="accessibilityConfiguration">
+                                    <accessibilityTraits key="traits" none="YES" image="YES" notEnabled="YES"/>
+                                </accessibility>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="STANDARD" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="DOE-r2-aEW" userLabel="car_charge_mode">
+                                <rect key="frame" x="76" y="286" width="201" height="19"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="12"/>
+                                <color key="textColor" red="0.94117653369903564" green="0.4901961088180542" blue="0.0" alpha="1" colorSpace="deviceRGB"/>
+                                <nil key="highlightedColor"/>
+                                <color key="shadowColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <size key="shadowOffset" width="0.0" height="0.0"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512112140656" green="0.14509804546833038" blue="0.25098040699958801" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="Status" image="49-battery.png" id="eHK-35-AMI"/>
-                    <navigationItem key="navigationItem" id="4y7-LI-Dwy">
-                        <barButtonItem key="rightBarButtonItem" tag="42" title="Controls" id="K7V-fz-d9g">
-                            <connections>
-                                <segue destination="SsU-0d-yX8" kind="modal" modalTransitionStyle="flipHorizontal" id="6TL-uG-ue6"/>
-                            </connections>
-                        </barButtonItem>
-                    </navigationItem>
+                    <navigationItem key="navigationItem" id="4y7-LI-Dwy"/>
                     <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
+                        <outlet property="m_battery_charging" destination="C4i-5V-3e1" id="1yJ-Nz-IQn"/>
                         <outlet property="m_battery_front" destination="CKU-Hj-ZF9" id="O1T-SI-yN0"/>
+                        <outlet property="m_car_charge_mode" destination="DOE-r2-aEW" id="gQ1-3Z-vX9"/>
                         <outlet property="m_car_charge_state" destination="as8-eT-6NH" id="Xgp-Ol-StF"/>
                         <outlet property="m_car_charge_type" destination="8Nu-Np-kIL" id="skw-DC-HZk"/>
                         <outlet property="m_car_connection_image" destination="Rcp-Jf-HIC" id="M2R-tK-9DK"/>
@@ -110,8 +159,11 @@
                         <outlet property="m_car_image" destination="feQ-Vi-h8L" id="JLe-fz-8AU"/>
                         <outlet property="m_car_parking_image" destination="baT-Xv-wo7" id="Ont-AN-RBM"/>
                         <outlet property="m_car_parking_state" destination="Xez-gW-NCV" id="b0z-ic-WG7"/>
-                        <outlet property="m_car_range" destination="kQB-dH-EY6" id="TXF-ba-tqa"/>
+                        <outlet property="m_car_range_estimated" destination="Sun-nV-rnJ" id="BSO-tN-VWZ"/>
+                        <outlet property="m_car_range_ideal" destination="kQB-dH-EY6" id="aot-Z5-pxU"/>
                         <outlet property="m_car_soc" destination="zYR-tz-88R" id="TyB-ho-2hX"/>
+                        <outlet property="m_charger_button" destination="rlv-Wy-337" id="7uh-Ab-siw"/>
+                        <outlet property="m_charger_plug" destination="Geg-T8-Lqj" id="ZKY-mj-LKI"/>
                     </connections>
                 </viewController>
             </objects>
@@ -130,19 +182,13 @@
                         </connections>
                     </view>
                     <tabBarItem key="tabBarItem" title="Location" image="74-location.png" id="6"/>
-                    <navigationItem key="navigationItem" id="OPu-VM-BCk">
-                        <barButtonItem key="rightBarButtonItem" tag="42" title="Controls" id="ucH-Bd-llj">
-                            <connections>
-                                <segue destination="SsU-0d-yX8" kind="modal" modalTransitionStyle="flipHorizontal" id="HDC-p9-1eU"/>
-                            </connections>
-                        </barButtonItem>
-                    </navigationItem>
+                    <navigationItem key="navigationItem" id="OPu-VM-BCk"/>
                     <connections>
                         <outlet property="myMapView" destination="17" id="D7r-5K-gLy"/>
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="1054" y="700"/>
+            <point key="canvasLocation" x="1074" y="700"/>
         </scene>
         <scene sceneID="15">
             <objects>
@@ -243,7 +289,7 @@
                     </navigationItem>
                 </tableViewController>
             </objects>
-            <point key="canvasLocation" x="1054" y="1275"/>
+            <point key="canvasLocation" x="1074" y="1275"/>
         </scene>
         <scene sceneID="rV3-H9-bVt">
             <objects>
@@ -302,6 +348,11 @@
                     </view>
                     <navigationItem key="navigationItem" id="AWr-Ib-rpt">
                         <barButtonItem key="backBarButtonItem" title="Cancel" id="Uj3-Qm-JjY"/>
+                        <barButtonItem key="rightBarButtonItem" title="Control" id="A0l-T7-xJ2">
+                            <connections>
+                                <segue destination="ywl-8V-elC" kind="modal" modalTransitionStyle="flipHorizontal" id="fI9-vg-Gk1"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                     <connections>
                         <outlet property="vehicleImage" destination="fbz-J9-5fJ" id="KAD-x3-FcB"/>
@@ -394,112 +445,124 @@
                                 <rect key="frame" x="84" y="8" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </imageView>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="0rd-Ad-rTR">
-                                <rect key="frame" x="236" y="60" width="64" height="21"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="carlights.png" id="cuU-21-cm1">
+                                <rect key="frame" x="84" y="1" width="152" height="317"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carlock.png" id="8IY-yH-cja">
+                                <rect key="frame" x="84" y="8" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <imageView contentMode="scaleAspectFit" image="carvaletoff.png" id="Nol-jU-v3m">
+                                <rect key="frame" x="84" y="8" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="0rd-Ad-rTR">
+                                <rect key="frame" x="241" y="51" width="52" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="uyN-xq-DsY">
-                                <rect key="frame" x="236" y="82" width="64" height="21"/>
+                                <rect key="frame" x="241" y="70" width="52" height="16"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="yOm-eK-EiO">
-                                <rect key="frame" x="236" y="236" width="64" height="21"/>
+                                <rect key="frame" x="241" y="236" width="52" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="8Qv-w9-QFk">
-                                <rect key="frame" x="236" y="258" width="64" height="21"/>
+                                <rect key="frame" x="241" y="253" width="52" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="CmF-mX-gkX">
-                                <rect key="frame" x="19" y="60" width="64" height="21"/>
+                                <rect key="frame" x="26" y="51" width="52" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="OC6-3T-D0U">
-                                <rect key="frame" x="19" y="82" width="64" height="21"/>
+                                <rect key="frame" x="26" y="70" width="52" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
-                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="1Vf-q6-6iU">
-                                <rect key="frame" x="19" y="236" width="64" height="21"/>
+                                <rect key="frame" x="26" y="236" width="52" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="E6h-hK-fCp">
-                                <rect key="frame" x="19" y="258" width="64" height="21"/>
+                                <rect key="frame" x="26" y="254" width="52" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="ydx-jw-Xh5">
-                                <rect key="frame" x="19" y="335" width="64" height="21"/>
+                                <rect key="frame" x="26" y="338" width="52" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="uZW-nt-WxM">
-                                <rect key="frame" x="128" y="335" width="64" height="21"/>
+                                <rect key="frame" x="134" y="337" width="52" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="Hvm-f7-boq">
-                                <rect key="frame" x="236" y="335" width="64" height="21"/>
+                                <rect key="frame" x="241" y="337" width="52" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="PEM" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="tWp-hW-qv5">
                                 <rect key="frame" x="19" y="319" width="64" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="11"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="10"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="MOTOR" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="W8h-P3-hsR">
                                 <rect key="frame" x="128" y="319" width="64" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="11"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="10"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="BATTERY" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="dSt-fr-TTW">
-                                <rect key="frame" x="236" y="319" width="64" height="21"/>
+                                <rect key="frame" x="236" y="319" width="57" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="11"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="10"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carlock.png" id="8IY-yH-cja">
-                                <rect key="frame" x="84" y="8" width="152" height="303"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="tirepress_letterbox.png" id="ZT2-sz-zYB">
+                                <rect key="frame" x="26" y="51" width="267" height="305"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="Ktq-Dz-PKA">
-                                <rect key="frame" x="128" y="20" width="64" height="21"/>
+                                <rect key="frame" x="26" y="164" width="57" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
@@ -507,13 +570,7 @@
                         <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="Car" image="54-lock.png" id="bim-Rd-70t"/>
-                    <navigationItem key="navigationItem" id="la3-Bx-lIa">
-                        <barButtonItem key="rightBarButtonItem" tag="42" title="Controls" id="xBr-GK-uG7">
-                            <connections>
-                                <segue destination="SsU-0d-yX8" kind="modal" modalTransitionStyle="flipHorizontal" id="fhs-F5-9Hg"/>
-                            </connections>
-                        </barButtonItem>
-                    </navigationItem>
+                    <navigationItem key="navigationItem" id="la3-Bx-lIa"/>
                     <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
                         <outlet property="m_car_ambient_temp" destination="Ktq-Dz-PKA" id="AWJ-hv-TR6"/>
@@ -522,6 +579,7 @@
                         <outlet property="m_car_door_ld" destination="Gj2-y1-rHO" id="bPe-Yt-OeC"/>
                         <outlet property="m_car_door_rd" destination="982-WB-UWS" id="90j-kp-zHK"/>
                         <outlet property="m_car_door_tr" destination="MO1-D4-O0F" id="AFe-Hs-p6i"/>
+                        <outlet property="m_car_lights" destination="cuU-21-cm1" id="4Ql-iQ-gJp"/>
                         <outlet property="m_car_lockunlock" destination="8IY-yH-cja" id="yyp-iR-JVi"/>
                         <outlet property="m_car_outlineimage" destination="yy1-Al-VLM" id="RU9-12-oiZ"/>
                         <outlet property="m_car_temp_battery" destination="Hvm-f7-boq" id="jZr-fc-vyS"/>
@@ -530,6 +588,7 @@
                         <outlet property="m_car_temp_motor_l" destination="W8h-P3-hsR" id="nHR-OH-qgk"/>
                         <outlet property="m_car_temp_pem" destination="ydx-jw-Xh5" id="0fO-7j-MZl"/>
                         <outlet property="m_car_temp_pem_l" destination="tWp-hW-qv5" id="lRV-aM-xpy"/>
+                        <outlet property="m_car_valetonoff" destination="Nol-jU-v3m" id="Cch-kk-0im"/>
                         <outlet property="m_car_wheel_fl_pressure" destination="CmF-mX-gkX" id="GM5-fb-YoB"/>
                         <outlet property="m_car_wheel_fl_temp" destination="OC6-3T-D0U" id="tKT-Df-1OD"/>
                         <outlet property="m_car_wheel_fr_pressure" destination="0rd-Ad-rTR" id="GuN-59-3dY"/>
@@ -546,22 +605,13 @@
         <scene sceneID="3Qb-bc-MYS">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="aaS-jK-xbS" userLabel="First Responder" sceneMemberID="firstResponder"/>
-                <viewController id="SsU-0d-yX8" sceneMemberID="viewController">
+                <viewController id="SsU-0d-yX8" customClass="ovmsControlViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="LDM-Dw-lTh">
-                        <rect key="frame" x="0.0" y="20" width="320" height="460"/>
+                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <navigationBar contentMode="scaleToFill" barStyle="blackOpaque" id="J0l-GB-Jfc">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                                <items>
-                                    <navigationItem title="Title" id="xzE-8M-oP5">
-                                        <barButtonItem key="leftBarButtonItem" title="Done" id="TOS-Sb-ygs"/>
-                                    </navigationItem>
-                                </items>
-                            </navigationBar>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="8NQ-TI-CRi">
-                                <rect key="frame" x="20" y="64" width="125" height="37"/>
+                                <rect key="frame" x="20" y="17" width="125" height="37"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="Start Charging">
@@ -571,9 +621,12 @@
                                 <state key="highlighted">
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="startChargingButton:" destination="SsU-0d-yX8" eventType="touchUpInside" id="cIg-TT-R0U"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="llc-GA-Q8J">
-                                <rect key="frame" x="175" y="64" width="125" height="37"/>
+                                <rect key="frame" x="175" y="17" width="125" height="37"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="Stop Charging">
@@ -583,9 +636,12 @@
                                 <state key="highlighted">
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="stopChargingButton:" destination="SsU-0d-yX8" eventType="touchUpInside" id="vtc-gO-XEF"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="yn5-ba-rGK">
-                                <rect key="frame" x="20" y="164" width="280" height="37"/>
+                                <rect key="frame" x="20" y="117" width="280" height="37"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="  Lock/Unlock Car" image="54-lock.png">
@@ -595,9 +651,12 @@
                                 <state key="highlighted">
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <segue destination="cgm-Vv-Biu" kind="modal" identifier="LockUnlock" modalTransitionStyle="crossDissolve" id="ICY-BZ-u8B"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="11x-bb-Zur">
-                                <rect key="frame" x="20" y="203" width="280" height="40"/>
+                                <rect key="frame" x="20" y="156" width="280" height="40"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="  Valet Mode On/Off" image="54-lock.png">
@@ -607,9 +666,12 @@
                                 <state key="highlighted">
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <segue destination="cgm-Vv-Biu" kind="modal" identifier="ValetMode" modalTransitionStyle="crossDissolve" id="ViB-aJ-Vm9"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="mHX-1w-gLc">
-                                <rect key="frame" x="20" y="269" width="280" height="37"/>
+                                <rect key="frame" x="20" y="222" width="280" height="37"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="Features">
@@ -619,9 +681,13 @@
                                 <state key="highlighted">
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="featuresButton:" destination="SsU-0d-yX8" eventType="touchUpInside" id="num-uD-PyX"/>
+                                    <segue destination="c4t-Fe-tyb" kind="push" id="lD1-IL-4Sc"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="Cq8-P6-GXr">
-                                <rect key="frame" x="20" y="309" width="280" height="37"/>
+                                <rect key="frame" x="20" y="262" width="280" height="37"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="Parameters">
@@ -631,9 +697,13 @@
                                 <state key="highlighted">
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="parametersButton:" destination="SsU-0d-yX8" eventType="touchUpInside" id="hwB-pX-tMr"/>
+                                    <segue destination="WYu-zK-Uku" kind="push" id="n7l-Mz-oPY"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="Nm9-lh-ngf">
-                                <rect key="frame" x="20" y="349" width="280" height="37"/>
+                                <rect key="frame" x="20" y="302" width="280" height="37"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="Cellular Usage">
@@ -643,9 +713,13 @@
                                 <state key="highlighted">
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="cellularUsageButton:" destination="SsU-0d-yX8" eventType="touchUpInside" id="KRG-nu-fo0"/>
+                                    <segue destination="ea2-qH-NLr" kind="push" id="CYO-Zs-mbU"/>
+                                </connections>
                             </button>
                             <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="bar" selectedSegmentIndex="0" id="svL-h0-dxf">
-                                <rect key="frame" x="20" y="109" width="280" height="30"/>
+                                <rect key="frame" x="20" y="62" width="280" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <segments>
                                     <segment title="Standard"/>
@@ -653,9 +727,12 @@
                                     <segment title="Range"/>
                                     <segment title="Perform"/>
                                 </segments>
+                                <connections>
+                                    <action selector="chargeModeButton:" destination="SsU-0d-yX8" eventType="valueChanged" id="wCa-uC-Te9"/>
+                                </connections>
                             </segmentedControl>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="kcW-Ln-Gei">
-                                <rect key="frame" x="20" y="409" width="280" height="37"/>
+                                <rect key="frame" x="20" y="361" width="280" height="37"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="Reset OVMS Module">
@@ -665,12 +742,182 @@
                                 <state key="highlighted">
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="resetModuleButton:" destination="SsU-0d-yX8" eventType="touchUpInside" id="Zqf-c3-Ebm"/>
+                                </connections>
                             </button>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
                     </view>
-                    <navigationItem key="navigationItem" id="0Q6-oV-Bz0"/>
+                    <navigationItem key="navigationItem" title="Control" id="0Q6-oV-Bz0">
+                        <barButtonItem key="rightBarButtonItem" title="Done" id="TOS-Sb-ygs">
+                            <connections>
+                                <action selector="doneButton:" destination="SsU-0d-yX8" id="eAJ-eg-YZs"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="m_chargemode" destination="svL-h0-dxf" id="VHc-Xd-Cgw"/>
+                    </connections>
                 </viewController>
+            </objects>
+            <point key="canvasLocation" x="1872" y="-183"/>
+        </scene>
+        <scene sceneID="A9I-hX-b5M">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ybv-tC-bBy" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <viewController id="cgm-Vv-Biu" customClass="ovmsControlPINEntry" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Jni-bp-gse">
+                        <rect key="frame" x="0.0" y="20" width="320" height="460"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <navigationBar contentMode="scaleToFill" barStyle="blackOpaque" id="GjN-y7-rTR">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <items>
+                                    <navigationItem title="Vehicle PIN" id="p1C-Hr-N1g">
+                                        <barButtonItem key="leftBarButtonItem" title="Cancel" id="Dfd-ca-NW0">
+                                            <connections>
+                                                <action selector="Cancel:" destination="cgm-Vv-Biu" id="bUP-kI-p9D"/>
+                                            </connections>
+                                        </barButtonItem>
+                                        <barButtonItem key="rightBarButtonItem" title="Action" id="wTb-Dr-ISr">
+                                            <connections>
+                                                <action selector="Done:" destination="cgm-Vv-Biu" id="ygo-Jb-9pg"/>
+                                            </connections>
+                                        </barButtonItem>
+                                    </navigationItem>
+                                </items>
+                            </navigationBar>
+                            <view contentMode="scaleToFill" id="8xB-tp-wF6">
+                                <rect key="frame" x="0.0" y="165" width="320" height="79"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" textAlignment="center" clearsOnBeginEditing="YES" minimumFontSize="36" id="K2Y-m2-99Q">
+                                        <rect key="frame" x="27" y="24" width="280" height="31"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="36"/>
+                                        <textInputTraits key="textInputTraits" autocorrectionType="no" keyboardType="numberPad" enablesReturnKeyAutomatically="YES" secureTextEntry="YES"/>
+                                        <connections>
+                                            <action selector="Edited:" destination="cgm-Vv-Biu" eventType="editingDidEnd" id="37F-CJ-bQF"/>
+                                        </connections>
+                                    </textField>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <textView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" bounces="NO" scrollEnabled="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" editable="NO" text="Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu." textAlignment="center" id="GCa-iu-ACU">
+                                <rect key="frame" x="20" y="50" width="286" height="102"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="18"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                            </textView>
+                        </subviews>
+                        <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Vehicle PIN" id="0sB-iI-UEb"/>
+                    <connections>
+                        <outlet property="m_done" destination="wTb-Dr-ISr" id="ahV-Mr-0s0"/>
+                        <outlet property="m_message" destination="GCa-iu-ACU" id="lGL-1d-hYG"/>
+                        <outlet property="m_navbar" destination="GjN-y7-rTR" id="xPC-wr-x8Q"/>
+                        <outlet property="m_pin" destination="K2Y-m2-99Q" id="v9d-1k-zne"/>
+                    </connections>
+                </viewController>
+            </objects>
+            <point key="canvasLocation" x="2354" y="-163"/>
+        </scene>
+        <scene sceneID="Z5c-Qj-YRV">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="nwU-BM-F4o" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <tableViewController id="WYu-zK-Uku" customClass="ovmsControlParametersViewController" sceneMemberID="viewController">
+                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="jpS-gQ-XEd">
+                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="AOd-gX-equ">
+                                <rect key="frame" x="0.0" y="22" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                    <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </view>
+                                <color key="backgroundColor" red="0.2588235438" green="0.39607846740000002" blue="0.61568629740000003" alpha="1" colorSpace="deviceRGB"/>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="WYu-zK-Uku" id="SEN-Z1-Nq3"/>
+                            <outlet property="delegate" destination="WYu-zK-Uku" id="4xh-h7-zPd"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Parameters" id="gcK-oN-82b"/>
+                </tableViewController>
+            </objects>
+            <point key="canvasLocation" x="2277" y="-761"/>
+        </scene>
+        <scene sceneID="CgH-xe-eJm">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="RVA-Lx-JyF" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <tableViewController id="c4t-Fe-tyb" customClass="ovmsControlFeaturesViewController" sceneMemberID="viewController">
+                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="eKo-3s-wib">
+                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="6eO-tb-xwY">
+                                <rect key="frame" x="0.0" y="22" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                    <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </view>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="c4t-Fe-tyb" id="tNd-Cl-a8B"/>
+                            <outlet property="delegate" destination="c4t-Fe-tyb" id="U8I-P5-i3D"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Features" id="GXv-t9-y7E"/>
+                </tableViewController>
+            </objects>
+            <point key="canvasLocation" x="2119" y="-880"/>
+        </scene>
+        <scene sceneID="o7M-rV-knj">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="AVt-Sg-UbF" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <viewController id="ea2-qH-NLr" customClass="ovmsControlCellularUsageViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="680-FP-B2x" customClass="CPTGraphHostingView">
+                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Cellular Usage" id="xu4-gr-jFX"/>
+                </viewController>
+            </objects>
+            <point key="canvasLocation" x="2277" y="396"/>
+        </scene>
+        <scene sceneID="Eb1-bU-SS7">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="XvS-O3-MsP" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <navigationController id="ywl-8V-elC" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" barStyle="blackOpaque" id="dIp-hY-kyL">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <connections>
+                            <outlet property="delegate" destination="ywl-8V-elC" id="f85-J1-Y8Q"/>
+                        </connections>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="SsU-0d-yX8" kind="relationship" relationship="rootViewController" id="fEC-qw-Pg3"/>
+                    </connections>
+                </navigationController>
             </objects>
             <point key="canvasLocation" x="1507" y="-183"/>
         </scene>
@@ -682,8 +929,14 @@
         <image name="74-location.png" width="20" height="20"/>
         <image name="battery_000.png" width="268" height="70"/>
         <image name="battery_100.png" width="268" height="70"/>
+        <image name="battery_coppertops.png" width="268" height="70"/>
+        <image name="battery_textbox.png" width="233" height="38"/>
         <image name="car_roadster_thundergray.png" width="327" height="151"/>
+        <image name="carlights.png" width="304" height="634"/>
         <image name="carlock.png" width="304" height="606"/>
+        <image name="carvaletoff.png" width="304" height="606"/>
+        <image name="charger_button.png" width="47" height="21"/>
+        <image name="charger_plug.png" width="268" height="70"/>
         <image name="connection_good.png" width="64" height="64"/>
         <image name="ol_car_roadster_thundergray.png" width="304" height="606"/>
         <image name="parking.png" width="300" height="300"/>
@@ -692,77 +945,15 @@
         <image name="roadster_outline_ld.png" width="304" height="606"/>
         <image name="roadster_outline_rd.png" width="304" height="606"/>
         <image name="roadster_outline_tr.png" width="304" height="606"/>
+        <image name="tirepress_letterbox.png" width="267" height="305"/>
     </resources>
-    <classes>
-        <class className="ovmsBodyViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsBodyViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="m_car_ambient_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_door_cp" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_hd" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_ld" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_rd" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_tr" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_lockunlock" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_outlineimage" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_temp_battery" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_battery_l" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_motor" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_motor_l" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_pem" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_pem_l" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fl_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fl_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fr_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fr_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rl_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rl_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rr_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rr_temp" candidateClass="UILabel"/>
-            </relationships>
-        </class>
-        <class className="ovmsCarsFormViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
-                <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
-            </relationships>
-        </class>
-        <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
-        </class>
-        <class className="ovmsLocationViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsLocationViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
-            </relationships>
-        </class>
-        <class className="ovmsStatusViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_connection_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_parking_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_parking_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_range" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
-            </relationships>
-        </class>
-    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="HDC-p9-1eU"/>
         <segue reference="X9h-Z2-0t4"/>
+        <segue reference="ICY-BZ-u8B"/>
     </inferredMetricsTieBreakers>
 </document>

@@ -1,0 +1,9 @@
+<map id="structs" name="structs">
+<area shape="rect" id="node1" href="$group__plot_animation_all_plots.html" title="All Plots" alt="" coords="355,5,429,35"/>
+<area shape="rect" id="node2" href="$group__animation.html" title="Custom layer properties that can be animated using Core Animation." alt="" coords="6,142,170,173"/>
+<area shape="rect" id="node3" href="$group__plot_animation_pie_chart.html" title="Pie Chart" alt="" coords="352,59,432,90"/>
+<area shape="rect" id="node4" href="$group__plot_animation_bar_plot.html" title="Bar Plot" alt="" coords="357,114,427,145"/>
+<area shape="rect" id="node5" href="$group__plot_animation_scatter_plot.html" title="Scatter Plot" alt="" coords="345,169,439,199"/>
+<area shape="rect" id="node6" href="$group__plot_animation_trading_range_plot.html" title="Trading Range Plot" alt="" coords="320,223,464,254"/>
+<area shape="rect" id="node7" href="$group__plot_animation_range_plot.html" title="Range Plot" alt="" coords="347,278,437,309"/>
+</map>

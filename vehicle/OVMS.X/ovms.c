@@ -40,13 +40,15 @@
 // Configuration settings
 #pragma	config FCMEN = OFF,      IESO = OFF
 #pragma	config PWRT = ON,        BOREN = OFF,      BORV = 0
-#pragma	config WDT = OFF,        WDTPS = 32768
+#pragma	config WDTPS = 2048     // WDT timeout set to 8 secs
 #if defined(__DEBUG)
   #pragma config MCLRE  = ON
   #pragma config DEBUG = ON
+  #pragma config WDT = OFF
 #else
   #pragma config MCLRE  = OFF
   #pragma config DEBUG = OFF
+  #pragma config WDT = ON
 #endif
 #pragma config OSC = HS
 #pragma	config LPT1OSC = OFF,    PBADEN = OFF
@@ -132,6 +134,8 @@ void main(void)
       net_poll();
 
     can_idlepoll();
+
+    ClrWdt();		// Clear Watchdog Timer
 
     x = TMR0L;
     if (TMR0H >= 0x4c) // Timout ~1sec (actually 996ms)

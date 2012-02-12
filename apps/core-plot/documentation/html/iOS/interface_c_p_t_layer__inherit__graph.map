@@ -1,0 +1,29 @@
+<map id="G" name="G">
+<area shape="rect" id="node14" href="$interface_c_p_t_annotation_host_layer.html" title="A container layer for annotations." alt="" coords="697,253,879,283"/>
+<area shape="rect" id="node40" href="$interface_c_p_t_axis.html" title="An abstract axis class." alt="" coords="751,334,825,365"/>
+<area shape="rect" id="node44" href="$interface_c_p_t_axis_label_group.html" title="A container layer for the axis labels." alt="" coords="714,389,862,419"/>
+<area shape="rect" id="node46" href="$interface_c_p_t_axis_set.html" title="A container layer for the set of axes for a graph." alt="" coords="741,443,835,474"/>
+<area shape="rect" id="node50" href="$interface_c_p_t_grid_line_group.html" title="A group of grid line layers." alt="" coords="718,498,858,529"/>
+<area shape="rect" id="node52" href="$interface_c_p_t_grid_lines.html" title="An abstract class that draws grid lines for an axis." alt="" coords="734,553,842,583"/>
+<area shape="rect" id="node54" href="$interface_c_p_t_plot_group.html" title="Defines the coordinate system of a plot." alt="" coords="733,607,843,638"/>
+<area shape="rect" id="node56" href="$interface_c_p_t_text_layer.html" title="A Core Animation layer that displays text drawn in a uniform style." alt="" coords="733,662,843,693"/>
+<area shape="rect" id="node2" href="doxygen-cocoa-touch-tags.xml$http://developer.apple.com/iphone/library/documentation/GraphicsImaging/Reference/CALayer_class/Introduction/Introduction.html" title="CALayer" alt="" coords="412,443,486,474"/>
+<area shape="rect" id="node4" href="doxygen-cocoa-touch-tags.xml$http://developer.apple.com/iphone/library/documentation/Cocoa/Reference/Foundation/Classes/NSObject_Class/Reference/Reference.html" title="NSObject" alt="" coords="212,390,292,421"/>
+<area shape="rect" id="node6" href="doxygen-cocoa-touch-tags.xml$http://developer.apple.com/iPhone/library/documentation/Cocoa/Reference/Foundation/Protocols/NSObject_Protocol/Reference/NSObject.html" title="\&lt;NSObject&#45;p\&gt;" alt="" coords="5,445,123,475"/>
+<area shape="rect" id="node10" href="$protocol_c_p_t_responder-p.html" title="The basis of all event processing in Core Plot." alt="" coords="381,498,518,529"/>
+<area shape="rect" id="node8" href="doxygen-cocoa-touch-tags.xml$http://www.devworld.apple.com/iphone/library/documentation/GraphicsImaging/Reference/CAMediaTiming_protocol/Introduction/Introduction.html" title="\&lt;CAMediaTiming&#45;p\&gt;" alt="" coords="172,445,332,475"/>
+<area shape="rect" id="node16" href="$interface_c_p_t_bordered_layer.html" title="A layer with a border line and background fill." alt="" coords="928,89,1067,119"/>
+<area shape="rect" id="node26" href="$interface_c_p_t_plot.html" title="An abstract plot class." alt="" coords="962,253,1033,283"/>
+<area shape="rect" id="node38" href="$interface_c_p_t_plot_area.html" title="A layer representing the actual plotting area of a graph." alt="" coords="947,307,1047,338"/>
+<area shape="rect" id="node18" href="$interface_c_p_t_graph.html" title="An abstract graph class." alt="" coords="1152,6,1237,37"/>
+<area shape="rect" id="node22" href="$interface_c_p_t_legend.html" title="A graph legend." alt="" coords="1148,61,1241,91"/>
+<area shape="rect" id="node24" href="$interface_c_p_t_plot_area_frame.html" title="A layer drawn on top of the graph layer and behind all plot elements." alt="" coords="1125,115,1265,146"/>
+<area shape="rect" id="node20" href="$interface_c_p_t_x_y_graph.html" title="A graph using a cartesian (X&#45;Y) plot space." alt="" coords="1324,6,1426,37"/>
+<area shape="rect" id="node28" href="$interface_c_p_t_bar_plot.html" title="A two&#45;dimensional bar plot." alt="" coords="1149,170,1240,201"/>
+<area shape="rect" id="node30" href="$interface_c_p_t_pie_chart.html" title="A pie chart." alt="" coords="1145,225,1245,255"/>
+<area shape="rect" id="node32" href="$interface_c_p_t_range_plot.html" title="A plot class representing a range of values in one coordinate, such as typically used to show errors..." alt="" coords="1139,279,1250,310"/>
+<area shape="rect" id="node34" href="$interface_c_p_t_scatter_plot.html" title="A two&#45;dimensional scatter plot." alt="" coords="1137,334,1252,365"/>
+<area shape="rect" id="node36" href="$interface_c_p_t_trading_range_plot.html" title="A trading range financial plot." alt="" coords="1114,389,1275,419"/>
+<area shape="rect" id="node42" href="$interface_c_p_t_x_y_axis.html" title="A 2&#45;dimensional cartesian (X&#45;Y) axis class." alt="" coords="952,362,1043,393"/>
+<area shape="rect" id="node48" href="$interface_c_p_t_x_y_axis_set.html" title="A set of cartesian (X&#45;Y) axes." alt="" coords="942,443,1053,474"/>
+</map>

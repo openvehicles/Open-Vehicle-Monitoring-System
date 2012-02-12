@@ -35,6 +35,11 @@
 -(void) updateCar;
 @end
 
+@protocol ovmsCommandDelegate
+@required
+- (void)commandResult:(NSArray*)result;
+@end
+
 @interface ovmsAppDelegate : UIResponder <UIApplicationDelegate>
 {
   GCDAsyncSocket *asyncSocket;
@@ -51,6 +56,7 @@
   id location_delegate;
   id status_delegate;
   id car_delegate;
+  id command_delegate;
   
   NSString* apns_deviceid;
   NSString* apns_pushkeytype;
@@ -165,5 +171,9 @@
 - (void)serverClearState;
 - (void)handleCommand:(char)code command:(NSString*)cmd;
 - (void)switchCar:(NSString*)car;
+
+- (BOOL)commandIsFree;
+- (void)commandRegister:(NSString*)command callback:(id)cb;
+- (void)commandCancel;
 
 @end

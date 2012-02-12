@@ -1,0 +1,12 @@
+<map id="G" name="G">
+<area shape="rect" id="node13" href="$interface___c_p_t_dark_gradient_theme.html" title="Creates a CPTXYGraph instance formatted with dark gray gradient backgrounds and light gray lines..." alt="" coords="763,5,946,35"/>
+<area shape="rect" id="node15" href="$interface___c_p_t_plain_black_theme.html" title="Creates a CPTXYGraph instance formatted with black backgrounds and white lines." alt="" coords="774,59,935,90"/>
+<area shape="rect" id="node17" href="$interface___c_p_t_plain_white_theme.html" title="Creates a CPTXYGraph instance formatted with white backgrounds and black lines." alt="" coords="773,114,937,145"/>
+<area shape="rect" id="node19" href="$interface___c_p_t_slate_theme.html" title="Creates a CPTXYGraph instance with colors that match the default iPhone navigation bar..." alt="" coords="791,169,919,199"/>
+<area shape="rect" id="node21" href="$interface___c_p_t_stocks_theme.html" title="Creates a CPTXYGraph instance formatted with a gradient background and white lines." alt="" coords="785,223,924,254"/>
+<area shape="rect" id="node2" href="$interface_c_p_t_theme.html" title="Creates a CPTGraph instance formatted with a predefined style." alt="" coords="461,114,552,145"/>
+<area shape="rect" id="node4" href="doxygen-cocoa-tags.xml$http://developer.apple.com/documentation/Cocoa/Reference/Foundation/Classes/NSObject_Class/Reference/Reference.html" title="NSObject" alt="" coords="312,86,392,117"/>
+<area shape="rect" id="node6" href="doxygen-cocoa-tags.xml$http://developer.apple.com/documentation/Cocoa/Reference/Foundation/Protocols/NSObject_Protocol/Reference/NSObject.html" title="\&lt;NSObject&#45;p\&gt;" alt="" coords="65,59,183,90"/>
+<area shape="rect" id="node8" href="doxygen-cocoa-tags.xml$http://developer.apple.com/documentation/Cocoa/Reference/ApplicationKit/Protocols/NSKeyValueBindingCreation_Protocol/Reference/Reference.html" title="\&lt;NSKeyValueBindingCreation&#45;p\&gt;" alt="" coords="5,114,243,145"/>
+<area shape="rect" id="node10" href="doxygen-cocoa-tags.xml$http://developer.apple.com/documentation/Cocoa/Reference/Foundation/Protocols/NSCoding_Protocol/Reference/Reference.html" title="\&lt;NSCoding&#45;p\&gt;" alt="" coords="291,141,413,171"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="structs" name="structs">
+<area shape="rect" id="node2" href="$group__legend_animation.html" title="Legend properties that can be animated using Core Animation." alt="" coords="218,5,294,35"/>
+<area shape="rect" id="node3" href="$group__graph_animation.html" title="Graph properties that can be animated using Core Animation." alt="" coords="222,59,290,90"/>
+<area shape="rect" id="node4" href="$group__plot_animation.html" title="Plot properties that can be animated using Core Animation." alt="" coords="230,114,282,145"/>
+<area shape="rect" id="node5" href="$group__axis_animation.html" title="Axis properties that can be animated using Core Animation." alt="" coords="230,169,282,199"/>
+</map>
