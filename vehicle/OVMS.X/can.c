@@ -87,6 +87,10 @@ void can_initialise(void)
   {
   char *p;
 
+  car_type[0] = 'T'; // Car is type TR - Tesla Roadster
+  car_type[1] = 'R';
+  car_type[2] = 0;
+
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
@@ -177,6 +181,7 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0x82: // Ambient Temperature
       car_ambient_temp = (signed char)can_databuffer[1];
+      car_stale_ambient = 120; // Reset stale indicator
       break;
     case 0x83: // GPS Latitude
       car_latitude = can_databuffer[4]
@@ -190,8 +195,27 @@ void can_poll0(void)                // CAN ID 100 and 102
                       + ((unsigned long) can_databuffer[6] << 16)
                       + ((unsigned long) can_databuffer[7] << 24);
       break;
+    case 0x85: // GPS direction and altitude
+      car_gpslock = can_databuffer[1];
+      if (car_gpslock)
+        {
+        car_direction = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
+        if (car_direction==360) car_direction=0; // Bug-fix for Tesla VMS bug
+        if (can_databuffer[5]&0xf0)
+          car_altitude = 0;
+        else
+          car_altitude = ((unsigned int)can_databuffer[5]<<8)+(can_databuffer[4]);
+        car_stale_gps = 120; // Reset stale indicator
+        }
+      else
+        {
+        car_stale_gps = 0; // Reset stale indicator
+        }
+      break;
     case 0x88: // Charging Current / Duration
       car_chargecurrent = can_databuffer[1];
+      car_chargelimit = can_databuffer[6];
+      car_chargeduration = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
       break;
     case 0x89: // Charging Voltage / Iavailable
       if (can_mileskm=='M')
@@ -203,15 +227,18 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0x95: // Charging mode
       car_chargestate = can_databuffer[1];
+      car_chargesubstate = can_databuffer[2];
       if (sys_features[FEATURE_CARBITS]&FEATURE_CB_2008) // A 2010+ roadster?
         car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
       else
         car_chargemode = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
-      if (car_stopped) // Stopped charging?
+      if ((car_chargestate >= 0x15)&&(car_stopped)) // Stopped charging?
         {
         car_stopped = 0;
         net_notify_status();
         }
+      car_charge_b4 = can_databuffer[3];
+      car_chargekwh = can_databuffer[7];
       break;
     case 0x96: // Doors / Charging yes/no
       if ((car_charging) && !(can_databuffer[1] & 0x10)) // Already Charging? Stopped?
@@ -220,10 +247,12 @@ void can_poll0(void)                // CAN ID 100 and 102
         }
       car_charging = (can_databuffer[1] >> 4) & 0x01; //Charging status
       if ((car_doors1 != can_databuffer[1])||
-          (car_doors2 != can_databuffer[2]))
+          (car_doors2 != can_databuffer[2])||
+          (car_doors3 != can_databuffer[3]))
         net_notify_environment();
       car_doors1 = can_databuffer[1]; // Doors #1
       car_doors2 = can_databuffer[2]; // Doors #2
+      car_doors3 = can_databuffer[3]; // Doors #3
       if (((car_doors1 & 0x80)==0)&&  // Car is not ON
           (car_parktime == 0)&&       // Parktime was not previously set
           (car_time != 0))            // We know the car time
@@ -242,6 +271,7 @@ void can_poll0(void)                // CAN ID 100 and 102
       car_tpem = (signed char)can_databuffer[1]; // Tpem
       car_tmotor = (signed char)can_databuffer[2]; // Tmotor
       car_tbattery = (signed char)can_databuffer[6]; // Tbattery
+      car_stale_temps = 120; // Reset stale indicator
       break;
     case 0xA4: // 7 VIN bytes i.e. "SFZRE2B"
       for (k=0;k<7;k++)
@@ -335,6 +365,7 @@ void can_poll1(void)                // CAN ID 344 and 402
       car_tpms_p[3] = can_databuffer[4];
       car_tpms_t[3] = (signed char)can_databuffer[5];
       }
+    car_stale_tpms = 120; // Reset stale indicator
     }
   else  				// It must be CAN ID 402
     {
@@ -358,6 +389,10 @@ void can_poll1(void)                // CAN ID 344 and 402
 //
 void can_state_ticker1(void)
   {
+  if (car_stale_ambient>0) car_stale_ambient--;
+  if (car_stale_temps>0)   car_stale_temps--;
+  if (car_stale_gps>0)     car_stale_gps--;
+  if (car_stale_tpms>0)    car_stale_tpms--;
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -469,6 +504,37 @@ void can_idlepoll(void)
   can_lastspeedrpt--;
   }
 
+void can_tx_wakeup(void)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x0a;
+  TXB0DLC = 0b00000001; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
+void can_tx_wakeuptemps(void)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x06;
+  TXB0D1 = 0x2c;
+  TXB0D2 = 0x01;
+  TXB0D3 = 0x00;
+  TXB0D4 = 0x00;
+  TXB0D5 = 0x09;
+  TXB0D6 = 0x10;
+  TXB0D7 = 0x00;
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
 void can_tx_setchargemode(unsigned char mode)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
@@ -486,6 +552,29 @@ void can_tx_setchargemode(unsigned char mode)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+
+  can_tx_wakeup(); // Also, wakeup the car if necessary
+  }
+
+void can_tx_setchargecurrent(unsigned char current)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x05;
+  TXB0D1 = 0x02;
+  TXB0D2 = 0x00;
+  TXB0D3 = 0x00;
+  TXB0D4 = current;
+  TXB0D5 = 0x00;
+  TXB0D6 = 0x00;
+  TXB0D7 = 0x00;
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+
+  can_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void can_tx_startstopcharge(unsigned char start)
@@ -505,6 +594,8 @@ void can_tx_startstopcharge(unsigned char start)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+
+  can_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void can_tx_lockunlockcar(unsigned char mode, char *pin)

@@ -199,6 +199,9 @@ void net_msg_stat(void)
     case 0x0d:
       strcatpgm2ram(net_scratchpad,(char const rom far*)"prepare,"); // Preparing
       break;
+    case 0x0f:
+      strcatpgm2ram(net_scratchpad,(char const rom far*)"heating,"); // Heating
+      break;
     default:
       strcatpgm2ram(net_scratchpad,(char const rom far*)"stopped,"); // Stopped
     }
@@ -224,9 +227,14 @@ void net_msg_stat(void)
     sprintf(net_msg_scratchpad, (rom far char*)"%u,", (((car_idealrange << 4)+5)/10));
   strcat(net_scratchpad,net_msg_scratchpad);
   if (*p == 'M') // Kmh or Miles
-    sprintf(net_msg_scratchpad, (rom far char*)"%u", car_estrange);
+    sprintf(net_msg_scratchpad, (rom far char*)"%u,", car_estrange);
   else
-    sprintf(net_msg_scratchpad, (rom far char*)"%u", (((car_estrange << 4)+5)/10));
+    sprintf(net_msg_scratchpad, (rom far char*)"%u,", (((car_estrange << 4)+5)/10));
+  strcat(net_scratchpad,net_msg_scratchpad);
+  sprintf(net_msg_scratchpad,(rom far char*)"%d,%u,%d,%d,%d,%d,%d",
+          car_chargelimit,car_chargeduration,
+          car_charge_b4, car_chargekwh, car_chargesubstate,
+          car_chargestate,car_chargemode);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -239,6 +247,10 @@ void net_msg_gps(void)
   strcatpgm2ram(net_scratchpad,(char const rom far*)",");
   format_latlon(car_longitude,net_msg_scratchpad);
   strcat(net_scratchpad,net_msg_scratchpad);
+  sprintf(net_msg_scratchpad, (rom far char*)",%d,%d,%d,%d",
+          car_direction, car_altitude, car_gpslock,car_stale_gps);
+  strcat(net_scratchpad,net_msg_scratchpad);
+
   net_msg_encode_puts();
   }
 
@@ -269,7 +281,8 @@ void net_msg_tpms(void)
       strcatpgm2ram(net_scratchpad, (rom far char*)"0,0,");
       }
     }
-  net_scratchpad[strlen(net_scratchpad)-1] = 0; // Remove trailing ','
+  sprintf(net_msg_scratchpad, (rom far char*)"%d",car_stale_tpms);
+  strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
 
@@ -277,8 +290,8 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.1.9-exp6,%s,%d,%d",
-    car_vin, net_sq, sys_features[FEATURE_CANWRITE]);
+  sprintf(net_msg_scratchpad, (rom far char*)"1.2.0-rc3,%s,%d,%d,%s",
+    car_vin, net_sq, sys_features[FEATURE_CANWRITE],car_type);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -293,11 +306,12 @@ void net_msg_environment(void)
     park = car_time - car_parktime;
 
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 D");
-  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d,%lu,%d",
+  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d,%lu,%d,%d,%d,%d",
           car_doors1, car_doors2, car_lockstate,
           car_tpem, car_tmotor, car_tbattery,
           car_trip, car_odometer, car_speed, park,
-          car_ambient_temp);
+          car_ambient_temp, car_doors3,
+          car_stale_temps, car_stale_ambient);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -305,8 +319,9 @@ void net_msg_environment(void)
 void net_msg_group(char *groupname)
   {
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 g");
-  sprintf(net_msg_scratchpad, (rom far char*)"%s,%d,%d,",
-          groupname, car_SOC, car_speed);
+  sprintf(net_msg_scratchpad, (rom far char*)"%s,%d,%d,%d,%d,%d,%d,",
+          groupname, car_SOC, car_speed,
+          car_direction, car_altitude, car_gpslock, car_stale_gps);
   strcat(net_scratchpad,net_msg_scratchpad);
 
   format_latlon(car_latitude,net_msg_scratchpad);
@@ -593,6 +608,8 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
+      delay100(2);
+      net_msg_stat();
       break;
     case 11: // Start charge (params unused)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -605,6 +622,8 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
+      delay100(2);
+      net_msg_stat();
       break;
     case 12: // Stop charge (params unused)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -617,6 +636,52 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
+      delay100(2);
+      net_msg_stat();
+      break;
+    case 15: // Set charge current (params: current in amps)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_setchargecurrent(atoi(net_msg_cmd_msg));
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
+      net_msg_encode_puts();
+      delay100(2);
+      net_msg_stat();
+      break;
+    case 18: // Wakeup car
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_wakeup();
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
+      net_msg_encode_puts();
+      delay100(2);
+      net_msg_stat();
+      net_msg_environment();
+      break;
+    case 19: // Wakeup temperature subsystem
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_wakeuptemps();
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
+      net_msg_encode_puts();
+      delay100(2);
+      net_msg_stat();
+      net_msg_environment();
       break;
     case 20: // Lock car (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -629,6 +694,8 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
+      delay100(2);
+      net_msg_environment();
       break;
     case 21: // Activate valet mode (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -641,6 +708,8 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
+      delay100(2);
+      net_msg_environment();
       break;
     case 22: // Unlock car (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -653,6 +722,8 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
+      delay100(2);
+      net_msg_environment();
       break;
     case 23: // Deactivate valet mode (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -665,6 +736,8 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
+      delay100(2);
+      net_msg_environment();
       break;
     case 40: // Send SMS (params: phone number, SMS message)
       for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;

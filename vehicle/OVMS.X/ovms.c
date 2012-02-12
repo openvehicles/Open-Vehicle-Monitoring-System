@@ -64,12 +64,18 @@
 #pragma udata
 unsigned int car_linevoltage = 0; // Line Voltage
 unsigned char car_chargecurrent = 0; // Charge Current
+unsigned char car_chargelimit = 0; // Charge Limit (amps)
+unsigned int car_chargeduration = 0; // Charge Duration (minutes)
 unsigned char car_chargestate = 4; // 1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging
+unsigned char car_chargesubstate = 0;
 unsigned char car_chargemode = 0; // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_charging = 0; // 1=yes/0=no
+unsigned char car_charge_b4 = 0; // B4 byte of charge state
+unsigned char car_chargekwh = 0; // KWh of charge
 unsigned char car_stopped = 0; // 1=yes,0=no
 unsigned char car_doors1 = 0; //
 unsigned char car_doors2 = 0; //
+unsigned char car_doors3 = 0; //
 unsigned char car_lockstate = 0; // Lock State
 unsigned char car_speed = 0; // speed in defined units (mph or kph)
 unsigned char car_SOC = 0; // State of Charge in %
@@ -79,6 +85,7 @@ unsigned long car_time = 0; // UTC Time
 unsigned long car_parktime = 0; // UTC time car was parked (or 0 if not)
 signed char car_ambient_temp = -127; // Ambient Temperature (celcius)
 unsigned char car_vin[18] = "-----------------"; // VIN
+unsigned char car_type[3]; // Car Type
 signed char car_tpem = 0; // Tpem
 signed char car_tmotor = 0; // Tmotor
 signed char car_tbattery = 0; // Tbattery
@@ -88,6 +95,13 @@ unsigned int car_trip = 0; // ODO trip in miles /10
 unsigned long car_odometer = 0; //Odometer in miles /10
 signed long car_latitude = 0x16DEC6D9; // Raw GPS Latitude  (52.04246 zero in converted result)
 signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not verified if this is correct)
+unsigned int car_direction = 0; // GPS direction of the car
+signed int car_altitude = 0; // GPS altitude of the car
+unsigned char car_gpslock = 0; // GPS lock status
+signed char car_stale_ambient = -1; // 0 = Ambient temperature is stale
+signed char car_stale_temps = -1; // 0 = Powertrain temperatures are stale
+signed char car_stale_gps = -1; // 0 = gps is stale
+signed char car_stale_tpms = -1; // 0 = tpms is stale
 unsigned char net_reg = 0; // Network registration
 unsigned char net_link = 0; // Network link status
 char net_apps_connected = 0; // Network apps connected
@@ -110,10 +124,9 @@ void main(void)
 
   PORTA = 0x00; // Initialise port A
   ADCON1 = 0x0F; // Switch off A/D converter
-  TRISB = 0xFE; // SET RB0 to output (connected to modem PWRKEY)
+  TRISA = 0xFF;
+  TRISB = 0xFE;
 
-  PORTBbits.RB0 = 0; // pull modem PWRKEY low for the modem's initial power up
-  
   // Timer 0 enabled, Fosc/4, 16 bit mode, prescaler 1:256
   // This gives us one tick every 51.2uS before prescale (13.1ms after)
   T0CON = 0b10000111; // @ 5Mhz => 51.2uS

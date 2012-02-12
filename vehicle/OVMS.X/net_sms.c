@@ -133,6 +133,9 @@ void net_sms_stat(char* number)
     case 0x0d:
       net_puts_rom("Charging, Preparing"); // Preparing
       break;
+    case 0x0f:
+      net_puts_rom("Charging, Heating"); // Preparing
+      break;
     default:
       net_puts_rom("Charging Stopped"); // Stopped
     }

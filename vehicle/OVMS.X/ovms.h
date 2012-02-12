@@ -66,12 +66,18 @@
 #pragma udata
 extern unsigned int car_linevoltage; // Line Voltage
 extern unsigned char car_chargecurrent; // Charge Current
+extern unsigned char car_chargelimit; // Charge Limit (amps)
+extern unsigned int car_chargeduration; // Charge Duration (minutes)
 extern unsigned char car_chargestate; // 1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging
+extern unsigned char car_chargesubstate;
 extern unsigned char car_chargemode; // 0=standard, 1=storage, 3=range, 4=performance
 extern unsigned char car_charging; // 1=yes/0=no
+extern unsigned char car_charge_b4; // B4 byte of charge state
+extern unsigned char car_chargekwh; // KWh of charge
 extern unsigned char car_stopped; // 1=yes,0=no
 extern unsigned char car_doors1; //
 extern unsigned char car_doors2; //
+extern unsigned char car_doors3; //
 extern unsigned char car_lockstate; // Lock State
 extern unsigned char car_speed; // speed in defined units (mph or kph)
 extern unsigned char car_SOC; // State of Charge in %
@@ -81,6 +87,7 @@ extern unsigned long car_time; // UTC Time
 extern unsigned long car_parktime; // UTC time car was parked (or 0 if not)
 extern signed char car_ambient_temp; // Ambient Temperature (celcius)
 extern unsigned char car_vin[18]; // VIN
+extern unsigned char car_type[3]; // Car Type
 extern signed char car_tpem; // Tpem
 extern signed char car_tmotor; // Tmotor
 extern signed char car_tbattery; // Tbattery
@@ -90,6 +97,13 @@ extern unsigned int car_trip; // ODO trip in miles /10
 extern unsigned long car_odometer; //Odometer in miles /10
 extern signed long car_latitude; // Raw GPS Latitude
 extern signed long car_longitude; // Raw GPS Longitude
+extern unsigned int car_direction; // GPS direction of the car
+extern signed int car_altitude; // GPS altitude of the car
+extern unsigned char car_gpslock; // GPS lock status
+extern signed char car_stale_ambient; // 0 = Ambient temperature is stale
+extern signed char car_stale_temps; // 0 = Powertrain temperatures are stale
+extern signed char car_stale_gps; // 0 = gps is stale
+extern signed char car_stale_tpms; // 0 = tpms is stale
 extern unsigned char net_reg; // Network registration
 extern unsigned char net_link; // Network link status
 extern char net_apps_connected; // Network apps connected
