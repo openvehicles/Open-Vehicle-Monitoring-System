@@ -230,9 +230,10 @@ void net_msg_stat(void)
   else
     sprintf(net_msg_scratchpad, (rom far char*)"%u,", (((car_estrange << 4)+5)/10));
   strcat(net_scratchpad,net_msg_scratchpad);
-  sprintf(net_msg_scratchpad,(rom far char*)"%d,%u,%d,%d,%d",
+  sprintf(net_msg_scratchpad,(rom far char*)"%d,%u,%d,%d,%d,%d,%d",
           car_chargelimit,car_chargeduration,
-          car_charge_b4, car_chargekwh, car_chargesubstate);
+          car_charge_b4, car_chargekwh, car_chargesubstate,
+          car_chargestate,car_chargemode);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -288,7 +289,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.2.0-rc2,%s,%d,%d,%s",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.2.0-rc3,%s,%d,%d,%s",
     car_vin, net_sq, sys_features[FEATURE_CANWRITE],car_type);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
