@@ -28,31 +28,98 @@
 ; THE SOFTWARE.
 */
 
-2012-01-08 1.0.9   Stream
-                   Tidy: Align miles->km calculations to car VMS
-                   Added: Increase to 16 features
-                   Added: Map to 8 features to top 8 parameters - to make them persistent
+2012-02-12 1.2.0-rc3   Release Candidate #3 for end-user firmware
+                       Include charge state and mode as raw values in status message
 
-2012-01-04 1.0.8   Miles->Km
-                   BufFix: Minor change to rounding in miles->km conversion
+2012-02-11 1.2.0-rc2   Release Candidate #2 for end-user firmware
+                       Add heating state
+                       Add charge sub-state to status message
 
-2012-01-03 1.0.7   Parking Meter
-                   Added: Support for issue #22 parking meter
-                   Tidy: Final tidy of SPEEDO feature
+2012-02-11 1.2.0-rc1   Release Candidate #1 for end-user firmware
+                       Working car lock/unlock, valet on/off, charge stop, charge start
+                       Status of lights on car body
+                       Support can_tx_wakeup and waking up car when starting/stopping charging
+                       Support can_tx_wakeuptemps
+                       Support can_tx_setchargecurrent (command 15)
+                       Support commands 18 and 19 for wakeup car and temps
+                       Support car type firmware parameter
+                       Extensions for GPS direction and altitude
+                       Send charge limit
+                       Send charge duration
+                       Send charge B4 byte and KWH
+                       Send car_doors3
+                       Stale message indications
+                       Honour board switch to control GSM-only or GPRS-enable
+                       Only notify (SMS, IP, etc) if charge was stopped
+                       send status messages after commands issued
+                       Reverse logic of GSM-only/GPRS-enable switch - bridging 11-13 seems to be GSM-only
+                       Car stopped charging notification fix
+                       Cumulative protocol updated
 
-2012-01-02 1.0.6   More Speedo Spoof
-                   Tidy: Further refinements to speedo spoof feature
+2012-02-08 1.19-exp6    Car transmits to CAN bus
+                        Ambient Temperature
+                        Signed temperatures
+                        Support social group subscriptions
+                        Support for ambient temperature display. Start of framework for Controls (disabled).
+                        Support for ambient temperature display. Start of framework for Controls (disabled).
+                        Add suspected decode for id#100 B1=85 GPS lock status
+                        CAN bus id#100 b1=85 gps status documentation complete
+                        HVAC and tidy-ups
+                        Add valet mode and unlock/lock status
+                        Added Watchdog
+                        iOS graphics rework. Work in progress prototype only.
+                        Fix ID on can tx command messages - doh
+                        Support "preparing" charge state
+                        Clarify can bus id#100 B1=0x95 document
 
-2012-01-01 1.0.5   Speedo Spoof
-                   Tidy: Tidy-up init code
-                   Added: The send_pending feature
-                   Added: Speed in units/hour (mph or kph, depending on param)
-                   Added: RESET SMS command
-                   Added: Better multi-app support, and more stable async. But, ATE0 ;-(
-                   BugFix: For FEATURE SMS command
+2012-01-31 1.1.9-exp4   Car Commands
+                        Add a reset_cpu() utility function
+                        Support for NET_STATE_HARDSTOP, NET_STATE_HARDSTOP2 and NET_STATE_STOP states
+                        Extend firmware (F) message to send can-write status, add support for C5 command to reset system
+                        Implement c2 - set feature
+                        Implement c4 - set parameter, and bug fix for c2
+                        Implement can_tx_setchargemode, can_tx_startstopcharge, can_tx_lockunlockcar
+                        Implement all outstounding app->server->car messages
+                        Add a modem_reboot function. Fix delay100 to support up to 25.5seconds delay and be more accurate using TIMER2
+                        Merge Sonnys changes for modem init, plus delay fixes to try to fix drop after DATA SENT 122 problem
 
-2011-12-22 1.0.1   Features
-                   Added: CAN interrupts, GSM signal quality
-                   Added: FEATURE SMS command and sys_feature mechanism
+2012-01-16 1.1.9-exp1   Refactor to 'features'
+                        Extensions to protocol, for app->server->car commands and responses
+                        Extensions to protocol, for GPRS utilisation data
+                        #16 Server support for A->S->C Messages
+                        Smooth location update for map display
+                        Re-work for Production/QualityControl/Experimental configurations
+                        Tidy-up streaming for iOS
+                        Basic implementation of commands server->car and responses - untested
+                        Try to speed up initial 30second sleep by trying AT wakeup every 4 seconds
+                        Move PARAM_MINSOC -> FEATURE_MINSOC (#9)
+                        Move compiler #define constants to features
 
-2011-12-17 1.0.0   Nominal v1.0, prior to branch
+2012-01-08 1.0.9        Stream
+                        Tidy: Align miles->km calculations to car VMS
+                        Added: Increase to 16 features
+                        Added: Map to 8 features to top 8 parameters - to make them persistent
+
+2012-01-04 1.0.8        Miles->Km
+                        BufFix: Minor change to rounding in miles->km conversion
+
+2012-01-03 1.0.7        Parking Meter
+                        Added: Support for issue #22 parking meter
+                        Tidy: Final tidy of SPEEDO feature
+
+2012-01-02 1.0.6        More Speedo Spoof
+                        Tidy: Further refinements to speedo spoof feature
+
+2012-01-01 1.0.5        Speedo Spoof
+                        Tidy: Tidy-up init code
+                        Added: The send_pending feature
+                        Added: Speed in units/hour (mph or kph, depending on param)
+                        Added: RESET SMS command
+                        Added: Better multi-app support, and more stable async. But, ATE0 ;-(
+                        BugFix: For FEATURE SMS command
+
+2011-12-22 1.0.1        Features
+                        Added: CAN interrupts, GSM signal quality
+                        Added: FEATURE SMS command and sys_feature mechanism
+
+2011-12-17 1.0.0        Nominal v1.0, prior to branch
