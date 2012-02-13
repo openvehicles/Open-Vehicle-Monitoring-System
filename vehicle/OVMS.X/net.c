@@ -186,11 +186,11 @@ void net_poll(void)
 void net_puts_rom(static const rom char *data)
   {
   /* Send characters up to the null */
-  do
+  for (;*data;data++)
     {
     while (vUARTIntStatus.UARTIntTxBufferFull);
     UARTIntPutChar(*data);
-    } while (*++data);
+    }
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -201,11 +201,11 @@ void net_puts_rom(static const rom char *data)
 void net_puts_ram(const char *data)
   {
   /* Send characters up to the null */
-  do
+  for (;*data;data++)
     {
     while (vUARTIntStatus.UARTIntTxBufferFull);
     UARTIntPutChar(*data);
-    } while (*++data);
+    }
   }
 
 ////////////////////////////////////////////////////////////////////////
