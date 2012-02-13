@@ -232,10 +232,13 @@ void can_poll0(void)                // CAN ID 100 and 102
         car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
       else
         car_chargemode = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
-      if ((car_chargestate >= 0x15)&&(car_stopped)) // Stopped charging?
+      if (car_stopped) // Stopped charging?
         {
         car_stopped = 0;
-        net_notify_status();
+        if (car_chargestate >= 0x15)
+          {
+          net_notify_status();
+          }
         }
       car_charge_b4 = can_databuffer[3];
       car_chargekwh = can_databuffer[7];
@@ -245,7 +248,7 @@ void can_poll0(void)                // CAN ID 100 and 102
         {
         car_stopped = 1; // Yes Roadster stopped charging, set flag.
         }
-      car_charging = (can_databuffer[1] >> 4) & 0x01; //Charging status
+      car_charging = (can_databuffer[1] & 0x10); //Charging status
       if ((car_doors1 != can_databuffer[1])||
           (car_doors2 != can_databuffer[2])||
           (car_doors3 != can_databuffer[3]))
