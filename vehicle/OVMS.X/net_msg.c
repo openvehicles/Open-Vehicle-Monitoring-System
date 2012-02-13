@@ -74,6 +74,8 @@ rom char NET_MSG_OK[] = "MP-0 c%d,0";
 rom char NET_MSG_INVALIDSYNTAX[] = "MP-0 c%d,1,Invalid syntax";
 rom char NET_MSG_NOCANWRITE[] = "MP-0 c%d,1,No write access to CAN";
 rom char NET_MSG_INVALIDRANGE[] = "MP-0 c%d,1,Parameter out of range";
+rom char NET_MSG_NOCANCHARGE[] = "MP-0 c%d,1,Cannot charge (charge port closed)";
+rom char NET_MSG_NOCANSTOPCHARGE[] = "MP-0 c%d,1,Cannot stop charge (charge not in progress)";
 
 void net_msg_init(void)
   {
@@ -613,8 +615,15 @@ void net_msg_cmd_do(void)
         }
       else
         {
-        can_tx_startstopcharge(1);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        if ((car_doors1 & 0x04))
+          {
+          can_tx_startstopcharge(1);
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+          }
+        else
+          {
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANCHARGE,net_msg_cmd_code);
+          }
         }
       net_msg_encode_puts();
       delay100(2);
@@ -627,8 +636,15 @@ void net_msg_cmd_do(void)
         }
       else
         {
-        can_tx_startstopcharge(0);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        if ((car_doors1 & 0x10))
+          {
+          can_tx_startstopcharge(0);
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+          }
+        else
+          {
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANSTOPCHARGE,net_msg_cmd_code);
+          }
         }
       net_msg_encode_puts();
       delay100(2);
