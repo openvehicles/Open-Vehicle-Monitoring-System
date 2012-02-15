@@ -475,14 +475,7 @@
   {
     case 'c': // Command response
       {
-      NSArray *lparts = [cmd componentsSeparatedByString:@","];
-      if (command_delegate != nil)
-        {
-        if ([command_delegate conformsToProtocol:@protocol(ovmsCommandDelegate)])
-          {
-          [command_delegate commandResult:lparts];
-          }
-        }
+      [self commandResponse:cmd];
       }
       break;
     case 'Z': // Number of connected cars
@@ -768,11 +761,16 @@
 }
 
 - (void)commandRegister:(NSString*)command callback:(id)cb
-{
+  {
   if (command_delegate != nil) return; // Cancel any pending delegate
   
   command_delegate = cb;
   
+  [self commandIssue:command];
+  }
+
+- (void)commandIssue:(NSString*)command
+  {
   char buf[1024];
   char output[1024];
   NSString* cmd = [NSString stringWithFormat:@"MP-0 C%@",command];
@@ -783,14 +781,212 @@
   NSString *pushStr = [NSString stringWithFormat:@"%s\r\n",output];
   NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
   [asyncSocket writeData:pushData withTimeout:-1 tag:0];
-  [self didStartNetworking];
-}
+  [self didStartNetworking];  
+  }
+
+- (void)commandResponse:(NSString*)response
+  {
+  NSArray *result = [response componentsSeparatedByString:@","];
+  
+  if ([result count]>1)
+    {
+    int command = [[result objectAtIndex:0] intValue];
+    int rcode = [[result objectAtIndex:1] intValue];
+    switch (rcode)
+      {
+      case 0: // ok
+        switch (command)
+          {
+          case 1:
+          case 3:
+          case 30:
+            if ((command_delegate != nil)&&([command_delegate conformsToProtocol:@protocol(ovmsCommandDelegate)]))
+              {
+              [command_delegate commandResult:result];
+              }
+            else
+              [self didStopNetworking];
+            break;
+          case 5:
+            [JHNotificationManager notificationWithMessage:@"Car Module Reboot..."];
+            [self didStopNetworking];
+            break;
+          case 10:
+            [JHNotificationManager notificationWithMessage:@"Set Charge Mode"];
+            [self didStopNetworking];
+            break;
+          case 11:
+            [JHNotificationManager notificationWithMessage:@"Started Charge"];
+            [self didStopNetworking];
+            break;
+          case 12:
+            [JHNotificationManager notificationWithMessage:@"Stopped Charge"];
+            [self didStopNetworking];
+            break;
+          case 15:
+            [JHNotificationManager notificationWithMessage:@"Set Charge Current"];
+            [self didStopNetworking];
+            break;
+          case 18:
+            [JHNotificationManager notificationWithMessage:@"Car woken up"];
+            [self didStopNetworking];
+            break;
+          case 19:
+            [JHNotificationManager notificationWithMessage:@"Temperature subsystem woken up"];
+            [self didStopNetworking];
+            break;
+          case 20:
+            [JHNotificationManager notificationWithMessage:@"Car Locked"];
+            [self didStopNetworking];
+            break;
+          case 21:
+            [JHNotificationManager notificationWithMessage:@"Valet Mode Activated"];
+            [self didStopNetworking];
+            break;
+          case 22:
+            [JHNotificationManager notificationWithMessage:@"Car Unlocked"];
+            [self didStopNetworking];
+            break;
+          case 23:
+            [JHNotificationManager notificationWithMessage:@"Valet Mode Deactivated"];
+            [self didStopNetworking];
+            break;
+          default:
+            [self didStopNetworking];
+          }
+        break;
+      case 1: // failed
+        [JHNotificationManager
+         notificationWithMessage:
+         [NSString stringWithFormat:@"Failed: %@",[[result objectAtIndex:2] stringValue]]];
+        [self didStopNetworking];
+        break;
+      case 2: // unsupported
+        [JHNotificationManager notificationWithMessage:@"Unsupported operation"];
+        [self didStopNetworking];
+        break;
+      case 3: // unimplemented
+        [JHNotificationManager notificationWithMessage:@"Unimplemented operation"];
+        [self didStopNetworking];
+        break;
+      default:
+        [JHNotificationManager
+         notificationWithMessage:
+         [NSString stringWithFormat:@"Error: %@",[[result objectAtIndex:2] stringValue]]];
+        [self didStopNetworking];
+        break;
+      }
+    }
+  else
+    [self didStopNetworking];
+  }
 
 - (void)commandCancel
-{
+  {
   command_delegate = nil;
   [self didStopNetworking];
-}
+  }
+
+- (void)commandDoRequestFeatureList
+  {
+  [self commandIssue:@"1"];
+  }
+
+- (void)commandDoSetFeature:(int)feature value:(NSString*)value
+  {
+  [self commandIssue:[NSString stringWithFormat:@"2,%d,%@",feature,value]];
+  }
+
+- (void)commandDoRequestParameterList
+  {
+  [self commandIssue:@"3"];
+  }
+
+- (void)commandDoSetParameter:(int)param value:(NSString*)value
+  {
+  [self commandIssue:[NSString stringWithFormat:@"4,%d,%@",param,value]];  
+  }
+
+- (void)commandDoReboot
+  {
+  [JHNotificationManager notificationWithMessage:@"Rebooting Car Module..."];
+  [self commandIssue:@"5"];
+  }
+
+- (void)commandDoSetChargeMode:(int)mode
+  {
+  [JHNotificationManager notificationWithMessage:@"Setting Charge Mode..."];
+  [self commandIssue:[NSString stringWithFormat:@"10,%d",mode]];  
+  }
+
+- (void)commandDoStartCharge
+  {
+  [JHNotificationManager notificationWithMessage:@"Starting Charge..."];
+  [self commandIssue:@"11"];
+  self.car_linevoltage = 0;
+  self.car_chargecurrent = 0;
+  self.car_chargestate = @"starting";
+  if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+    {
+    [self.status_delegate updateStatus];
+    }
+  }
+
+- (void)commandDoStopCharge
+  {
+  [JHNotificationManager notificationWithMessage:@"Stopping Charge..."];
+  [self commandIssue:@"12"];
+  self.car_linevoltage = 0;
+  self.car_chargecurrent = 0;
+  self.car_chargestate = @"stopping";
+  if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+    {
+    [self.status_delegate updateStatus];
+    }
+  }
+
+- (void)commandDoSetChargeCurrent:(int)current
+  {
+  [JHNotificationManager notificationWithMessage:@"Setting Charge Current..."];
+  [self commandIssue:[NSString stringWithFormat:@"15,%d",current]];
+  }
+
+- (void)comamndDoWakeupCar
+  {
+  [JHNotificationManager notificationWithMessage:@"Waking up Car..."];
+  [self commandIssue:@"18"];  
+  }
+
+- (void)commandDoWakeupTempSubsystem
+  {
+  [JHNotificationManager notificationWithMessage:@"Waking up Temperature Subsystem..."];
+  [self commandIssue:@"19"];
+  }
+
+- (void)commandDoLockCar:(NSString*)pin
+  {
+  [self commandIssue:[NSString stringWithFormat:@"20,%@",pin]];
+  }
+
+- (void)commandDoActivateValet:(NSString*)pin
+  {
+  [self commandIssue:[NSString stringWithFormat:@"21,%@",pin]];
+  }
+
+- (void)commandDoUnlockCar:(NSString*)pin
+  {
+  [self commandIssue:[NSString stringWithFormat:@"22,%@",pin]];
+  }
+
+- (void)commandDoDeactivateValet:(NSString*)pin
+  {
+  [self commandIssue:[NSString stringWithFormat:@"23,%@",pin]];
+  }
+
+- (void)commandDoRequestGPRSData
+  {
+  [self commandIssue:@"30"];
+  }
 
 /**
  Returns the managed object context for the application.

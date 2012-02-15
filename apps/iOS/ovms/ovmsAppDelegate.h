@@ -174,6 +174,25 @@
 
 - (BOOL)commandIsFree;
 - (void)commandRegister:(NSString*)command callback:(id)cb;
+- (void)commandIssue:(NSString*)command;
+- (void)commandResponse:(NSString*)response;
 - (void)commandCancel;
+
+- (void)commandDoRequestFeatureList;
+- (void)commandDoSetFeature:(int)feature value:(NSString*)value;
+- (void)commandDoRequestParameterList;
+- (void)commandDoSetParameter:(int)param value:(NSString*)value;
+- (void)commandDoReboot;
+- (void)commandDoSetChargeMode:(int)mode;
+- (void)commandDoStartCharge;
+- (void)commandDoStopCharge;
+- (void)commandDoSetChargeCurrent:(int)current;
+- (void)comamndDoWakeupCar;
+- (void)commandDoWakeupTempSubsystem;
+- (void)commandDoLockCar:(NSString*)pin;
+- (void)commandDoActivateValet:(NSString*)pin;
+- (void)commandDoUnlockCar:(NSString*)pin;
+- (void)commandDoDeactivateValet:(NSString*)pin;
+- (void)commandDoRequestGPRSData;
 
 @end

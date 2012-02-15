@@ -10,7 +10,7 @@
 #import "ovmsAppDelegate.h"
 #import "ovmsControlPINEntry.h"
 
-@interface ovmsControlViewController : UIViewController <ovmsControlPINEntryDelegate, ovmsCommandDelegate>
+@interface ovmsControlViewController : UIViewController <ovmsControlPINEntryDelegate>
 
 @property (strong, nonatomic) IBOutlet UISegmentedControl *m_chargemode;
 

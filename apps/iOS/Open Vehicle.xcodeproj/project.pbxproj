@@ -14,6 +14,8 @@
 		4D10FCF7147BCACD0092FAF9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D10FCF6147BCACD0092FAF9 /* Security.framework */; };
 		4D16EF32148747EC004A80AE /* JHNotificationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D16EF31148747EC004A80AE /* JHNotificationManager.m */; };
 		4D16EF3514874AE7004A80AE /* notification_background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D16EF3414874AE7004A80AE /* notification_background.png */; };
+		4D3C35C914EAA42000126F47 /* Nothing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D3C35C814EAA42000126F47 /* Nothing.png */; };
+		4D3C35CB14EAA43300126F47 /* charger_blank.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D3C35CA14EAA43300126F47 /* charger_blank.png */; };
 		4D5AE36914733757002F5F52 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36814733757002F5F52 /* UIKit.framework */; };
 		4D5AE36B14733757002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
 		4D5AE36D14733757002F5F52 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36C14733757002F5F52 /* CoreGraphics.framework */; };
@@ -179,6 +181,8 @@
 		4D16EF30148747EC004A80AE /* JHNotificationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JHNotificationManager.h; sourceTree = "<group>"; };
 		4D16EF31148747EC004A80AE /* JHNotificationManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JHNotificationManager.m; sourceTree = "<group>"; };
 		4D16EF3414874AE7004A80AE /* notification_background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = notification_background.png; sourceTree = "<group>"; };
+		4D3C35C814EAA42000126F47 /* Nothing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Nothing.png; sourceTree = "<group>"; };
+		4D3C35CA14EAA43300126F47 /* charger_blank.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = charger_blank.png; sourceTree = "<group>"; };
 		4D5AE36414733757002F5F52 /* Open Vehicle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Open Vehicle.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D5AE36814733757002F5F52 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		4D5AE36A14733757002F5F52 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -466,6 +470,8 @@
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
 			isa = PBXGroup;
 			children = (
+				4D3C35C814EAA42000126F47 /* Nothing.png */,
+				4D3C35CA14EAA43300126F47 /* charger_blank.png */,
 				4DDF384614E4246000B4ACC0 /* carlights.png */,
 				4D69A85B14DFCB0D00CF0F74 /* charger_button.png */,
 				4D69A85C14DFCB0E00CF0F74 /* charger_plug.png */,
@@ -828,6 +834,8 @@
 				4D69A85D14DFCB0E00CF0F74 /* charger_button.png in Resources */,
 				4D69A85E14DFCB0E00CF0F74 /* charger_plug.png in Resources */,
 				4DDF384714E4246000B4ACC0 /* carlights.png in Resources */,
+				4D3C35C914EAA42000126F47 /* Nothing.png in Resources */,
+				4D3C35CB14EAA43300126F47 /* charger_blank.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -17,10 +17,6 @@
                                 <rect key="frame" x="-31" y="143" width="343" height="70"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="charger_button.png" id="rlv-Wy-337">
-                                <rect key="frame" x="200" y="165" width="47" height="21"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="battery_textbox.png" id="L42-Cm-yFc">
                                 <rect key="frame" x="45" y="318" width="233" height="38"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -85,6 +81,14 @@
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="-" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" minimumFontSize="9" id="dxg-Z5-kDR" userLabel="car_charge_msg">
+                                <rect key="frame" x="198" y="157" width="52" height="35"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="9"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                                <size key="shadowOffset" width="0.0" height="0.0"/>
+                            </label>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="connection_good.png" id="Rcp-Jf-HIC">
                                 <rect key="frame" x="291" y="5" width="24" height="24"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -142,6 +146,14 @@
                                 <color key="shadowColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <size key="shadowOffset" width="0.0" height="0.0"/>
                             </label>
+                            <slider opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="1" minValue="0.0" maxValue="1" continuous="NO" id="Tjp-Kr-c3l">
+                                <rect key="frame" x="135" y="163" width="115" height="23"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <connections>
+                                    <action selector="ChargeSliderTouch:" destination="2" eventType="touchUpInside" id="ohl-Ph-w2p"/>
+                                    <action selector="ChargeSliderValue:" destination="2" eventType="valueChanged" id="zKo-92-726"/>
+                                </connections>
+                            </slider>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512112140656" green="0.14509804546833038" blue="0.25098040699958801" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -151,6 +163,7 @@
                     <connections>
                         <outlet property="m_battery_charging" destination="C4i-5V-3e1" id="1yJ-Nz-IQn"/>
                         <outlet property="m_battery_front" destination="CKU-Hj-ZF9" id="O1T-SI-yN0"/>
+                        <outlet property="m_car_charge_message" destination="dxg-Z5-kDR" id="inI-Ew-PzW"/>
                         <outlet property="m_car_charge_mode" destination="DOE-r2-aEW" id="gQ1-3Z-vX9"/>
                         <outlet property="m_car_charge_state" destination="as8-eT-6NH" id="Xgp-Ol-StF"/>
                         <outlet property="m_car_charge_type" destination="8Nu-Np-kIL" id="skw-DC-HZk"/>
@@ -162,8 +175,8 @@
                         <outlet property="m_car_range_estimated" destination="Sun-nV-rnJ" id="BSO-tN-VWZ"/>
                         <outlet property="m_car_range_ideal" destination="kQB-dH-EY6" id="aot-Z5-pxU"/>
                         <outlet property="m_car_soc" destination="zYR-tz-88R" id="TyB-ho-2hX"/>
-                        <outlet property="m_charger_button" destination="rlv-Wy-337" id="7uh-Ab-siw"/>
                         <outlet property="m_charger_plug" destination="Geg-T8-Lqj" id="ZKY-mj-LKI"/>
+                        <outlet property="m_charger_slider" destination="Tjp-Kr-c3l" id="gn2-Eq-8pI"/>
                     </connections>
                 </viewController>
             </objects>
@@ -935,7 +948,6 @@
         <image name="carlights.png" width="304" height="634"/>
         <image name="carlock.png" width="304" height="606"/>
         <image name="carvaletoff.png" width="304" height="606"/>
-        <image name="charger_button.png" width="47" height="21"/>
         <image name="charger_plug.png" width="268" height="70"/>
         <image name="connection_good.png" width="64" height="64"/>
         <image name="ol_car_roadster_thundergray.png" width="304" height="606"/>

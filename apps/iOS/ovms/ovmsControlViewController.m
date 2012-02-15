@@ -77,15 +77,11 @@
 }
 
 - (IBAction)startChargingButton:(id)sender {
-  [JHNotificationManager notificationWithMessage:@"Starting Charge"];
-  NSString* cmd = @"11";
-  [[ovmsAppDelegate myRef] commandRegister:cmd callback:self];
+  [[ovmsAppDelegate myRef] commandDoStartCharge];
 }
 
 - (IBAction)stopChargingButton:(id)sender {
-  [JHNotificationManager notificationWithMessage:@"Stopping Charge"];
-  NSString* cmd = @"12";
-  [[ovmsAppDelegate myRef] commandRegister:cmd callback:self];
+  [[ovmsAppDelegate myRef] commandDoStopCharge];
 }
 
 - (IBAction)chargeModeButton:(id)sender {
@@ -107,6 +103,7 @@
 }
 
 - (IBAction)resetModuleButton:(id)sender {
+  [[ovmsAppDelegate myRef] commandDoReboot];
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
@@ -156,80 +153,20 @@
 {
   if ([fn isEqualToString:@"Valet On"])
     {
-    [JHNotificationManager notificationWithMessage:@"Activating Valet Mode"];
-    NSString* cmd = [NSString stringWithFormat:@"21,%@",pin];
-    [[ovmsAppDelegate myRef] commandRegister:cmd callback:self];
+    [[ovmsAppDelegate myRef] commandDoActivateValet:pin];
     }
   else if ([fn isEqualToString:@"Valet Off"])
     {
-    [JHNotificationManager notificationWithMessage:@"Deactivating Valet Mode"];
-    NSString* cmd = [NSString stringWithFormat:@"23,%@",pin];
-    [[ovmsAppDelegate myRef] commandRegister:cmd callback:self];
+    [[ovmsAppDelegate myRef] commandDoDeactivateValet:pin];
     }    
   else if ([fn isEqualToString:@"Lock Car"])
     {
-    [JHNotificationManager notificationWithMessage:@"Locking Car"];
-    NSString* cmd = [NSString stringWithFormat:@"20,%@",pin];
-    [[ovmsAppDelegate myRef] commandRegister:cmd callback:self];
+    [[ovmsAppDelegate myRef] commandDoLockCar:pin];
     }
   else if ([fn isEqualToString:@"Unlock Car"])
     {
-    [JHNotificationManager notificationWithMessage:@"Unlocking Car"];
-    NSString* cmd = [NSString stringWithFormat:@"22,%@",pin];
-    [[ovmsAppDelegate myRef] commandRegister:cmd callback:self];
+    [[ovmsAppDelegate myRef] commandDoUnlockCar:pin];
     }    
-}
-
-- (void)commandResult:(NSArray*)result
-{
-  [[ovmsAppDelegate myRef] commandCancel];
-  if ([result count]>1)
-    {
-//    int command = [[result objectAtIndex:0] intValue];
-    int rcode = [[result objectAtIndex:1] intValue];
-    switch (rcode)
-      {
-      case 0: // ok
-        switch ([[result objectAtIndex:0] intValue])
-          {
-          case 11:
-            [JHNotificationManager notificationWithMessage:@"Started Charge"];
-            break;
-          case 12:
-            [JHNotificationManager notificationWithMessage:@"Stopped Charge"];
-            break;
-          case 20:
-            [JHNotificationManager notificationWithMessage:@"Car Locked"];
-            break;
-          case 21:
-            [JHNotificationManager notificationWithMessage:@"Valet Mode Activated"];
-            break;
-          case 22:
-            [JHNotificationManager notificationWithMessage:@"Car Unlocked"];
-            break;
-          case 23:
-            [JHNotificationManager notificationWithMessage:@"Valet Mode Deactivated"];
-            break;
-          }
-        break;
-      case 1: // failed
-        [JHNotificationManager
-         notificationWithMessage:
-         [NSString stringWithFormat:@"Failed: %@",[[result objectAtIndex:2] stringValue]]];
-        break;
-      case 2: // unsupported
-        [JHNotificationManager notificationWithMessage:@"Unsupported operation"];
-        break;
-      case 3: // unimplemented
-        [JHNotificationManager notificationWithMessage:@"Unimplemented operation"];
-        break;
-      default:
-        [JHNotificationManager
-         notificationWithMessage:
-         [NSString stringWithFormat:@"Error: %@",[[result objectAtIndex:2] stringValue]]];
-        break;
-      }
-    }
 }
 
 @end
