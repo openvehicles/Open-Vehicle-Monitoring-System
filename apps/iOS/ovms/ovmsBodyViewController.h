@@ -8,8 +8,9 @@
 
 #import <UIKit/UIKit.h>
 #import "ovmsAppDelegate.h"
+#import "ovmsControlPINEntry.h"
 
-@interface ovmsBodyViewController : UIViewController <ovmsCarDelegate>
+@interface ovmsBodyViewController : UIViewController <ovmsCarDelegate, ovmsControlPINEntryDelegate>
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_lockunlock;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_valetonoff;

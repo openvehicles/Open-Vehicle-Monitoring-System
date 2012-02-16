@@ -57,6 +57,10 @@
 		4D7439F8148F961600090BBA /* connection_good_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F6148F961600090BBA /* connection_good_paranoid.png */; };
 		4D7439F9148F961600090BBA /* connection_bad_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F7148F961600090BBA /* connection_bad_paranoid.png */; };
 		4D7439FC148F9CA400090BBA /* connection_unknown_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */; };
+		4D777F6914ED2EC900B46223 /* carlock_b.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D777F6514ED2EC900B46223 /* carlock_b.png */; };
+		4D777F6A14ED2EC900B46223 /* carunlock_b.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D777F6614ED2EC900B46223 /* carunlock_b.png */; };
+		4D777F6B14ED2EC900B46223 /* carvaletoff_b.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D777F6714ED2EC900B46223 /* carvaletoff_b.png */; };
+		4D777F6C14ED2EC900B46223 /* carvaleton_b.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D777F6814ED2EC900B46223 /* carvaleton_b.png */; };
 		4D8E597C14B3CB4C00426260 /* parking.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D8E597B14B3CB4C00426260 /* parking.png */; };
 		4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D90410A147C787F00D9C8E1 /* CoreLocation.framework */; };
 		4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */; };
@@ -234,6 +238,10 @@
 		4D7439F6148F961600090BBA /* connection_good_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_good_paranoid.png; sourceTree = "<group>"; };
 		4D7439F7148F961600090BBA /* connection_bad_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_bad_paranoid.png; sourceTree = "<group>"; };
 		4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_unknown_paranoid.png; sourceTree = "<group>"; };
+		4D777F6514ED2EC900B46223 /* carlock_b.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carlock_b.png; sourceTree = "<group>"; };
+		4D777F6614ED2EC900B46223 /* carunlock_b.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carunlock_b.png; sourceTree = "<group>"; };
+		4D777F6714ED2EC900B46223 /* carvaletoff_b.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carvaletoff_b.png; sourceTree = "<group>"; };
+		4D777F6814ED2EC900B46223 /* carvaleton_b.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carvaleton_b.png; sourceTree = "<group>"; };
 		4D8E597B14B3CB4C00426260 /* parking.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = parking.png; sourceTree = "<group>"; };
 		4D90410A147C787F00D9C8E1 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewController.h; sourceTree = "<group>"; };
@@ -470,6 +478,10 @@
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
 			isa = PBXGroup;
 			children = (
+				4D777F6514ED2EC900B46223 /* carlock_b.png */,
+				4D777F6614ED2EC900B46223 /* carunlock_b.png */,
+				4D777F6714ED2EC900B46223 /* carvaletoff_b.png */,
+				4D777F6814ED2EC900B46223 /* carvaleton_b.png */,
 				4D3C35C814EAA42000126F47 /* Nothing.png */,
 				4D3C35CA14EAA43300126F47 /* charger_blank.png */,
 				4DDF384614E4246000B4ACC0 /* carlights.png */,
@@ -836,6 +848,10 @@
 				4DDF384714E4246000B4ACC0 /* carlights.png in Resources */,
 				4D3C35C914EAA42000126F47 /* Nothing.png in Resources */,
 				4D3C35CB14EAA43300126F47 /* charger_blank.png in Resources */,
+				4D777F6914ED2EC900B46223 /* carlock_b.png in Resources */,
+				4D777F6A14ED2EC900B46223 /* carunlock_b.png in Resources */,
+				4D777F6B14ED2EC900B46223 /* carvaletoff_b.png in Resources */,
+				4D777F6C14ED2EC900B46223 /* carvaleton_b.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

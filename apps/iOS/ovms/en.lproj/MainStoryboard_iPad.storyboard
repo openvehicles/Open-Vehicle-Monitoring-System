@@ -100,6 +100,14 @@
                                 <rect key="frame" x="481" y="41" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                             </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carunlock.png" id="T9f-p1-bGJ">
+                                <rect key="frame" x="481" y="41" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carvaletoff.png" id="Cxa-IJ-9Om">
+                                <rect key="frame" x="481" y="41" width="152" height="303"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" lineBreakMode="tailTruncation" minimumFontSize="10" id="ITH-aK-f0c">
                                 <rect key="frame" x="641" y="89" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
@@ -200,14 +208,6 @@
                             </label>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="carlights.png" id="zyk-Z4-RVj">
                                 <rect key="frame" x="480" y="34" width="152" height="317"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                            </imageView>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carunlock.png" id="T9f-p1-bGJ">
-                                <rect key="frame" x="481" y="41" width="152" height="303"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                            </imageView>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="carvaletoff.png" id="Cxa-IJ-9Om">
-                                <rect key="frame" x="480" y="41" width="152" height="303"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="M0c-0x-SFf">
@@ -547,7 +547,7 @@
         <image name="carlights.png" width="304" height="634"/>
         <image name="carunlock.png" width="304" height="606"/>
         <image name="carvaletoff.png" width="304" height="606"/>
-        <image name="charger_button.png" width="47" height="21"/>
+        <image name="charger_button.png" width="61" height="21"/>
         <image name="charger_plug.png" width="268" height="70"/>
         <image name="connection_good.png" width="64" height="64"/>
         <image name="ol_car_roadster_thundergray.png" width="304" height="606"/>
@@ -559,66 +559,6 @@
         <image name="roadster_outline_tr.png" width="304" height="606"/>
         <image name="tirepress_letterbox.png" width="267" height="305"/>
     </resources>
-    <classes>
-        <class className="ovmsCarsFormViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
-                <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
-            </relationships>
-        </class>
-        <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
-        </class>
-        <class className="ovmsStatusViewControllerPad" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewControllerPad.h"/>
-            <relationships>
-                <relationship kind="outlet" name="m_battery_charging" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_ambient_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_charge_mode" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_connection_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_door_cp" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_hd" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_ld" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_rd" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_door_tr" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_lights" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_lockunlock" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_outlineimage" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_parking_image" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_parking_state" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_range_estimated" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_range_ideal" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_battery" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_battery_l" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_motor" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_motor_l" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_pem" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_temp_pem_l" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_valetonoff" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_car_wheel_fl_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fl_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fr_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_fr_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rl_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rl_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rr_pressure" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_car_wheel_rr_temp" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="m_charger_button" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="m_charger_plug" candidateClass="UIImageView"/>
-                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
-            </relationships>
-        </class>
-    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar" statusBarStyle="blackTranslucent"/>
         <simulatedOrientationMetrics key="orientation"/>

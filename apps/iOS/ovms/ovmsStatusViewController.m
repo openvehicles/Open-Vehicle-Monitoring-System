@@ -308,6 +308,7 @@
     m_charger_slider.enabled = 0;
     m_car_charge_state.hidden = 1;
     m_car_charge_type.hidden = 1;
+    m_car_charge_message.hidden = 1;
     }
 
   if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"charging"])

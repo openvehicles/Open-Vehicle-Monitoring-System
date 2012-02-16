@@ -7,6 +7,7 @@
 //
 
 #import "ovmsBodyViewController.h"
+#import "ovmsControlPINEntry.h"
 
 @implementation ovmsBodyViewController
 @synthesize m_car_lockunlock;
@@ -67,6 +68,10 @@
   [ovmsAppDelegate myRef].car_delegate = self;
   
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
+  
+//  m_car_lockunlock.userInteractionEnabled = YES;
+//  UITapGestureRecognizer *tap1 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(LockTapped:)];
+//  [m_car_lockunlock addGestureRecognizer:tap1];
 }
 
 - (void)viewDidUnload
@@ -279,5 +284,67 @@
     m_car_wheel_rl_temp.text = @"";
     }
 }
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+  {
+  if ([[segue identifier] isEqualToString:@"ValetMode"])
+    {
+    if ([ovmsAppDelegate myRef].car_doors2 & 0x10)
+      { // Valet is ON, let's offer to deactivate it
+        [[segue destinationViewController] setInstructions:@"Deactivating valet mode\n\nEnter PIN"];
+        [[segue destinationViewController] setHeading:@"Valet Mode"];
+        [[segue destinationViewController] setFunction:@"Valet Off"];
+        [[segue destinationViewController] setDelegate:self];
+      }
+    else
+      { // Valet is OFF, let's offer to activate it
+        [[segue destinationViewController] setInstructions:@"Activating valet mode\n\nEnter PIN"];
+        [[segue destinationViewController] setHeading:@"Valet Mode"];
+        [[segue destinationViewController] setFunction:@"Valet On"];
+        [[segue destinationViewController] setDelegate:self];
+      }
+    }
+  else if ([[segue identifier] isEqualToString:@"LockUnlock"])
+    {
+    if ([ovmsAppDelegate myRef].car_doors2 & 0x08)
+      { // Car is locked, let's offer to unlock it
+        [[segue destinationViewController] setInstructions:@"Unlocking Car\n\nEnter PIN"];
+        [[segue destinationViewController] setHeading:@"Unlock Car"];
+        [[segue destinationViewController] setFunction:@"Unlock Car"];
+        [[segue destinationViewController] setDelegate:self];
+      }
+    else
+      { // Car is unlocked, let's offer to lock it
+        [[segue destinationViewController] setInstructions:@"Locking Car\n\nEnter PIN"];
+        [[segue destinationViewController] setHeading:@"Lock Car"];
+        [[segue destinationViewController] setFunction:@"Lock Car"];
+        [[segue destinationViewController] setDelegate:self];
+      }
+    }
+  }
+
+- (void)omvsControlPINEntryDelegateDidCancel:(NSString*)fn
+  {
+  }
+
+- (void)omvsControlPINEntryDelegateDidSave:(NSString*)fn pin:(NSString*)pin
+  {
+  if ([fn isEqualToString:@"Valet On"])
+    {
+    [[ovmsAppDelegate myRef] commandDoActivateValet:pin];
+    }
+  else if ([fn isEqualToString:@"Valet Off"])
+    {
+    [[ovmsAppDelegate myRef] commandDoDeactivateValet:pin];
+    }    
+  else if ([fn isEqualToString:@"Lock Car"])
+    {
+    [[ovmsAppDelegate myRef] commandDoLockCar:pin];
+    }
+  else if ([fn isEqualToString:@"Unlock Car"])
+    {
+    [[ovmsAppDelegate myRef] commandDoUnlockCar:pin];
+    }    
+  }
 
 @end
