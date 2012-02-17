@@ -430,6 +430,8 @@
     }
   }
 
-- (IBAction)ChargeSliderValue:(id)sender {
-}
+- (IBAction)ChargeSliderValue:(id)sender
+  {
+  }
+
 @end

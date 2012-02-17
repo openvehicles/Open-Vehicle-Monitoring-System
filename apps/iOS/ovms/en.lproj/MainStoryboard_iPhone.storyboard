@@ -154,6 +154,22 @@
                                     <action selector="ChargeSliderValue:" destination="2" eventType="valueChanged" id="zKo-92-726"/>
                                 </connections>
                             </slider>
+                            <button opaque="NO" alpha="0.10000000149011612" tag="200" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="OLs-ET-xq8" userLabel="Battery Button">
+                                <rect key="frame" x="52" y="240" width="213" height="73"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="boldSystem" size="button"/>
+                                <state key="normal">
+                                    <color key="titleColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <segue destination="u5C-fS-YrG" kind="modal" identifier="ChargerSettings" modalTransitionStyle="coverVertical" id="WmQ-jV-fGN"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512112140656" green="0.14509804546833038" blue="0.25098040699958801" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -574,6 +590,22 @@
                                 <rect key="frame" x="26" y="51" width="267" height="305"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
+                            <button opaque="NO" alpha="0.10000000149011612" tag="200" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="ME6-jf-qXo" userLabel="Wakeup Button">
+                                <rect key="frame" x="113" y="208" width="94" height="73"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="boldSystem" size="button"/>
+                                <state key="normal">
+                                    <color key="titleColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="WakeupButton:" destination="QVp-45-P9a" eventType="touchUpInside" id="vrj-ev-R7z"/>
+                                </connections>
+                            </button>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="Ktq-Dz-PKA">
                                 <rect key="frame" x="26" y="164" width="57" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -795,7 +827,7 @@
                                 </connections>
                             </button>
                         </subviews>
-                        <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                        <color key="backgroundColor" red="0.070588238537311554" green="0.11372549831867218" blue="0.18823531270027161" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <navigationItem key="navigationItem" title="Control" id="0Q6-oV-Bz0">
                         <barButtonItem key="rightBarButtonItem" title="Done" id="TOS-Sb-ygs">
@@ -809,7 +841,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="1872" y="-183"/>
+            <point key="canvasLocation" x="1896" y="-177"/>
         </scene>
         <scene sceneID="A9I-hX-b5M">
             <objects>
@@ -904,7 +936,7 @@
                     <navigationItem key="navigationItem" title="Parameters" id="gcK-oN-82b"/>
                 </tableViewController>
             </objects>
-            <point key="canvasLocation" x="2277" y="-761"/>
+            <point key="canvasLocation" x="2507" y="-708"/>
         </scene>
         <scene sceneID="CgH-xe-eJm">
             <objects>
@@ -933,7 +965,7 @@
                     <navigationItem key="navigationItem" title="Features" id="GXv-t9-y7E"/>
                 </tableViewController>
             </objects>
-            <point key="canvasLocation" x="2119" y="-880"/>
+            <point key="canvasLocation" x="2380" y="-901"/>
         </scene>
         <scene sceneID="o7M-rV-knj">
             <objects>
@@ -948,6 +980,81 @@
                 </viewController>
             </objects>
             <point key="canvasLocation" x="2277" y="396"/>
+        </scene>
+        <scene sceneID="Kev-uy-6HY">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="LXJ-GX-JpT" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <viewController id="NfD-wf-3qX" customClass="ovmsChargerSettingsViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="sNT-Cv-UJh">
+                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <pickerView contentMode="scaleToFill" id="X8M-5y-crp">
+                                <rect key="frame" x="0.0" y="200" width="320" height="216"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <connections>
+                                    <outlet property="dataSource" destination="NfD-wf-3qX" id="Cyw-p6-NXQ"/>
+                                    <outlet property="delegate" destination="NfD-wf-3qX" id="TiQ-wL-JcB"/>
+                                </connections>
+                            </pickerView>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="bar" selectedSegmentIndex="0" id="5tY-j8-As0">
+                                <rect key="frame" x="20" y="20" width="280" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <segments>
+                                    <segment title="Standard"/>
+                                    <segment title="Storage"/>
+                                    <segment title="Range"/>
+                                    <segment title="Perform"/>
+                                </segments>
+                                <connections>
+                                    <action selector="ModeChanged:" destination="NfD-wf-3qX" eventType="valueChanged" id="mgl-fa-9Fn"/>
+                                    <action selector="chargeModeButton:" destination="SsU-0d-yX8" eventType="valueChanged" id="RNH-1V-W29"/>
+                                </connections>
+                            </segmentedControl>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="center" text="Range Mode limits power.  Frequent use will reduce long-term battery life." textAlignment="center" lineBreakMode="wordWrap" numberOfLines="4" minimumFontSize="10" id="K2W-47-lAZ">
+                                <rect key="frame" x="20" y="57" width="280" height="115"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" red="0.070588238540000001" green="0.11372549830000001" blue="0.18823531269999999" alpha="1" colorSpace="deviceRGB"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Charger Settings" id="MC4-oY-aOP">
+                        <barButtonItem key="leftBarButtonItem" title="Cancel" id="G7c-Ic-m7e">
+                            <connections>
+                                <action selector="CancelButton:" destination="NfD-wf-3qX" id="mgK-wX-5l1"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem key="rightBarButtonItem" title="Done" id="jbc-Eq-kzI">
+                            <connections>
+                                <action selector="DoneButton:" destination="NfD-wf-3qX" id="zsV-NK-vmc"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="m_charger_current" destination="X8M-5y-crp" id="8Cl-gf-zYS"/>
+                        <outlet property="m_charger_mode" destination="5tY-j8-As0" id="Mfe-CG-xmG"/>
+                        <outlet property="m_charger_warning" destination="K2W-47-lAZ" id="XAH-X3-NsX"/>
+                    </connections>
+                </viewController>
+            </objects>
+            <point key="canvasLocation" x="1903" y="-761"/>
+        </scene>
+        <scene sceneID="xSi-dF-4Bk">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="UX8-jo-G9a" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <navigationController definesPresentationContext="YES" id="u5C-fS-YrG" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" barStyle="blackOpaque" id="k19-N2-F74">
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="NfD-wf-3qX" kind="relationship" relationship="rootViewController" id="n6L-gZ-cka"/>
+                    </connections>
+                </navigationController>
+            </objects>
+            <point key="canvasLocation" x="1507" y="-761"/>
         </scene>
         <scene sceneID="Eb1-bU-SS7">
             <objects>
@@ -1000,7 +1107,7 @@
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="gam-vz-1Nr"/>
         <segue reference="X9h-Z2-0t4"/>
+        <segue reference="ViB-aJ-Vm9"/>
     </inferredMetricsTieBreakers>
 </document>

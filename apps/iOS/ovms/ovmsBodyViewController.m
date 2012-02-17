@@ -347,4 +347,23 @@
     }    
   }
 
+- (IBAction)WakeupButton:(id)sender
+  {
+  // The wakeup button has been pressed - let's wakeup the car
+  UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Wakeup Car"
+                                                           delegate:self
+                                                  cancelButtonTitle:@"Cancel"
+                                                  destructiveButtonTitle:nil
+                                                  otherButtonTitles:@"Wakeup",nil];
+  [actionSheet showInView:self.view];
+  }
+
+- (void)actionSheet:(UIActionSheet *)sender clickedButtonAtIndex:(int)index
+  {
+  if (index == [sender firstOtherButtonIndex])
+    {
+    [[ovmsAppDelegate myRef] commandDoWakeupCar];
+    }
+  }
+
 @end

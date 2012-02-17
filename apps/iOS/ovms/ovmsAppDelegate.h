@@ -81,7 +81,14 @@
   NSString* car_chargemode;
   int car_idealrange;
   int car_estimatedrange;
-  
+  int car_chargelimit;
+  int car_chargeduration;
+  int car_chargeb4;
+  int car_chargekwh;
+  int car_chargesubstate;
+  int car_chargestateN;
+  int car_chargemodeN;
+
   int car_doors1;
   int car_doors2;
   int car_lockstate;
@@ -135,6 +142,13 @@
 @property (strong, nonatomic) NSString* car_chargemode;
 @property (assign) int car_idealrange;
 @property (assign) int car_estimatedrange;
+@property (assign) int car_chargelimit;
+@property (assign) int car_chargeduration;
+@property (assign) int car_chargeb4;
+@property (assign) int car_chargekwh;
+@property (assign) int car_chargesubstate;
+@property (assign) int car_chargestateN;
+@property (assign) int car_chargemodeN;
 
 @property (strong, nonatomic) id car_delegate;
 @property (assign) int car_doors1;
@@ -187,7 +201,7 @@
 - (void)commandDoStartCharge;
 - (void)commandDoStopCharge;
 - (void)commandDoSetChargeCurrent:(int)current;
-- (void)comamndDoWakeupCar;
+- (void)commandDoWakeupCar;
 - (void)commandDoWakeupTempSubsystem;
 - (void)commandDoLockCar:(NSString*)pin;
 - (void)commandDoActivateValet:(NSString*)pin;

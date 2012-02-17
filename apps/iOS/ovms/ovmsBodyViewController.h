@@ -10,7 +10,7 @@
 #import "ovmsAppDelegate.h"
 #import "ovmsControlPINEntry.h"
 
-@interface ovmsBodyViewController : UIViewController <ovmsCarDelegate, ovmsControlPINEntryDelegate>
+@interface ovmsBodyViewController : UIViewController <ovmsCarDelegate, ovmsControlPINEntryDelegate, UIActionSheetDelegate>
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_lockunlock;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_valetonoff;
@@ -39,5 +39,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_motor_l;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_battery_l;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_ambient_temp;
+
+- (IBAction)WakeupButton:(id)sender;
 
 @end

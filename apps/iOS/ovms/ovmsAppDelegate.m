@@ -42,6 +42,13 @@
 @synthesize car_chargemode;
 @synthesize car_idealrange;
 @synthesize car_estimatedrange;
+@synthesize car_chargelimit;
+@synthesize car_chargeduration;
+@synthesize car_chargeb4;
+@synthesize car_chargekwh;
+@synthesize car_chargesubstate;
+@synthesize car_chargestateN;
+@synthesize car_chargemodeN;
 
 @synthesize car_delegate;
 @synthesize car_doors1;
@@ -398,6 +405,14 @@
   car_chargemode = @"";
   car_idealrange = 0;
   car_estimatedrange = 0;
+  car_chargelimit = 0;
+  car_chargeduration = 0;
+  car_chargeb4 = 0;
+  car_chargekwh = 0;
+  car_chargesubstate = 0;
+  car_chargestateN = 0;
+  car_chargemodeN = 0;
+
   car_doors1 = 0;
   car_doors2 = 0;
   car_lockstate = 0;
@@ -506,6 +521,16 @@
         car_chargemode = [lparts objectAtIndex:5];
         car_idealrange = [[lparts objectAtIndex:6] intValue];
         car_estimatedrange = [[lparts objectAtIndex:7] intValue];
+        }
+      if ([lparts count]>=15)
+        {
+        car_chargelimit = [[lparts objectAtIndex:8] intValue];
+        car_chargeduration = [[lparts objectAtIndex:9] intValue];
+        car_chargeb4 = [[lparts objectAtIndex:10] intValue];
+        car_chargekwh = [[lparts objectAtIndex:11] intValue];
+        car_chargesubstate = [[lparts objectAtIndex:12] intValue];
+        car_chargestateN = [[lparts objectAtIndex:13] intValue];
+        car_chargemodeN = [[lparts objectAtIndex:14] intValue];
         }
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
         {
@@ -951,10 +976,10 @@
   [self commandIssue:[NSString stringWithFormat:@"15,%d",current]];
   }
 
-- (void)comamndDoWakeupCar
+- (void)commandDoWakeupCar
   {
   [JHNotificationManager notificationWithMessage:@"Waking up Car..."];
-  [self commandIssue:@"18"];  
+  [self commandIssue:@"18"];
   }
 
 - (void)commandDoWakeupTempSubsystem
