@@ -49,6 +49,7 @@
 LINE: while(<>)
   {
   while (/[\r\n]$/) { chop; }
+  my $line = $_;
   tr/a-z/A-z/;
   my ($type,$time,$id,@d) = split /[,\s]+/;
   foreach (@d) { $_ = '0'.$_ if (length($_)==1); }
@@ -269,9 +270,10 @@ LINE: while(<>)
   elsif ($type eq 'TD11')
     {
     $msg = "PING: TD11 transmit";
-    my @vals;
-    foreach (0 .. 7) { push @vals,(defined $d[$_])?$d[$_]:"  "; }
-    printf "%15s %3s %s   %6s %s\n",$time,$id,join(' ',@vals),$msgt,$msg;
+    my @vals = ();
+    foreach (0 .. 7) { push @vals,"  "; }
+    $msg = $1 if ($line=~/\s+;\s*(.+)/);
+    printf "%15s %4s %s  %6s %s\n",$time,'NOTE',join(' ',@vals),$msgt,$msg;
     }
   }
 

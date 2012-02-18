@@ -1,0 +1,2096 @@
+              0 NOTE                                 A Tesla Roadster 2.5 std model, charge with slide-to-stop charging
+         0.0413 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         0.0417 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         0.0421 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         0.6111 100 96 68 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: closed) (pilot: true) (charging: false) (bits 68)
+         0.6119 588 00 00 84                         
+         0.6125 1A0 00 00 00 00                      
+         0.6127 590 01 00 00 00 00 00 00 00          
+         0.7411 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         0.7415 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         0.7418 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         1.4411 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         1.4414 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         1.4418 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         1.4710 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+         1.4719 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+         1.4722 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+         1.5377 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+         1.6212 100 96 68 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: closed) (pilot: true) (charging: false) (bits 68)
+         1.6219 588 00 00 84                         
+         1.6225 1A0 00 00 00 00                      
+         1.6228 590 01 00 00 00 00 00 00 00          
+         2.1415 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         2.1417 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         2.1422 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         2.6212 100 96 68 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: closed) (pilot: true) (charging: false) (bits 68)
+         2.6219 588 00 00 84                         
+         2.6225 1A0 00 00 00 00                      
+         2.6228 590 01 00 00 00 00 00 00 00          
+         2.8511 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         2.8515 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         2.8518 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         3.4914 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+         3.4922 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+         3.4925 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+         3.5614 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         3.5618 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         3.5621 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         3.6315 100 96 68 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: closed) (pilot: true) (charging: false) (bits 68)
+         3.6323 588 00 00 84                         
+         3.6329 1A0 00 00 00 00                      
+         3.6331 590 01 00 00 00 00 00 00 00          
+         4.2712 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         4.2714 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         4.2718 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         4.2721 100 9B E9 F2 07 05 D7 92 00    ->VDS (message to VDS 9B)
+         4.2723 100 07 64                      ->VDS (message to VDS 07)
+         4.5012 100 81 00 00 00 9E 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:49:18 2012)
+         4.5015 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+         4.5018 100 86 00 92 01 F0 FF FF FF    ->VDS (message to VDS 86)
+         4.5021 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+         4.5024 100 8B 06 90 81 13 07 14 1E    ->VDS (message to VDS 8B)
+         4.5028 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+         4.5031 100 A3 22 27 00 00 00 14       ->VDS TEMPS (Tpem 34) (Tmotor 39) (Tbattery 20)
+         4.5033 100 97 22 27 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+         4.5036 100 9D 22 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+         4.6125 588 00 00 84                         
+         4.6130 1A0 00 00 00 00                      
+         4.6133 590 01 00 00 00 00 00 00 00          
+         4.6414 100 96 68 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: closed) (pilot: true) (charging: false) (bits 68)
+         4.9927 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         4.9930 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         4.9934 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         5.5115 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+         5.5123 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+         5.5126 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+         5.6415 100 96 68 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: closed) (pilot: true) (charging: false) (bits 68)
+         5.6422 588 00 00 84                         
+         5.6428 1A0 00 00 00 00                      
+         5.6431 590 01 00 00 00 00 00 00 00          
+         5.7113 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         5.7116 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         5.7119 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         6.4313 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         6.4316 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         6.4319 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         6.5201 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+         6.6514 100 96 68 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: closed) (pilot: true) (charging: false) (bits 68)
+         6.6521 588 00 00 84                         
+         6.6527 1A0 00 00 00 00                      
+         6.6530 590 01 00 00 00 00 00 00 00          
+         6.6579 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+         7.1513 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         7.1516 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         7.1519 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         7.5314 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+         7.5322 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+         7.5325 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+         7.6619 100 96 68 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: closed) (pilot: true) (charging: false) (bits 68)
+         7.6626 588 00 00 84                         
+         7.6632 1A0 00 00 00 00                      
+         7.6634 590 01 00 00 00 00 00 00 00          
+         7.8717 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         7.8721 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         7.8724 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         8.2501 NOTE                                 Open Charge Port
+         8.5914 100 88 00 AD 01 FF FF 46       ->VDS Charger settings (limit 70A) (current 0A) (duration 429mins)
+         8.5917 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         8.5920 100 95 04 07 64 57 02 0E 1E    ->VDS Charger v1.5 (done) (conn-pwr-cable) (standard)
+         8.6268 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+         8.6276 588 00 00 84                         
+         8.6281 1A0 00 00 00 00                      
+         8.6285 590 01 00 00 00 00 00 00 00          
+         8.6380 102 06 10 27 00 00 01 00 00    VDS-> (message from VDS 06)
+         8.6407 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+         8.6413 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         8.6417 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+         8.6715 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+         9.2918 100 9B E9 F2 07 06 D7 92 00    ->VDS (message to VDS 9B)
+         9.2921 100 07 64                      ->VDS (message to VDS 07)
+         9.5514 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+         9.5523 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+         9.5528 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+         9.6825 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+         9.6831 588 00 00 84                         
+         9.6838 1A0 00 00 00 00                      
+         9.6840 590 01 00 00 00 00 00 00 00          
+         9.9895 102 06 BC 02 00 00 21 00 00    VDS-> (message from VDS 06)
+         9.9897 102 04 44                      VDS-> (message from VDS 04)
+         9.9980 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+         9.9983 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+         9.9986 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+         9.9988 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        10.0009 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        10.6915 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        10.6918 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        10.6921 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        10.6924 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        10.6928 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        10.6935 588 00 00 84                         
+        10.6941 1A0 00 00 00 00                      
+        10.6943 590 01 00 00 00 00 00 00 00          
+        11.3384 102 04 44                      VDS-> (message from VDS 04)
+        11.3409 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        11.4119 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        11.4122 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        11.4125 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        11.4128 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        11.5619 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        11.5628 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        11.5631 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        11.6529 588 00 00 84                         
+        11.6534 1A0 00 00 00 00                      
+        11.6538 590 01 00 00 00 00 00 00 00          
+        11.7018 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        12.1319 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        12.1322 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        12.1325 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        12.1328 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        12.6184 102 04 44                      VDS-> (message from VDS 04)
+        12.6191 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        12.6209 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        12.7117 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        12.7124 588 00 00 84                         
+        12.7130 1A0 00 00 00 00                      
+        12.7133 590 01 00 00 00 00 00 00 00          
+        12.8447 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        12.8450 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        12.8453 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        12.8456 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        13.2006 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        13.5520 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        13.5528 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        13.5531 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        13.5534 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        13.5537 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        13.5541 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+        13.5543 100 9C 00 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        13.7221 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        13.7228 588 00 00 84                         
+        13.7234 1A0 00 00 00 00                      
+        13.7237 590 01 00 00 00 00 00 00 00          
+        13.8985 102 04 44                      VDS-> (message from VDS 04)
+        13.9015 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        14.7704 100 81 00 00 00 A9 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:49:29 2012)
+        14.7706 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+        14.7829 100 86 00 92 01 70 FF FF FF    ->VDS (message to VDS 86)
+        14.7833 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+        14.7835 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        14.7838 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        14.7842 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        14.7844 100 8B 0A 90 81 13 07 14 1E    ->VDS (message to VDS 8B)
+        14.7847 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        14.7849 100 A3 22 27 00 00 00 14       ->VDS TEMPS (Tpem 34) (Tmotor 39) (Tbattery 20)
+        14.7853 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        14.7856 100 97 22 27 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+        14.7859 100 9B E9 F2 07 06 D7 92 00    ->VDS (message to VDS 9B)
+        14.7863 100 9D E9 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+        14.7865 100 07 64                      ->VDS (message to VDS 07)
+        14.7872 588 00 00 84                         
+        14.7878 1A0 00 00 00 00                      
+        14.7881 590 01 00 00 00 00 00 00 00          
+        15.1786 102 04 44                      VDS-> (message from VDS 04)
+        15.1826 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        15.4927 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        15.4929 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        15.4933 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        15.4936 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        15.5829 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        15.5837 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        15.5840 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        15.7922 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        15.7929 588 00 00 84                         
+        15.7936 1A0 00 00 00 00                      
+        15.7938 590 01 00 00 00 00 00 00 00          
+        16.2031 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        16.2033 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        16.2036 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        16.2039 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        16.4585 102 04 44                      VDS-> (message from VDS 04)
+        16.4605 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        16.8120 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        16.8126 588 00 00 84                         
+        16.8133 1A0 00 00 00 00                      
+        16.8135 590 01 00 00 00 00 00 00 00          
+        16.9027 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        16.9030 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        16.9034 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        16.9037 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        17.5921 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        17.5930 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        17.5942 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        17.5944 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        17.5947 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        17.5950 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        17.5952 100 9C 00 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        17.7387 102 04 44                      VDS-> (message from VDS 04)
+        17.7393 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        17.7423 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        17.8322 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        17.8330 588 00 00 84                         
+        17.8336 1A0 00 00 00 00                      
+        17.8338 590 01 00 00 00 00 00 00 00          
+        18.3028 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        18.3031 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        18.3034 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        18.3038 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        18.8521 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        18.8528 588 00 00 84                         
+        18.8534 1A0 00 00 00 00                      
+        18.8537 590 01 00 00 00 00 00 00 00          
+        19.0028 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        19.0031 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        19.0034 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        19.0037 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        19.0188 102 04 44                      VDS-> (message from VDS 04)
+        19.1789 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        19.6020 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        19.6029 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        19.6031 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        19.7132 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        19.7135 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        19.7138 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        19.7142 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        19.7834 100 9B E9 F2 07 06 D7 92 00    ->VDS (message to VDS 9B)
+        19.7838 100 07 64                      ->VDS (message to VDS 07)
+        19.8721 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        19.8730 588 00 00 84                         
+        19.8735 1A0 00 00 00 00                      
+        19.8738 590 01 00 00 00 00 00 00 00          
+        19.9066 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        20.2989 102 04 44                      VDS-> (message from VDS 04)
+        20.3011 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        20.4529 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        20.4532 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        20.4536 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        20.4539 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        20.9021 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        20.9028 588 00 00 84                         
+        20.9034 1A0 00 00 00 00                      
+        20.9037 590 01 00 00 00 00 00 00 00          
+        21.1730 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        21.1732 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        21.1736 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        21.1739 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        21.5789 102 04 44                      VDS-> (message from VDS 04)
+        21.5841 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        21.6324 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        21.6333 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        21.6335 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        21.8843 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        21.8846 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        21.8850 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        21.8853 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        21.8859 588 00 00 84                         
+        21.8865 1A0 00 00 00 00                      
+        21.8867 590 01 00 00 00 00 00 00 00          
+        21.9128 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        22.5931 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        22.5934 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        22.5937 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        22.5940 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        22.6644 NOTE                                 Connect plug
+        22.8589 102 04 44                      VDS-> (message from VDS 04)
+        22.8597 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        22.8631 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        22.8638 588 00 00 84                         
+        22.8644 1A0 00 00 00 00                      
+        22.8646 590 01 00 00 00 00 00 00 00          
+        22.9323 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        23.3033 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        23.3036 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        23.3040 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        23.3043 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        23.6522 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        23.6531 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        23.6536 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        23.9427 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        23.9434 588 00 00 84                         
+        23.9440 1A0 00 00 00 00                      
+        23.9442 590 01 00 00 00 00 00 00 00          
+        24.0135 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        24.0138 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        24.0141 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        24.0145 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        24.1391 102 04 44                      VDS-> (message from VDS 04)
+        24.1413 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        24.7332 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        24.7334 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        24.7338 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        24.7341 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        24.8023 100 81 00 00 00 B3 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:49:39 2012)
+        24.8025 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+        24.8028 100 86 00 92 01 F0 FF FF FF    ->VDS (message to VDS 86)
+        24.8032 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+        24.8035 100 8B 0A 90 81 13 07 14 1E    ->VDS (message to VDS 8B)
+        24.8038 100 A3 22 26 00 00 00 14       ->VDS TEMPS (Tpem 34) (Tmotor 38) (Tbattery 20)
+        24.8041 100 97 22 26 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+        24.8043 100 9B E9 F2 07 07 D7 92 00    ->VDS (message to VDS 9B)
+        24.8046 100 9D E9 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+        24.8049 100 07 64                      ->VDS (message to VDS 07)
+        24.9524 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        24.9531 588 00 00 84                         
+        24.9537 1A0 00 00 00 00                      
+        24.9540 590 01 00 00 00 00 00 00 00          
+        25.4190 102 04 44                      VDS-> (message from VDS 04)
+        25.4211 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        25.4434 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        25.4437 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        25.4440 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        25.4443 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        25.6723 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        25.6732 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        25.6734 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        25.9627 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        25.9633 588 00 00 84                         
+        25.9639 1A0 00 00 00 00                      
+        25.9641 590 01 00 00 00 00 00 00 00          
+        26.1535 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        26.1538 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        26.1541 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        26.1544 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        26.6012 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        26.6991 102 04 44                      VDS-> (message from VDS 04)
+        26.7010 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        26.8633 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        26.8636 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+        26.8639 100 95 0D 07 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (conn-pwr-cable) (standard)
+        26.8643 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        26.9207 NOTE                                 A few seconds after slide to stop
+        26.9725 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        26.9732 588 00 00 84                         
+        26.9738 1A0 00 00 00 00                      
+        26.9741 590 01 00 00 00 00 00 00 00          
+        27.5736 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        27.5739 100 89 00 00 00 00 46          ->VDS Charger interface (speed 0mph) (vline 0V) (Iavailable 70A)
+        27.5743 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        27.5746 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        27.6834 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        27.6843 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        27.6846 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        27.9941 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        27.9948 588 00 00 84                         
+        27.9954 1A0 00 00 00 00                      
+        27.9956 590 01 00 00 00 00 00 00 00          
+        28.2843 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        28.2846 100 89 00 00 00 00 46          ->VDS Charger interface (speed 0mph) (vline 0V) (Iavailable 70A)
+        28.2849 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        28.2853 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        28.3592 102 04 44                      VDS-> (message from VDS 04)
+        28.3599 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        28.3649 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        28.9934 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        28.9937 100 89 00 00 00 00 46          ->VDS Charger interface (speed 0mph) (vline 0V) (Iavailable 70A)
+        28.9940 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        28.9944 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        28.9946 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        28.9953 588 00 00 84                         
+        28.9959 1A0 00 00 00 00                      
+        28.9962 590 01 00 00 00 00 00 00 00          
+        29.6393 102 04 44                      VDS-> (message from VDS 04)
+        29.6415 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        29.6840 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        29.6848 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        29.6851 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        29.7142 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        29.7145 100 89 00 01 00 00 46          ->VDS Charger interface (speed 0mph) (vline 1V) (Iavailable 70A)
+        29.7149 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        29.7152 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        29.8030 100 9B E9 F2 07 07 D7 92 00    ->VDS (message to VDS 9B)
+        29.8033 100 07 64                      ->VDS (message to VDS 07)
+        30.0127 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        30.0134 588 00 00 84                         
+        30.0141 1A0 00 00 00 00                      
+        30.0144 590 01 00 00 00 00 00 00 00          
+        30.4334 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        30.4337 100 89 00 00 00 00 46          ->VDS Charger interface (speed 0mph) (vline 0V) (Iavailable 70A)
+        30.4340 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        30.4344 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        30.9194 102 04 44                      VDS-> (message from VDS 04)
+        30.9213 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        30.9220 588 00 00 84                         
+        30.9231 1A0 00 00 00 00                      
+        30.9235 590 01 00 00 00 00 00 00 00          
+        31.0327 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        31.1436 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        31.1438 100 89 00 00 00 00 46          ->VDS Charger interface (speed 0mph) (vline 0V) (Iavailable 70A)
+        31.1442 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        31.1445 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        31.6926 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        31.6934 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        31.6937 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        31.8436 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        31.8439 100 89 00 00 00 00 46          ->VDS Charger interface (speed 0mph) (vline 0V) (Iavailable 70A)
+        31.8442 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        31.8446 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        32.0530 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        32.0537 588 00 00 84                         
+        32.0543 1A0 00 00 00 00                      
+        32.0546 590 01 00 00 00 00 00 00 00          
+        32.1994 102 04 44                      VDS-> (message from VDS 04)
+        32.2016 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        32.5535 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        32.5538 100 89 00 00 00 00 46          ->VDS Charger interface (speed 0mph) (vline 0V) (Iavailable 70A)
+        32.5542 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        32.5545 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        33.0642 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        33.0649 588 00 00 84                         
+        33.0655 1A0 00 00 00 00                      
+        33.0658 590 01 00 00 00 00 00 00 00          
+        33.2739 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        33.2742 100 89 00 01 00 00 46          ->VDS Charger interface (speed 0mph) (vline 1V) (Iavailable 70A)
+        33.2745 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        33.2749 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        33.2869 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        33.4795 102 04 44                      VDS-> (message from VDS 04)
+        33.4803 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        33.7231 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        33.7238 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        33.7241 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        33.7667 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        34.0036 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        34.0039 100 89 00 03 00 00 46          ->VDS Charger interface (speed 0mph) (vline 3V) (Iavailable 70A)
+        34.0042 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        34.0046 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+        34.0054 588 00 00 84                         
+        34.0059 1A0 00 00 00 00                      
+        34.0062 590 01 00 00 00 00 00 00 00          
+        34.0932 100 96 6C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: false) (bits 6C)
+        34.7036 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        34.7039 100 89 00 03 00 00 46          ->VDS Charger interface (speed 0mph) (vline 3V) (Iavailable 70A)
+        34.7043 100 95 0D 01 64 57 02 0E 00    ->VDS Charger v1.5 (preparing-to-charge) (??sub-state?? 1) (standard)
+        34.7046 100 8D 00 91 01 02 01 8C 00    ->VDS (message to VDS 8D)
+        34.7595 102 04 44                      VDS-> (message from VDS 04)
+        34.7618 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        34.8329 100 81 00 00 00 BD 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:49:49 2012)
+        34.8331 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+        34.8335 100 86 00 92 01 50 FF FF FF    ->VDS (message to VDS 86)
+        34.8338 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+        34.8341 100 8B 0A 90 81 13 07 14 1E    ->VDS (message to VDS 8B)
+        34.8344 100 A3 22 26 00 00 00 14       ->VDS TEMPS (Tpem 34) (Tmotor 38) (Tbattery 20)
+        34.8347 100 97 22 26 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+        34.8349 100 9B E9 F2 07 08 D7 92 00    ->VDS (message to VDS 9B)
+        34.8353 100 9D E9 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+        34.8355 100 07 64                      ->VDS (message to VDS 07)
+        35.1030 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        35.1038 588 00 00 84                         
+        35.1043 1A0 00 00 00 00                      
+        35.1046 590 01 00 00 00 00 00 00 00          
+        35.4141 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        35.4144 100 89 00 CB 00 00 46          ->VDS Charger interface (speed 0mph) (vline 203V) (Iavailable 70A)
+        35.4147 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        35.4151 100 8D 00 92 01 02 01 8D 00    ->VDS (message to VDS 8D)
+        35.7233 100 80 5D B4 00 75 00 A3 00    ->VDS Range (SOC 93%) (ideal 180) (est 163)
+        35.7242 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        35.7245 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        36.1142 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        36.1144 100 89 00 DC 00 00 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        36.1148 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        36.1151 100 8D 00 92 01 FE 00 90 00    ->VDS (message to VDS 8D)
+        36.1154 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        36.1161 588 00 00 84                         
+        36.1166 1A0 00 00 00 00                      
+        36.1169 590 01 00 00 00 00 00 00 00          
+        36.5197 102 04 44                      VDS-> (message from VDS 04)
+        36.5216 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        36.8238 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        36.8241 100 89 00 DC 00 00 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        36.8245 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        36.8248 100 8D 00 92 01 00 01 8F 00    ->VDS (message to VDS 8D)
+        37.1331 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        37.1337 588 00 00 84                         
+        37.1343 1A0 00 00 00 00                      
+        37.1345 590 01 00 00 00 00 00 00 00          
+        37.5238 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        37.5241 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        37.5245 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        37.5248 100 8D 00 92 01 0A 01 84 00    ->VDS (message to VDS 8D)
+        37.7332 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        37.7341 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        37.7344 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        37.8396 102 04 44                      VDS-> (message from VDS 04)
+        37.8418 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        38.1434 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        38.1441 588 00 00 84                         
+        38.1447 1A0 00 00 00 00                      
+        38.1450 590 01 00 00 00 00 00 00 00          
+        38.2339 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        38.2344 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        38.2347 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        38.2350 100 8D 00 92 01 5C 00 35 01    ->VDS (message to VDS 8D)
+        38.9440 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        38.9443 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        38.9446 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        38.9448 100 8D 00 92 01 8D 00 04 01    ->VDS (message to VDS 8D)
+        39.1198 102 04 44                      VDS-> (message from VDS 04)
+        39.1206 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        39.1223 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        39.1236 588 00 00 84                         
+        39.1241 1A0 00 00 00 00                      
+        39.1245 590 01 00 00 00 00 00 00 00          
+        39.1532 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        39.6440 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        39.6442 100 89 00 DE 00 00 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        39.6446 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        39.6449 100 8D 00 92 01 31 01 5D 00    ->VDS (message to VDS 8D)
+        39.7537 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        39.7545 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        39.7548 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        39.8432 100 9B E9 F2 07 09 D7 92 00    ->VDS (message to VDS 9B)
+        39.8435 100 07 64                      ->VDS (message to VDS 07)
+        39.9964 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        40.0038 588 00 00 84                         
+        40.0043 1A0 00 00 00 00                      
+        40.0047 590 01 00 00 00 00 00 00 00          
+        40.1935 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        40.3654 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        40.3656 100 89 00 DE 00 00 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        40.3660 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        40.3662 100 8D 00 92 01 FC 00 90 00    ->VDS (message to VDS 8D)
+        40.4197 102 04 44                      VDS-> (message from VDS 04)
+        40.4232 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        41.0740 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        41.0743 100 89 00 DE 00 00 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        41.0747 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        41.0750 100 8D 00 92 01 5E 00 33 01    ->VDS (message to VDS 8D)
+        41.0756 588 00 00 84                         
+        41.0762 1A0 00 00 00 00                      
+        41.0764 590 01 00 00 00 00 00 00 00          
+        41.2033 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        41.6999 102 04 44                      VDS-> (message from VDS 04)
+        41.7023 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        41.7936 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        41.7944 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        41.7956 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        41.7958 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        41.7962 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        41.7965 100 8D 00 92 01 AD 00 E7 00    ->VDS (message to VDS 8D)
+        41.7967 100 9C 00 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        42.2035 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        42.2042 588 00 00 84                         
+        42.2048 1A0 00 00 00 00                      
+        42.2050 590 01 00 00 00 00 00 00 00          
+        42.5041 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        42.5044 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        42.5048 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        42.5051 100 8D 00 92 01 27 01 67 00    ->VDS (message to VDS 8D)
+        43.0001 102 04 44                      VDS-> (message from VDS 04)
+        43.0031 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        43.2142 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        43.2144 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        43.2148 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        43.2152 100 8D 00 92 01 D0 00 BA 00    ->VDS (message to VDS 8D)
+        43.2154 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        43.2161 588 00 00 84                         
+        43.2166 1A0 00 00 00 00                      
+        43.2169 590 01 00 00 00 00 00 00 00          
+        43.8036 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        43.8044 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        43.8047 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        43.9345 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        43.9347 100 89 00 DE 00 00 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        43.9351 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        43.9354 100 8D 00 92 01 69 00 28 01    ->VDS (message to VDS 8D)
+        44.2238 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        44.2244 588 00 00 84                         
+        44.2250 1A0 00 00 00 00                      
+        44.2252 590 01 00 00 00 00 00 00 00          
+        44.3000 102 04 44                      VDS-> (message from VDS 04)
+        44.3007 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        44.5437 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        44.6542 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        44.6545 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        44.6548 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        44.6552 100 8D 00 92 01 D0 00 C4 00    ->VDS (message to VDS 8D)
+        44.8635 100 81 00 00 00 C7 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:49:59 2012)
+        44.8638 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+        44.8641 100 86 00 92 01 E0 FF FF FF    ->VDS (message to VDS 86)
+        44.8644 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+        44.8647 100 8B 06 90 81 13 07 14 1E    ->VDS (message to VDS 8B)
+        44.8650 100 A3 22 26 00 00 00 14       ->VDS TEMPS (Tpem 34) (Tmotor 38) (Tbattery 20)
+        44.8654 100 97 22 26 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+        44.8656 100 9B E9 F2 07 09 D7 92 00    ->VDS (message to VDS 9B)
+        44.8659 100 9D E9 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+        44.8662 100 07 64                      ->VDS (message to VDS 07)
+        45.2334 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        45.2341 588 00 00 84                         
+        45.2347 1A0 00 00 00 00                      
+        45.2350 590 01 00 00 00 00 00 00 00          
+        45.3650 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        45.3652 100 89 00 DE 00 00 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        45.3656 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        45.3659 100 8D 00 92 01 24 01 6A 00    ->VDS (message to VDS 8D)
+        45.6000 102 04 44                      VDS-> (message from VDS 04)
+        45.6020 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        45.8137 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        45.8145 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        45.8148 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        46.0661 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        46.0663 100 89 00 DE 00 00 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        46.0667 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        46.0670 100 8D 00 92 01 A7 00 E4 00    ->VDS (message to VDS 8D)
+        46.2535 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        46.2542 588 00 00 84                         
+        46.2548 1A0 00 00 00 00                      
+        46.2551 590 01 00 00 00 00 00 00 00          
+        46.6953 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        46.7854 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        46.7857 100 89 00 DE 00 00 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        46.7860 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        46.7864 100 8D 00 92 01 6E 00 23 01    ->VDS (message to VDS 8D)
+        46.8802 102 04 44                      VDS-> (message from VDS 04)
+        46.8822 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        47.2847 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        47.2856 588 00 00 84                         
+        47.2861 1A0 00 00 00 00                      
+        47.2864 590 01 00 00 00 00 00 00 00          
+        47.4964 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        47.4967 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        47.4970 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        47.4974 100 8D 00 92 01 FA 00 98 00    ->VDS (message to VDS 8D)
+        47.8439 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        47.8449 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        47.8452 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        48.1602 102 04 44                      VDS-> (message from VDS 04)
+        48.1926 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        48.1990 588 00 00 84                         
+        48.1997 1A0 00 00 00 00                      
+        48.2000 590 01 00 00 00 00 00 00 00          
+        48.2244 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        48.2247 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        48.2250 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        48.2254 100 8D 00 92 01 1D 01 71 00    ->VDS (message to VDS 8D)
+        48.3137 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        48.9245 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        48.9247 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        48.9251 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        48.9254 100 8D 00 92 01 7E 00 0F 01    ->VDS (message to VDS 8D)
+        49.3337 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        49.3344 588 00 00 84                         
+        49.3351 1A0 00 00 00 00                      
+        49.3354 590 01 00 00 00 00 00 00 00          
+        49.4402 102 04 44                      VDS-> (message from VDS 04)
+        49.4409 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        49.4439 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        49.6345 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        49.6348 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        49.6352 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        49.6355 100 8D 00 92 01 76 00 1B 01    ->VDS (message to VDS 8D)
+        49.8671 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        49.8679 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        49.8682 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        49.8686 100 07 64                      ->VDS (message to VDS 07)
+        49.9140 100 9B E9 F2 07 0A D7 92 00    ->VDS (message to VDS 9B)
+        50.3446 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        50.3449 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        50.3452 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        50.3455 100 8D 00 92 01 20 01 71 00    ->VDS (message to VDS 8D)
+        50.3458 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        50.3465 588 00 00 84                         
+        50.3470 1A0 00 00 00 00                      
+        50.3473 590 01 00 00 00 00 00 00 00          
+        50.7202 102 04 44                      VDS-> (message from VDS 04)
+        50.7221 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        51.0446 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        51.0449 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        51.0452 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        51.0456 100 8D 00 92 01 14 01 7A 00    ->VDS (message to VDS 8D)
+        51.3542 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        51.3549 588 00 00 84                         
+        51.3555 1A0 00 00 00 00                      
+        51.3558 590 01 00 00 00 00 00 00 00          
+        51.7449 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        51.7452 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        51.7455 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        51.7458 100 8D 00 92 01 63 00 2D 01    ->VDS (message to VDS 8D)
+        51.8740 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        51.8749 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        51.8751 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        52.0004 102 04 44                      VDS-> (message from VDS 04)
+        52.0041 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        52.3602 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        52.3609 588 00 00 84                         
+        52.3615 1A0 00 00 00 00                      
+        52.3618 590 01 00 00 00 00 00 00 00          
+        52.4446 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        52.4449 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        52.4453 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        52.4456 100 8D 00 92 01 7F 00 11 01    ->VDS (message to VDS 8D)
+        53.1547 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        53.1550 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        53.1554 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        53.1557 100 8D 00 92 01 30 01 5F 00    ->VDS (message to VDS 8D)
+        53.1563 588 00 00 84                         
+        53.1569 1A0 00 00 00 00                      
+        53.1572 590 01 00 00 00 00 00 00 00          
+        53.2804 102 04 44                      VDS-> (message from VDS 04)
+        53.2845 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        53.3739 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        53.4057 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        53.8741 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        53.8749 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        53.8761 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        53.8764 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        53.8767 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        53.8770 100 8D 00 92 01 0B 01 83 00    ->VDS (message to VDS 8D)
+        53.8772 100 9C 00 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        54.3607 588 00 00 84                         
+        54.3613 1A0 00 00 00 00                      
+        54.3617 590 01 00 00 00 00 00 00 00          
+        54.3852 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        54.5605 102 04 44                      VDS-> (message from VDS 04)
+        54.5613 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        54.5640 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        54.5948 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        54.5951 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        54.5955 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        54.5957 100 8D 00 92 01 61 00 30 01    ->VDS (message to VDS 8D)
+        54.9040 100 81 00 00 00 D1 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:50:09 2012)
+        54.9042 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+        54.9045 100 86 00 92 01 D0 FF FF FF    ->VDS (message to VDS 86)
+        54.9048 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+        54.9051 100 8B 06 90 81 13 07 14 1E    ->VDS (message to VDS 8B)
+        54.9054 100 A3 22 26 00 00 00 14       ->VDS TEMPS (Tpem 34) (Tmotor 38) (Tbattery 20)
+        54.9058 100 97 22 26 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+        54.9060 100 9D 22 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+        54.9063 100 07 64                      ->VDS (message to VDS 07)
+        54.9339 100 9B E9 F2 07 0A D7 92 00    ->VDS (message to VDS 9B)
+        55.3051 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        55.3054 100 89 00 DD 00 00 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        55.3057 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        55.3060 100 8D 00 92 01 8F 00 04 01    ->VDS (message to VDS 8D)
+        55.3066 588 00 00 84                         
+        55.3072 1A0 00 00 00 00                      
+        55.3075 590 01 00 00 00 00 00 00 00          
+        55.3940 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        55.8404 102 04 44                      VDS-> (message from VDS 04)
+        55.8426 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        55.8874 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        55.8882 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        55.8885 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        56.0148 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        56.0151 100 89 00 DE 00 00 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        56.0155 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        56.0158 100 8D 00 96 01 B7 01 00 00    ->VDS (message to VDS 8D)
+        56.3680 588 00 00 84                         
+        56.3685 1A0 00 00 00 00                      
+        56.3689 590 01 00 00 00 00 00 00 00          
+        56.4141 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        56.7249 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        56.7252 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        56.7255 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        56.7259 100 8D 00 92 01 8F 01 10 00    ->VDS (message to VDS 8D)
+        57.1407 102 04 44                      VDS-> (message from VDS 04)
+        57.1427 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        57.4252 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        57.4255 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        57.4259 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        57.4262 100 8D 00 92 01 3F 01 4D 00    ->VDS (message to VDS 8D)
+        57.4265 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        57.4273 588 00 00 84                         
+        57.4279 1A0 00 00 00 00                      
+        57.4282 590 01 00 00 00 00 00 00 00          
+        57.8948 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        57.8957 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        57.8960 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        58.1250 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        58.1252 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        58.1256 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        58.1260 100 8D 00 92 01 4E 00 41 01    ->VDS (message to VDS 8D)
+        58.3666 588 00 00 84                         
+        58.3672 1A0 00 00 00 00                      
+        58.3675 590 01 00 00 00 00 00 00 00          
+        58.4206 102 04 44                      VDS-> (message from VDS 04)
+        58.4243 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        58.4247 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        58.8350 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        58.8353 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        58.8356 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        58.8360 100 8D 00 92 01 5E 00 35 01    ->VDS (message to VDS 8D)
+        59.4244 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        59.4251 588 00 00 84                         
+        59.4257 1A0 00 00 00 00                      
+        59.4259 590 01 00 00 00 00 00 00 00          
+        59.5553 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        59.5556 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        59.5559 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        59.5563 100 8D 00 92 01 4C 01 43 00    ->VDS (message to VDS 8D)
+        59.7006 102 04 44                      VDS-> (message from VDS 04)
+        59.7014 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        59.7039 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        59.9141 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        59.9150 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        59.9153 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        59.9158 100 07 64                      ->VDS (message to VDS 07)
+        59.9442 100 9B E9 F2 07 0C D7 92 00    ->VDS (message to VDS 9B)
+        60.0954 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        60.2870 100 88 00 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 0mins)
+        60.2873 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        60.2877 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        60.2880 100 8D 00 92 01 1E 01 6D 00    ->VDS (message to VDS 8D)
+        60.2887 588 00 00 84                         
+        60.2893 1A0 00 00 00 00                      
+        60.2897 590 01 00 00 00 00 00 00 00          
+        60.4443 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        60.9808 102 04 44                      VDS-> (message from VDS 04)
+        60.9827 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        60.9853 100 88 03 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 3A) (duration 0mins)
+        60.9855 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        60.9858 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        60.9861 100 8D 00 92 01 39 00 57 01    ->VDS (message to VDS 8D)
+        61.4546 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        61.4553 588 00 00 84                         
+        61.4559 1A0 00 00 00 00                      
+        61.4562 590 01 00 00 00 00 00 00 00          
+        61.6863 100 88 03 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 3A) (duration 0mins)
+        61.6866 100 89 00 DF 00 00 46          ->VDS Charger interface (speed 0mph) (vline 223V) (Iavailable 70A)
+        61.6870 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        61.6873 100 8D 00 91 01 7D 00 16 01    ->VDS (message to VDS 8D)
+        61.9543 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        61.9551 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        61.9554 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        62.2809 102 04 44                      VDS-> (message from VDS 04)
+        62.2832 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        62.2852 588 00 00 84                         
+        62.2858 1A0 00 00 00 00                      
+        62.2862 590 01 00 00 00 00 00 00 00          
+        62.3865 100 88 03 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 3A) (duration 0mins)
+        62.3867 100 89 00 DD 00 03 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        62.3871 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        62.3874 100 8D 00 92 01 5A 01 35 00    ->VDS (message to VDS 8D)
+        62.4744 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        63.0865 100 88 0B 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 11A) (duration 0mins)
+        63.0867 100 89 00 DC 00 10 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        63.0871 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        63.0874 100 8D 00 92 01 FC 00 90 00    ->VDS (message to VDS 8D)
+        63.4947 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        63.4957 588 00 00 84                         
+        63.4961 1A0 00 00 00 00                      
+        63.4964 590 01 00 00 00 00 00 00 00          
+        63.5809 102 04 44                      VDS-> (message from VDS 04)
+        63.5848 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        63.7953 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        63.7955 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        63.7959 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        63.7962 100 8D 00 93 01 30 00 62 01    ->VDS (message to VDS 8D)
+        63.9644 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        63.9652 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        63.9657 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        64.3614 588 00 00 84                         
+        64.3620 1A0 00 00 00 00                      
+        64.3624 590 01 00 00 00 00 00 00 00          
+        64.5053 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        64.5055 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        64.5059 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        64.5062 100 8D 00 92 01 A7 00 ED 00    ->VDS (message to VDS 8D)
+        64.5065 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        64.9007 102 04 44                      VDS-> (message from VDS 04)
+        64.9015 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        64.9046 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        64.9344 100 81 00 00 00 DB 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:50:19 2012)
+        64.9347 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+        64.9350 100 86 00 92 01 D4 04 00 00    ->VDS (message to VDS 86)
+        64.9354 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+        64.9357 100 8B 15 08 82 13 07 14 1E    ->VDS (message to VDS 8B)
+        64.9360 100 A3 23 26 00 00 00 14       ->VDS TEMPS (Tpem 35) (Tmotor 38) (Tbattery 20)
+        64.9363 100 97 23 26 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+        64.9366 100 9D 23 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+        64.9368 100 07 64                      ->VDS (message to VDS 07)
+        64.9651 100 9B EC F2 07 0C D7 92 00    ->VDS (message to VDS 9B)
+        65.2154 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        65.2157 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        65.2160 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        65.2164 100 8D 00 93 01 60 01 30 00    ->VDS (message to VDS 8D)
+        65.5048 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        65.5055 588 00 00 84                         
+        65.5061 1A0 00 00 00 00                      
+        65.5064 590 01 00 00 00 00 00 00 00          
+        65.9357 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        65.9360 100 89 00 DB 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 219V) (Iavailable 70A)
+        65.9364 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        65.9367 100 8D 00 92 01 B6 00 D6 00    ->VDS (message to VDS 8D)
+        65.9650 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        65.9658 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        65.9661 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        66.2011 102 04 44                      VDS-> (message from VDS 04)
+        66.2035 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        66.3681 588 00 00 84                         
+        66.3687 1A0 00 00 00 00                      
+        66.3690 590 01 00 00 00 00 00 00 00          
+        66.5146 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        66.6454 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        66.6457 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        66.6460 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        66.6463 100 8D 00 93 01 2F 00 64 01    ->VDS (message to VDS 8D)
+        66.7959 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        67.3673 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        67.3676 100 89 00 DB 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 219V) (Iavailable 70A)
+        67.3679 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        67.3683 100 8D 00 92 01 EE 00 A4 00    ->VDS (message to VDS 8D)
+        67.3689 588 00 00 84                         
+        67.3694 1A0 00 00 00 00                      
+        67.3698 590 01 00 00 00 00 00 00 00          
+        67.5212 102 04 44                      VDS-> (message from VDS 04)
+        67.5247 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        67.5549 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        67.9861 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        67.9870 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        67.9873 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        68.0758 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        68.0761 100 89 00 DB 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 219V) (Iavailable 70A)
+        68.0764 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        68.0768 100 8D 00 93 01 5F 01 30 00    ->VDS (message to VDS 8D)
+        68.3657 588 00 00 84                         
+        68.3663 1A0 00 00 00 00                      
+        68.3666 590 01 00 00 00 00 00 00 00          
+        68.5747 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        68.7868 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        68.7870 100 89 00 DB 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 219V) (Iavailable 70A)
+        68.7874 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        68.7877 100 8D 00 92 01 87 00 06 01    ->VDS (message to VDS 8D)
+        68.8012 102 04 44                      VDS-> (message from VDS 04)
+        68.8031 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        69.4872 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        69.4874 100 89 00 DB 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 219V) (Iavailable 70A)
+        69.4878 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        69.4881 100 8D 00 93 01 38 00 5D 01    ->VDS (message to VDS 8D)
+        69.4887 588 00 00 84                         
+        69.4893 1A0 00 00 00 00                      
+        69.4896 590 01 00 00 00 00 00 00 00          
+        69.5948 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        69.9850 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        69.9858 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        69.9861 100 9B F3 F2 07 0C D7 92 00    ->VDS (message to VDS 9B)
+        69.9863 100 9C F3 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        69.9867 100 07 64                      ->VDS (message to VDS 07)
+        70.0812 102 04 44                      VDS-> (message from VDS 04)
+        70.0819 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        70.0840 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        70.1959 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        70.1962 100 89 00 DB 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 219V) (Iavailable 70A)
+        70.1966 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        70.1969 100 8D 00 92 01 1F 01 73 00    ->VDS (message to VDS 8D)
+        70.6048 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        70.6055 588 00 00 84                         
+        70.6061 1A0 00 00 00 00                      
+        70.6064 590 01 00 00 00 00 00 00 00          
+        70.9158 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        70.9160 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        70.9166 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        70.9168 100 8D 00 93 01 20 01 6D 00    ->VDS (message to VDS 8D)
+        71.3813 102 04 44                      VDS-> (message from VDS 04)
+        71.3836 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        71.6160 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        71.6163 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        71.6167 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        71.6170 100 8D 00 92 01 57 00 38 01    ->VDS (message to VDS 8D)
+        71.6173 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        71.6180 588 00 00 84                         
+        71.6185 1A0 00 00 00 00                      
+        71.6188 590 01 00 00 00 00 00 00 00          
+        71.9864 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        71.9873 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        71.9876 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        72.3357 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        72.3360 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        72.3364 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        72.3367 100 8D 00 92 01 87 00 0D 01    ->VDS (message to VDS 8D)
+        72.6249 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        72.6256 588 00 00 84                         
+        72.6262 1A0 00 00 00 00                      
+        72.6265 590 01 00 00 00 00 00 00 00          
+        72.6613 102 04 44                      VDS-> (message from VDS 04)
+        72.6636 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        73.0558 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        73.0561 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        73.0564 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        73.0568 100 8D 00 93 01 4E 01 42 00    ->VDS (message to VDS 8D)
+        73.4871 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        73.4939 588 00 00 84                         
+        73.4987 1A0 00 00 00 00                      
+        73.4991 590 01 00 00 00 00 00 00 00          
+        73.7050 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        73.7959 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        73.7964 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        73.7967 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        73.7969 100 8D 00 92 01 EA 00 A2 00    ->VDS (message to VDS 8D)
+        73.9412 102 04 44                      VDS-> (message from VDS 04)
+        73.9464 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        74.0152 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        74.0160 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        74.0163 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        74.5059 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        74.5061 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        74.5066 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        74.5069 100 8D 00 93 01 36 00 5C 01    ->VDS (message to VDS 8D)
+        74.5075 588 00 00 84                         
+        74.5081 1A0 00 00 00 00                      
+        74.5083 590 01 00 00 00 00 00 00 00          
+        74.7150 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        75.2214 102 04 44                      VDS-> (message from VDS 04)
+        75.2222 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        75.4773 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        75.4776 100 81 00 00 00 E5 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:50:29 2012)
+        75.4780 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+        75.4793 100 86 00 92 01 85 05 00 00    ->VDS (message to VDS 86)
+        75.4798 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+        75.4802 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        75.4806 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        75.4808 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        75.4813 100 8B 06 08 82 13 07 14 1E    ->VDS (message to VDS 8B)
+        75.4817 100 8D 00 92 01 0F 01 83 00    ->VDS (message to VDS 8D)
+        75.4820 100 A3 23 26 00 00 00 14       ->VDS TEMPS (Tpem 35) (Tmotor 38) (Tbattery 20)
+        75.4822 100 97 23 26 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+        75.4825 100 9B FA F2 07 0C D7 92 00    ->VDS (message to VDS 9B)
+        75.4828 100 9D FA 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+        75.4831 100 07 64                      ->VDS (message to VDS 07)
+        75.4839 588 00 00 84                         
+        75.4843 1A0 00 00 00 00                      
+        75.4909 590 01 00 00 00 00 00 00 00          
+        75.7353 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        76.0254 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        76.0262 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        76.0265 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        76.1959 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        76.1961 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        76.1965 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        76.1969 100 8D 00 93 01 37 01 56 00    ->VDS (message to VDS 8D)
+        76.5215 102 04 44                      VDS-> (message from VDS 04)
+        76.5256 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        76.5264 588 00 00 84                         
+        76.5270 1A0 00 00 00 00                      
+        76.5272 590 01 00 00 00 00 00 00 00          
+        76.7551 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        76.9060 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        76.9062 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        76.9066 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        76.9070 100 8D 00 92 01 68 00 27 01    ->VDS (message to VDS 8D)
+        77.6163 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        77.6166 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        77.6169 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        77.6173 100 8D 00 93 01 6B 00 29 01    ->VDS (message to VDS 8D)
+        77.6179 588 00 00 84                         
+        77.6185 1A0 00 00 00 00                      
+        77.6187 590 01 00 00 00 00 00 00 00          
+        77.7656 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        77.8015 102 04 44                      VDS-> (message from VDS 04)
+        77.8034 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        78.0251 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        78.0260 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        78.0262 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        78.3360 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        78.3363 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        78.3366 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        78.3370 100 8D 00 92 01 3A 01 57 00    ->VDS (message to VDS 8D)
+        78.7653 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        78.7660 588 00 00 84                         
+        78.7666 1A0 00 00 00 00                      
+        78.7669 590 01 00 00 00 00 00 00 00          
+        79.0561 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        79.0564 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        79.0568 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        79.0570 100 8D 00 93 01 0D 01 7F 00    ->VDS (message to VDS 8D)
+        79.0817 102 04 44                      VDS-> (message from VDS 04)
+        79.0861 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        79.7764 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        79.7766 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        79.7770 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        79.7773 100 8D 00 93 01 45 00 4C 01    ->VDS (message to VDS 8D)
+        79.7776 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        79.7783 588 00 00 84                         
+        79.7790 1A0 00 00 00 00                      
+        79.7795 590 01 00 00 00 00 00 00 00          
+        80.0255 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        80.0264 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        80.0266 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        80.1985 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        80.3817 102 04 44                      VDS-> (message from VDS 04)
+        80.3824 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        80.3845 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        80.5162 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        80.5165 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        80.5169 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        80.5172 100 8D 00 92 01 A2 00 F2 00    ->VDS (message to VDS 8D)
+        80.5174 100 9B 02 F3 07 0C D7 92 00    ->VDS (message to VDS 9B)
+        80.5177 100 07 64                      ->VDS (message to VDS 07)
+        80.8054 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        80.8061 588 00 00 84                         
+        80.8067 1A0 00 00 00 00                      
+        80.8070 590 01 00 00 00 00 00 00 00          
+        81.2362 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        81.2365 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        81.2368 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        81.2372 100 8D 00 93 01 60 01 30 00    ->VDS (message to VDS 8D)
+        81.6818 102 04 44                      VDS-> (message from VDS 04)
+        81.6843 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        81.6864 588 00 00 84                         
+        81.6870 1A0 00 00 00 00                      
+        81.6873 590 01 00 00 00 00 00 00 00          
+        81.8158 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        81.9465 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        81.9468 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        81.9471 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        81.9475 100 8D 00 92 01 D2 00 BA 00    ->VDS (message to VDS 8D)
+        82.0553 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        82.0562 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        82.0565 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        82.6462 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        82.6465 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        82.6469 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        82.6472 100 8D 00 94 01 2F 00 64 01    ->VDS (message to VDS 8D)
+        82.6478 588 00 00 84                         
+        82.6484 1A0 00 00 00 00                      
+        82.6487 590 01 00 00 00 00 00 00 00          
+        82.8355 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        82.9818 102 04 44                      VDS-> (message from VDS 04)
+        82.9847 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        83.3565 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        83.3568 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        83.3571 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        83.3573 100 8D 00 92 01 D1 00 C2 00    ->VDS (message to VDS 8D)
+        83.8458 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        83.8465 588 00 00 84                         
+        83.8471 1A0 00 00 00 00                      
+        83.8473 590 01 00 00 00 00 00 00 00          
+        84.0754 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        84.0763 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        84.0775 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        84.0777 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        84.0780 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        84.0783 100 8D 00 94 01 5C 01 33 00    ->VDS (message to VDS 8D)
+        84.0786 100 9C 00 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        84.2618 102 04 44                      VDS-> (message from VDS 04)
+        84.2641 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        84.7876 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        84.7879 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        84.7883 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        84.7886 100 8D 00 92 01 A8 00 E5 00    ->VDS (message to VDS 8D)
+        84.7892 588 00 00 84                         
+        84.7898 1A0 00 00 00 00                      
+        84.7901 590 01 00 00 00 00 00 00 00          
+        84.8556 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        85.4879 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        85.4882 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        85.4886 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        85.4889 100 8D 00 94 01 3C 00 59 01    ->VDS (message to VDS 8D)
+        85.5161 100 81 00 00 00 EF 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:50:39 2012)
+        85.5163 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+        85.5166 100 86 00 94 01 25 05 00 00    ->VDS (message to VDS 86)
+        85.5170 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+        85.5172 100 8B 35 2E 82 13 07 14 1E    ->VDS (message to VDS 8B)
+        85.5176 100 A3 23 26 00 00 00 14       ->VDS TEMPS (Tpem 35) (Tmotor 38) (Tbattery 20)
+        85.5179 100 97 23 26 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+        85.5181 100 9B 09 F3 07 0C D7 92 00    ->VDS (message to VDS 9B)
+        85.5184 100 9D 09 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+        85.5187 100 07 64                      ->VDS (message to VDS 07)
+        85.5620 102 04 44                      VDS-> (message from VDS 04)
+        85.5626 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        85.5644 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        85.8759 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        85.8766 588 00 00 84                         
+        85.8772 1A0 00 00 00 00                      
+        85.8775 590 01 00 00 00 00 00 00 00          
+        86.0867 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        86.0876 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        86.0879 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        86.1968 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        86.1970 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        86.1974 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        86.1977 100 8D 00 92 01 F8 00 9B 00    ->VDS (message to VDS 8D)
+        86.8421 102 04 44                      VDS-> (message from VDS 04)
+        86.8446 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        86.8461 588 00 00 84                         
+        86.8466 1A0 00 00 00 00                      
+        86.8470 590 01 00 00 00 00 00 00 00          
+        86.8977 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        86.9040 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        86.9265 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        86.9267 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        86.9271 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        86.9274 100 8D 00 93 01 49 01 45 00    ->VDS (message to VDS 8D)
+        87.6368 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        87.6371 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        87.6375 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        87.6378 100 8D 00 92 01 83 00 0B 01    ->VDS (message to VDS 8D)
+        87.6384 588 00 00 84                         
+        87.6390 1A0 00 00 00 00                      
+        87.6393 590 01 00 00 00 00 00 00 00          
+        87.9060 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        88.1157 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        88.1167 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        88.1170 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        88.1420 102 04 44                      VDS-> (message from VDS 04)
+        88.3467 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        88.3469 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        88.3473 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        88.3476 100 8D 00 93 01 24 01 69 00    ->VDS (message to VDS 8D)
+        88.3903 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        88.9158 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        88.9166 588 00 00 84                         
+        88.9172 1A0 00 00 00 00                      
+        88.9174 590 01 00 00 00 00 00 00 00          
+        89.0466 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        89.0468 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        89.0472 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        89.0476 100 8D 00 92 01 5D 00 32 01    ->VDS (message to VDS 8D)
+        89.4622 102 04 44                      VDS-> (message from VDS 04)
+        89.4660 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        89.7570 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        89.7573 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        89.7576 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        89.7580 100 8D 00 93 01 7C 00 18 01    ->VDS (message to VDS 8D)
+        89.7586 588 00 00 84                         
+        89.7592 1A0 00 00 00 00                      
+        89.7594 590 01 00 00 00 00 00 00 00          
+        89.9269 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        90.1358 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        90.1366 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        90.1369 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        90.4678 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        90.4681 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        90.4684 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        90.4688 100 8D 00 93 01 46 01 4B 00    ->VDS (message to VDS 8D)
+        90.5558 100 9B 10 F3 07 0C D7 92 00    ->VDS (message to VDS 9B)
+        90.5562 100 07 64                      ->VDS (message to VDS 07)
+        90.7422 102 04 44                      VDS-> (message from VDS 04)
+        90.7430 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        90.7455 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        90.7463 588 00 00 84                         
+        90.7469 1A0 00 00 00 00                      
+        90.7471 590 01 00 00 00 00 00 00 00          
+        90.9359 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        91.1668 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        91.1671 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        91.1675 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        91.1678 100 8D 00 92 01 FC 00 90 00    ->VDS (message to VDS 8D)
+        91.8768 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        91.8771 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        91.8775 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        91.8778 100 8D 00 93 01 3D 00 54 01    ->VDS (message to VDS 8D)
+        91.8784 588 00 00 84                         
+        91.8790 1A0 00 00 00 00                      
+        91.8792 590 01 00 00 00 00 00 00 00          
+        91.9460 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        92.0222 102 04 44                      VDS-> (message from VDS 04)
+        92.0714 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        92.1562 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        92.1571 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        92.1574 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        92.5881 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        92.5883 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        92.5887 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        92.5890 100 8D 00 92 01 A9 00 EB 00    ->VDS (message to VDS 8D)
+        92.9560 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        92.9569 588 00 00 84                         
+        92.9573 1A0 00 00 00 00                      
+        92.9576 590 01 00 00 00 00 00 00 00          
+        93.2882 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        93.2885 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        93.2889 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        93.2892 100 8D 00 93 01 5A 01 36 00    ->VDS (message to VDS 8D)
+        93.3022 102 04 44                      VDS-> (message from VDS 04)
+        93.3042 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        93.5879 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+        93.9768 100 88 0D 00 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 0mins)
+        93.9771 100 89 00 DC 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 220V) (Iavailable 70A)
+        93.9775 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        93.9778 100 8D 00 93 01 07 01 85 00    ->VDS (message to VDS 8D)
+        93.9781 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        93.9788 588 00 00 84                         
+        93.9793 1A0 00 00 00 00                      
+        93.9798 590 01 00 00 00 00 00 00 00          
+        94.1664 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        94.1674 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        94.1678 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        94.5821 102 04 44                      VDS-> (message from VDS 04)
+        94.5845 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        94.6884 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+        94.6886 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        94.6890 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        94.6894 100 8D 00 93 01 31 00 61 01    ->VDS (message to VDS 8D)
+        94.9961 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        94.9968 588 00 00 84                         
+        94.9974 1A0 00 00 00 00                      
+        94.9976 590 01 00 00 00 00 00 00 00          
+        95.3881 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+        95.3883 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        95.3887 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        95.3890 100 8D 00 92 01 A2 00 F2 00    ->VDS (message to VDS 8D)
+        95.5565 100 81 00 00 00 F9 03 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:50:49 2012)
+        95.5567 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+        95.5570 100 86 00 92 01 45 05 00 00    ->VDS (message to VDS 86)
+        95.5573 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+        95.5576 100 8B 06 08 82 13 07 14 1E    ->VDS (message to VDS 8B)
+        95.5578 100 A3 23 25 00 00 00 14       ->VDS TEMPS (Tpem 35) (Tmotor 37) (Tbattery 20)
+        95.5582 100 97 23 25 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+        95.5585 100 9B 17 F3 07 0C D7 92 00    ->VDS (message to VDS 9B)
+        95.5587 100 9D 17 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+        95.5590 100 07 64                      ->VDS (message to VDS 07)
+        95.8825 102 04 44                      VDS-> (message from VDS 04)
+        95.8833 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+        95.8863 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        95.8870 588 00 00 84                         
+        95.8876 1A0 00 00 00 00                      
+        95.8880 590 01 00 00 00 00 00 00 00          
+        96.0162 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        96.0878 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+        96.0880 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        96.0884 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        96.0887 100 8D 00 94 01 60 01 30 00    ->VDS (message to VDS 8D)
+        96.1763 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        96.1772 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        96.1775 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        96.7970 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+        96.7973 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        96.7976 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        96.7980 100 8D 00 92 01 CF 00 BE 00    ->VDS (message to VDS 8D)
+        96.7985 588 00 00 84                         
+        96.7992 1A0 00 00 00 00                      
+        96.7994 590 01 00 00 00 00 00 00 00          
+        97.0262 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        97.1625 102 04 44                      VDS-> (message from VDS 04)
+        97.1645 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        97.5071 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+        97.5074 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        97.5078 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        97.5081 100 8D 00 94 01 30 00 63 01    ->VDS (message to VDS 8D)
+        98.0365 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        98.0372 588 00 00 84                         
+        98.0378 1A0 00 00 00 00                      
+        98.0381 590 01 00 00 00 00 00 00 00          
+        98.1872 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+        98.1881 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+        98.1883 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+        98.2178 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+        98.2180 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        98.2184 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        98.2187 100 8D 00 92 01 DB 00 B8 00    ->VDS (message to VDS 8D)
+        98.4425 102 04 44                      VDS-> (message from VDS 04)
+        98.4448 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+        98.9275 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+        98.9279 100 89 00 DD 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 221V) (Iavailable 70A)
+        98.9283 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        98.9285 100 8D 00 94 01 51 01 3D 00    ->VDS (message to VDS 8D)
+        98.9294 588 00 00 84                         
+        98.9299 1A0 00 00 00 00                      
+        98.9303 590 01 00 00 00 00 00 00 00          
+        99.0564 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+        99.6275 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+        99.6278 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+        99.6281 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+        99.6284 100 8D 00 92 01 97 00 F6 00    ->VDS (message to VDS 8D)
+        99.7425 102 04 44                      VDS-> (message from VDS 04)
+        99.7447 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       100.0678 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+       100.0685 588 00 00 84                         
+       100.0691 1A0 00 00 00 00                      
+       100.0694 590 01 00 00 00 00 00 00 00          
+       100.1965 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       100.1974 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       100.1977 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       100.2653 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+       100.3372 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+       100.3374 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+       100.3378 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+       100.3382 100 8D 00 94 01 47 00 4D 01    ->VDS (message to VDS 8D)
+       100.5664 100 9B 1F F3 07 0C D7 92 00    ->VDS (message to VDS 9B)
+       100.5667 100 07 64                      ->VDS (message to VDS 07)
+       101.0226 102 04 44                      VDS-> (message from VDS 04)
+       101.0234 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       101.0251 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       101.0264 588 00 00 84                         
+       101.0269 1A0 00 00 00 00                      
+       101.0273 590 01 00 00 00 00 00 00 00          
+       101.0573 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+       101.0575 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+       101.0579 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+       101.0583 100 8D 00 93 01 40 01 51 00    ->VDS (message to VDS 8D)
+       101.0585 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+       101.7677 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+       101.7680 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+       101.7684 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+       101.7687 100 8D 00 93 01 2F 01 5F 00    ->VDS (message to VDS 8D)
+       102.0764 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+       102.0772 588 00 00 84                         
+       102.0777 1A0 00 00 00 00                      
+       102.0780 590 01 00 00 00 00 00 00 00          
+       102.2068 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       102.2076 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       102.2079 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       102.3026 102 04 44                      VDS-> (message from VDS 04)
+       102.3044 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       102.4690 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+       102.4692 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+       102.4696 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+       102.4699 100 8D 00 93 01 3F 00 52 01    ->VDS (message to VDS 8D)
+       103.0965 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+       103.0972 588 00 00 84                         
+       103.0978 1A0 00 00 00 00                      
+       103.0981 590 01 00 00 00 00 00 00 00          
+       103.1674 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+       103.1677 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+       103.1681 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+       103.1684 100 8D 00 93 01 78 00 1D 01    ->VDS (message to VDS 8D)
+       103.5826 102 04 44                      VDS-> (message from VDS 04)
+       103.5849 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       103.8708 100 88 0D 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 13A) (duration 1mins)
+       103.8713 100 89 00 DE 00 0F 46          ->VDS Charger interface (speed 0mph) (vline 222V) (Iavailable 70A)
+       103.8716 100 95 01 05 64 57 02 0E 00    ->VDS Charger v1.5 (charging) (??sub-state?? 5) (standard)
+       103.8719 100 8D 00 93 01 5B 01 35 00    ->VDS (message to VDS 8D)
+       103.8726 588 00 00 84                         
+       103.8732 1A0 00 00 00 00                      
+       103.8735 590 01 00 00 00 00 00 00 00          
+       104.1169 100 96 7C 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: true) (charging: true) (bits 7C)
+       104.2068 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       104.2076 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       104.2079 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       104.2846 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       104.5674 100 88 06 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 6A) (duration 1mins)
+       104.5677 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       104.5681 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       104.5684 100 8D 00 92 01 C1 00 CF 00    ->VDS (message to VDS 8D)
+       105.1366 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       105.1373 588 00 00 84                         
+       105.1379 1A0 00 00 00 00                      
+       105.1382 590 01 00 00 00 00 00 00 00          
+       105.2678 100 88 01 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 1A) (duration 1mins)
+       105.2680 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       105.2684 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       105.2688 100 8D 00 92 01 C8 00 C8 00    ->VDS (message to VDS 8D)
+       105.4227 102 04 44                      VDS-> (message from VDS 04)
+       105.4256 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       105.5769 100 81 00 00 00 03 04 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:50:59 2012)
+       105.5771 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+       105.5774 100 86 00 92 01 F0 FF FF FF    ->VDS (message to VDS 86)
+       105.5778 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+       105.5781 100 8B 13 B8 81 13 07 14 1E    ->VDS (message to VDS 8B)
+       105.5784 100 A3 22 25 00 00 00 14       ->VDS TEMPS (Tpem 34) (Tmotor 37) (Tbattery 20)
+       105.5787 100 97 22 25 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+       105.5789 100 9B 25 F3 07 0C D7 92 00    ->VDS (message to VDS 9B)
+       105.5792 100 9D 25 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+       105.5795 100 07 64                      ->VDS (message to VDS 07)
+       105.9675 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       105.9678 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       105.9681 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       105.9684 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       105.9690 588 00 00 84                         
+       105.9698 1A0 00 00 00 00                      
+       105.9700 590 01 00 00 00 00 00 00 00          
+       106.1570 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       106.2070 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       106.2077 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       106.2080 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       106.6775 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       106.6777 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       106.6781 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       106.6785 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       106.7028 102 04 44                      VDS-> (message from VDS 04)
+       106.7036 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       106.7054 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       106.9555 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+       106.9642 588 00 00 84                         
+       106.9648 1A0 00 00 00 00                      
+       106.9652 590 01 00 00 00 00 00 00 00          
+       107.1876 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       107.4179 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       107.4182 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       107.4185 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       107.4189 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       107.9828 102 04 44                      VDS-> (message from VDS 04)
+       107.9883 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       107.9891 588 00 00 84                         
+       107.9897 1A0 00 00 00 00                      
+       107.9900 590 01 00 00 00 00 00 00 00          
+       108.1378 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       108.1380 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       108.1384 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       108.1387 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       108.1878 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       108.2367 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       108.2376 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       108.2378 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       108.8577 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       108.8580 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       108.8583 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       108.8587 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       108.8593 588 00 00 84                         
+       108.8599 1A0 00 00 00 00                      
+       108.8601 590 01 00 00 00 00 00 00 00          
+       109.1877 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       109.2630 102 04 44                      VDS-> (message from VDS 04)
+       109.2651 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       109.5678 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       109.5681 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       109.5684 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       109.5687 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       109.7790 NOTE                                 Stop Charging: Connect power cable
+       110.1972 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       110.1981 588 00 00 84                         
+       110.1986 1A0 00 00 00 00                      
+       110.1989 590 01 00 00 00 00 00 00 00          
+       110.2468 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       110.2476 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       110.2479 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       110.2777 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       110.2780 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       110.2783 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       110.2787 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       110.5429 102 04 44                      VDS-> (message from VDS 04)
+       110.5458 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       110.6069 100 9B 25 F3 07 0D D7 92 00    ->VDS (message to VDS 9B)
+       110.6072 100 07 64                      ->VDS (message to VDS 07)
+       110.9978 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       110.9982 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       110.9986 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       110.9988 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       110.9996 588 00 00 84                         
+       111.0002 1A0 00 00 00 00                      
+       111.0005 590 01 00 00 00 00 00 00 00          
+       111.2069 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       111.7181 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       111.7184 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       111.7188 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       111.7191 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       111.8231 102 04 44                      VDS-> (message from VDS 04)
+       111.8239 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       111.8258 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       112.2171 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       112.2178 588 00 00 84                         
+       112.2184 1A0 00 00 00 00                      
+       112.2186 590 01 00 00 00 00 00 00 00          
+       112.2469 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       112.2477 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       112.2480 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       112.4286 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       112.4289 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       112.4293 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       112.4296 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       113.1032 102 04 44                      VDS-> (message from VDS 04)
+       113.1051 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       113.1060 588 00 00 84                         
+       113.1071 1A0 00 00 00 00                      
+       113.1075 590 01 00 00 00 00 00 00 00          
+       113.1379 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       113.1382 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       113.1385 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       113.1389 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       113.2271 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       113.6564 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+       113.8706 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       113.8708 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       113.8712 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       113.8715 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       114.2570 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       114.2578 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       114.2582 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       114.2585 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       114.2592 588 00 00 84                         
+       114.2598 1A0 00 00 00 00                      
+       114.2601 590 01 00 00 00 00 00 00 00          
+       114.3832 102 04 44                      VDS-> (message from VDS 04)
+       114.3854 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       114.5680 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       114.5682 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       114.5686 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       114.5690 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       115.2779 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       115.2782 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       115.2786 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       115.2789 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       115.2792 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       115.2798 588 00 00 84                         
+       115.2804 1A0 00 00 00 00                      
+       115.2807 590 01 00 00 00 00 00 00 00          
+       115.6274 100 81 00 00 00 0D 04 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:51:09 2012)
+       115.6277 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+       115.6280 100 86 00 92 01 F0 FF FF FF    ->VDS (message to VDS 86)
+       115.6284 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+       115.6286 100 8B 16 B8 81 13 07 14 1E    ->VDS (message to VDS 8B)
+       115.6290 100 A3 21 25 00 00 00 14       ->VDS TEMPS (Tpem 33) (Tmotor 37) (Tbattery 20)
+       115.6293 100 97 21 25 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+       115.6295 100 9B 25 F3 07 0D D7 92 00    ->VDS (message to VDS 9B)
+       115.6298 100 9D 25 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+       115.6301 100 07 64                      ->VDS (message to VDS 07)
+       115.6632 102 04 44                      VDS-> (message from VDS 04)
+       115.6656 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       115.9891 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       115.9894 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       115.9897 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       115.9901 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       115.9907 588 00 00 84                         
+       115.9913 1A0 00 00 00 00                      
+       115.9917 590 01 00 00 00 00 00 00 00          
+       116.2771 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       116.2779 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       116.2783 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       116.2786 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       116.6980 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       116.6983 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       116.6986 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       116.6990 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       116.9434 102 04 44                      VDS-> (message from VDS 04)
+       116.9441 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       117.2877 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       117.2883 588 00 00 84                         
+       117.2889 1A0 00 00 00 00                      
+       117.2891 590 01 00 00 00 00 00 00 00          
+       117.3250 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       117.4086 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       117.4088 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       117.4092 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       117.4095 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       118.1181 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       118.1184 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       118.1188 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       118.1191 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       118.1197 588 00 00 84                         
+       118.1203 1A0 00 00 00 00                      
+       118.1206 590 01 00 00 00 00 00 00 00          
+       118.2235 102 04 44                      VDS-> (message from VDS 04)
+       118.2254 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       118.2883 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       118.2891 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       118.2895 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       118.2898 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       118.8282 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       118.8284 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       118.8288 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       118.8291 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       119.2977 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       119.2984 588 00 00 84                         
+       119.2990 1A0 00 00 00 00                      
+       119.2992 590 01 00 00 00 00 00 00 00          
+       119.5034 102 04 44                      VDS-> (message from VDS 04)
+       119.5110 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       119.5382 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       119.5384 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       119.5388 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       119.5392 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       120.2482 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       120.2485 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       120.2489 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       120.2492 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       120.2498 588 00 00 84                         
+       120.2504 1A0 00 00 00 00                      
+       120.2506 590 01 00 00 00 00 00 00 00          
+       120.2973 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       120.2982 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       120.2985 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       120.2989 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       120.3466 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+       120.6275 100 9B 25 F3 07 0D D7 92 00    ->VDS (message to VDS 9B)
+       120.6278 100 07 64                      ->VDS (message to VDS 07)
+       120.7836 102 04 44                      VDS-> (message from VDS 04)
+       120.7864 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       120.9583 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       120.9586 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       120.9590 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       120.9593 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       120.9599 588 00 00 84                         
+       120.9605 1A0 00 00 00 00                      
+       120.9607 590 01 00 00 00 00 00 00 00          
+       121.3078 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       121.6786 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       121.6788 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       121.6792 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       121.6795 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       122.0637 102 04 44                      VDS-> (message from VDS 04)
+       122.0644 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       122.0664 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       122.0694 588 00 00 84                         
+       122.0699 1A0 00 00 00 00                      
+       122.0703 590 01 00 00 00 00 00 00 00          
+       122.3175 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       122.3183 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       122.3187 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       122.3190 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       122.3893 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       122.3896 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       122.3899 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       122.3903 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       123.0983 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       123.0986 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       123.0990 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       123.0993 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       123.0999 588 00 00 84                         
+       123.1005 1A0 00 00 00 00                      
+       123.1007 590 01 00 00 00 00 00 00 00          
+       123.3279 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       123.3438 102 04 44                      VDS-> (message from VDS 04)
+       123.3462 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       123.8099 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       123.8102 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       123.8106 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       123.8109 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       124.3376 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       124.3384 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       124.3388 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       124.3391 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       124.3397 588 00 00 84                         
+       124.3404 1A0 00 00 00 00                      
+       124.3407 590 01 00 00 00 00 00 00 00          
+       124.5084 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       124.5087 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       124.5090 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       124.5093 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       124.6237 102 04 44                      VDS-> (message from VDS 04)
+       124.6339 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       125.2185 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       125.2188 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       125.2191 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       125.2195 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       125.2200 588 00 00 84                         
+       125.2207 1A0 00 00 00 00                      
+       125.2209 590 01 00 00 00 00 00 00 00          
+       125.3479 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       125.6379 100 81 00 00 00 17 04 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:51:19 2012)
+       125.6382 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+       125.6385 100 86 00 92 01 F0 FF FF FF    ->VDS (message to VDS 86)
+       125.6388 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+       125.6391 100 8B 26 B8 81 13 07 14 1E    ->VDS (message to VDS 8B)
+       125.6395 100 A3 21 25 00 00 00 14       ->VDS TEMPS (Tpem 33) (Tmotor 37) (Tbattery 20)
+       125.6398 100 97 21 25 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+       125.6400 100 9B 25 F3 07 0E D7 92 00    ->VDS (message to VDS 9B)
+       125.6403 100 9D 25 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+       125.6406 100 07 64                      ->VDS (message to VDS 07)
+       125.9037 102 04 44                      VDS-> (message from VDS 04)
+       125.9078 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       125.9389 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       125.9392 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       125.9396 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       125.9399 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       126.3477 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       126.3485 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       126.3489 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       126.3492 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       126.3498 588 00 00 84                         
+       126.3505 1A0 00 00 00 00                      
+       126.3508 590 01 00 00 00 00 00 00 00          
+       126.6586 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       126.6588 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       126.6592 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       126.6595 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       127.0266 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+       127.0343 588 00 00 84                         
+       127.0349 1A0 00 00 00 00                      
+       127.0352 590 01 00 00 00 00 00 00 00          
+       127.1838 102 04 44                      VDS-> (message from VDS 04)
+       127.1846 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       127.1871 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       127.3598 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       127.3601 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       127.3604 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       127.3608 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       127.3610 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       128.0704 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       128.0707 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       128.0710 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       128.0713 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       128.0719 588 00 00 84                         
+       128.0726 1A0 00 00 00 00                      
+       128.0729 590 01 00 00 00 00 00 00 00          
+       128.3578 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       128.3587 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       128.3590 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       128.3593 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       128.4640 102 04 44                      VDS-> (message from VDS 04)
+       128.4700 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       128.7787 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       128.7790 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       128.7793 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       128.7797 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       129.3710 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       129.3717 588 00 00 84                         
+       129.3726 1A0 00 00 00 00                      
+       129.3729 590 01 00 00 00 00 00 00 00          
+       129.4994 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       129.4996 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       129.4999 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       129.5002 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       129.7439 102 04 44                      VDS-> (message from VDS 04)
+       129.7466 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       130.2190 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       130.2193 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       130.2196 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       130.2200 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       130.2206 588 00 00 84                         
+       130.2212 1A0 00 00 00 00                      
+       130.2214 590 01 00 00 00 00 00 00 00          
+       130.3648 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       130.3657 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       130.3663 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       130.3666 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       130.6480 100 9B 25 F3 07 0E D7 92 00    ->VDS (message to VDS 9B)
+       130.6483 100 07 64                      ->VDS (message to VDS 07)
+       130.9388 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       130.9391 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       130.9394 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       130.9398 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       131.0240 102 04 44                      VDS-> (message from VDS 04)
+       131.0258 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       131.3700 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       131.3707 588 00 00 84                         
+       131.3713 1A0 00 00 00 00                      
+       131.3715 590 01 00 00 00 00 00 00 00          
+       131.6591 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       131.6593 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       131.6596 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       131.6600 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       132.3041 102 04 44                      VDS-> (message from VDS 04)
+       132.3049 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       132.3067 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       132.3077 588 00 00 84                         
+       132.3086 1A0 00 00 00 00                      
+       132.3088 590 01 00 00 00 00 00 00 00          
+       132.3657 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       132.3666 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       132.3715 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       132.3718 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       132.3721 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       132.3724 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       132.3728 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       132.3731 100 9C 00 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       133.0789 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       133.0792 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       133.0796 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       133.0799 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       133.0805 588 00 00 84                         
+       133.0811 1A0 00 00 00 00                      
+       133.0813 590 01 00 00 00 00 00 00 00          
+       133.3706 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       133.5840 102 04 44                      VDS-> (message from VDS 04)
+       133.5866 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       133.7073 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+       133.7999 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       133.8002 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       133.8006 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       133.8009 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       134.3651 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       134.3659 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       134.3663 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       134.3666 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       134.3673 588 00 00 84                         
+       134.3683 1A0 00 00 00 00                      
+       134.3687 590 01 00 00 00 00 00 00 00          
+       134.5190 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       134.5192 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       134.5196 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       134.5199 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       134.8641 102 04 44                      VDS-> (message from VDS 04)
+       134.8689 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       135.2390 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       135.2393 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       135.2397 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       135.2400 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       135.2406 588 00 00 84                         
+       135.2412 1A0 00 00 00 00                      
+       135.2414 590 01 00 00 00 00 00 00 00          
+       135.3683 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       136.1442 102 04 44                      VDS-> (message from VDS 04)
+       136.1656 100 81 00 00 00 22 04 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:51:30 2012)
+       136.1658 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+       136.1669 100 86 00 92 01 F0 FF FF FF    ->VDS (message to VDS 86)
+       136.1673 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+       136.1676 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       136.1732 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       136.1736 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       136.1739 100 8B 26 B8 81 13 07 14 1E    ->VDS (message to VDS 8B)
+       136.1741 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       136.1743 100 A3 22 25 00 00 00 14       ->VDS TEMPS (Tpem 34) (Tmotor 37) (Tbattery 20)
+       136.1746 100 97 22 25 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+       136.1750 100 9B 25 F3 07 0F D7 92 00    ->VDS (message to VDS 9B)
+       136.1753 100 9D 25 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+       136.1756 100 07 64                      ->VDS (message to VDS 07)
+       136.1762 588 00 00 84                         
+       136.1768 1A0 00 00 00 00                      
+       136.1771 590 01 00 00 00 00 00 00 00          
+       136.3224 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       136.3651 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       136.3659 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       136.3663 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       136.3666 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       136.8791 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       136.8794 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       136.8798 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       136.8801 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       137.3688 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       137.3696 588 00 00 84                         
+       137.3702 1A0 00 00 00 00                      
+       137.3705 590 01 00 00 00 00 00 00 00          
+       137.4243 102 04 44                      VDS-> (message from VDS 04)
+       137.4248 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       137.4273 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       137.5995 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       137.5997 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       137.6001 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       137.6004 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       138.3092 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       138.3095 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       138.3098 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       138.3102 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       138.3108 588 00 00 84                         
+       138.3114 1A0 00 00 00 00                      
+       138.3116 590 01 00 00 00 00 00 00 00          
+       138.3661 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       138.3668 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       138.3673 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       138.3676 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       138.7043 102 04 44                      VDS-> (message from VDS 04)
+       138.7070 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       139.0097 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       139.0100 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       139.0104 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       139.0107 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       139.3790 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       139.3796 588 00 00 84                         
+       139.3802 1A0 00 00 00 00                      
+       139.3805 590 01 00 00 00 00 00 00 00          
+       139.7093 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       139.7095 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       139.7098 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       139.7101 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       139.9845 102 04 44                      VDS-> (message from VDS 04)
+       139.9899 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       140.3655 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       140.3664 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       140.3667 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       140.3675 588 00 00 84                         
+       140.3731 1A0 00 00 00 00                      
+       140.3735 590 01 00 00 00 00 00 00 00          
+       140.3996 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+       140.4063 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       140.4302 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       140.4304 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       140.4308 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       140.4311 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       141.1393 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       141.1396 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       141.1399 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       141.1403 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       141.1897 100 9B 25 F3 07 0F D7 92 00    ->VDS (message to VDS 9B)
+       141.1900 100 07 64                      ->VDS (message to VDS 07)
+       141.2646 102 04 44                      VDS-> (message from VDS 04)
+       141.2673 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       141.2688 588 00 00 84                         
+       141.2694 1A0 00 00 00 00                      
+       141.2698 590 01 00 00 00 00 00 00 00          
+       141.4189 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       141.8494 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       141.8497 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       141.8500 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       141.8504 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       142.3663 588 00 00 84                         
+       142.3668 1A0 00 00 00 00                      
+       142.3673 590 01 00 00 00 00 00 00 00          
+       142.3897 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       142.3905 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       142.3908 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       142.4386 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       142.5445 102 04 44                      VDS-> (message from VDS 04)
+       142.5453 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       142.5472 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       142.5489 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       142.5492 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       142.5496 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       142.5498 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       143.2598 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       143.2601 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       143.2604 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       143.2608 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       143.2614 588 00 00 84                         
+       143.2620 1A0 00 00 00 00                      
+       143.2622 590 01 00 00 00 00 00 00 00          
+       143.4488 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       143.8246 102 04 44                      VDS-> (message from VDS 04)
+       143.8271 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       143.9725 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       143.9729 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       143.9732 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       143.9734 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       144.3662 588 00 00 84                         
+       144.3667 1A0 00 00 00 00                      
+       144.3671 590 01 00 00 00 00 00 00 00          
+       144.3897 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       144.3906 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       144.3909 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       144.4588 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       144.6695 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       144.6698 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       144.6702 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       144.6705 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       145.1047 102 04 44                      VDS-> (message from VDS 04)
+       145.1076 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       145.3704 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       145.3707 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       145.3712 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       145.3714 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       145.3722 588 00 00 84                         
+       145.3729 1A0 00 00 00 00                      
+       145.3732 590 01 00 00 00 00 00 00 00          
+       145.4788 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       146.0710 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       146.0712 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       146.0716 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       146.0720 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       146.1990 100 81 00 00 00 2C 04 3F 4F    ->VDS Time/Date UTC (time Sat Feb 18 01:51:40 2012)
+       146.1993 100 82 0C                      ->VDS Ambient Temperature (12 celcius)
+       146.1996 100 86 00 92 01 F0 FF FF FF    ->VDS (message to VDS 86)
+       146.1999 100 87 21 00 00 00 00 00 00    ->VDS (message to VDS 87)
+       146.2002 100 8B 36 B8 81 13 07 14 1E    ->VDS (message to VDS 8B)
+       146.2006 100 A3 22 25 00 00 00 14       ->VDS TEMPS (Tpem 34) (Tmotor 37) (Tbattery 20)
+       146.2009 100 97 22 25 00 A4 D9 00 00    ->VDS Odometer (miles: 5571.6 km: 8966.6)
+       146.2011 100 9B 25 F3 07 0F D7 92 00    ->VDS (message to VDS 9B)
+       146.2014 100 9D 25 4C 00 3A 00 01 00    ->VDS (message to VDS 9D)
+       146.2017 100 07 64                      ->VDS (message to VDS 07)
+       146.3717 588 00 00 84                         
+       146.3722 1A0 00 00 00 00                      
+       146.3726 590 01 00 00 00 00 00 00 00          
+       146.3848 102 04 44                      VDS-> (message from VDS 04)
+       146.3898 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       146.3901 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       146.3909 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       146.3912 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       146.5000 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       146.7697 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       146.7700 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       146.7703 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       146.7707 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       147.1001 100 93 00 FF FF 00 00 00 00    ->VDS (message to VDS 93)
+       147.4911 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       147.4914 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       147.4918 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       147.4921 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       147.4927 588 00 00 84                         
+       147.4934 1A0 00 00 00 00                      
+       147.4937 590 01 00 00 00 00 00 00 00          
+       147.5392 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       147.6647 102 04 44                      VDS-> (message from VDS 04)
+       147.6655 102 06 BC 02 00 10 00 00 00    VDS-> (message from VDS 06)
+       147.6679 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       148.2000 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       148.2003 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       148.2007 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       148.2010 100 8D 00 92 01 C8 00 C7 00    ->VDS (message to VDS 8D)
+       148.3664 588 00 00 84                         
+       148.3670 1A0 00 00 00 00                      
+       148.3674 590 01 00 00 00 00 00 00 00          
+       148.4093 100 80 5D B5 00 76 00 A3 00    ->VDS Range (SOC 93%) (ideal 181) (est 163)
+       148.4102 100 85 01 49 01 68 00          ->VDS GPS status (direction 329 deg) (altitude 104m)
+       148.4104 100 9C 01 28 00                ->VDS Trip->VDS (trip 4.0miles)
+       148.5590 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       148.9102 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       148.9104 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       148.9108 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       148.9112 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+       148.9448 102 04 44                      VDS-> (message from VDS 04)
+       148.9476 100 05 44 01 00 48 4B 00 00    ->VDS (message to VDS 05)
+       149.5693 100 96 64 00 02 21 0C 00 00    ->VDS Doors (l-door: closed) (r-door: closed) (chargeport: open) (pilot: false) (charging: false) (bits 64)
+       149.5700 588 00 00 84                         
+       149.5706 1A0 00 00 00 00                      
+       149.5708 590 01 00 00 00 00 00 00 00          
+       149.6201 100 88 00 01 00 FF FF 0D       ->VDS Charger settings (limit 13A) (current 0A) (duration 1mins)
+       149.6204 100 89 00 FF FF 7F FF          ->VDS Charger interface (speed 0mph) (vline 65535V) (Iavailable 255A)
+       149.6207 100 95 17 07 64 57 02 0E 00    ->VDS Charger v1.5 (stopped-charging) (conn-pwr-cable) (standard)
+       149.6211 100 8D 00 92 01 C9 00 C7 00    ->VDS (message to VDS 8D)
+              0 NOTE                                 VDS Display: Stop Charging: Connect power cable
