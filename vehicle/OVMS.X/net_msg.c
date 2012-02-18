@@ -291,7 +291,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.2.0-rc3,%s,%d,%d,%s",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.2.0-rc4,%s,%d,%d,%s",
     car_vin, net_sq, sys_features[FEATURE_CANWRITE],car_type);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
@@ -605,8 +605,6 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
-      delay100(2);
-      net_msg_stat();
       break;
     case 11: // Start charge (params unused)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -626,8 +624,6 @@ void net_msg_cmd_do(void)
           }
         }
       net_msg_encode_puts();
-      delay100(2);
-      net_msg_stat();
       break;
     case 12: // Stop charge (params unused)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -647,8 +643,6 @@ void net_msg_cmd_do(void)
           }
         }
       net_msg_encode_puts();
-      delay100(2);
-      net_msg_stat();
       break;
     case 15: // Set charge current (params: current in amps)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -661,8 +655,30 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
-      delay100(2);
-      net_msg_stat();
+      break;
+    case 16: // Set charge mode and current (params: mode, current)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
+        // check if a value exists and is separated by a comma
+        if (*p == ',')
+          {
+          *p++ = 0;
+          // At this point, <net_msg_cmd_msg> points to the mode, and p to the current
+          can_tx_setchargemode(atoi(net_msg_cmd_msg));
+          can_tx_setchargecurrent(atoi(p));
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+          }
+        else
+          {
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
+          }
+        }
+      net_msg_encode_puts();
       break;
     case 18: // Wakeup car
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -675,9 +691,6 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
-      delay100(2);
-      net_msg_stat();
-      net_msg_environment();
       break;
     case 19: // Wakeup temperature subsystem
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -690,9 +703,6 @@ void net_msg_cmd_do(void)
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
-      delay100(2);
-      net_msg_stat();
-      net_msg_environment();
       break;
     case 20: // Lock car (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)

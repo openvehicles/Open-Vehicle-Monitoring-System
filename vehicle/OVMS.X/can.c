@@ -226,29 +226,28 @@ void can_poll0(void)                // CAN ID 100 and 102
                         + ((unsigned int) can_databuffer[3] << 8);
       break;
     case 0x95: // Charging mode
+      if ((car_chargestate<0x15)&&
+          (can_databuffer[1]>=0x15)&&
+          (can_databuffer[2]!=0x03))
+        { // We've moved from charging to stopped charging, not by-request
+        net_notify_status();
+        }
+      if ((can_databuffer[1] != car_chargestate)||
+          (can_databuffer[2] != car_chargesubstate))
+        { // If the state/sub-state has changed, notify it
+        net_notify_environment();
+        }
       car_chargestate = can_databuffer[1];
       car_chargesubstate = can_databuffer[2];
       if (sys_features[FEATURE_CARBITS]&FEATURE_CB_2008) // A 2010+ roadster?
         car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
       else
         car_chargemode = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
-      if (car_stopped) // Stopped charging?
-        {
-        car_stopped = 0;
-        if (car_chargestate >= 0x15)
-          {
-          net_notify_status();
-          }
-        }
       car_charge_b4 = can_databuffer[3];
       car_chargekwh = can_databuffer[7];
       break;
     case 0x96: // Doors / Charging yes/no
-      if ((car_charging) && !(can_databuffer[1] & 0x10)) // Already Charging? Stopped?
-        {
-        car_stopped = 1; // Yes Roadster stopped charging, set flag.
-        }
-      car_charging = (can_databuffer[1] & 0x10); //Charging status
+      if (car_chargestate == 0x0f) can_databuffer[1] |= 0x10; // Fudge for heating state, to be charging=on
       if ((car_doors1 != can_databuffer[1])||
           (car_doors2 != can_databuffer[2])||
           (car_doors3 != can_databuffer[3]))

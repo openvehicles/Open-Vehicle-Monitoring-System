@@ -659,6 +659,7 @@ void net_state_ticker1(void)
           delay100(10);
           net_msg_start();
           net_msg_environment();
+          net_msg_stat();
           net_msg_send();
           return;
           }

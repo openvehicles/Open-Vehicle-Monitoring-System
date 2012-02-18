@@ -69,10 +69,8 @@ unsigned int car_chargeduration = 0; // Charge Duration (minutes)
 unsigned char car_chargestate = 4; // 1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging
 unsigned char car_chargesubstate = 0;
 unsigned char car_chargemode = 0; // 0=standard, 1=storage, 3=range, 4=performance
-unsigned char car_charging = 0; // 1=yes/0=no
 unsigned char car_charge_b4 = 0; // B4 byte of charge state
 unsigned char car_chargekwh = 0; // KWh of charge
-unsigned char car_stopped = 0; // 1=yes,0=no
 unsigned char car_doors1 = 0; //
 unsigned char car_doors2 = 0; //
 unsigned char car_doors3 = 0; //
