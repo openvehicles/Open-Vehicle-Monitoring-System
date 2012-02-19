@@ -53,7 +53,7 @@
   switch (cm_row)
     {
     case 2:
-      m_charger_warning.text = @"Range Mode limits power\n\nFrequent use of Range Mode\nwill reduce long-term battery life";
+      m_charger_warning.text = @"Range Mode limits power\nFrequent use will reduce long-term battery life";
       break;
     case 3:
       m_charger_warning.text = @"Frequent use of Performance Mode\nwill reduce long-term battery life";
@@ -98,7 +98,7 @@
   switch (cm_row)
     {
     case 2:
-      m_charger_warning.text = @"Range Mode limits power\n\nFrequent use of Range Mode\nwill reduce long-term battery life";
+      m_charger_warning.text = @"Range Mode limits power\nFrequent use will reduce long-term battery life";
       break;
     case 3:
       m_charger_warning.text = @"Frequent use of Performance Mode\nwill reduce long-term battery life";
@@ -122,7 +122,13 @@
 
   [self dismissModalViewControllerAnimated:YES];
 
-  if (ncm != [ovmsAppDelegate myRef].car_chargemodeN)
+  if ((ncm != [ovmsAppDelegate myRef].car_chargemodeN)&&
+      (ncl != [ovmsAppDelegate myRef].car_chargelimit))
+    {
+    // We need to change the car charge mode and limit
+    [[ovmsAppDelegate myRef] commandDoSetChargeModecurrent:ncm current:ncl];
+    }
+  else if (ncm != [ovmsAppDelegate myRef].car_chargemodeN)
     {
     [[ovmsAppDelegate myRef] commandDoSetChargeMode:ncm];
     }
@@ -130,12 +136,6 @@
     {
     [[ovmsAppDelegate myRef] commandDoSetChargeCurrent:ncl];
     }
-//  if ((ncm != [ovmsAppDelegate myRef].car_chargemodeN)||
-//      (ncl != [ovmsAppDelegate myRef].car_chargelimit))
-//    {
-//    // We need to change the car charge mode / limit
-//    [[ovmsAppDelegate myRef] commandDoSetChargeMode:ncm];
-//    }
   }
 
 #pragma mark -

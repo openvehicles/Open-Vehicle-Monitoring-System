@@ -255,7 +255,7 @@
       {
       // Slider on the left, message is "Slide to charge"
       m_charger_slider.value = 0.0;
-      m_car_charge_message.text = @"Slide to charge";
+      m_car_charge_message.text = @"SLIDE TO CHARGE";
       m_car_charge_message.hidden = 0;
       m_car_charge_state.hidden = 1;
       m_car_charge_type.hidden = 1;

@@ -8,18 +8,12 @@
 
 #import <UIKit/UIKit.h>
 #import "ovmsAppDelegate.h"
-#import "ovmsControlPINEntry.h"
 
-@interface ovmsControlViewController : UIViewController <ovmsControlPINEntryDelegate>
+@interface ovmsControlViewController : UIViewController
 
 @property (strong, nonatomic) IBOutlet UISegmentedControl *m_chargemode;
 
 - (IBAction)doneButton:(id)sender;
-- (IBAction)startChargingButton:(id)sender;
-- (IBAction)stopChargingButton:(id)sender;
-- (IBAction)chargeModeButton:(id)sender;
-- (IBAction)lockButton:(id)sender;
-- (IBAction)valetButton:(id)sender;
 - (IBAction)featuresButton:(id)sender;
 - (IBAction)parametersButton:(id)sender;
 - (IBAction)cellularUsageButton:(id)sender;

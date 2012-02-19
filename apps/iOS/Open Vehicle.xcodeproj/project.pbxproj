@@ -44,7 +44,6 @@
 		4D69A82614DAC93700CF0F74 /* ovmsControlCellularUsageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D69A82514DAC93700CF0F74 /* ovmsControlCellularUsageViewController.m */; };
 		4D69A82914DACAF500CF0F74 /* ovmsControlFeaturesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D69A82814DACAF500CF0F74 /* ovmsControlFeaturesViewController.m */; };
 		4D69A82C14DACB0900CF0F74 /* ovmsControlParametersViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D69A82B14DACB0900CF0F74 /* ovmsControlParametersViewController.m */; };
-		4D69A84714DAD85000CF0F74 /* libCorePlot-CocoaTouch.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D69A84414DAD81F00CF0F74 /* libCorePlot-CocoaTouch.a */; };
 		4D69A84914DADA4400CF0F74 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D69A84814DADA4400CF0F74 /* QuartzCore.framework */; };
 		4D69A85014DBB11F00CF0F74 /* ovmsControlPINEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D69A84F14DBB11F00CF0F74 /* ovmsControlPINEntry.m */; };
 		4D69A85314DFC00900CF0F74 /* carvaletoff.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85114DFC00900CF0F74 /* carvaletoff.png */; };
@@ -159,20 +158,6 @@
 			remoteGlobalIDString = 4D5AE36314733757002F5F52;
 			remoteInfo = ovms;
 		};
-		4D69A84314DAD81F00CF0F74 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = BC9B83470FB8A0A40035D8DA;
-			remoteInfo = "CorePlot-CocoaTouch";
-		};
-		4D69A84514DAD82D00CF0F74 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = BC9B83460FB8A0A40035D8DA;
-			remoteInfo = "CorePlot-CocoaTouch";
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -225,7 +210,6 @@
 		4D69A82814DACAF500CF0F74 /* ovmsControlFeaturesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsControlFeaturesViewController.m; sourceTree = "<group>"; };
 		4D69A82A14DACB0900CF0F74 /* ovmsControlParametersViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsControlParametersViewController.h; sourceTree = "<group>"; };
 		4D69A82B14DACB0900CF0F74 /* ovmsControlParametersViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsControlParametersViewController.m; sourceTree = "<group>"; };
-		4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "CorePlot-CocoaTouch.xcodeproj"; path = "../core-plot/framework/CorePlot-CocoaTouch.xcodeproj"; sourceTree = "<group>"; };
 		4D69A84814DADA4400CF0F74 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		4D69A84E14DBB11F00CF0F74 /* ovmsControlPINEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsControlPINEntry.h; sourceTree = "<group>"; };
 		4D69A84F14DBB11F00CF0F74 /* ovmsControlPINEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsControlPINEntry.m; sourceTree = "<group>"; };
@@ -352,7 +336,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D69A84914DADA4400CF0F74 /* QuartzCore.framework in Frameworks */,
-				4D69A84714DAD85000CF0F74 /* libCorePlot-CocoaTouch.a in Frameworks */,
 				4DBF3762149B7333002323B5 /* SystemConfiguration.framework in Frameworks */,
 				4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */,
 				4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */,
@@ -382,7 +365,6 @@
 			isa = PBXGroup;
 			children = (
 				4D69A84814DADA4400CF0F74 /* QuartzCore.framework */,
-				4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */,
 				4D5AE36E14733757002F5F52 /* ovms */,
 				4D5AE39A14733758002F5F52 /* ovmsTests */,
 				4D5AE36714733757002F5F52 /* Frameworks */,
@@ -468,14 +450,6 @@
 				4D5AE39D14733758002F5F52 /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		4D69A83B14DAD81F00CF0F74 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				4D69A84414DAD81F00CF0F74 /* libCorePlot-CocoaTouch.a */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
@@ -680,7 +654,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				4D69A84614DAD82D00CF0F74 /* PBXTargetDependency */,
 			);
 			name = "Open Vehicle";
 			productName = ovms;
@@ -725,12 +698,6 @@
 			mainGroup = 4D5AE35914733757002F5F52;
 			productRefGroup = 4D5AE36514733757002F5F52 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 4D69A83B14DAD81F00CF0F74 /* Products */;
-					ProjectRef = 4D69A83A14DAD81F00CF0F74 /* CorePlot-CocoaTouch.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				4D5AE36314733757002F5F52 /* Open Vehicle */,
@@ -738,16 +705,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		4D69A84414DAD81F00CF0F74 /* libCorePlot-CocoaTouch.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = "libCorePlot-CocoaTouch.a";
-			remoteRef = 4D69A84314DAD81F00CF0F74 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		4D5AE36214733757002F5F52 /* Resources */ = {
@@ -933,11 +890,6 @@
 			target = 4D5AE36314733757002F5F52 /* Open Vehicle */;
 			targetProxy = 4D5AE39814733758002F5F52 /* PBXContainerItemProxy */;
 		};
-		4D69A84614DAD82D00CF0F74 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "CorePlot-CocoaTouch";
-			targetProxy = 4D69A84514DAD82D00CF0F74 /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -992,8 +944,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "39FD1127-57A0-470C-89B7-30714C143F54";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "39FD1127-57A0-470C-89B7-30714C143F54";
+				PROVISIONING_PROFILE = "F13B40C2-4A56-4E73-A8AF-B61F8BBBBCCE";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "F13B40C2-4A56-4E73-A8AF-B61F8BBBBCCE";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -1003,12 +955,16 @@
 		4D29A7F11485EFE60088122F /* Adhoc Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Mark Webb-Johnson";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Mark Webb-Johnson";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
 				HEADER_SEARCH_PATHS = "../core-plot/framework/**";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "Open Vehicle";
+				PROVISIONING_PROFILE = "F13B40C2-4A56-4E73-A8AF-B61F8BBBBCCE";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "F13B40C2-4A56-4E73-A8AF-B61F8BBBBCCE";
 				WRAPPER_EXTENSION = app;
 			};
 			name = "Adhoc Release";
@@ -1057,12 +1013,14 @@
 		4D29A7F41485EFEE0088122F /* AppStore Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Mark Webb-Johnson";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
 				HEADER_SEARCH_PATHS = "../core-plot/framework/**";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "Open Vehicle";
+				PROVISIONING_PROFILE = "39FD1127-57A0-470C-89B7-30714C143F54";
 				WRAPPER_EXTENSION = app;
 			};
 			name = "AppStore Release";

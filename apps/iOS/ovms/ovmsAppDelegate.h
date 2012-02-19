@@ -201,6 +201,7 @@
 - (void)commandDoStartCharge;
 - (void)commandDoStopCharge;
 - (void)commandDoSetChargeCurrent:(int)current;
+- (void)commandDoSetChargeModecurrent:(int)mode current:(int)current;
 - (void)commandDoWakeupCar;
 - (void)commandDoWakeupTempSubsystem;
 - (void)commandDoLockCar:(NSString*)pin;

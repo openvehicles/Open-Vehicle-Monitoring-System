@@ -7,11 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "CorePlot-CocoaTouch.h"
 
-@interface ovmsControlCellularUsageViewController : UIViewController<CPTPlotDataSource>
-{
-  CPTXYGraph *barChart;
-}
+@interface ovmsControlCellularUsageViewController : UIViewController
 
 @end

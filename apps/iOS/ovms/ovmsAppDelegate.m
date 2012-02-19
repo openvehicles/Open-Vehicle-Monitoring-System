@@ -976,6 +976,12 @@
   [self commandIssue:[NSString stringWithFormat:@"15,%d",current]];
   }
 
+- (void)commandDoSetChargeModecurrent:(int)mode current:(int)current
+  {
+  [JHNotificationManager notificationWithMessage:@"Setting Charge Mode and Current..."];
+  [self commandIssue:[NSString stringWithFormat:@"16,%d,%d",mode,current]];
+  }
+
 - (void)commandDoWakeupCar
   {
   [JHNotificationManager notificationWithMessage:@"Waking up Car..."];
