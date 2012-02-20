@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #include "ovmsAppDelegate.h"
+#import "MBProgressHUD.h"
 
 #define PARAM_MAX 32
 #define PARAM_MAX_LENGTH 32
@@ -36,17 +37,16 @@
 #define PARAM_FEATURE14 0x1E
 #define PARAM_FEATURE15 0x1F
 
-@interface ovmsControlParametersViewController : UITableViewController <ovmsCommandDelegate, UITextFieldDelegate>
+@interface ovmsControlParametersViewController : UITableViewController <ovmsCommandDelegate, UITextFieldDelegate, MBProgressHUDDelegate>
 {
   NSString* param[PARAM_FEATURE_S];
   BOOL params_ready;
-  UIActivityIndicatorView *spinner;
 }
 
 @property (strong, nonatomic) IBOutlet UITableView *m_table;
 @property (nonatomic, retain) UIActivityIndicatorView *spinner;
 
-- (void)startSpinner;
+- (void)startSpinner:(NSString *)label;
 - (void)stopSpinner;
 - (void)textFieldDidEndEditing:(UITextField *)textField;
 

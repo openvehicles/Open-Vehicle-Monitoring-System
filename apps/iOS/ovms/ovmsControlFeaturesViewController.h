@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "ovmsAppDelegate.h"
+#import "MBProgressHUD.h"
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -23,17 +24,15 @@
 #define FEATURE_CB_SAD_SMS   0x02 // Set to 1 to suppress "Access Denied" SMS
 #define FEATURE_CB_SOUT_SMS  0x04 // Set to 1 to suppress all outbound SMS
 
-@interface ovmsControlFeaturesViewController : UITableViewController 
+@interface ovmsControlFeaturesViewController : UITableViewController <ovmsCommandDelegate, MBProgressHUDDelegate>
   {
   int feature[FEATURES_MAX];
   BOOL features_ready;
-  UIActivityIndicatorView *spinner;
   }
 
 @property (strong, nonatomic) IBOutlet UITableView *m_table;
-@property (nonatomic, retain) UIActivityIndicatorView *spinner;
 
-- (void)startSpinner;
+- (void)startSpinner:(NSString *)label;
 - (void)stopSpinner;
 - (void)textFieldDidEndEditing:(UITextField *)textField;
 

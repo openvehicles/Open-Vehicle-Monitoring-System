@@ -11,7 +11,6 @@
 
 @implementation ovmsControlFeaturesViewController
 @synthesize m_table;
-@synthesize spinner;
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -60,7 +59,7 @@
   
   // Request the list of features from the car...
   [[ovmsAppDelegate myRef] commandRegister:@"1" callback:self];
-  [self startSpinner];
+  [self startSpinner:@"Loading Features"];
   }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -84,25 +83,16 @@
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
-- (void)startSpinner
+- (void)startSpinner:(NSString *)label
   {
-  spinner = nil;
-  if (spinner==nil)
-    {
-    spinner = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-    spinner.frame = CGRectMake(0, 0, 50, 50);
-    spinner.center = self.view.center;
-    [spinner setBackgroundColor:[UIColor blackColor]];
-    [self.view addSubview:spinner];
-    }
+  MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.navigationController.view animated:YES];
+  hud.labelText = label; 
   m_table.userInteractionEnabled = NO;
-  [spinner startAnimating];
-  spinner.hidden = NO;
   }
 
 - (void)stopSpinner
   {
-  [spinner stopAnimating];
+  [MBProgressHUD hideHUDForView:self.navigationController.view animated:YES];
   m_table.userInteractionEnabled = YES;
   }
 
@@ -114,24 +104,22 @@
     int rcode = [[result objectAtIndex:1] intValue];
     if (command == 2)
       {
+      [[ovmsAppDelegate myRef] commandCancel];
+      [self stopSpinner];
       switch (rcode)
         {
         case 0:
-          [self stopSpinner];
           break;
         case 1: // failed
           [JHNotificationManager
            notificationWithMessage:
            [NSString stringWithFormat:@"Failed: %@",[[result objectAtIndex:2] stringValue]]];
-          [[ovmsAppDelegate myRef] commandCancel];
           break;
         case 2: // unsupported
           [JHNotificationManager notificationWithMessage:@"Unsupported operation"];
-          [[ovmsAppDelegate myRef] commandCancel];
           break;
         case 3: // unimplemented
           [JHNotificationManager notificationWithMessage:@"Unimplemented operation"];
-          [[ovmsAppDelegate myRef] commandCancel];
           break;
         }
       return;
@@ -157,9 +145,8 @@
             {
             [[ovmsAppDelegate myRef] commandCancel];
             features_ready = YES;
-            m_table.userInteractionEnabled = YES;
+            [self stopSpinner];
             [m_table reloadData];
-            [spinner stopAnimating];
             }
           }
         }
@@ -169,20 +156,24 @@
          notificationWithMessage:
          [NSString stringWithFormat:@"Failed: %@",[[result objectAtIndex:2] stringValue]]];
         [[ovmsAppDelegate myRef] commandCancel];
+        [self stopSpinner];
         break;
       case 2: // unsupported
         [JHNotificationManager notificationWithMessage:@"Unsupported operation"];
         [[ovmsAppDelegate myRef] commandCancel];
+        [self stopSpinner];
         break;
       case 3: // unimplemented
         [JHNotificationManager notificationWithMessage:@"Unimplemented operation"];
         [[ovmsAppDelegate myRef] commandCancel];
+        [self stopSpinner];
         break;
       }
     }
   else
     {
     [[ovmsAppDelegate myRef] commandCancel];
+    [self stopSpinner];
     }
   }
 
@@ -197,7 +188,7 @@
     {
     feature[fn] = val;
     [[ovmsAppDelegate myRef] commandRegister:[NSString stringWithFormat:@"2,%d,%d",fn,val] callback:self];
-    [self startSpinner];
+    [self startSpinner:@"Saving"];
     }
   }
 

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D04C86914F28EF4002D6B69 /* MBProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D04C86814F28EF4002D6B69 /* MBProgressHUD.m */; };
 		4D04E2E7147E7695007CB190 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 4D04E2E6147E7695007CB190 /* Settings.bundle */; };
 		4D0A96AF14939616000B74FC /* ovmsStatusViewControllerPad.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A96AE14939616000B74FC /* ovmsStatusViewControllerPad.m */; };
 		4D10FCF3147BC9AA0092FAF9 /* GCDAsyncSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D10FCF2147BC9AA0092FAF9 /* GCDAsyncSocket.m */; };
@@ -161,6 +162,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4D04C86714F28EF4002D6B69 /* MBProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MBProgressHUD.h; sourceTree = "<group>"; };
+		4D04C86814F28EF4002D6B69 /* MBProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MBProgressHUD.m; sourceTree = "<group>"; };
 		4D04E2E6147E7695007CB190 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = Settings.bundle; path = ../Settings.bundle; sourceTree = "<group>"; };
 		4D0A96AD14939616000B74FC /* ovmsStatusViewControllerPad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewControllerPad.h; sourceTree = "<group>"; };
 		4D0A96AE14939616000B74FC /* ovmsStatusViewControllerPad.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsStatusViewControllerPad.m; sourceTree = "<group>"; };
@@ -407,6 +410,8 @@
 				4DBF375F149B7312002323B5 /* Reachability.m */,
 				4D16EF30148747EC004A80AE /* JHNotificationManager.h */,
 				4D16EF31148747EC004A80AE /* JHNotificationManager.m */,
+				4D04C86714F28EF4002D6B69 /* MBProgressHUD.h */,
+				4D04C86814F28EF4002D6B69 /* MBProgressHUD.m */,
 				4D5AE37A14733758002F5F52 /* MainStoryboard_iPhone.storyboard */,
 				4D5AE37D14733758002F5F52 /* MainStoryboard_iPad.storyboard */,
 				4DFAD7FF1475435300416D38 /* Tabs */,
@@ -871,6 +876,7 @@
 				4D69A82C14DACB0900CF0F74 /* ovmsControlParametersViewController.m in Sources */,
 				4D69A85014DBB11F00CF0F74 /* ovmsControlPINEntry.m in Sources */,
 				4DA91F7114EE896100106AD4 /* ovmsChargerSettingsViewController.m in Sources */,
+				4D04C86914F28EF4002D6B69 /* MBProgressHUD.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
