@@ -317,7 +317,9 @@
     m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
     [ovmsAppDelegate myRef].car_linevoltage,
     [ovmsAppDelegate myRef].car_chargecurrent];
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
+                              [[ovmsAppDelegate myRef].car_chargemode uppercaseString],
+                              [ovmsAppDelegate myRef].car_chargelimit];
     m_battery_charging.hidden = 0;
     m_car_charge_mode.hidden = 0;
     }
@@ -327,7 +329,9 @@
     m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
                               [ovmsAppDelegate myRef].car_linevoltage,
                               [ovmsAppDelegate myRef].car_chargecurrent];
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
+                              [[ovmsAppDelegate myRef].car_chargemode uppercaseString],
+                              [ovmsAppDelegate myRef].car_chargelimit];
     m_battery_charging.hidden = 0;
     m_car_charge_mode.hidden = 0;
     }
@@ -337,7 +341,9 @@
     m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
                               [ovmsAppDelegate myRef].car_linevoltage,
                               [ovmsAppDelegate myRef].car_chargecurrent];
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
+                              [[ovmsAppDelegate myRef].car_chargemode uppercaseString],
+                              [ovmsAppDelegate myRef].car_chargelimit];
     m_battery_charging.hidden = 0;
     m_car_charge_mode.hidden = 0;
     }
@@ -347,7 +353,9 @@
     m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
                               [ovmsAppDelegate myRef].car_linevoltage,
                               [ovmsAppDelegate myRef].car_chargecurrent];
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
+                              [[ovmsAppDelegate myRef].car_chargemode uppercaseString],
+                              [ovmsAppDelegate myRef].car_chargelimit];
     m_battery_charging.hidden = 0;
     m_car_charge_mode.hidden = 0;
     }
@@ -355,7 +363,9 @@
     {
     m_car_charge_state.text = @"DONE";
     m_car_charge_type.text = @"";
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
+                              [[ovmsAppDelegate myRef].car_chargemode uppercaseString],
+                              [ovmsAppDelegate myRef].car_chargelimit];
     m_battery_charging.hidden = 1;
     m_car_charge_mode.hidden = 1;
     }
@@ -363,7 +373,9 @@
     {
     m_car_charge_state.text = @"STOPPED";
     m_car_charge_type.text = @"";
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
+                              [[ovmsAppDelegate myRef].car_chargemode uppercaseString],
+                              [ovmsAppDelegate myRef].car_chargelimit];
     m_battery_charging.hidden = 1;
     m_car_charge_mode.hidden = 1;
    }
@@ -371,7 +383,9 @@
     {
     m_car_charge_state.text = @"STOPPING";
     m_car_charge_type.text = @"";
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
+    m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
+                              [[ovmsAppDelegate myRef].car_chargemode uppercaseString],
+                              [ovmsAppDelegate myRef].car_chargelimit];
     m_battery_charging.hidden = 1;
     m_car_charge_mode.hidden = 1;
     }

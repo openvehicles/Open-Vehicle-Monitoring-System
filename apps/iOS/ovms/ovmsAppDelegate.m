@@ -812,7 +812,11 @@
 - (void)commandResponse:(NSString*)response
   {
   NSArray *result = [response componentsSeparatedByString:@","];
-  
+  if ((command_delegate != nil)&&([command_delegate conformsToProtocol:@protocol(ovmsCommandDelegate)]))
+    {
+    [command_delegate commandResult:result];
+    }
+
   if ([result count]>1)
     {
     int command = [[result objectAtIndex:0] intValue];
@@ -827,7 +831,6 @@
           case 30:
             if ((command_delegate != nil)&&([command_delegate conformsToProtocol:@protocol(ovmsCommandDelegate)]))
               {
-              [command_delegate commandResult:result];
               }
             else
               [self didStopNetworking];

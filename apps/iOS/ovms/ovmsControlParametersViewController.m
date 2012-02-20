@@ -7,15 +7,17 @@
 //
 
 #import "ovmsControlParametersViewController.h"
-
+#import "JHNotificationManager.h"
 
 @implementation ovmsControlParametersViewController
+@synthesize m_table;
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
     self = [super initWithStyle:style];
     if (self) {
         // Custom initialization
+      params_ready = NO;
     }
     return self;
 }
@@ -43,6 +45,7 @@
 
 - (void)viewDidUnload
 {
+    [self setM_table:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -51,6 +54,14 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+
+  params_ready = NO;
+  m_table.userInteractionEnabled = NO;
+  
+  // Request the list of features from the car...
+  [[ovmsAppDelegate myRef] commandRegister:@"3" callback:self];
+  [self startSpinner];
+
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -74,86 +85,214 @@
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
+- (void)startSpinner
+  {
+  spinner = nil;
+  if (spinner==nil)
+    {
+    spinner = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+    spinner.frame = CGRectMake(0, 0, 50, 50);
+    spinner.center = self.view.center;
+    [spinner setBackgroundColor:[UIColor blackColor]];
+    [self.view addSubview:spinner];
+    }
+  m_table.userInteractionEnabled = NO;
+  [spinner startAnimating];
+  spinner.hidden = NO;
+  }
+
+- (void)stopSpinner
+  {
+  [spinner stopAnimating];
+  m_table.userInteractionEnabled = YES;
+  }
+
+- (void)commandResult:(NSArray*)result
+  {  
+  if ([result count]>1)
+    {
+    int command = [[result objectAtIndex:0] intValue];
+    int rcode = [[result objectAtIndex:1] intValue];
+    if (command == 4)
+      {
+      switch (rcode)
+        {
+        case 0:
+          [self stopSpinner];
+          break;
+        case 1: // failed
+          [JHNotificationManager
+           notificationWithMessage:
+           [NSString stringWithFormat:@"Failed: %@",[[result objectAtIndex:2] stringValue]]];
+          [[ovmsAppDelegate myRef] commandCancel];
+          break;
+        case 2: // unsupported
+          [JHNotificationManager notificationWithMessage:@"Unsupported operation"];
+          [[ovmsAppDelegate myRef] commandCancel];
+          break;
+        case 3: // unimplemented
+          [JHNotificationManager notificationWithMessage:@"Unimplemented operation"];
+          [[ovmsAppDelegate myRef] commandCancel];
+          break;
+        }
+      return;
+      }
+    if (command != 3) return; // Not for us
+    switch (rcode)
+      {
+      case 0:
+        {
+        int fn = 0;
+        int fm = 0;
+        NSString* fv = @"";
+        if ([result count]>4)
+          {
+          fn = [[result objectAtIndex:2] intValue];
+          fm = [[result objectAtIndex:3] intValue];
+          fv = [result objectAtIndex:4];
+          if (fn < PARAM_FEATURE_S)
+            {
+            param[fn] = fv;
+            }
+          if (fn == fm-1)
+            {
+            [[ovmsAppDelegate myRef] commandCancel];
+            params_ready = YES;
+            m_table.userInteractionEnabled = YES;
+            [m_table reloadData];
+            [spinner stopAnimating];
+            }
+          }
+        }
+        break;
+      case 1: // failed
+        [JHNotificationManager
+         notificationWithMessage:
+         [NSString stringWithFormat:@"Failed: %@",[[result objectAtIndex:2] stringValue]]];
+        [[ovmsAppDelegate myRef] commandCancel];
+        break;
+      case 2: // unsupported
+        [JHNotificationManager notificationWithMessage:@"Unsupported operation"];
+        [[ovmsAppDelegate myRef] commandCancel];
+        break;
+      case 3: // unimplemented
+        [JHNotificationManager notificationWithMessage:@"Unimplemented operation"];
+        [[ovmsAppDelegate myRef] commandCancel];
+        break;
+      }
+    }
+  else
+    {
+    [[ovmsAppDelegate myRef] commandCancel];
+    }
+  }
+
+- (void)textFieldDidEndEditing:(UITextField *)textField
+  {
+  UIView *cell = [[textField superview] superview];
+  int fn = cell.tag-200;
+  NSString* val = textField.text;
+  
+  if ([val compare:param[fn]])
+    {
+    param[fn] = val;
+    [[ovmsAppDelegate myRef] commandRegister:[NSString stringWithFormat:@"4,%d,%@",fn,val] callback:self];
+    [self startSpinner];
+    }
+  }
+
+
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
-{
-#warning Potentially incomplete method implementation.
-    // Return the number of sections.
-    return 0;
-}
+  {
+  // Return the number of sections.
+  return (params_ready)?1:0;
+  }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-#warning Incomplete method implementation.
-    // Return the number of rows in the section.
-    return 0;
-}
+  {
+  // Return the number of rows in the section.
+  return (params_ready)?PARAM_FEATURE_S:0;
+  }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *CellIdentifier = @"Cell";
-    
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+  static NSString *CellIdentifier = @"ParamCell";
+  
+  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+  if (cell == nil) {
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+  }
+  [cell setTag:200+indexPath.row];
+  
+  // Configure the cell...
+  
+  UILabel *cellLabel = (UILabel *)[cell viewWithTag:1000];
+  switch (indexPath.row)
+    {
+    case PARAM_REGPHONE:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Registered Telephone",indexPath.row]];
+      break;
+    case PARAM_REGPASS:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Registration Password",indexPath.row]];
+      break;
+    case PARAM_MILESKM:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Miles/Km",indexPath.row]];
+      break;
+    case PARAM_NOTIFIES:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Notifications",indexPath.row]];
+      break;
+    case PARAM_SERVERIP:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Server IP",indexPath.row]];
+      break;
+    case PARAM_GPRSAPN:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: GPRS APN",indexPath.row]];
+      break;
+    case PARAM_GPRSUSER:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: GPRS User",indexPath.row]];
+      break;
+    case PARAM_GPRSPASS:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: GPRS Password",indexPath.row]];
+      break;
+    case PARAM_MYID:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Vehicle ID",indexPath.row]];
+      break;
+    case PARAM_NETPASS1:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Network Password",indexPath.row]];
+      break;
+    case PARAM_PARANOID:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Paranoid Mode",indexPath.row]];
+      break;
+    case PARAM_S_GROUP:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Social Group",indexPath.row]];
+      break;
+    default:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d:",indexPath.row]];
+      break;
     }
-    
-    // Configure the cell...
-    
-    return cell;
+  
+  UITextField *cellText = (UITextField *)[cell viewWithTag:1001];
+  if ((indexPath.row == PARAM_REGPASS)||(indexPath.row == PARAM_NETPASS1))
+    {
+    [cellText setText:@"**********"];
+    cellText.enabled = NO;    
+    }
+  else
+    {
+    [cellText setText:param[indexPath.row]];
+    cellText.enabled = YES;
+    }
+  
+  return cell;
 }
-
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
-}
-*/
-
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    }   
-    else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
-}
-*/
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
 
 #pragma mark - Table view delegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Navigation logic may go here. Create and push another view controller.
-    /*
-     <#DetailViewController#> *detailViewController = [[<#DetailViewController#> alloc] initWithNibName:@"<#Nib name#>" bundle:nil];
-     // ...
-     // Pass the selected object to the new view controller.
-     [self.navigationController pushViewController:detailViewController animated:YES];
-     */
-}
+  {
+  [self.view endEditing:TRUE];
+  }
+
 
 @end
