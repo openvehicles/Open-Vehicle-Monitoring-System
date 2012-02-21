@@ -232,6 +232,12 @@ void can_poll0(void)                // CAN ID 100 and 102
         { // We've moved from charging to stopped charging, not by-request
         net_notify_status();
         }
+      if ((car_chargestate == 0x0f)&&
+          (can_databuffer[1] == 0x0d)&&
+          (can_databuffer[2] != 0x03))
+        { // We've moved from heating to preparing, not by-request
+        net_notify_status();
+        }
       if ((can_databuffer[1] != car_chargestate)||
           (can_databuffer[2] != car_chargesubstate))
         { // If the state/sub-state has changed, notify it
