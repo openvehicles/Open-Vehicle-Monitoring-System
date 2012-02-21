@@ -28,6 +28,15 @@
 ; THE SOFTWARE.
 */
 
+2012-02-18 1.2.0-rc4   Release Candidate #4 for end-user firmware
+                       Treat HEATING state as car charging (force charging bit high)
+                       Tidy up car_charging and stopped charging alerts
+                       Implement a command 16 to set charge mode and current in the same message
+                       Change logic for commands 10,11,12 and 15 to NOT send battery status message immediately
+                       Change can.c to detect changes in battery status and send that as an immediate status update
+                       Triple-check notifications for charge stopped vs done
+                       Support heating indication in push alerts
+
 2012-02-12 1.2.0-rc3   Release Candidate #3 for end-user firmware
                        Include charge state and mode as raw values in status message
 
