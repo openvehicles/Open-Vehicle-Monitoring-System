@@ -30,6 +30,11 @@
 
 2012-02-21 1.2.0-rc5   Release Candidate #5 for end-user firmware
                        Heating->Preparing, not by-request, -> SMS/IP alert
+                       Command 40: Send SMS (params: phone number, SMS message)
+                       Command 41: Send MMI/USSD Codes (param: USSD_CODE)
+                       Command 49: Send raw AT command (param: raw AT command)
+                       Increase message buffers to 200 bytes
+                       Support multi-line incoming SMS
 
 2012-02-18 1.2.0-rc4   Release Candidate #4 for end-user firmware
                        Treat HEATING state as car charging (force charging bit high)
