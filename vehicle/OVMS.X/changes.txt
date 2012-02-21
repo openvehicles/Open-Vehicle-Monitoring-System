@@ -28,6 +28,9 @@
 ; THE SOFTWARE.
 */
 
+2012-02-21 1.2.0-rc5   Release Candidate #5 for end-user firmware
+                       Heating->Preparing, not by-request, -> SMS/IP alert
+
 2012-02-18 1.2.0-rc4   Release Candidate #4 for end-user firmware
                        Treat HEATING state as car charging (force charging bit high)
                        Tidy up car_charging and stopped charging alerts
