@@ -86,6 +86,7 @@
 		4DBB7932148270A50055769F /* connection_unknown.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DBB792F148270A50055769F /* connection_unknown.png */; };
 		4DBF3760149B7312002323B5 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DBF375F149B7312002323B5 /* Reachability.m */; };
 		4DBF3762149B7333002323B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DBF3761149B7333002323B5 /* SystemConfiguration.framework */; };
+		4DC4C1E414F334CC0093F581 /* ovmsControlCellularUsageView.html in Resources */ = {isa = PBXBuildFile; fileRef = 4DC4C1E314F334CC0093F581 /* ovmsControlCellularUsageView.html */; };
 		4DC8B38C147E7BF2007FDFB2 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 4DC8B38A147E7BF2007FDFB2 /* Model.xcdatamodeld */; };
 		4DDA222F1476962700BA40AA /* teslapin.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDA222E1476962700BA40AA /* teslapin.png */; };
 		4DDF384714E4246000B4ACC0 /* carlights.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDF384614E4246000B4ACC0 /* carlights.png */; };
@@ -262,6 +263,7 @@
 		4DBF375E149B7312002323B5 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
 		4DBF375F149B7312002323B5 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
 		4DBF3761149B7333002323B5 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		4DC4C1E314F334CC0093F581 /* ovmsControlCellularUsageView.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = ovmsControlCellularUsageView.html; sourceTree = "<group>"; };
 		4DC8B38B147E7BF2007FDFB2 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		4DDA222E1476962700BA40AA /* teslapin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teslapin.png; sourceTree = "<group>"; };
 		4DDF384614E4246000B4ACC0 /* carlights.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carlights.png; sourceTree = "<group>"; };
@@ -633,6 +635,7 @@
 				4D69A82114DA85E400CF0F74 /* ovmsControlViewController.m */,
 				4D69A82414DAC93700CF0F74 /* ovmsControlCellularUsageViewController.h */,
 				4D69A82514DAC93700CF0F74 /* ovmsControlCellularUsageViewController.m */,
+				4DC4C1E314F334CC0093F581 /* ovmsControlCellularUsageView.html */,
 				4D69A82714DACAF500CF0F74 /* ovmsControlFeaturesViewController.h */,
 				4D69A82814DACAF500CF0F74 /* ovmsControlFeaturesViewController.m */,
 				4D69A82A14DACB0900CF0F74 /* ovmsControlParametersViewController.h */,
@@ -819,6 +822,7 @@
 				4D777F6A14ED2EC900B46223 /* carunlock_b.png in Resources */,
 				4D777F6B14ED2EC900B46223 /* carvaletoff_b.png in Resources */,
 				4D777F6C14ED2EC900B46223 /* carvaleton_b.png in Resources */,
+				4DC4C1E414F334CC0093F581 /* ovmsControlCellularUsageView.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

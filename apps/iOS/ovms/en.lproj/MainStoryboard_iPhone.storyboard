@@ -722,22 +722,6 @@
                                     <segue destination="WYu-zK-Uku" kind="push" id="n7l-Mz-oPY"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="Nm9-lh-ngf">
-                                <rect key="frame" x="20" y="304" width="280" height="37"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
-                                <state key="normal" title="Cellular Usage">
-                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
-                                </state>
-                                <state key="highlighted">
-                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                </state>
-                                <connections>
-                                    <action selector="cellularUsageButton:" destination="SsU-0d-yX8" eventType="touchUpInside" id="KRG-nu-fo0"/>
-                                    <segue destination="ea2-qH-NLr" kind="push" id="CYO-Zs-mbU"/>
-                                </connections>
-                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="kcW-Ln-Gei">
                                 <rect key="frame" x="20" y="361" width="280" height="37"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
@@ -751,6 +735,22 @@
                                 </state>
                                 <connections>
                                     <action selector="resetModuleButton:" destination="SsU-0d-yX8" eventType="touchUpInside" id="Zqf-c3-Ebm"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="5HZ-A9-htO">
+                                <rect key="frame" x="20" y="304" width="280" height="37"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="Cellular Usage">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="parametersButton:" destination="SsU-0d-yX8" eventType="touchUpInside" id="AJ9-Hq-c7c"/>
+                                    <segue destination="ea2-qH-NLr" kind="push" id="slq-Cw-Q7v"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -943,12 +943,26 @@
                     <view key="view" contentMode="scaleToFill" id="680-FP-B2x" customClass="CPTGraphHostingView">
                         <rect key="frame" x="0.0" y="64" width="320" height="416"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <webView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" scalesPageToFit="YES" id="IHW-5M-OrN">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="416"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                                <dataDetectorType key="dataDetectorTypes"/>
+                                <connections>
+                                    <outlet property="delegate" destination="ea2-qH-NLr" id="Nmv-2j-b6l"/>
+                                </connections>
+                            </webView>
+                        </subviews>
                         <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <navigationItem key="navigationItem" title="Cellular Usage" id="xu4-gr-jFX"/>
+                    <connections>
+                        <outlet property="m_webview" destination="IHW-5M-OrN" id="afY-Cd-Icf"/>
+                    </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="2277" y="396"/>
+            <point key="canvasLocation" x="2439" y="-331"/>
         </scene>
         <scene sceneID="Kev-uy-6HY">
             <objects>
@@ -1134,6 +1148,9 @@
         </class>
         <class className="ovmsControlCellularUsageViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsControlCellularUsageViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="m_webview" candidateClass="UIWebView"/>
+            </relationships>
         </class>
         <class className="ovmsControlFeaturesViewController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsControlFeaturesViewController.h"/>

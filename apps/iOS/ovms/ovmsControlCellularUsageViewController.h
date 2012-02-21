@@ -7,7 +7,25 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "MBProgressHUD.h"
+#import "ovmsAppDelegate.h"
 
-@interface ovmsControlCellularUsageViewController : UIViewController
+#define MAX_DAYS 100
+
+@interface ovmsControlCellularUsageViewController : UIViewController <UIWebViewDelegate, ovmsCommandDelegate, MBProgressHUDDelegate>
+  {
+  NSString *t_day[MAX_DAYS];
+  int t_rx[MAX_DAYS];
+  int t_tx[MAX_DAYS];
+  int t_days;
+  int t_rxt;
+  int t_txt;
+  }
+
+@property (strong, nonatomic) IBOutlet UIWebView *m_webview;
+
+- (void)startSpinner:(NSString *)label;
+- (void)stopSpinner;
+- (void)displayChart;
 
 @end

@@ -1,0 +1,70 @@
+<!--
+ You are free to copy and use this sample in accordance with the terms of the
+ Apache license (http://www.apache.org/licenses/LICENSE-2.0.html)
+ -->
+
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+<meta http-equiv='content-type' content='text/html; charset=utf-8'/>
+<meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+<title>
+Google Visualization API Sample
+</title>
+<script type='text/javascript' src='http://www.google.com/jsapi'></script>
+<script type='text/javascript'>
+google.load('visualization', '1', {packages: ['corechart']});
+</script>
+<script type='text/javascript'>
+function drawVisualization() {
+// Create and populate the data table.
+var data = new google.visualization.DataTable();
+var raw_data = [['Tx',
++++REPLACEME04+++
+],
+['Rx',
++++REPLACEME05+++
+]];
+
+var days = [
++++REPLACEME03+++
+];
+
+data.addColumn('string', 'Day');
+for (var i = 0; i  < raw_data.length; ++i) {
+data.addColumn('number', raw_data[i][0]);    
+}
+
+data.addRows(days.length);
+
+for (var j = 0; j < days.length; ++j) {    
+data.setValue(j, 0, days[j].toString());    
+}
+for (var i = 0; i  < raw_data.length; ++i) {
+for (var j = 1; j  < raw_data[i].length; ++j) {
+data.setValue(j-1, i+1, raw_data[i][j]);    
+}
+}
+
+// Create and draw the visualization.
+new google.visualization.ColumnChart(document.getElementById('visualization')).
+draw(data,
+{title:'+++REPLACEME02+++', 
+width:320, height:416,
+backgroundColor: '#0F1723',
+legend: {textStyle:{color:'white'}, position:'in'},
+titleTextStyle:{color:'white', fontSize:14},
+vAxis: {title: 'Bandwidth (KB)', textStyle:{color:'white'}, titleTextStyle:{color:'white'}},
+hAxis: {title: '+++REPLACEME01+++', textStyle:{color:'white'}, titleTextStyle:{color:'white'}}
+}
+);
+}
+
+
+google.setOnLoadCallback(drawVisualization);
+</script>
+</head>
+<body bgcolor='#0F1723' style='font-family: Arial;border: 0 none;'>
+<div id='visualization' style='width: 320px; height: 416px;'></div>
+</body>
+</html>
