@@ -47,18 +47,22 @@ unsigned int  net_timeout_ticks = 0;        // Number of seconds before timeout 
 unsigned int  net_granular_tick = 0;        // An internal ticker used to generate 1min, 5min, etc, calls
 unsigned int  net_watchdog = 0;             // Second count-down for network connectivity
 char net_caller[NET_TEL_MAX] = {0};         // The telephone number of the caller
-char net_scratchpad[100];                   // A general-purpose scratchpad
 
 unsigned char net_buf_pos = 0;              // Current position (aka length) in the network buffer
 unsigned char net_buf_mode = NET_BUF_CRLF;  // Mode of the buffer (CRLF, SMS or MSG)
+unsigned char net_buf_todo = 0;             // Bytes outstanding on a reception
+
+#pragma udata NETBUF_SP
+char net_scratchpad[NET_BUF_MAX];           // A general-purpose scratchpad
+#pragma udata
 #pragma udata NETBUF
 char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
-rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E0\r";
+rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
-//rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=0;+CIPSPRT=0;+CIPQSEND=1;E1\r";
+//rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
 //rom char NET_COPS[] = "AT+COPS=4,0,\"3(2G)\"\r";
 
 rom char NET_WAKEUP[] = "AT\r";
@@ -117,7 +121,7 @@ void net_poll(void)
 
   while(UARTIntGetChar(&x))
     {
-    if ((net_buf_mode==NET_BUF_SMS)||(net_buf_mode==NET_BUF_CRLF))
+    if (net_buf_mode==NET_BUF_CRLF)
       { // CRLF (either normal or SMS second line) mode
       if (x == 0x0d) continue; // Skip 0x0d (CR)
       net_buf[net_buf_pos++] = x;
@@ -127,7 +131,8 @@ void net_poll(void)
           (net_buf[2]=='P')&&(net_buf[3]=='D'))
         {
         net_buf[net_buf_pos-1] = 0; // Change the ':' to an end
-        net_buf_mode = atoi(net_buf+5);
+        net_buf_todo = atoi(net_buf+5);
+        net_buf_mode = NET_BUF_IPD;
         net_buf_pos = 0;
         continue; // We have switched to IPD mode
         }
@@ -145,10 +150,29 @@ void net_poll(void)
           net_caller[0] = '\0';
           strncpy(net_caller,net_buf+7,NET_TEL_MAX);
           net_caller[NET_TEL_MAX-1] = '\0';
+          x = net_buf_pos;
+          while ((net_buf[x--] != ',')&&(x>0)); // Search for last comma seperator
+          net_buf_todo = atoi(net_buf+x+2); // Length of SMS message
           net_buf_pos = 0;
           net_buf_mode = NET_BUF_SMS;
           continue;
           }
+        net_state_activity();
+        net_buf_pos = 0;
+        net_buf_mode = NET_BUF_CRLF;
+        }
+      }
+    else if (net_buf_mode==NET_BUF_SMS)
+      { // SMS data mode
+      if ((x==0x0d)||(x==0x0a))
+        net_buf[net_buf_pos++] = ' '; // \d, \r => space
+      else
+        net_buf[net_buf_pos++] = x;
+      if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
+      net_buf_todo--;
+      if (net_buf_todo==0)
+        {
+        net_buf[net_buf_pos] = 0; // Zero-terminate
         net_state_activity();
         net_buf_pos = 0;
         net_buf_mode = NET_BUF_CRLF;
@@ -161,7 +185,7 @@ void net_poll(void)
         net_buf[net_buf_pos++] = x; // Swallow CR
         if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
         }
-      net_buf_mode--;
+      net_buf_todo--;
       if (x == 0x0A) // Newline?
         {
         net_buf_pos--;
@@ -169,7 +193,7 @@ void net_poll(void)
         net_state_activity();
         net_buf_pos = 0;
         }
-      if (net_buf_mode==0)
+      if (net_buf_todo==0)
         {
         net_buf_pos = 0;
         net_buf_mode = NET_BUF_CRLF;

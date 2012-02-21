@@ -36,6 +36,7 @@
 #include "net.h"
 #include "can.h"
 #include "net_msg.h"
+#include "net_sms.h"
 #include "crypt_base64.h"
 #include "crypt_md5.h"
 #include "crypt_hmac.h"
@@ -53,7 +54,10 @@ char ptoken[23] = {0};
 char ptokenmade = 0;
 char digest[MD5_SIZE];
 char pdigest[MD5_SIZE];
-char net_msg_scratchpad[100];
+
+#pragma udata NETMSG_SP
+char net_msg_scratchpad[NET_BUF_MAX];
+#pragma udata
 
 #pragma udata Q_CMD
 int  net_msg_cmd_code = 0;
@@ -518,7 +522,11 @@ void net_msg_cmd_do(void)
   char *p;
 
   delay100(2);
-  net_msg_start();
+
+  // commands 40-49 are special AT commands, thus, disable net_msg here
+  if ((net_msg_cmd_code < 40) || (net_msg_cmd_code > 49)) 
+    net_msg_start();
+
   switch (net_msg_cmd_code)
     {
     case 1: // Request feature list (params unused)
@@ -760,6 +768,47 @@ void net_msg_cmd_do(void)
       delay100(2);
       net_msg_environment();
       break;
+    case 40: // Send SMS (params: phone number, SMS message)
+      for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
+      // check if a value exists and is separated by a comma
+      if (*p == ',')
+        {
+        *p++ = 0;
+        // At this point, <net_msg_cmd_msg> points to the phone number, and <p> to the SMS message
+        net_send_sms_start(net_msg_cmd_msg);
+        net_puts_ram(p);
+        net_puts_rom("\x1a");
+        delay100(5);
+        net_msg_start();
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
+      else
+        {
+        net_msg_start();
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
+        }
+      net_msg_encode_puts();
+      delay100(2);
+      break;
+    case 41: // Send MMI/USSD Codes (param: USSD_CODE)
+      net_puts_rom("AT+CUSD=1,\"");
+      net_puts_ram(net_msg_cmd_msg);
+      net_puts_rom("\",15\r");
+      delay100(5);
+      net_msg_start();
+      sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      net_msg_encode_puts();
+      delay100(2);
+      break;
+    case 49: // Send raw AT command (param: raw AT command)
+      net_puts_ram(net_msg_cmd_msg);
+      net_puts_rom("\r");
+      delay100(5);
+      net_msg_start();
+      sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      net_msg_encode_puts();
+      delay100(2);
+      break;
     default:
       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,3",net_msg_cmd_code);
       net_msg_encode_puts();
@@ -783,7 +832,7 @@ void net_msg_forward_sms(char *caller, char *SMS)
   strcatpgm2ram(net_scratchpad,(char const rom far*)"SMS FROM: ");
   strcat(net_scratchpad, caller);
   strcatpgm2ram(net_scratchpad,(char const rom far*)" - MSG: ");
-  SMS[70]=0; // Hacky limit on the max size of an SMS forwarded
+  SMS[170]=0; // Hacky limit on the max size of an SMS forwarded
   strcat(net_scratchpad, SMS);
   net_msg_encode_puts();
   net_msg_send();
