@@ -44,7 +44,6 @@
 }
 
 @property (strong, nonatomic) IBOutlet UITableView *m_table;
-@property (nonatomic, retain) UIActivityIndicatorView *spinner;
 
 - (void)startSpinner:(NSString *)label;
 - (void)stopSpinner;
