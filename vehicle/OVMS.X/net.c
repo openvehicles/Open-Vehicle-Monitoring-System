@@ -248,18 +248,18 @@ void net_putc_ram(const char data)
 // Emits a status notification error to the user (by SMS)
 // upon request (e.g. by an incoming call or sms STAT command).
 //
-void net_notify_status(void)
+void net_notify_status(unsigned char notify)
   {
   // Emit an unsolicited notification showing current status
   char *p,*q;
   p = par_get(PARAM_NOTIFIES);
   if (strstrrampgm(p,(char const rom far*)"SMS") != NULL)
     {
-    net_sms_notify = 1;
+    net_sms_notify = notify;
     }
   if (strstrrampgm(p,(char const rom far*)"IP") != NULL)
     {
-    net_msg_notify = 1;
+    net_msg_notify = notify;
     }
   }
 
@@ -539,7 +539,7 @@ void net_state_activity()
           }
         delay100(1);
         net_puts_rom(NET_HANGUP);
-        net_notify_status();
+        //net_notify_status(2); // Disable this feature, as not really used and can lead to SMS charges
         }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT OK", 10) == 0)
         {
@@ -659,19 +659,25 @@ void net_state_ticker1(void)
           net_msg_cmd_do();
           return;
           }
-        if ((net_msg_notify==1)&&(net_msg_serverok==1))
+        if ((net_msg_notify>0)&&(net_msg_serverok==1))
           {
-          net_msg_notify = 0;
           delay100(10);
-          net_msg_alert();
+          if ((net_msg_notify==1)&&(car_chargestate!=0x04)&&(car_chargesubstate!=0x03))
+            net_msg_alert();
+          else if (net_msg_notify==2)
+            net_msg_alert();
+          net_msg_notify = 0;
           return;
           }
-        if (net_sms_notify==1)
+        if (net_sms_notify>0)
           {
-          net_sms_notify = 0;
           delay100(10);
           p = par_get(PARAM_REGPHONE);
-          net_sms_stat(p);
+          if ((net_sms_notify==1)&&(car_chargestate!=0x04)&&(car_chargesubstate!=0x03))
+            net_sms_stat(p);
+          else if (net_sms_notify==2)
+            net_sms_stat(p);
+          net_sms_notify = 0;
           return;
           }
         if ((net_msg_notifyenvironment==1)&&

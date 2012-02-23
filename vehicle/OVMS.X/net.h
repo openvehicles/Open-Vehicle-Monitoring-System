@@ -68,7 +68,7 @@ void net_state_enter(unsigned char);
 void net_state_activity(void);
 void net_state_ticker(void);
 
-void net_notify_status(void);
+void net_notify_status(unsigned char notify);
 void net_notify_environment(void);
 
 #endif // #ifndef __OVMS_NET_H
