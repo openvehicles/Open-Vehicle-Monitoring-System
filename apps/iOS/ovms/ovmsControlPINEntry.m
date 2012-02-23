@@ -67,10 +67,12 @@
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    // Return YES for supported orientations
+  {
+  if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+    return YES;
+  else
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
-}
+  }
 
 -(void) viewWillAppear:(BOOL)animated
 {

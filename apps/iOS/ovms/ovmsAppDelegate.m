@@ -32,6 +32,10 @@
 
 @synthesize location_delegate;
 @synthesize car_location;
+@synthesize car_direction;
+@synthesize car_altitude;
+@synthesize car_gpslock;
+@synthesize car_stale_gps;
 
 @synthesize status_delegate;
 @synthesize car_soc;
@@ -53,10 +57,15 @@
 @synthesize car_delegate;
 @synthesize car_doors1;
 @synthesize car_doors2;
+@synthesize car_doors3;
+@synthesize car_state_pemtemps;
+@synthesize car_stale_ambienttemps;
 @synthesize car_lockstate;
 @synthesize car_vin;
 @synthesize car_firmware;
 @synthesize server_firmware;
+@synthesize car_write_enabled;
+@synthesize car_type;
 @synthesize car_gsmlevel;
 @synthesize car_tpem;
 @synthesize car_tmotor;
@@ -74,6 +83,7 @@
 @synthesize car_tpms_fl_temp;
 @synthesize car_tpms_rl_pressure;
 @synthesize car_tpms_rl_temp;
+@synthesize car_stale_tpms;
 
 + (ovmsAppDelegate *) myRef
 {
@@ -397,6 +407,11 @@
   //TODO
   car_location.latitude = 0;
   car_location.longitude = 0;
+  car_direction = 0;
+  car_altitude = 0;
+  car_gpslock = 0;
+  car_stale_gps = 0;
+  
   car_soc = 0;
   car_units = @"-";
   car_linevoltage = 0;
@@ -415,10 +430,16 @@
 
   car_doors1 = 0;
   car_doors2 = 0;
+  car_doors3 = 0;
+  car_state_pemtemps = 0;
+  car_stale_ambienttemps = 0;
   car_lockstate = 0;
   car_vin = @"";
   car_firmware = @"";
   server_firmware = @"";
+  car_write_enabled = 0;
+  car_type = @"";
+
   car_gsmlevel = 0;
   car_tpem = 0;
   car_tmotor = 0;
@@ -435,7 +456,8 @@
   car_tpms_fl_temp = 0;
   car_tpms_rl_pressure = 0;
   car_tpms_rl_temp = 0;
-  
+  car_stale_tpms = 0;
+
   if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
     {
     [self.location_delegate updateLocation];
@@ -564,6 +586,13 @@
           [self.location_delegate updateLocation];
           }
         }
+      if ([lparts count]>=6)
+        {
+        car_direction = [[lparts objectAtIndex:2] intValue];
+        car_altitude = [[lparts objectAtIndex:3] intValue];
+        car_gpslock = [[lparts objectAtIndex:4] intValue];
+        car_stale_gps = [[lparts objectAtIndex:5] intValue];
+        }
       }
       break;
     case 'F': // CAR FIRMWARE
@@ -583,6 +612,11 @@
           {
           [self.car_delegate updateCar];
           }
+        }
+      if ([lparts count]>=5)
+        {
+        car_write_enabled = [[lparts objectAtIndex:3] intValue];
+        car_type = [lparts objectAtIndex:4];
         }
       }
       break;
@@ -630,7 +664,13 @@
           car_ambient_temp = [[lparts objectAtIndex:10] intValue];
         else
           car_ambient_temp = -127;
-        
+        if ([lparts count] >= 14)
+          {
+          car_doors3 = [[lparts objectAtIndex:11] intValue];
+          car_state_pemtemps = [[lparts objectAtIndex:12] intValue];
+          car_stale_ambienttemps = [[lparts objectAtIndex:13] intValue];
+          }
+
         // Update the visible status
         if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
           {
@@ -660,11 +700,15 @@
         car_tpms_fl_temp = [[lparts objectAtIndex:5] intValue];
         car_tpms_rl_pressure = [[lparts objectAtIndex:6] floatValue];
         car_tpms_rl_temp = [[lparts objectAtIndex:7] intValue];
-        // Update the visible status
-        if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-          {
-          [self.car_delegate updateCar];
-          }
+        }
+      if ([lparts count]>=9)
+        {
+        car_stale_tpms = [[lparts objectAtIndex:8] intValue];
+        }
+      // Update the visible status
+      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+        {
+        [self.car_delegate updateCar];
         }
       }
       break;

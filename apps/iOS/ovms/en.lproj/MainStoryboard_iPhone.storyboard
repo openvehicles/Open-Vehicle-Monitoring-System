@@ -174,7 +174,13 @@
                         <color key="backgroundColor" red="0.086274512112140656" green="0.14509804546833038" blue="0.25098040699958801" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="Status" image="49-battery.png" id="eHK-35-AMI"/>
-                    <navigationItem key="navigationItem" id="4y7-LI-Dwy"/>
+                    <navigationItem key="navigationItem" id="4y7-LI-Dwy">
+                        <barButtonItem key="rightBarButtonItem" title="Control" id="A0l-T7-xJ2">
+                            <connections>
+                                <segue destination="ywl-8V-elC" kind="modal" modalTransitionStyle="flipHorizontal" id="fI9-vg-Gk1"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
                         <outlet property="m_battery_charging" destination="C4i-5V-3e1" id="1yJ-Nz-IQn"/>
@@ -377,11 +383,6 @@
                     </view>
                     <navigationItem key="navigationItem" id="AWr-Ib-rpt">
                         <barButtonItem key="backBarButtonItem" title="Cancel" id="Uj3-Qm-JjY"/>
-                        <barButtonItem key="rightBarButtonItem" title="Control" id="A0l-T7-xJ2">
-                            <connections>
-                                <segue destination="ywl-8V-elC" kind="modal" modalTransitionStyle="flipHorizontal" id="fI9-vg-Gk1"/>
-                            </connections>
-                        </barButtonItem>
                     </navigationItem>
                     <connections>
                         <outlet property="vehicleImage" destination="fbz-J9-5fJ" id="KAD-x3-FcB"/>
@@ -830,7 +831,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="1507" y="396"/>
+            <point key="canvasLocation" x="1818" y="403"/>
         </scene>
         <scene sceneID="Z5c-Qj-YRV">
             <objects>

@@ -73,6 +73,10 @@
   BOOL car_paranoid;
   
   CLLocationCoordinate2D car_location;
+  int car_direction;
+  int car_altitude;
+  int car_gpslock;
+  int car_stale_gps;
   int car_soc;
   NSString* car_units;
   int car_linevoltage;
@@ -91,10 +95,15 @@
 
   int car_doors1;
   int car_doors2;
+  int car_doors3;
+  int car_state_pemtemps;
+  int car_stale_ambienttemps;
   int car_lockstate;
   NSString* car_vin;
   NSString* car_firmware;
   NSString* server_firmware;
+  int car_write_enabled;
+  NSString* car_type;
   int car_gsmlevel;
   int car_tpem;
   int car_tmotor;
@@ -112,6 +121,7 @@
   int car_tpms_fl_temp;
   float car_tpms_rl_pressure;
   int car_tpms_rl_temp;
+  int car_stale_tpms;
 }
 
 @property (strong, nonatomic) UIWindow *window;
@@ -132,6 +142,10 @@
 
 @property (strong, nonatomic) id location_delegate;
 @property (assign) CLLocationCoordinate2D car_location;
+@property (assign) int car_direction;
+@property (assign) int car_altitude;
+@property (assign) int car_gpslock;
+@property (assign) int car_stale_gps;
 
 @property (strong, nonatomic) id status_delegate;
 @property (assign) int car_soc;
@@ -153,10 +167,16 @@
 @property (strong, nonatomic) id car_delegate;
 @property (assign) int car_doors1;
 @property (assign) int car_doors2;
+@property (assign) int car_doors3;
+@property (assign) int car_state_pemtemps;
+@property (assign) int car_stale_ambienttemps;
+
 @property (assign) int car_lockstate;
 @property (strong, nonatomic) NSString* car_vin;
 @property (strong, nonatomic) NSString* car_firmware;
 @property (strong, nonatomic) NSString* server_firmware;
+@property (assign) int car_write_enabled;
+@property (strong, nonatomic) NSString* car_type;
 @property (assign) int car_gsmlevel;
 @property (assign) int car_tpem;
 @property (assign) int car_tmotor;
@@ -174,6 +194,7 @@
 @property (assign) int car_tpms_fl_temp;
 @property (assign) float car_tpms_rl_pressure;
 @property (assign) int car_tpms_rl_temp;
+@property (assign) int car_stale_tpms;
 
 + (ovmsAppDelegate *) myRef;
 - (void)saveContext;

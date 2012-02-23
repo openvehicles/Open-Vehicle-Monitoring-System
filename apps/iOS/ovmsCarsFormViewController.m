@@ -81,17 +81,13 @@
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
+  {
   // Return YES for supported orientations
-  if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
-    {
-    return (interfaceOrientation == UIInterfaceOrientationPortrait);
-    }
-  else
-    {
+  if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
     return YES;
-    }
-}
+  else
+    return (interfaceOrientation == UIInterfaceOrientationPortrait);
+  }
 
 -(void) viewWillAppear:(BOOL)animated
 {

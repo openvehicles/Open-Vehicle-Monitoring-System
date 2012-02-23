@@ -55,13 +55,25 @@
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    // Return YES for supported orientations
+  {
+  if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+    return YES;
+  else
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
-}
+  }
+
+- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
+  {
+  m_webview.hidden = YES;
+  }
+
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+  {
+  [self displayChart];
+  }
 
 - (void)viewWillAppear:(BOOL)animated
-{
+  {
   [super viewWillAppear:animated];
 
   // Request the list of features from the car...
@@ -70,7 +82,8 @@
   t_days = 0;
   [[ovmsAppDelegate myRef] commandRegister:@"30" callback:self];
   [self startSpinner:@"Loading Usage"];
-}
+  m_webview.hidden = YES;
+  }
 
 - (void)viewDidAppear:(BOOL)animated
 {
@@ -138,6 +151,29 @@
   page = [page stringByReplacingOccurrencesOfString:@"+++REPLACEME04+++" withString:r04];
   page = [page stringByReplacingOccurrencesOfString:@"+++REPLACEME05+++" withString:r05];
 
+  if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+    {
+    // The device is an iPad running iPhone 3.2 or later.
+    UIInterfaceOrientation orientation = self.interfaceOrientation;
+    if ((orientation == UIInterfaceOrientationPortrait)||
+        (orientation == UIInterfaceOrientationPortraitUpsideDown))
+      {
+      page = [page stringByReplacingOccurrencesOfString:@"+++REPLACEME10+++" withString:@"768"];
+      page = [page stringByReplacingOccurrencesOfString:@"+++REPLACEME11+++" withString:@"960"];
+      }
+    else
+      {
+      page = [page stringByReplacingOccurrencesOfString:@"+++REPLACEME10+++" withString:@"960"];
+      page = [page stringByReplacingOccurrencesOfString:@"+++REPLACEME11+++" withString:@"768"];
+      }
+    }
+  else
+    {
+    // The device is an iPhone or iPod touch.
+    page = [page stringByReplacingOccurrencesOfString:@"+++REPLACEME10+++" withString:@"320"];
+    page = [page stringByReplacingOccurrencesOfString:@"+++REPLACEME11+++" withString:@"416"];
+    }
+  
   [m_webview loadHTMLString:page baseURL:nil];
   }
 
@@ -209,8 +245,8 @@
 }
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView
-{
+  {
   m_webview.hidden = NO;
-}
+  }
 
 @end
