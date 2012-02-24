@@ -295,7 +295,7 @@ void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"1.2.0-rc6,%s,%d,%d,%s",
+  sprintf(net_msg_scratchpad, (rom far char*)"1.2.0-rc7,%s,%d,%d,%s",
     car_vin, net_sq, sys_features[FEATURE_CANWRITE],car_type);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
@@ -621,7 +621,7 @@ void net_msg_cmd_do(void)
         }
       else
         {
-        if ((car_doors1 & 0x04))
+        if ((car_doors1 & 0x04)&&(car_chargesubstate != 0x07))
           {
           can_tx_startstopcharge(1);
           sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
@@ -894,4 +894,12 @@ void net_msg_alert(void)
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   net_msg_send();
+  }
+
+void net_msg_socalert(void)
+  {
+  char *p;
+
+  sprintf(net_scratchpad, (rom far char*)"MP-0 PAALERT!!! CRITICAL SOC LEVEL APPROACHED (%u%% SOC)", car_SOC); // 95%
+  net_msg_encode_puts();
   }

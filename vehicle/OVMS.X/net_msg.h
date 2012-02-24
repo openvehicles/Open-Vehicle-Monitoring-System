@@ -56,5 +56,6 @@ void net_msg_cmd_in(char* msg);
 void net_msg_cmd_do(void);
 void net_msg_forward_sms(char* caller, char* SMS);
 void net_msg_alert(void);
+void net_msg_socalert(void);
 
 #endif // #ifndef __OVMS_MSG_H

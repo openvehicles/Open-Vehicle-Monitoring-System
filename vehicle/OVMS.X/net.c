@@ -52,6 +52,11 @@ unsigned char net_buf_pos = 0;              // Current position (aka length) in 
 unsigned char net_buf_mode = NET_BUF_CRLF;  // Mode of the buffer (CRLF, SMS or MSG)
 unsigned char net_buf_todo = 0;             // Bytes outstanding on a reception
 
+#ifdef OVMS_SOCALERT
+unsigned char net_socalert_sms = 0;         // SOC Alert (msg) 10min ticks remaining
+unsigned char net_socalert_msg = 0;         // SOC Alert (sms) 10min ticks remaining
+#endif //#ifdef OVMS_SOCALERT
+
 #pragma udata NETBUF_SP
 char net_scratchpad[NET_BUF_MAX];           // A general-purpose scratchpad
 #pragma udata
@@ -795,6 +800,36 @@ void net_state_ticker600(void)
   switch (net_state)
     {
     case NET_STATE_READY:
+#ifdef OVMS_SOCALERT
+      if ((car_SOC<5)&&((car_doors1 & 0x80)==0)) // Car is OFF, and SOC<5%
+        {
+        if (net_socalert_msg==0)
+          {
+          if ((net_link==1)&&(net_msg_sendpending==0))
+            {
+            net_msg_start();
+            net_msg_socalert();
+            net_msg_send();
+            net_socalert_msg = 72; // 72x10mins = 12hours
+            }
+          }
+        else
+          net_socalert_msg--;
+        if (net_socalert_sms==0)
+          {
+          p = par_get(PARAM_REGPHONE);
+          net_sms_socalert(p);
+          net_socalert_sms = 72; // 72x10mins = 12hours
+          }
+        else
+          net_socalert_sms--;
+        }
+      else
+        {
+        net_socalert_sms = 6;         // Check in 1 hour
+        net_socalert_msg = 6;         // Check in 1 hour
+        }
+#endif //#ifdef OVMS_SOCALERT
       if ((net_link==1)&&(net_apps_connected==0))
         {
         if (net_msg_sendpending>0)

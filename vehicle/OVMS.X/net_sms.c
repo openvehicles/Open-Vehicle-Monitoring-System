@@ -327,3 +327,16 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
     net_msg_forward_sms(caller, buf);
     }
   }
+
+void net_sms_socalert(char* number)
+  {
+  char *p;
+
+  delay100(10);
+  net_send_sms_start(number);
+
+  sprintf(net_scratchpad, (rom far char*)"ALERT!!! CRITICAL SOC LEVEL APPROACHED (%u%% SOC)", car_SOC); // 95%
+  net_puts_ram(net_scratchpad);
+  net_puts_rom("\x1a");
+  delay100(5);
+  }

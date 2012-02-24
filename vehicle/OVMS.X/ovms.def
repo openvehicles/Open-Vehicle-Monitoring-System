@@ -40,3 +40,9 @@
 // it seems very very specific to that dashboard display).
 // We really don't want anyone breaking their cars with this.
 //#define OVMS_SPEEDO_EXPERIMENT
+
+// The OVMS_SOCALERT switch will enable a feature such that if the SOC falls
+// below 5%, and the car is switched off (ie; not driving), the car will alert
+// (by SMS and net PUSH msg) every twelve hours, until such time as the SOC
+// recovers to at least 5%.
+#define OVMS_SOCALERT

@@ -41,5 +41,6 @@ void net_sms_params(char* number);
 void net_sms_gps(char* number);
 void net_sms_stat(char* number);
 void net_sms_in(char *caller, char *buf, unsigned char pos);
+void net_sms_socalert(char* number);
 
 #endif // #ifndef __OVMS_SMS_H
