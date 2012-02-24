@@ -28,6 +28,14 @@
 ; THE SOFTWARE.
 */
 
+2012-02-24 1.2.0-rc7   Release Candidate #7 for end-user firmware
+                       SOC Alert when SOC<5% (SMS and PUSH notification, when car is off and SOC<5%, every 12 hours)
+                       Tighten up StartCharge command restriction to refuse if charge substate=0x07 (connect power cable)
+
+2012-02-23 1.2.0-rc6   Release Candidate #6 for end-user firmware
+                       Tighten up restrictions on sms notification charging=done
+                       Remove sms notification on telephone call
+
 2012-02-21 1.2.0-rc5   Release Candidate #5 for end-user firmware
                        Heating->Preparing, not by-request, -> SMS/IP alert
                        Command 40: Send SMS (params: phone number, SMS message)
