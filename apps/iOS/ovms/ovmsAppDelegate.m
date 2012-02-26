@@ -473,7 +473,7 @@
 }
 
 - (void)handleCommand:(char)code command:(NSString*)cmd
-{
+  {
   if (code == 'E')
     {
     // We have a paranoid mode message
@@ -509,7 +509,7 @@
     }
 
   switch(code)
-  {
+    {
     case 'c': // Command response
       {
       [self commandResponse:cmd];
@@ -519,9 +519,7 @@
       {
       self.car_connected = [cmd intValue];
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        {
         [self.status_delegate updateStatus];
-        }
       }
       break;
     case 'P': // PUSH notification
@@ -555,18 +553,14 @@
         car_chargemodeN = [[lparts objectAtIndex:14] intValue];
         }
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        {
         [self.status_delegate updateStatus];
-        }
       }
       break;
     case 'T': // TIME
       {
       self.car_lastupdated = time(0) - [cmd intValue];
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        {
         [self.status_delegate updateStatus];
-        }
       }
       break;
     case 'L': // LOCATION
@@ -580,11 +574,6 @@
         {
         car_location.latitude = [[lparts objectAtIndex:0] doubleValue];
         car_location.longitude = [[lparts objectAtIndex:1] doubleValue];
-        // Update the visible location
-        if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
-          {
-          [self.location_delegate updateLocation];
-          }
         }
       if ([lparts count]>=6)
         {
@@ -593,57 +582,45 @@
         car_gpslock = [[lparts objectAtIndex:4] intValue];
         car_stale_gps = [[lparts objectAtIndex:5] intValue];
         }
+      if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
+        [self.location_delegate updateLocation];
       }
       break;
     case 'F': // CAR FIRMWARE
       {
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        {
-        [self.status_delegate updateStatus];
-        }
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=3)
         {
         car_firmware = [lparts objectAtIndex:0];
         car_vin = [lparts objectAtIndex:1];
         car_gsmlevel = [[lparts objectAtIndex:2] intValue];
-        // Update the visible status
-        if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-          {
-          [self.car_delegate updateCar];
-          }
         }
       if ([lparts count]>=5)
         {
         car_write_enabled = [[lparts objectAtIndex:3] intValue];
         car_type = [lparts objectAtIndex:4];
         }
+      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+        [self.car_delegate updateCar];
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        [self.status_delegate updateStatus];
       }
       break;
     case 'f': // SERVER FIRMWARE
       {
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        {
-        [self.status_delegate updateStatus];
-        }
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=1)
         {
         server_firmware = [lparts objectAtIndex:0];
-        // Update the visible status
-        if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-          {
-          [self.car_delegate updateCar];
-          }
         }
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        [self.status_delegate updateStatus];
+      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+        [self.car_delegate updateCar];
       }
       break;
     case 'D': // CAR ENVIRONMENT
       {
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        {
-        [self.status_delegate updateStatus];
-        }
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=9)
         {
@@ -670,25 +647,15 @@
           car_state_pemtemps = [[lparts objectAtIndex:12] intValue];
           car_stale_ambienttemps = [[lparts objectAtIndex:13] intValue];
           }
-
-        // Update the visible status
         if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-          {
           [self.car_delegate updateCar];
-          }
         if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-          {
           [self.status_delegate updateStatus];
-          }
         }
       }
       break;
     case 'W': // CAR TPMS
       {
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        {
-        [self.status_delegate updateStatus];
-        }
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=8)
         {
@@ -705,15 +672,14 @@
         {
         car_stale_tpms = [[lparts objectAtIndex:8] intValue];
         }
-      // Update the visible status
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        [self.status_delegate updateStatus];
       if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-        {
         [self.car_delegate updateCar];
-        }
       }
       break;
+    }
   }
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Socket Delegate
@@ -998,6 +964,7 @@
   self.car_linevoltage = 0;
   self.car_chargecurrent = 0;
   self.car_chargestate = @"starting";
+  self.car_chargestateN = 0x101;
   if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
     {
     [self.status_delegate updateStatus];
@@ -1011,6 +978,7 @@
   self.car_linevoltage = 0;
   self.car_chargecurrent = 0;
   self.car_chargestate = @"stopping";
+  self.car_chargestateN = 0x115;
   if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
     {
     [self.status_delegate updateStatus];
