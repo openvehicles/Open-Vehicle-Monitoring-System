@@ -29,6 +29,7 @@
 @synthesize car_lastupdated;
 @synthesize car_connected;
 @synthesize car_paranoid;
+@synthesize car_online;
 
 @synthesize location_delegate;
 @synthesize car_location;
@@ -352,6 +353,7 @@
     {
     self.car_lastupdated = 0;
     self.car_connected = 0;
+    self.car_online = NO;
     self.car_paranoid = FALSE;
     
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -394,6 +396,7 @@
     {
     self.car_lastupdated = 0;
     self.car_connected = 0;
+    self.car_online = NO;
     [self serverClearState];
     [asyncSocket setDelegate:nil delegateQueue:NULL];
     [asyncSocket disconnect];
@@ -518,6 +521,7 @@
     case 'Z': // Number of connected cars
       {
       self.car_connected = [cmd intValue];
+      if (self.car_connected==0) self.car_online=NO;
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
         [self.status_delegate updateStatus];
       }
@@ -558,17 +562,17 @@
       break;
     case 'T': // TIME
       {
-      self.car_lastupdated = time(0) - [cmd intValue];
+      int tick = [cmd intValue];
+      if ((car_connected>0)&&(tick==0)) car_online=YES;
+      self.car_lastupdated = time(0) - tick;
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
         [self.status_delegate updateStatus];
+      if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
+        [self.location_delegate updateLocation];
       }
       break;
     case 'L': // LOCATION
       {
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        {
-        [self.status_delegate updateStatus];
-        }
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
       if ([lparts count]>=2)
         {
@@ -581,6 +585,10 @@
         car_altitude = [[lparts objectAtIndex:3] intValue];
         car_gpslock = [[lparts objectAtIndex:4] intValue];
         car_stale_gps = [[lparts objectAtIndex:5] intValue];
+        }
+      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
+        {
+        [self.status_delegate updateStatus];
         }
       if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
         [self.location_delegate updateLocation];

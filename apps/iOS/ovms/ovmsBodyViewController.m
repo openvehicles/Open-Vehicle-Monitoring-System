@@ -34,6 +34,9 @@
 @synthesize m_car_temp_motor_l;
 @synthesize m_car_temp_battery_l;
 @synthesize m_car_ambient_temp;
+@synthesize m_lock_button;
+@synthesize m_valet_button;
+@synthesize m_wakeup_button;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -100,6 +103,9 @@
   [self setM_car_ambient_temp:nil];
     [self setM_car_valetonoff:nil];
     [self setM_car_lights:nil];
+  [self setM_lock_button:nil];
+  [self setM_valet_button:nil];
+  [self setM_wakeup_button:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -142,6 +148,19 @@
 
 -(void) updateCar
 {
+  if ([ovmsAppDelegate myRef].car_online)
+    {
+    m_lock_button.enabled=YES;
+    m_valet_button.enabled=YES;
+    m_wakeup_button.enabled=YES;
+    }
+  else
+    {
+    m_lock_button.enabled=NO;
+    m_valet_button.enabled=NO;
+    m_wakeup_button.enabled=NO;    
+    }
+  
   m_car_outlineimage.image=[UIImage
                             imageNamed:[NSString stringWithFormat:@"ol_%@",
                                         [ovmsAppDelegate myRef].sel_imagepath]];

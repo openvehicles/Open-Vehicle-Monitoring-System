@@ -23,6 +23,8 @@
 @synthesize m_car_range_estimated;
 @synthesize m_charger_plug;
 @synthesize m_charger_slider;
+@synthesize m_control_button;
+@synthesize m_battery_button;
 @synthesize m_car_charge_message;
 @synthesize m_car_charge_mode;
 @synthesize m_battery_charging;
@@ -75,6 +77,8 @@
   [self setM_charger_plug:nil];
   [self setM_charger_slider:nil];
   [self setM_car_charge_message:nil];
+  [self setM_control_button:nil];
+  [self setM_battery_button:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -196,14 +200,18 @@
     m_car_connection_state.textColor = [UIColor whiteColor];
     }
 
-  if (seconds < 10)
+  if ([ovmsAppDelegate myRef].car_online)
     {
+    m_control_button.enabled=YES;
+    m_battery_button.enabled=YES;
     [m_car_connection_image stopAnimating];
     m_car_connection_image.animationImages = nil;
     m_car_connection_image.image=[UIImage imageNamed:imagewanted];
     }
   else
     {
+    m_control_button.enabled=NO;
+    m_battery_button.enabled=NO;
     NSArray *images = [[NSArray alloc] initWithObjects:
                         [UIImage imageNamed:@"Nothing.png"],
                         [UIImage imageNamed:imagewanted],
@@ -266,7 +274,7 @@
   bounds = m_battery_front.bounds;
   
   if ((([ovmsAppDelegate myRef].car_doors1 & 0x04)==0)||
-      ([ovmsAppDelegate myRef].car_chargestateN == 0x07))
+      ([ovmsAppDelegate myRef].car_chargesubstate == 0x07))
     { // Charge port is closed, or connect-pwr-cable charge sub-state
     m_charger_plug.hidden = 1;            // The plug image
     m_charger_slider.hidden = 1;          // The slider control on the plug
@@ -283,7 +291,8 @@
     m_charger_slider.hidden = 0;          // The slider control on the plug
     m_charger_slider.enabled =            // The slider control on the plug
       connected &&
-      ([ovmsAppDelegate myRef].car_chargestateN<0x100);
+      ([ovmsAppDelegate myRef].car_chargestateN<0x100) &&
+      ([ovmsAppDelegate myRef].car_online);
     m_car_charge_state.hidden = 0;        // The car charge state label (left of slider)
     m_car_charge_type.hidden = 0;         // The car charge type label (left of slider)
     switch ([ovmsAppDelegate myRef].car_chargestateN)

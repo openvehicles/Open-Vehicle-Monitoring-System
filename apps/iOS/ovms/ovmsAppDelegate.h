@@ -71,6 +71,7 @@
   time_t car_lastupdated;
   int car_connected;
   BOOL car_paranoid;
+  BOOL car_online;
   
   CLLocationCoordinate2D car_location;
   int car_direction;
@@ -139,6 +140,7 @@
 @property (assign) time_t car_lastupdated;
 @property (assign) int car_connected;
 @property (assign) BOOL car_paranoid;
+@property (assign) BOOL car_online;
 
 @property (strong, nonatomic) id location_delegate;
 @property (assign) CLLocationCoordinate2D car_location;
