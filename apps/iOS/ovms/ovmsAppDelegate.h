@@ -43,6 +43,7 @@
 @interface ovmsAppDelegate : UIResponder <UIApplicationDelegate>
 {
   GCDAsyncSocket *asyncSocket;
+  NSTimer *tim;
   NSInteger networkingCount;
   
   unsigned char token[TOKEN_SIZE+1];
@@ -208,6 +209,8 @@
 - (void)serverClearState;
 - (void)handleCommand:(char)code command:(NSString*)cmd;
 - (void)switchCar:(NSString*)car;
+
+- (void)onTick:(NSTimer *)timer;
 
 - (BOOL)commandIsFree;
 - (void)commandRegister:(NSString*)command callback:(id)cb;

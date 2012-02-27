@@ -402,6 +402,7 @@
     [asyncSocket disconnect];
     [self didStopNetworking];
     asyncSocket = NULL;
+    tim = NULL;
     }
 }
 
@@ -760,8 +761,13 @@
       RC4_crypt(&txCrypto, &x, &x, 1);
       }
     [asyncSocket readDataToData:[GCDAsyncSocket CRLFData] withTimeout:-1 tag:1];
-      
-      
+
+    tim = [NSTimer scheduledTimerWithTimeInterval: 180.0
+                                           target: self
+                                         selector: @selector(onTick:)
+                                         userInfo: nil
+                                          repeats: YES];
+
     if ([apns_devicetoken length] > 0)
     {
       // Subscribe to push notifications
@@ -797,6 +803,19 @@
 {
   [[ovmsAppDelegate myRef] serverClearState];
 }
+
+-(void)onTick:(NSTimer *)timer
+  {
+  char buf[1024];
+  char output[1024];
+  strcpy(buf, "MP-0 A");
+  int len = strlen(buf);
+  RC4_crypt(&txCrypto, (uint8_t*)buf, (uint8_t*)buf, len);
+  base64encode((uint8_t*)buf, len, (uint8_t*)output);
+  NSString *pushStr = [NSString stringWithFormat:@"%s\r\n",output];
+  NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
+  [asyncSocket writeData:pushData withTimeout:-1 tag:0];
+  }
 
 - (BOOL)commandIsFree
 {
