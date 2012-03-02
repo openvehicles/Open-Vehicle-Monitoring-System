@@ -88,7 +88,7 @@
       buildConfiguration = "AppStore Release">
    </AnalyzeAction>
    <ArchiveAction
-      buildConfiguration = "Adhoc Release"
+      buildConfiguration = "AppStore Release"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>

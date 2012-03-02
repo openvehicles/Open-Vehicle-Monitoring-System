@@ -26,6 +26,7 @@
 @synthesize m_charger_button;
 @synthesize m_car_range_ideal;
 @synthesize m_car_range_estimated;
+@synthesize m_car_charge_message;
 @synthesize m_car_lights;
 @synthesize m_battery_charging;
 
@@ -54,6 +55,12 @@
 
 @synthesize myMapView;
 @synthesize m_car_location;
+@synthesize m_control_button;
+@synthesize m_charger_slider;
+@synthesize m_battery_button;
+@synthesize m_wakeup_button;
+@synthesize m_lock_button;
+@synthesize m_valet_button;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -84,6 +91,16 @@
 - (void)viewDidLoad
 {
   [super viewDidLoad];
+
+  UIImage *stetchLeftTrack= [[UIImage imageNamed:@"Nothing.png"]
+                             stretchableImageWithLeftCapWidth:30.0 topCapHeight:0.0];
+  UIImage *stetchRightTrack= [[UIImage imageNamed:@"Nothing.png"]
+                              stretchableImageWithLeftCapWidth:30.0 topCapHeight:0.0];
+  
+  // this code to set the slider ball image
+  [m_charger_slider setThumbImage: [UIImage imageNamed:@"charger_button.png"] forState:UIControlStateNormal];
+  [m_charger_slider setMinimumTrackImage:stetchLeftTrack forState:UIControlStateNormal];
+  [m_charger_slider setMaximumTrackImage:stetchRightTrack forState:UIControlStateNormal];
 
   [ovmsAppDelegate myRef].status_delegate = self;
   [ovmsAppDelegate myRef].location_delegate = self;
@@ -163,6 +180,13 @@
   [self setM_car_range_ideal:nil];
   [self setM_car_valetonoff:nil];
     [self setM_car_lights:nil];
+    [self setM_car_charge_message:nil];
+    [self setM_control_button:nil];
+    [self setM_charger_slider:nil];
+    [self setM_battery_button:nil];
+    [self setM_wakeup_button:nil];
+    [self setM_lock_button:nil];
+    [self setM_valet_button:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -221,13 +245,15 @@
     c_unknown = [[NSString alloc] initWithString:@"connection_unknown.png"];
     }
   
+  NSString* imagewanted;
+  
   if (connected>0)
     {
-    m_car_connection_image.image=[UIImage imageNamed:c_good];
+    imagewanted = c_good;
     }
   else
     {
-    m_car_connection_image.image=[UIImage imageNamed:c_unknown];
+    imagewanted = c_unknown;
     }
   
   if (lastupdated == 0)
@@ -249,24 +275,49 @@
     {
     m_car_connection_state.text = [NSString stringWithFormat:@"%d days",days];
     m_car_connection_state.textColor = [UIColor redColor];
-    m_car_connection_image.image=[UIImage imageNamed:c_bad];
+    imagewanted = c_bad;
     }
   else if (hours > 1)
     {
     m_car_connection_state.text = [NSString stringWithFormat:@"%d hours",hours];
     m_car_connection_state.textColor = [UIColor redColor];
-    m_car_connection_image.image=[UIImage imageNamed:c_bad];
+    imagewanted = c_bad;
     }
   else if (minutes >= 20)
     {
     m_car_connection_state.text = [NSString stringWithFormat:@"%d mins",minutes];
     m_car_connection_state.textColor = [UIColor redColor];
-    m_car_connection_image.image=[UIImage imageNamed:c_bad];
+    imagewanted = c_bad;
     }
   else
     {
     m_car_connection_state.text = [NSString stringWithFormat:@"%d mins",minutes];
     m_car_connection_state.textColor = [UIColor whiteColor];
+    }
+  
+  if ([ovmsAppDelegate myRef].car_online)
+    {
+    self.navigationItem.rightBarButtonItem = m_control_button;
+    m_control_button.enabled=YES;
+    m_battery_button.enabled=YES;
+    [m_car_connection_image stopAnimating];
+    m_car_connection_image.animationImages = nil;
+    m_car_connection_image.image=[UIImage imageNamed:imagewanted];
+    }
+  else
+    {
+    self.navigationItem.rightBarButtonItem = nil;
+    m_control_button.enabled=NO;
+    m_battery_button.enabled=NO;
+    NSArray *images = [[NSArray alloc] initWithObjects:
+                       [UIImage imageNamed:@"Nothing.png"],
+                       [UIImage imageNamed:imagewanted],
+                       nil];
+    m_car_connection_image.image = nil;
+    m_car_connection_image.animationImages = images;
+    m_car_connection_image.animationDuration = 1.0;
+    m_car_connection_image.animationRepeatCount = 0;
+    [m_car_connection_image startAnimating];
     }
   
   int parktime = [ovmsAppDelegate myRef].car_parktime;
@@ -299,7 +350,7 @@
     m_car_parking_image.hidden = 0;
     m_car_parking_state.text = [NSString stringWithFormat:@"%d hours",parktime/3600];
     }
-
+  
   m_car_image.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
   m_car_soc.text = [NSString stringWithFormat:@"%d%%",[ovmsAppDelegate myRef].car_soc];
   m_car_range_ideal.text = [NSString stringWithFormat:@"%d%s",
@@ -308,6 +359,7 @@
   m_car_range_estimated.text = [NSString stringWithFormat:@"%d%s",
                                 [ovmsAppDelegate myRef].car_estimatedrange,
                                 [units UTF8String]];
+  
   CGRect bounds = m_battery_front.bounds;
   CGPoint center = m_battery_front.center;
   CGFloat oldwidth = bounds.size.width;
@@ -317,84 +369,107 @@
   m_battery_front.bounds = bounds;
   m_battery_front.center = center;
   bounds = m_battery_front.bounds;
-
-  if ([ovmsAppDelegate myRef].car_doors1 & 0x04)
-    {
-    m_charger_plug.hidden = 0;
-    m_charger_button.hidden = 0;
-    m_car_charge_state.hidden = 0;
-    m_car_charge_type.hidden = 0;
-    }
-  else
-    {
-    m_charger_plug.hidden = 1;
-    m_charger_button.hidden = 1;
-    m_car_charge_state.hidden = 1;
-    m_car_charge_type.hidden = 1;
-    }
   
-  if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"charging"])
-    {
-    m_car_charge_state.text = @"CHARGING";
-    m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
-                              [ovmsAppDelegate myRef].car_linevoltage,
-                              [ovmsAppDelegate myRef].car_chargecurrent];
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
-    m_battery_charging.hidden = 0;
-    m_car_charge_mode.hidden = 0;
-    }
-  else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"topoff"])
-    {
-    m_car_charge_state.text = @"TOP OFF";
-    m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
-                              [ovmsAppDelegate myRef].car_linevoltage,
-                              [ovmsAppDelegate myRef].car_chargecurrent];
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
-    m_battery_charging.hidden = 0;
-    m_car_charge_mode.hidden = 0;
-    }
-  else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"prepare"])
-    {
-    m_car_charge_state.text = @"PREPARE";
-    m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
-                              [ovmsAppDelegate myRef].car_linevoltage,
-                              [ovmsAppDelegate myRef].car_chargecurrent];
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
-    m_battery_charging.hidden = 0;
-    m_car_charge_mode.hidden = 0;
-    }
-  else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"done"])
-    {
-    m_car_charge_state.text = @"DONE";
-    m_car_charge_type.text = @"";
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
-    m_battery_charging.hidden = 1;
-    m_car_charge_mode.hidden = 1;
-    }
-  else if ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"stopped"])
-    {
-    m_car_charge_state.text = @"STOPPED";
-    m_car_charge_type.text = @"";
-    m_car_charge_mode.text = [[ovmsAppDelegate myRef].car_chargemode uppercaseString];
-    m_battery_charging.hidden = 1;
-    m_car_charge_mode.hidden = 1;
+  if ((([ovmsAppDelegate myRef].car_doors1 & 0x04)==0)||
+      ([ovmsAppDelegate myRef].car_chargesubstate == 0x07))
+    { // Charge port is closed, or connect-pwr-cable charge sub-state
+      m_charger_plug.hidden = 1;            // The plug image
+      m_charger_slider.hidden = 1;          // The slider control on the plug
+      m_charger_slider.enabled = 0;         // The slider control on the plug
+      m_car_charge_state.hidden = 1;        // The car charge state label (left of slider)
+      m_car_charge_type.hidden = 1;         // The car charge type label (left of slider)
+      m_car_charge_message.hidden = 1;      // The car charge message (right of slider)
+      m_battery_charging.hidden = 1;        // Copper tops on the battery
+      m_car_charge_mode.hidden = 1;         // The car charge mode message (copper on battery)
     }
   else
-    {
-    m_car_charge_state.text = @"";
-    m_car_charge_type.text = @"";
-    m_car_charge_mode.text = @"";
-    m_battery_charging.hidden = 1;
-    m_car_charge_mode.hidden = 1;
+    { // Charge port is open and plugged in
+      m_charger_plug.hidden = 0;            // The plug image
+      m_charger_slider.hidden = 0;          // The slider control on the plug
+      m_charger_slider.enabled =            // The slider control on the plug
+      connected &&
+      ([ovmsAppDelegate myRef].car_chargestateN<0x100) &&
+      ([ovmsAppDelegate myRef].car_online);
+      m_car_charge_state.hidden = 0;        // The car charge state label (left of slider)
+      m_car_charge_type.hidden = 0;         // The car charge type label (left of slider)
+      switch ([ovmsAppDelegate myRef].car_chargestateN)
+      {
+        case 0x04:    // Done
+        case 0x115:   // Stopping
+        case 0x15:    // Stopped
+        case 0x16:    // Stopped
+        case 0x17:    // Stopped
+        case 0x18:    // Stopped
+        case 0x19:    // Stopped
+        m_car_charge_message.text = @"SLIDE TO CHARGE";
+        m_car_charge_state.text = @"";
+        m_car_charge_type.text = @"";
+        m_car_charge_mode.text = @"";
+        // Slider on the left, message is "Slide to charge"
+        m_charger_slider.value = 0.0;
+        m_car_charge_message.hidden = 0;
+        m_car_charge_state.hidden = 1;
+        m_car_charge_type.hidden = 1;
+        m_battery_charging.hidden = 1;
+        m_car_charge_mode.hidden = 1;
+        break;
+        
+        case 0x01:    // Charging
+        case 0x101:   // Starting
+        case 0x02:    // Top-off
+        case 0x0d:    // Preparing to charge
+        case 0x0f:    // Heating
+        m_car_charge_state.text = [[ovmsAppDelegate myRef].car_chargestate uppercaseString];
+        m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
+                                  [ovmsAppDelegate myRef].car_linevoltage,
+                                  [ovmsAppDelegate myRef].car_chargecurrent];
+        m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
+                                  [[ovmsAppDelegate myRef].car_chargemode uppercaseString],
+                                  [ovmsAppDelegate myRef].car_chargelimit];
+        // Slider on the right, message blank
+        m_charger_slider.value = 1.0;        
+        m_car_charge_message.hidden = 1;
+        m_car_charge_state.hidden = 0;
+        m_car_charge_type.hidden = 0;
+        m_battery_charging.hidden = 0;
+        m_car_charge_mode.hidden = 0;
+        break;
+        
+        default:
+        m_car_charge_state.text = @"";
+        m_car_charge_type.text = @"";
+        m_car_charge_mode.text = @"";
+        // Slider on the right, message blank
+        m_charger_slider.value = 1.0;
+        m_car_charge_message.hidden = 1;
+        m_car_charge_state.hidden = 0;
+        m_car_charge_type.hidden = 0;
+        m_battery_charging.hidden = 1;
+        m_car_charge_mode.hidden = 1;
+        break;
+      }
     }
-  }
+}
 
 -(void) updateCar
 {
+  if ([ovmsAppDelegate myRef].car_online)
+    {
+    m_lock_button.enabled=YES;
+    m_valet_button.enabled=YES;
+    m_wakeup_button.enabled=YES;
+    }
+  else
+    {
+    m_lock_button.enabled=NO;
+    m_valet_button.enabled=NO;
+    m_wakeup_button.enabled=NO;    
+    }
+  
   m_car_outlineimage.image=[UIImage
                             imageNamed:[NSString stringWithFormat:@"ol_%@",
                                         [ovmsAppDelegate myRef].sel_imagepath]];
-
+  
   if ([ovmsAppDelegate myRef].car_doors2 & 0x08)
     m_car_lockunlock.image = [UIImage imageNamed:@"carlock.png"];
   else
@@ -404,12 +479,12 @@
     m_car_valetonoff.image = [UIImage imageNamed:@"carvaleton.png"];
   else
     m_car_valetonoff.image = [UIImage imageNamed:@"carvaletoff.png"];
-
+  
   if ([ovmsAppDelegate myRef].car_doors2 & 0x20)
     m_car_lights.hidden = 0;
   else
     m_car_lights.hidden = 1;
-
+  
   if ([ovmsAppDelegate myRef].car_doors1 & 0x01)
     m_car_door_ld.hidden = 0;
   else
@@ -470,7 +545,7 @@
     m_car_temp_battery_l.hidden = 1;
     m_car_temp_battery.text = @"";
     }
-
+  
   if ([ovmsAppDelegate myRef].car_ambient_temp > -127)
     {
     m_car_ambient_temp.text = [NSString stringWithFormat:@"%dºC",
@@ -480,10 +555,10 @@
     {
     m_car_ambient_temp.text = @"";
     }
-
+  
   if ([ovmsAppDelegate myRef].car_tpms_fr_temp > 0)
     {
-    m_car_wheel_fr_pressure.text = [NSString stringWithFormat:@"%0.1fpsi",
+    m_car_wheel_fr_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_fr_pressure];
     m_car_wheel_fr_temp.text = [NSString stringWithFormat:@"%dºC",
                                 [ovmsAppDelegate myRef].car_tpms_fr_temp];
@@ -496,7 +571,7 @@
   
   if ([ovmsAppDelegate myRef].car_tpms_rr_temp > 0)
     {
-    m_car_wheel_rr_pressure.text = [NSString stringWithFormat:@"%0.1fpsi",
+    m_car_wheel_rr_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_rr_pressure];
     m_car_wheel_rr_temp.text = [NSString stringWithFormat:@"%dºC",
                                 [ovmsAppDelegate myRef].car_tpms_rr_temp];
@@ -509,7 +584,7 @@
   
   if ([ovmsAppDelegate myRef].car_tpms_fl_temp > 0)
     {
-    m_car_wheel_fl_pressure.text = [NSString stringWithFormat:@"%0.1fpsi",
+    m_car_wheel_fl_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_fl_pressure];
     m_car_wheel_fl_temp.text = [NSString stringWithFormat:@"%dºC",
                                 [ovmsAppDelegate myRef].car_tpms_fl_temp];
@@ -522,7 +597,7 @@
   
   if ([ovmsAppDelegate myRef].car_tpms_rl_temp > 0)
     {
-    m_car_wheel_rl_pressure.text = [NSString stringWithFormat:@"%0.1fpsi",
+    m_car_wheel_rl_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_rl_pressure];
     m_car_wheel_rl_temp.text = [NSString stringWithFormat:@"%dºC",
                                 [ovmsAppDelegate myRef].car_tpms_rl_temp];
@@ -602,6 +677,134 @@
   
   [myMapView setRegion:region animated:YES]; 
   [myMapView regionThatFits:region]; 
+}
+
+- (IBAction)ChargeSliderTouch:(id)sender {
+  if (([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"done"])||
+      ([[ovmsAppDelegate myRef].car_chargestate isEqualToString:@"stopped"]))
+    {
+    // The slider is on the left, and should spring back there
+    if (m_charger_slider.value == 1.0)
+      {
+      // We are done, and should start the charge
+      [[ovmsAppDelegate myRef] commandDoStartCharge];
+      }
+    else
+      {
+      // Spring back
+      [UIView beginAnimations: @"SlideCanceled" context: nil];
+      [UIView setAnimationDelegate: self];
+      [UIView setAnimationDuration: 0.35];
+      // use CurveEaseOut to create "spring" effect
+      [UIView setAnimationCurve: UIViewAnimationCurveEaseOut]; 
+      m_charger_slider.value = 0.0;      
+      [UIView commitAnimations];
+      }
+    }
+  else
+    {
+    // The slider is on the right, and should sprint back there
+    if (m_charger_slider.value == 0.0)
+      {
+      // We are done, and should stop the charge
+      [[ovmsAppDelegate myRef] commandDoStopCharge];
+      }
+    else
+      {
+      // Spring back
+      [UIView beginAnimations: @"SlideCanceled" context: nil];
+      [UIView setAnimationDelegate: self];
+      [UIView setAnimationDuration: 0.35];
+      // use CurveEaseOut to create "spring" effect
+      [UIView setAnimationCurve: UIViewAnimationCurveEaseOut]; 
+      m_charger_slider.value = 1.0;      
+      [UIView commitAnimations];
+      }
+    }
+}
+
+- (IBAction)ChargeSliderValue:(id)sender {
+}
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+  if ([[segue identifier] isEqualToString:@"ValetMode"])
+    {
+    if ([ovmsAppDelegate myRef].car_doors2 & 0x10)
+      { // Valet is ON, let's offer to deactivate it
+        [[segue destinationViewController] setInstructions:@"Enter PIN\nto deactivate valet mode"];
+        [[segue destinationViewController] setHeading:@"Valet Mode"];
+        [[segue destinationViewController] setFunction:@"Valet Off"];
+        [[segue destinationViewController] setDelegate:self];
+      }
+    else
+      { // Valet is OFF, let's offer to activate it
+        [[segue destinationViewController] setInstructions:@"Enter PIN\nto activate valet mode"];
+        [[segue destinationViewController] setHeading:@"Valet Mode"];
+        [[segue destinationViewController] setFunction:@"Valet On"];
+        [[segue destinationViewController] setDelegate:self];
+      }
+    }
+  else if ([[segue identifier] isEqualToString:@"LockUnlock"])
+    {
+    if ([ovmsAppDelegate myRef].car_doors2 & 0x08)
+      { // Car is locked, let's offer to unlock it
+        [[segue destinationViewController] setInstructions:@"Enter PIN\nto unlock car"];
+        [[segue destinationViewController] setHeading:@"Unlock Car"];
+        [[segue destinationViewController] setFunction:@"Unlock Car"];
+        [[segue destinationViewController] setDelegate:self];
+      }
+    else
+      { // Car is unlocked, let's offer to lock it
+        [[segue destinationViewController] setInstructions:@"Enter PIN\nto lock car"];
+        [[segue destinationViewController] setHeading:@"Lock Car"];
+        [[segue destinationViewController] setFunction:@"Lock Car"];
+        [[segue destinationViewController] setDelegate:self];
+      }
+    }
+}
+
+- (void)omvsControlPINEntryDelegateDidCancel:(NSString*)fn
+{
+}
+
+- (void)omvsControlPINEntryDelegateDidSave:(NSString*)fn pin:(NSString*)pin
+{
+  if ([fn isEqualToString:@"Valet On"])
+    {
+    [[ovmsAppDelegate myRef] commandDoActivateValet:pin];
+    }
+  else if ([fn isEqualToString:@"Valet Off"])
+    {
+    [[ovmsAppDelegate myRef] commandDoDeactivateValet:pin];
+    }    
+  else if ([fn isEqualToString:@"Lock Car"])
+    {
+    [[ovmsAppDelegate myRef] commandDoLockCar:pin];
+    }
+  else if ([fn isEqualToString:@"Unlock Car"])
+    {
+    [[ovmsAppDelegate myRef] commandDoUnlockCar:pin];
+    }    
+}
+
+- (IBAction)WakeupButton:(id)sender
+{
+  // The wakeup button has been pressed - let's wakeup the car
+  UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Wakeup Car"
+                                                           delegate:self
+                                                  cancelButtonTitle:@"Cancel"
+                                             destructiveButtonTitle:nil
+                                                  otherButtonTitles:@"Wakeup",nil];
+  [actionSheet showInView:self.view];
+}
+
+- (void)actionSheet:(UIActionSheet *)sender clickedButtonAtIndex:(int)index
+{
+  if (index == [sender firstOtherButtonIndex])
+    {
+    [[ovmsAppDelegate myRef] commandDoWakeupCar];
+    }
 }
 
 - (MKAnnotationView *)mapView:(MKMapView *)mapView

@@ -202,6 +202,7 @@
 
   if ([ovmsAppDelegate myRef].car_online)
     {
+    self.navigationItem.rightBarButtonItem = m_control_button;
     m_control_button.enabled=YES;
     m_battery_button.enabled=YES;
     [m_car_connection_image stopAnimating];
@@ -210,6 +211,7 @@
     }
   else
     {
+    self.navigationItem.rightBarButtonItem = nil;
     m_control_button.enabled=NO;
     m_battery_button.enabled=NO;
     NSArray *images = [[NSArray alloc] initWithObjects:
