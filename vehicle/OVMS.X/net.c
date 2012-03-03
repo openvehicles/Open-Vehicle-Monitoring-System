@@ -51,6 +51,7 @@ char net_caller[NET_TEL_MAX] = {0};         // The telephone number of the calle
 unsigned char net_buf_pos = 0;              // Current position (aka length) in the network buffer
 unsigned char net_buf_mode = NET_BUF_CRLF;  // Mode of the buffer (CRLF, SMS or MSG)
 unsigned char net_buf_todo = 0;             // Bytes outstanding on a reception
+unsigned char net_buf_todotimeout = 0;      // Timeout for bytes outstanding
 
 #ifdef OVMS_SOCALERT
 unsigned char net_socalert_sms = 0;         // SOC Alert (msg) 10min ticks remaining
@@ -137,6 +138,7 @@ void net_poll(void)
         {
         net_buf[net_buf_pos-1] = 0; // Change the ':' to an end
         net_buf_todo = atoi(net_buf+5);
+        net_buf_todotimeout = 60; // 60 seconds to receive the rest
         net_buf_mode = NET_BUF_IPD;
         net_buf_pos = 0;
         continue; // We have switched to IPD mode
@@ -158,6 +160,7 @@ void net_poll(void)
           x = net_buf_pos;
           while ((net_buf[x--] != ',')&&(x>0)); // Search for last comma seperator
           net_buf_todo = atoi(net_buf+x+2); // Length of SMS message
+          net_buf_todotimeout = 60; // 60 seconds to receive the rest
           net_buf_pos = 0;
           net_buf_mode = NET_BUF_SMS;
           continue;
@@ -639,6 +642,19 @@ void net_state_ticker1(void)
       net_state_enter(NET_STATE_START);
       break;
     case NET_STATE_READY:
+      if (net_buf_mode != NET_BUF_CRLF)
+        {
+        if (net_buf_todotimeout == 1)
+          {
+          // Timeout waiting for arrival of SMS/IP data
+          net_buf_todotimeout = 0;
+          net_buf_mode = NET_BUF_CRLF;
+          net_state_enter(NET_STATE_COPS); // Reset network connection
+          return;
+          }
+        else if (net_buf_todotimeout > 1)
+          net_buf_todotimeout--;
+        }
       if (net_watchdog > 0)
         {
         if (--net_watchdog == 0)
