@@ -105,39 +105,46 @@ void net_sms_stat(char* number)
   delay100(2);
   net_send_sms_start(number);
 
-  switch (car_chargemode)
-    {
-    case 0x00:
-      net_puts_rom("Standard - "); // Charge Mode Standard
-      break;
-    case 0x01:
-      net_puts_rom("Storage - "); // Storage
-      break;
-    case 0x03:
-      net_puts_rom("Range - "); // Range
-      break;
-    case 0x04:
-      net_puts_rom("Performance - "); // Performance
+  if (car_doors1 & 0x04)
+    { // Charge port door is open, we are charging
+    switch (car_chargemode)
+      {
+      case 0x00:
+        net_puts_rom("Standard - "); // Charge Mode Standard
+        break;
+      case 0x01:
+        net_puts_rom("Storage - "); // Storage
+        break;
+      case 0x03:
+        net_puts_rom("Range - "); // Range
+        break;
+      case 0x04:
+        net_puts_rom("Performance - "); // Performance
+      }
+    switch (car_chargestate)
+      {
+      case 0x01:
+        net_puts_rom("Charging"); // Charge State Charging
+        break;
+      case 0x02:
+        net_puts_rom("Charging, Topping off"); // Topping off
+        break;
+      case 0x04:
+        net_puts_rom("Charging Done"); // Done
+        break;
+      case 0x0d:
+        net_puts_rom("Charging, Preparing"); // Preparing
+        break;
+      case 0x0f:
+        net_puts_rom("Charging, Heating"); // Preparing
+        break;
+      default:
+        net_puts_rom("Charging Stopped"); // Stopped
+      }
     }
-  switch (car_chargestate)
-    {
-    case 0x01:
-      net_puts_rom("Charging"); // Charge State Charging
-      break;
-    case 0x02:
-      net_puts_rom("Charging, Topping off"); // Topping off
-      break;
-    case 0x04:
-      net_puts_rom("Charging Done"); // Done
-      break;
-    case 0x0d:
-      net_puts_rom("Charging, Preparing"); // Preparing
-      break;
-    case 0x0f:
-      net_puts_rom("Charging, Heating"); // Preparing
-      break;
-    default:
-      net_puts_rom("Charging Stopped"); // Stopped
+  else
+    { // Charge port door is closed, we are not charging
+    net_puts_rom("Not charging");
     }
 
   net_puts_rom(" \rIdeal Range: "); // Ideal Range
