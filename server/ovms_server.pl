@@ -39,6 +39,7 @@ my $c2dm_auth;
 my $c2dm_running=0;
 
 # Auto-flush
+select STDERR; $|=1;
 select STDOUT; $|=1;
 $AnyEvent::Log::FILTER->level ("info");
 
@@ -178,7 +179,7 @@ sub io_line
 
   if ($line =~ /^MP-(\S)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.+))?/)
     {
-    my ($clienttype,$protscheme,$clienttoken,$clientdigest,$vehicleid,$rest) = ($1,$2,$3,$4,$5,$7);
+    my ($clienttype,$protscheme,$clienttoken,$clientdigest,$vehicleid,$rest) = ($1,$2,$3,$4,uc($5),$7);
     if ($protscheme ne '0')
       {
       &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Unsupported protection scheme - aborting connection");
@@ -630,6 +631,14 @@ sub io_message
     &io_tx_apps($vehicleid, $code, $data); # Send it on to the apps
     return;
     }
+  elsif ($m_code eq 'g')
+    {
+    # A group update message - for the moment, just ignore it
+    }
+  elsif ($m_code eq 'G')
+    {
+    # A group subscription message - for the moment, just ignore it
+    }
 
   if ($clienttype eq 'C')
     {
@@ -922,7 +931,7 @@ sub apns_push
     my $pushkeyvalue = $rec->{'pushkeyvalue'};
     my $appid = $rec->{'appid'};
     AE::log info => "#$fn - $vehicleid msg apns '$alertmsg' => $pushkeyvalue";
-    &apns_send( $pushkeyvalue => { aps => { alert => "$vehicleid\n$alertmsg" } } );
+    &apns_send( $pushkeyvalue => { aps => { alert => "$vehicleid\n$alertmsg", sound => 'default' } } );
     }
   $apns_handle->on_drain(sub
                 {
@@ -981,13 +990,13 @@ sub apns_tim
 
 sub c2dm_tim
   {
-  if ($c2dm_running == 0)
+  if (($c2dm_running == 0)&&(!defined $c2dm_auth))
     {
     return if (scalar @c2dm_queue == 0);
 
     # OK. First step is we need to get an AUTH token...
     $c2dm_running = 1;
-    $c2dm_auth = 0;
+    $c2dm_auth = undef;
     my $c2dm_email = uri_escape($config->val('c2dm','email'));
     my $c2dm_password = uri_escape($config->val('c2dm','password'));
     my $c2dm_type = uri_escape($config->val('c2dm','accounttype'));
@@ -1014,8 +1023,9 @@ sub c2dm_tim
         $c2dm_running = 2;
         };
     }
-  elsif ($c2dm_running == 2)
+  elsif (($c2dm_running == 2)||(($c2dm_running==0)&&(defined $c2dm_auth)&&(scalar @c2dm_queue > 0)))
     {
+    $c2dm_running = 2;
     AE::log info => "- - - msg c2dm auth is '$c2dm_auth'";
 
     foreach my $rec (@c2dm_queue)
