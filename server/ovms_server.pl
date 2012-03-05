@@ -24,6 +24,8 @@ my $utilisations;
 my %car_conns;
 my %app_conns;
 my $svr_conns;
+my %group_msgs;
+my %group_subs;
 my $db;
 my $config;
 
@@ -359,6 +361,14 @@ sub io_terminate
         my $afn = $_;
         &io_tx($afn, $conns{$afn}{'handle'}, 'Z', '0');
         }
+      # Cleanup group messages
+      if (defined $conns{$fn}{'cargroups'})
+        {
+        foreach (keys %{$conns{$fn}{'cargroups'}})
+          {
+          delete $group_msgs{$_}{$vehicleid};
+          }
+        }
       }
     elsif ($conns{$fn}{'clienttype'} eq 'A')
       {
@@ -368,6 +378,14 @@ sub io_terminate
       if (defined $cfn)
         {
         &io_tx($cfn, $conns{$cfn}{'handle'}, 'Z', scalar keys %{$app_conns{$vehicleid}});
+        }
+      # Cleanup group messages
+      if (defined $conns{$fn}{'appgroups'})
+        {   
+        foreach (keys %{$conns{$fn}{'appgroups'}})
+          {
+          delete $group_subs{$_}{$fn};
+          }
         }
       }
     elsif ($conns{$fn}{'clienttype'} eq 'S')
@@ -633,11 +651,43 @@ sub io_message
     }
   elsif ($m_code eq 'g')
     {
-    # A group update message - for the moment, just ignore it
+    # A group update message
+    my ($groupid,$groupmsg) = split /,/,$data,2;
+    $groupid = uc($groupid);
+    if ($clienttype eq 'C')
+      {
+      AE::log info => "#$fn $clienttype $vehicleid msg group update $groupid $groupmsg";
+      # Store the update
+      $conns{$fn}{'cargroups'}{$groupid} = 1;
+      $group_msgs{$groupid}{$vehicleid} = $groupmsg;
+      # Notify all the apps
+      foreach(keys %{$group_subs{$groupid}})
+        {
+        my $afn = $_;
+        &io_tx($afn, $conns{$afn}{'handle'}, $m_code, join(',',$vehicleid,$groupid,$groupmsg));
+        }
+      }
+    return;
     }
   elsif ($m_code eq 'G')
     {
-    # A group subscription message - for the moment, just ignore it
+    # A group subscription message
+    my ($groupid,$groupmsg) = split /,/,$data,2;
+    $groupid = uc($groupid);
+    if ($clienttype eq 'A')
+      {
+      AE::log info => "#$fn $clienttype $vehicleid msg group subscribe $groupid";
+      $conns{$fn}{'appgroups'}{$groupid} = 1;
+      $group_subs{$groupid}{$fn} = $fn;
+      }
+    # Send all outstanding group messages...
+    foreach (keys %{$group_msgs{$groupid}})
+      {
+      my $vehicleid = $_;
+      my $msg = $group_msgs{$groupid}{$vehicleid};
+      &io_tx($fn, $conns{$fn}{'handle'}, 'g', join(',',$vehicleid,$groupid,$msg));
+      }
+    return;
     }
 
   if ($clienttype eq 'C')
