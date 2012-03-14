@@ -692,6 +692,11 @@ sub io_message
 
   if ($clienttype eq 'C')
     {
+    # Kludge: fix to 1.2.0 bug with S messages in performance mode
+    if (($m_code eq 'S')&&($m_paranoid == 0)&&($m_data =~ /,performance,,/))
+      {
+      $m_data =~ s/,performance,,/,performance,/;
+      }
     # Let's store the data in the database...
     my $ptoken = $conns{$fn}{'ptoken'}; $ptoken="" if (!defined $ptoken);
     $db->do("INSERT INTO ovms_carmessages (vehicleid,m_code,m_valid,m_msgtime,m_paranoid,m_ptoken,m_msg) "
@@ -880,7 +885,8 @@ sub push_queuenotify
     my %rec;
     $rec{'vehicleid'} = $vehicleid;
     $rec{'alerttype'} = $alerttype;
-    $rec{'alertmsg'} = $alertmsg;      $rec{'pushkeytype'} = $row->{'pushkeytype'};
+    $rec{'alertmsg'} = $alertmsg;
+    $rec{'pushkeytype'} = $row->{'pushkeytype'};
     $rec{'pushkeyvalue'} = $row->{'pushkeyvalue'};
     $rec{'appid'} = $row->{'appid'};
     foreach (%{$app_conns{$vehicleid}})

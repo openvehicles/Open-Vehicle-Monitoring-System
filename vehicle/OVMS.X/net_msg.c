@@ -223,6 +223,7 @@ void net_msg_stat(void)
       break;
     case 0x04:
       strcatpgm2ram(net_scratchpad,(char const rom far*)"performance,"); // Performance
+      break;
     default:
       strcatpgm2ram(net_scratchpad,(char const rom far*)",");
     }
