@@ -693,8 +693,9 @@ sub io_message
   if ($clienttype eq 'C')
     {
     # Kludge: fix to 1.2.0 bug with S messages in performance mode
-    if (($m_code eq 'S')&&($m_paranoid == 0)&&($m_data =~ /,performance,,/))
+    if (($code eq 'S')&&($m_paranoid == 0)&&($data =~ /,performance,,/))
       {
+      $data =~ s/,performance,,/,performance,/;
       $m_data =~ s/,performance,,/,performance,/;
       }
     # Let's store the data in the database...
