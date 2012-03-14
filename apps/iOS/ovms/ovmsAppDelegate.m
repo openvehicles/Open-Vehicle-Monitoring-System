@@ -719,6 +719,11 @@
   if (tag==0)
     { // Welcome message
     NSArray *rparts = [response componentsSeparatedByString:@" "];
+    if ([rparts count]<2)
+      {
+      [self serverDisconnect];
+      return; // Invalid server response
+      }
     NSString *stoken = [rparts objectAtIndex:2];
     NSString *etoken = [rparts objectAtIndex:3];
     const char *cstoken = [stoken UTF8String];
@@ -772,7 +777,7 @@
                                           repeats: YES];
 
     if ([apns_devicetoken length] > 0)
-    {
+      {
       // Subscribe to push notifications
       char buf[1024];
       char output[1024];
