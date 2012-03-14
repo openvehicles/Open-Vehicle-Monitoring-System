@@ -94,6 +94,9 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  // Initialise TestFlight
+  [TestFlight takeOff:@"5a4beeb296dd93d1971d64a94e74d9b6_NDM1MDAyMDExLTExLTI2IDAzOjQ0OjQxLjU1NjcxNQ"];
+  
   // Set the application defaults
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
   NSDictionary *appDefaults = [NSDictionary
@@ -783,6 +786,8 @@
       NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
       [asyncSocket writeData:pushData withTimeout:-1 tag:0];    
       }
+      
+    [TestFlight passCheckpoint:@"CONNECTED_TO_CAR"];
     }
   else if (tag==1)
     { // Normal encrypted data packet
@@ -843,7 +848,7 @@
   NSString *pushStr = [NSString stringWithFormat:@"%s\r\n",output];
   NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
   [asyncSocket writeData:pushData withTimeout:-1 tag:0];
-  [self didStartNetworking];  
+  [self didStartNetworking];
   }
 
 - (void)commandResponse:(NSString*)response
@@ -923,7 +928,7 @@
       case 1: // failed
         [JHNotificationManager
          notificationWithMessage:
-         [NSString stringWithFormat:@"Failed: %@",[[result objectAtIndex:2] stringValue]]];
+         [NSString stringWithFormat:@"Failed: %@",[result objectAtIndex:2]]];
         [self didStopNetworking];
         break;
       case 2: // unsupported
@@ -937,7 +942,7 @@
       default:
         [JHNotificationManager
          notificationWithMessage:
-         [NSString stringWithFormat:@"Error: %@",[[result objectAtIndex:2] stringValue]]];
+         [NSString stringWithFormat:@"Error: %@",[result objectAtIndex:2]]];
         [self didStopNetworking];
         break;
       }
@@ -955,33 +960,39 @@
 - (void)commandDoRequestFeatureList
   {
   [self commandIssue:@"1"];
+  [TestFlight passCheckpoint:@"COMMAND_FEATURES"];
   }
 
 - (void)commandDoSetFeature:(int)feature value:(NSString*)value
   {
   [self commandIssue:[NSString stringWithFormat:@"2,%d,%@",feature,value]];
+  [TestFlight passCheckpoint:@"COMMAND_SETFEATURE"];
   }
 
 - (void)commandDoRequestParameterList
   {
   [self commandIssue:@"3"];
+  [TestFlight passCheckpoint:@"COMMAND_PARAMETERS"];
   }
 
 - (void)commandDoSetParameter:(int)param value:(NSString*)value
   {
-  [self commandIssue:[NSString stringWithFormat:@"4,%d,%@",param,value]];  
+  [self commandIssue:[NSString stringWithFormat:@"4,%d,%@",param,value]];
+  [TestFlight passCheckpoint:@"COMMAND_SETPARAMETER"];
   }
 
 - (void)commandDoReboot
   {
   [JHNotificationManager notificationWithMessage:@"Rebooting Car Module..."];
   [self commandIssue:@"5"];
+  [TestFlight passCheckpoint:@"COMMAND_REBOOT"];
   }
 
 - (void)commandDoSetChargeMode:(int)mode
   {
   [JHNotificationManager notificationWithMessage:@"Setting Charge Mode..."];
   [self commandIssue:[NSString stringWithFormat:@"10,%d",mode]];  
+  [TestFlight passCheckpoint:@"COMMAND_SETCHARGEMODE"];
   }
 
 - (void)commandDoStartCharge
@@ -996,6 +1007,7 @@
     {
     [self.status_delegate updateStatus];
     }
+  [TestFlight passCheckpoint:@"COMMAND_STARTCHARGE"];
   }
 
 - (void)commandDoStopCharge
@@ -1010,55 +1022,65 @@
     {
     [self.status_delegate updateStatus];
     }
+  [TestFlight passCheckpoint:@"COMMAND_STOPCHARGE"];
   }
 
 - (void)commandDoSetChargeCurrent:(int)current
   {
   [JHNotificationManager notificationWithMessage:@"Setting Charge Current..."];
   [self commandIssue:[NSString stringWithFormat:@"15,%d",current]];
+  [TestFlight passCheckpoint:@"COMMAND_SETCHARGECURRENT"];
   }
 
 - (void)commandDoSetChargeModecurrent:(int)mode current:(int)current
   {
   [JHNotificationManager notificationWithMessage:@"Setting Charge Mode and Current..."];
   [self commandIssue:[NSString stringWithFormat:@"16,%d,%d",mode,current]];
+  [TestFlight passCheckpoint:@"COMMAND_SETCHARGEMODECURRENT"];
   }
 
 - (void)commandDoWakeupCar
   {
   [JHNotificationManager notificationWithMessage:@"Waking up Car..."];
   [self commandIssue:@"18"];
+  [TestFlight passCheckpoint:@"COMMAND_WAKEUPCAR"];
   }
 
 - (void)commandDoWakeupTempSubsystem
   {
   [JHNotificationManager notificationWithMessage:@"Waking up Temperature Subsystem..."];
   [self commandIssue:@"19"];
+  [TestFlight passCheckpoint:@"COMMAND_WAKEUPTEMP"];
   }
 
 - (void)commandDoLockCar:(NSString*)pin
   {
   [self commandIssue:[NSString stringWithFormat:@"20,%@",pin]];
+  [TestFlight passCheckpoint:@"COMMAND_LOCKCAR"];
   }
 
 - (void)commandDoActivateValet:(NSString*)pin
   {
   [self commandIssue:[NSString stringWithFormat:@"21,%@",pin]];
+  [TestFlight passCheckpoint:@"COMMAND_ACTIVATEVALET"];
   }
 
 - (void)commandDoUnlockCar:(NSString*)pin
   {
   [self commandIssue:[NSString stringWithFormat:@"22,%@",pin]];
+  [TestFlight passCheckpoint:@"COMMAND_UNLOCKCAR"];
   }
 
 - (void)commandDoDeactivateValet:(NSString*)pin
   {
   [self commandIssue:[NSString stringWithFormat:@"23,%@",pin]];
+  [TestFlight passCheckpoint:@"COMMAND_DEACTIVEVALET"];
   }
 
 - (void)commandDoRequestGPRSData
   {
   [self commandIssue:@"30"];
+  [TestFlight passCheckpoint:@"COMMAND_GPRSDATA"];
   }
 
 /**

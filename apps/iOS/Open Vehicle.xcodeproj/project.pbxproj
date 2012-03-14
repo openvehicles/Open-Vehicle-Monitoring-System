@@ -75,6 +75,10 @@
 		4D91CF081473F33400CBA435 /* 193-location-arrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF071473F33400CBA435 /* 193-location-arrow.png */; };
 		4D91CF0A1473F36000CBA435 /* 00-icons-license.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CF091473F36000CBA435 /* 00-icons-license.txt */; };
 		4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D91CF681473FE0900CBA435 /* MapKit.framework */; };
+		4DA49200151083A7004D26E0 /* libTestFlight.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DA491FC151083A7004D26E0 /* libTestFlight.a */; };
+		4DA49201151083A7004D26E0 /* testflight_README.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4DA491FE151083A7004D26E0 /* testflight_README.txt */; };
+		4DA49202151083A7004D26E0 /* testflight_release_notes.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4DA491FF151083A7004D26E0 /* testflight_release_notes.txt */; };
+		4DA492041510840A004D26E0 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DA492031510840A004D26E0 /* libz.dylib */; };
 		4DA91F7114EE896100106AD4 /* ovmsChargerSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DA91F6F14EE896000106AD4 /* ovmsChargerSettingsViewController.m */; };
 		4DAB2C741492109C00E1098C /* ovmsBodyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAB2C731492109C00E1098C /* ovmsBodyViewController.m */; };
 		4DAB2C77149216C000E1098C /* carlock.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C75149216C000E1098C /* carlock.png */; };
@@ -247,6 +251,11 @@
 		4D91CF071473F33400CBA435 /* 193-location-arrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "193-location-arrow.png"; sourceTree = "<group>"; };
 		4D91CF091473F36000CBA435 /* 00-icons-license.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "00-icons-license.txt"; sourceTree = "<group>"; };
 		4D91CF681473FE0900CBA435 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		4DA491FC151083A7004D26E0 /* libTestFlight.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libTestFlight.a; sourceTree = "<group>"; };
+		4DA491FD151083A7004D26E0 /* TestFlight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestFlight.h; sourceTree = "<group>"; };
+		4DA491FE151083A7004D26E0 /* testflight_README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = testflight_README.txt; sourceTree = "<group>"; };
+		4DA491FF151083A7004D26E0 /* testflight_release_notes.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = testflight_release_notes.txt; sourceTree = "<group>"; };
+		4DA492031510840A004D26E0 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		4DA91F6E14EE896000106AD4 /* ovmsChargerSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsChargerSettingsViewController.h; sourceTree = "<group>"; };
 		4DA91F6F14EE896000106AD4 /* ovmsChargerSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsChargerSettingsViewController.m; sourceTree = "<group>"; };
 		4DAB2C7014920DB600E1098C /* ovmsBodyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsBodyViewController.h; sourceTree = "<group>"; };
@@ -350,6 +359,8 @@
 				4D5AE36914733757002F5F52 /* UIKit.framework in Frameworks */,
 				4D5AE36B14733757002F5F52 /* Foundation.framework in Frameworks */,
 				4D5AE36D14733757002F5F52 /* CoreGraphics.framework in Frameworks */,
+				4DA49200151083A7004D26E0 /* libTestFlight.a in Frameworks */,
+				4DA492041510840A004D26E0 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -369,6 +380,7 @@
 		4D5AE35914733757002F5F52 = {
 			isa = PBXGroup;
 			children = (
+				4DA492031510840A004D26E0 /* libz.dylib */,
 				4D69A84814DADA4400CF0F74 /* QuartzCore.framework */,
 				4D5AE36E14733757002F5F52 /* ovms */,
 				4D5AE39A14733758002F5F52 /* ovmsTests */,
@@ -423,6 +435,7 @@
 				4DF2FF1114981FB900E488F2 /* Car Outlines */,
 				4D91CEF81473ECE500CBA435 /* Other Images */,
 				4D5AE36F14733757002F5F52 /* Supporting Files */,
+				4DA491FB151083A7004D26E0 /* TestFlightSDK0 */,
 			);
 			path = ovms;
 			sourceTree = "<group>";
@@ -511,6 +524,17 @@
 				4DFAD7FD1475430900416D38 /* Icons */,
 			);
 			name = "Other Images";
+			sourceTree = "<group>";
+		};
+		4DA491FB151083A7004D26E0 /* TestFlightSDK0 */ = {
+			isa = PBXGroup;
+			children = (
+				4DA491FC151083A7004D26E0 /* libTestFlight.a */,
+				4DA491FD151083A7004D26E0 /* TestFlight.h */,
+				4DA491FE151083A7004D26E0 /* testflight_README.txt */,
+				4DA491FF151083A7004D26E0 /* testflight_release_notes.txt */,
+			);
+			path = TestFlightSDK0;
 			sourceTree = "<group>";
 		};
 		4DE26E64147E83B800E3161D /* Data Model */ = {
@@ -693,7 +717,7 @@
 		4D5AE35B14733757002F5F52 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0420;
+				LastUpgradeCheck = 0430;
 				ORGANIZATIONNAME = "Open Vehicle Systems";
 			};
 			buildConfigurationList = 4D5AE35E14733757002F5F52 /* Build configuration list for PBXProject "Open Vehicle" */;
@@ -823,6 +847,8 @@
 				4D777F6B14ED2EC900B46223 /* carvaletoff_b.png in Resources */,
 				4D777F6C14ED2EC900B46223 /* carvaleton_b.png in Resources */,
 				4DC4C1E414F334CC0093F581 /* ovmsControlCellularUsageView.html in Resources */,
+				4DA49201151083A7004D26E0 /* testflight_README.txt in Resources */,
+				4DA49202151083A7004D26E0 /* testflight_release_notes.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -967,10 +993,15 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Mark Webb-Johnson";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Mark Webb-Johnson";
+				COPY_PHASE_STRIP = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
 				HEADER_SEARCH_PATHS = "../core-plot/framework/**";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/ovms/TestFlightSDK0\"",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "Open Vehicle";
 				PROVISIONING_PROFILE = "F13B40C2-4A56-4E73-A8AF-B61F8BBBBCCE";
@@ -1024,10 +1055,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Mark Webb-Johnson";
+				COPY_PHASE_STRIP = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
 				HEADER_SEARCH_PATHS = "../core-plot/framework/**";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/ovms/TestFlightSDK0\"",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "Open Vehicle";
 				PROVISIONING_PROFILE = "39FD1127-57A0-470C-89B7-30714C143F54";
@@ -1089,6 +1125,10 @@
 				GCC_PREFIX_HEADER = "ovms/Open Vehicle-Prefix.pch";
 				HEADER_SEARCH_PATHS = "../core-plot/framework/**";
 				INFOPLIST_FILE = "ovms/ovms-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/ovms/TestFlightSDK0\"",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "Open Vehicle";
 				PROVISIONING_PROFILE = "9A7DB02F-E526-4074-AF36-3E9ADECD0A04";
