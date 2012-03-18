@@ -94,9 +94,9 @@ $client_hmac->add($client_token);
 my $client_key = $client_hmac->digest;
 print STDERR "  Client version of shared key is: ",encode_base64($client_key,''),"\n";
 
-my $txcipher = Crypt::RC4::XS->new($client_key);
+our $txcipher = Crypt::RC4::XS->new($client_key);
 $txcipher->RC4(chr(0) x 1024); # Prime the cipher
-my $rxcipher = Crypt::RC4::XS->new($client_key);
+our $rxcipher = Crypt::RC4::XS->new($client_key);
 $rxcipher->RC4(chr(0) x 1024); # Prime the cipher
 
 my $encrypted = encode_base64($txcipher->RC4("MP-0 A"),'');
@@ -113,39 +113,22 @@ print STDERR "  Server message decodes to: ",$rxcipher->RC4(decode_base64($line)
 my $travelling = 1;
 my $lat = $latitudes[0];
 my $lon = $longitudes[0];
-my ($soc,$kmideal,$kmest,$state,$mode,$volts,$amps) = (80,int((80.0/100.0)*350.0),int((80.0/100.0)*350.0)-20,'done','standard',0,0);
-$encrypted = encode_base64($txcipher->RC4("MP-0 S$soc,K,$volts,$amps,$state,$mode,$kmideal,$kmest"),'');
-print STDERR "  Sending message $encrypted\n";
-print $sock "$encrypted\r\n";
-$encrypted = encode_base64($txcipher->RC4("MP-0 L$lat,$lon"),'');
-print STDERR "  Sending message $encrypted\n";
-print $sock "$encrypted\r\n";
-
-$encrypted = encode_base64($txcipher->RC4("MP-0 F1.0,VIN123456789012345,5"),'');
-print STDERR "  Sending message $encrypted\n";
-print $sock "$encrypted\r\n";
-
+my ($soc,$kmideal,$kmest,$state,$mode,$volts,$amps) = (30,int((30.0/100.0)*350.0),int((30.0/100.0)*350.0)-20,'done','standard',0,0);
+my ($substate,$stateN,$modeN) = (7,13,0);
 my $trip = 0;
 my $odometer = 0;
+my $chargetime = 0;
 
-$encrypted = encode_base64($txcipher->RC4("MP-0 D160,0,5,21,39,24,$trip,$odometer,50"),'');
-print STDERR "  Sending message $encrypted\n";
-print $sock "$encrypted\r\n";
-
-$encrypted = encode_base64($txcipher->RC4("MP-0 W29,21,40,22,29,21,40,23"),'');
-print STDERR "  Sending message $encrypted\n";
-print $sock "$encrypted\r\n";
-
-#$encrypted = encode_base64($txcipher->RC4("MP-0 PMWelcome to the Open Vehicle Monitoring System (push notification)"),'');
-#print STDERR "  Sending message $encrypted\n";
-#print $sock "$encrypted\r\n";
+my ($ambiant,$nextambiant)=(0,0);
+&getambiant();
 
 srand();
 
 my $handle = new AnyEvent::Handle(fh => $sock, on_error => \&io_error, keepalive => 1, no_delay => 1);
 $handle->push_read (line => \&io_line);
+&statmsg();
 
-my $tim = AnyEvent->timer (after => 120, interval => 120, cb => \&io_tim);
+my $tim = AnyEvent->timer (after => 60, interval => 60, cb => \&io_tim);
 
 # Main event loop...
 EV::loop();
@@ -180,26 +163,31 @@ sub io_tim
     print "Travelling ",$dist,"km - now SOC is $soc ($kmideal,$kmest)\n";
     if ($soc < 30)
       {
-      ($travelling,$volts,$amps,$state,$mode) = (0,220,70,"charging","standard");
+      ($travelling,$volts,$amps,$state,$mode,$chargetime) = (0,220,13,"charging","standard",0);
+      ($substate,$stateN,$modeN) = (5,1,0);
       }
-    $handle->push_write(encode_base64($txcipher->RC4("MP-0 S$soc,K,$volts,$amps,$state,$mode,$kmideal,$kmest"),'')."\r\n");
-    $handle->push_write(encode_base64($txcipher->RC4("MP-0 L$lat,$lon"),'')."\r\n");
-    $handle->push_write(encode_base64($txcipher->RC4("MP-0 D160,0,5,21,39,24,$trip,$odometer,50"),"")."\r\n");
     }
   else
     {
+    $chargetime++;
     $kmideal += 10;
     $kmest = int($kmideal*0.9);
     $soc = int(100*$kmideal/350);
     print "Charging - now SOC is $soc ($kmideal,$kmest)\n";
     if ($soc > 95)
       {
-      ($travelling,$volts,$amps,$state,$mode) = (1,0,0,"done","standard");
+      ($travelling,$volts,$amps,$state,$mode,$chargetime) = (1,0,0,"done","standard",0);
+      ($substate,$stateN,$modeN) = (7,13,0);
       }
     $trip = 0;
-    $handle->push_write(encode_base64($txcipher->RC4("MP-0 S$soc,K,$volts,$amps,$state,$mode,$kmideal,$kmest"),'')."\r\n");
-    $handle->push_write(encode_base64($txcipher->RC4("MP-0 D124,0,4,21,39,24,$trip,$odometer,50"),"")."\r\n");
     }
+
+  if (--$nextambiant <= 0)
+    {
+    &getambiant();
+    }
+
+  &statmsg();
   }
 
 sub io_line
@@ -216,7 +204,45 @@ sub io_line
     print STDERR "  Sending message $encrypted\n";
     print $hdl->push_write("$encrypted\r\n");
     }
+  elsif (($line =~ /^MP-0 Z(\d+)/)&&($1>0))
+    { # One or more apps connected...
+    &statmsg();
+    }
+  elsif ($line =~ /^MP-0 C(\d+)/)
+    { # A command...
+    my $encrypted = encode_base64($txcipher->RC4("MP-0 c$1,1,Comand refused"),'');
+    print STDERR "  Sending message $encrypted\n";
+    print $hdl->push_write("$encrypted\r\n");
+    &statmsg();
+    }
   $hdl->push_read (line => \&io_line);
+  }
+
+sub statmsg
+  {
+  my ($front,$back) = ($ambiant+2,$ambiant+6);
+  my ($pem,$motor,$battery) = ($ambiant+10,$ambiant+20,$ambiant+5);
+  my $cb = ($travelling == 0)?124:160;
+
+  print STDERR "  Sending status...\n";
+  $handle->push_write(encode_base64($txcipher->RC4("MP-0 F1.2.0,VIN123456789012345,5,0,TR"),'')."\r\n");
+  $handle->push_write(encode_base64($txcipher->RC4("MP-0 S$soc,K,$volts,$amps,$state,$mode,$kmideal,$kmest,13,$chargetime,0,0,$substate,$stateN,$modeN"),'')."\r\n");
+  $handle->push_write(encode_base64($txcipher->RC4("MP-0 L$lat,$lon,90,0,1,1"),'')."\r\n");
+  $handle->push_write(encode_base64($txcipher->RC4("MP-0 D$cb,0,5,$pem,$motor,$battery,$trip,$odometer,50,0,$ambiant,0,1,1"),"")."\r\n");
+  $handle->push_write(encode_base64($txcipher->RC4("MP-0 W29,$front,40,$back,29,$front,40,$back,1"),"")."\r\n");
+  }
+
+sub getambiant
+  {
+  print STDERR "  Getting ambiant temperature for Hong Kong\n";
+  my $weather = `curl http://rss.weather.gov.hk/rss/CurrentWeather.xml 2>/dev/null`;
+
+  if ($weather =~ /Air temperature.+\s(\d+)\s/)
+    {
+    $ambiant = $1;
+    print "    Ambiant is $ambiant celcius\n";
+    }
+  $nextambiant = 60;  
   }
 
 sub Haversine
