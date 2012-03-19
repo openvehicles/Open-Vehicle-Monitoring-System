@@ -18,6 +18,7 @@ use URI::Escape;
 
 # Global Variables
 
+my $VERSION = "1.2.0-20120319";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my %conns;
 my $utilisations;
@@ -710,6 +711,11 @@ sub io_message
     # And send it on to the apps...
     AE::log info => "#$fn $clienttype $vehicleid msg handle $m_code $m_data";
     &io_tx_apps($vehicleid, $code, $data);
+    if ($m_code eq "F")
+      {
+      # Let's follow up with server version...
+      &io_tx_apps($vehicleid, "f", $VERSION);
+      }
     &io_tx_apps($vehicleid, "T", 0);
     }
   elsif ($clienttype eq 'A')
