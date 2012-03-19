@@ -61,6 +61,7 @@
 @synthesize m_wakeup_button;
 @synthesize m_lock_button;
 @synthesize m_valet_button;
+@synthesize m_info_button;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -187,6 +188,7 @@
     [self setM_wakeup_button:nil];
     [self setM_lock_button:nil];
     [self setM_valet_button:nil];
+    [self setM_info_button:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -300,6 +302,7 @@
     self.navigationItem.rightBarButtonItem = m_control_button;
     m_control_button.enabled=YES;
     m_battery_button.enabled=YES;
+    m_info_button.hidden=NO;
     [m_car_connection_image stopAnimating];
     m_car_connection_image.animationImages = nil;
     m_car_connection_image.image=[UIImage imageNamed:imagewanted];
@@ -309,6 +312,7 @@
     self.navigationItem.rightBarButtonItem = nil;
     m_control_button.enabled=NO;
     m_battery_button.enabled=NO;
+    m_info_button.hidden=YES;
     NSArray *images = [[NSArray alloc] initWithObjects:
                        [UIImage imageNamed:@"Nothing.png"],
                        [UIImage imageNamed:imagewanted],

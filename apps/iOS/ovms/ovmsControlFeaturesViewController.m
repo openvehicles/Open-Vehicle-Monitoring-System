@@ -115,7 +115,7 @@
         case 1: // failed
           [JHNotificationManager
            notificationWithMessage:
-           [NSString stringWithFormat:@"Failed: %@",[[result objectAtIndex:2] stringValue]]];
+           [NSString stringWithFormat:@"Failed: %@",[result objectAtIndex:2]]];
           break;
         case 2: // unsupported
           [JHNotificationManager notificationWithMessage:@"Unsupported operation"];
@@ -156,7 +156,7 @@
       case 1: // failed
         [JHNotificationManager
          notificationWithMessage:
-         [NSString stringWithFormat:@"Failed: %@",[[result objectAtIndex:2] stringValue]]];
+         [NSString stringWithFormat:@"Failed: %@",[result objectAtIndex:2]]];
         [[ovmsAppDelegate myRef] commandCancel];
         [self stopSpinner];
         break;

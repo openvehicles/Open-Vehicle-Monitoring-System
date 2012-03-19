@@ -830,7 +830,6 @@
   NSString *pushStr = [NSString stringWithFormat:@"%s\r\n",output];
   NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
   [asyncSocket writeData:pushData withTimeout:-1 tag:0];
-  NSLog(@"PING server");
   }
 
 - (BOOL)commandIsFree

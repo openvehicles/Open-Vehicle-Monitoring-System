@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.0" toolsVersion="1938" systemVersion="11D50b" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="4">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.1" toolsVersion="2182" systemVersion="11D50b" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="4">
     <dependencies>
+        <deployment defaultVersion="1296" identifier="iOS"/>
         <development defaultVersion="4200" identifier="xcode"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="933"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="1179"/>
     </dependencies>
     <scenes>
+        <!--Ovms Status View Controller - Status-->
         <scene sceneID="11">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="10" sceneMemberID="firstResponder"/>
@@ -170,6 +172,21 @@
                                     <segue destination="u5C-fS-YrG" kind="modal" identifier="ChargerSettings" modalTransitionStyle="coverVertical" id="WmQ-jV-fGN"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" alpha="0.5" tag="300" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" id="Oiu-bi-QIu" userLabel="Info Button">
+                                <rect key="frame" x="294" y="337" width="18" height="19"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <segue destination="Ohb-tf-Jjj" kind="modal" identifier="VehicleInfo" modalTransitionStyle="coverVertical" id="vi1-SO-83A"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512112140656" green="0.14509804546833038" blue="0.25098040699958801" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -201,11 +218,13 @@
                         <outlet property="m_charger_plug" destination="Geg-T8-Lqj" id="ZKY-mj-LKI"/>
                         <outlet property="m_charger_slider" destination="Tjp-Kr-c3l" id="gn2-Eq-8pI"/>
                         <outlet property="m_control_button" destination="A0l-T7-xJ2" id="Hwg-uq-AD9"/>
+                        <outlet property="m_info_button" destination="Oiu-bi-QIu" id="Rpd-Bg-DhK"/>
                     </connections>
                 </viewController>
             </objects>
             <point key="canvasLocation" x="1074" y="-430"/>
         </scene>
+        <!--Ovms Location View Controller - Location-->
         <scene sceneID="13">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="12" sceneMemberID="firstResponder"/>
@@ -227,6 +246,7 @@
             </objects>
             <point key="canvasLocation" x="1074" y="700"/>
         </scene>
+        <!--Tab Bar Controller-->
         <scene sceneID="15">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="14" sceneMemberID="firstResponder"/>
@@ -247,6 +267,7 @@
             </objects>
             <point key="canvasLocation" x="132" y="180"/>
         </scene>
+        <!--Navigation Controller - Cars-->
         <scene sceneID="KFo-dg-nI6">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="fxB-pE-IpL" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -262,6 +283,7 @@
             </objects>
             <point key="canvasLocation" x="689" y="1275"/>
         </scene>
+        <!--Ovms Cars Table View Controller - Cars-->
         <scene sceneID="9Oa-SP-kvN">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OVn-SP-h2j" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -328,6 +350,7 @@
             </objects>
             <point key="canvasLocation" x="1074" y="1275"/>
         </scene>
+        <!--Ovms Cars Form View Controller-->
         <scene sceneID="rV3-H9-bVt">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="6wg-UF-9wn" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -397,6 +420,7 @@
             </objects>
             <point key="canvasLocation" x="1507" y="1275"/>
         </scene>
+        <!--Navigation Controller - Location-->
         <scene sceneID="sZB-Ex-xt6">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="xbX-Mu-Ig4" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -413,6 +437,7 @@
             </objects>
             <point key="canvasLocation" x="689" y="700"/>
         </scene>
+        <!--Navigation Controller - Battery-->
         <scene sceneID="TO2-d0-1xO">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="eV5-G5-oge" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -429,6 +454,7 @@
             </objects>
             <point key="canvasLocation" x="689" y="-430"/>
         </scene>
+        <!--Navigation Controller - Car-->
         <scene sceneID="mA1-O9-EXD">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="QS9-b8-eBZ" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -445,6 +471,7 @@
             </objects>
             <point key="canvasLocation" x="689" y="135"/>
         </scene>
+        <!--Ovms Body View Controller - Car-->
         <scene sceneID="66v-s6-RzB">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="og0-8h-9Xf" sceneMemberID="firstResponder"/>
@@ -688,6 +715,7 @@
             </objects>
             <point key="canvasLocation" x="1074" y="135"/>
         </scene>
+        <!--Ovms Control View Controller - Control-->
         <scene sceneID="3Qb-bc-MYS">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="aaS-jK-xbS" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -773,6 +801,7 @@
             </objects>
             <point key="canvasLocation" x="1896" y="-177"/>
         </scene>
+        <!--Ovms ControlPIN Entry - Vehicle PIN-->
         <scene sceneID="A9I-hX-b5M">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ybv-tC-bBy" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -836,8 +865,9 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="1818" y="403"/>
+            <point key="canvasLocation" x="1854" y="403"/>
         </scene>
+        <!--Ovms Control Parameters View Controller - Parameters-->
         <scene sceneID="Z5c-Qj-YRV">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="nwU-BM-F4o" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -890,6 +920,7 @@
             </objects>
             <point key="canvasLocation" x="2507" y="-708"/>
         </scene>
+        <!--Ovms Control Features View Controller - Features-->
         <scene sceneID="CgH-xe-eJm">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="RVA-Lx-JyF" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -942,6 +973,7 @@
             </objects>
             <point key="canvasLocation" x="2380" y="-901"/>
         </scene>
+        <!--Ovms Control Cellular Usage View Controller - Cellular Usage-->
         <scene sceneID="o7M-rV-knj">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="AVt-Sg-UbF" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -970,6 +1002,7 @@
             </objects>
             <point key="canvasLocation" x="2439" y="-331"/>
         </scene>
+        <!--Ovms Charger Settings View Controller - Charger Settings-->
         <scene sceneID="Kev-uy-6HY">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="LXJ-GX-JpT" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -1038,6 +1071,7 @@
             </objects>
             <point key="canvasLocation" x="1903" y="-761"/>
         </scene>
+        <!--Navigation Controller-->
         <scene sceneID="xSi-dF-4Bk">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="UX8-jo-G9a" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -1052,6 +1086,7 @@
             </objects>
             <point key="canvasLocation" x="1507" y="-761"/>
         </scene>
+        <!--Navigation Controller-->
         <scene sceneID="Eb1-bU-SS7">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="XvS-O3-MsP" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -1071,6 +1106,146 @@
                 </navigationController>
             </objects>
             <point key="canvasLocation" x="1507" y="-183"/>
+        </scene>
+        <!--Ovms Vehicle Info - Vehicle PIN-->
+        <scene sceneID="iQ6-82-3zm">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="KPR-VW-RVL" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <viewController id="Ohb-tf-Jjj" customClass="ovmsVehicleInfo" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="BxJ-VL-Oww">
+                        <rect key="frame" x="0.0" y="20" width="320" height="460"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <navigationBar contentMode="scaleToFill" barStyle="blackOpaque" id="VT6-MB-cHG">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <items>
+                                    <navigationItem title="Vehicle Info" id="Jra-Dd-iMp">
+                                        <barButtonItem key="rightBarButtonItem" title="Done" id="ODe-7r-Oxn">
+                                            <connections>
+                                                <action selector="Done:" destination="Ohb-tf-Jjj" id="fDr-6W-HdP"/>
+                                            </connections>
+                                        </barButtonItem>
+                                    </navigationItem>
+                                </items>
+                            </navigationBar>
+                            <textField opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="vehicle id" minimumFontSize="17" id="TvA-0V-loG">
+                                <rect key="frame" x="95" y="56" width="205" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Vehicle" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="QMU-mp-Cns">
+                                <rect key="frame" x="20" y="61" width="56" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <textField opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="vin" minimumFontSize="17" id="2dK-Un-sPU">
+                                <rect key="frame" x="95" y="95" width="205" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="VIN" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="KNN-HU-lpE">
+                                <rect key="frame" x="20" y="100" width="56" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="OVMS Firmware:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="1bn-oo-j51">
+                                <rect key="frame" x="20" y="336" width="131" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <textField opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="server firmware" minimumFontSize="17" id="xnD-R6-qWE">
+                                <rect key="frame" x="95" y="370" width="205" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                            <textField opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="car firmware" minimumFontSize="17" id="5vj-ow-P5Q">
+                                <rect key="frame" x="95" y="409" width="205" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Server" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="vg3-Ec-bVj">
+                                <rect key="frame" x="32" y="375" width="56" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Car" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="LK8-fu-f3s">
+                                <rect key="frame" x="32" y="414" width="56" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <textField opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="type" minimumFontSize="17" id="btW-xG-bsy">
+                                <rect key="frame" x="95" y="134" width="205" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Type" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="wCn-AE-Aoa">
+                                <rect key="frame" x="20" y="139" width="56" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <textField opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="gsm" minimumFontSize="17" id="kAU-ia-0FE">
+                                <rect key="frame" x="95" y="173" width="160" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="GSM" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="gWn-SJ-yrr">
+                                <rect key="frame" x="20" y="178" width="56" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="CAN Write" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="wg4-Nw-rqO">
+                                <rect key="frame" x="20" y="214" width="81" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <switch opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" id="bU8-9b-Bjn">
+                                <rect key="frame" x="176" y="211" width="79" height="27"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                            </switch>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="signalbars-5.png" id="ceb-zL-0MD">
+                                <rect key="frame" x="269" y="173" width="31" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Vehicle PIN" id="3px-dL-bF0"/>
+                    <connections>
+                        <outlet property="m_canwrite" destination="bU8-9b-Bjn" id="afy-Us-Xni"/>
+                        <outlet property="m_carfirmware" destination="5vj-ow-P5Q" id="qf3-SD-JdI"/>
+                        <outlet property="m_gsm" destination="kAU-ia-0FE" id="wBI-Mx-Bh9"/>
+                        <outlet property="m_gsm_signalbars" destination="ceb-zL-0MD" id="b1L-F2-L2c"/>
+                        <outlet property="m_serverfirmware" destination="xnD-R6-qWE" id="UQT-LS-JEb"/>
+                        <outlet property="m_type" destination="btW-xG-bsy" id="KRE-x3-GR1"/>
+                        <outlet property="m_vehicleid" destination="TvA-0V-loG" id="R1d-6k-PDV"/>
+                        <outlet property="m_vin" destination="2dK-Un-sPU" id="yg7-BJ-fSY"/>
+                    </connections>
+                </viewController>
+            </objects>
+            <point key="canvasLocation" x="1074" y="-1027"/>
         </scene>
     </scenes>
     <resources>
@@ -1095,6 +1270,7 @@
         <image name="roadster_outline_ld.png" width="304" height="606"/>
         <image name="roadster_outline_rd.png" width="304" height="606"/>
         <image name="roadster_outline_tr.png" width="304" height="606"/>
+        <image name="signalbars-5.png" width="256" height="256"/>
         <image name="tirepress_letterbox.png" width="267" height="305"/>
     </resources>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
@@ -1103,7 +1279,7 @@
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="gam-vz-1Nr"/>
         <segue reference="X9h-Z2-0t4"/>
+        <segue reference="gam-vz-1Nr"/>
     </inferredMetricsTieBreakers>
 </document>

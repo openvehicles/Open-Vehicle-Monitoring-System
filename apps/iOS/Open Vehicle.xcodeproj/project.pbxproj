@@ -15,6 +15,12 @@
 		4D10FCF7147BCACD0092FAF9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D10FCF6147BCACD0092FAF9 /* Security.framework */; };
 		4D16EF32148747EC004A80AE /* JHNotificationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D16EF31148747EC004A80AE /* JHNotificationManager.m */; };
 		4D16EF3514874AE7004A80AE /* notification_background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D16EF3414874AE7004A80AE /* notification_background.png */; };
+		4D2D3DDE15175ABD0014A0AD /* signalbars-0.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D2D3DD815175ABD0014A0AD /* signalbars-0.png */; };
+		4D2D3DDF15175ABD0014A0AD /* signalbars-1.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D2D3DD915175ABD0014A0AD /* signalbars-1.png */; };
+		4D2D3DE015175ABD0014A0AD /* signalbars-2.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D2D3DDA15175ABD0014A0AD /* signalbars-2.png */; };
+		4D2D3DE115175ABD0014A0AD /* signalbars-3.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D2D3DDB15175ABD0014A0AD /* signalbars-3.png */; };
+		4D2D3DE215175ABD0014A0AD /* signalbars-4.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D2D3DDC15175ABD0014A0AD /* signalbars-4.png */; };
+		4D2D3DE315175ABD0014A0AD /* signalbars-5.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D2D3DDD15175ABD0014A0AD /* signalbars-5.png */; };
 		4D3C35C914EAA42000126F47 /* Nothing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D3C35C814EAA42000126F47 /* Nothing.png */; };
 		4D3C35CB14EAA43300126F47 /* charger_blank.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D3C35CA14EAA43300126F47 /* charger_blank.png */; };
 		4D5AE36914733757002F5F52 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36814733757002F5F52 /* UIKit.framework */; };
@@ -34,6 +40,7 @@
 		4D5AE39714733758002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
 		4D5AE39F14733758002F5F52 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D5AE39D14733758002F5F52 /* InfoPlist.strings */; };
 		4D5AE3A214733758002F5F52 /* ovmsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5AE3A114733758002F5F52 /* ovmsTests.m */; };
+		4D6557AA1516183B00369AAC /* ovmsVehicleInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D6557A91516183B00369AAC /* ovmsVehicleInfo.m */; };
 		4D6734B21497891E00F7919F /* roadster_outline_tr.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D6734B11497891E00F7919F /* roadster_outline_tr.png */; };
 		4D6734B41497893F00F7919F /* roadster_outline_rd.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D6734B31497893F00F7919F /* roadster_outline_rd.png */; };
 		4D6734B61497895700F7919F /* roadster_outline_ld.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D6734B51497895700F7919F /* roadster_outline_ld.png */; };
@@ -61,9 +68,9 @@
 		4D777F6A14ED2EC900B46223 /* carunlock_b.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D777F6614ED2EC900B46223 /* carunlock_b.png */; };
 		4D777F6B14ED2EC900B46223 /* carvaletoff_b.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D777F6714ED2EC900B46223 /* carvaletoff_b.png */; };
 		4D777F6C14ED2EC900B46223 /* carvaleton_b.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D777F6814ED2EC900B46223 /* carvaleton_b.png */; };
+		4D7872311516136900BB7CA2 /* ovmsStatusViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D7872301516136900BB7CA2 /* ovmsStatusViewController.m */; };
 		4D8E597C14B3CB4C00426260 /* parking.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D8E597B14B3CB4C00426260 /* parking.png */; };
 		4D90410B147C787F00D9C8E1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D90410A147C787F00D9C8E1 /* CoreLocation.framework */; };
-		4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */; };
 		4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */; };
 		4D91CEFA1473F24500CBA435 /* 20-gear2.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CEF91473F24500CBA435 /* 20-gear2.png */; };
 		4D91CEFC1473F26D00CBA435 /* 49-battery.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D91CEFB1473F26D00CBA435 /* 49-battery.png */; };
@@ -179,6 +186,12 @@
 		4D16EF30148747EC004A80AE /* JHNotificationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JHNotificationManager.h; sourceTree = "<group>"; };
 		4D16EF31148747EC004A80AE /* JHNotificationManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JHNotificationManager.m; sourceTree = "<group>"; };
 		4D16EF3414874AE7004A80AE /* notification_background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = notification_background.png; sourceTree = "<group>"; };
+		4D2D3DD815175ABD0014A0AD /* signalbars-0.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "signalbars-0.png"; sourceTree = "<group>"; };
+		4D2D3DD915175ABD0014A0AD /* signalbars-1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "signalbars-1.png"; sourceTree = "<group>"; };
+		4D2D3DDA15175ABD0014A0AD /* signalbars-2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "signalbars-2.png"; sourceTree = "<group>"; };
+		4D2D3DDB15175ABD0014A0AD /* signalbars-3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "signalbars-3.png"; sourceTree = "<group>"; };
+		4D2D3DDC15175ABD0014A0AD /* signalbars-4.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "signalbars-4.png"; sourceTree = "<group>"; };
+		4D2D3DDD15175ABD0014A0AD /* signalbars-5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "signalbars-5.png"; sourceTree = "<group>"; };
 		4D3C35C814EAA42000126F47 /* Nothing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Nothing.png; sourceTree = "<group>"; };
 		4D3C35CA14EAA43300126F47 /* charger_blank.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = charger_blank.png; sourceTree = "<group>"; };
 		4D5AE36414733757002F5F52 /* Open Vehicle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Open Vehicle.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -203,6 +216,8 @@
 		4D5AE39E14733758002F5F52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4D5AE3A014733758002F5F52 /* ovmsTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ovmsTests.h; sourceTree = "<group>"; };
 		4D5AE3A114733758002F5F52 /* ovmsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ovmsTests.m; sourceTree = "<group>"; };
+		4D6557A81516183B00369AAC /* ovmsVehicleInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsVehicleInfo.h; sourceTree = "<group>"; };
+		4D6557A91516183B00369AAC /* ovmsVehicleInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsVehicleInfo.m; sourceTree = "<group>"; };
 		4D6734B11497891E00F7919F /* roadster_outline_tr.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_tr.png; sourceTree = "<group>"; };
 		4D6734B31497893F00F7919F /* roadster_outline_rd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_rd.png; sourceTree = "<group>"; };
 		4D6734B51497895700F7919F /* roadster_outline_ld.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_ld.png; sourceTree = "<group>"; };
@@ -235,10 +250,10 @@
 		4D777F6614ED2EC900B46223 /* carunlock_b.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carunlock_b.png; sourceTree = "<group>"; };
 		4D777F6714ED2EC900B46223 /* carvaletoff_b.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carvaletoff_b.png; sourceTree = "<group>"; };
 		4D777F6814ED2EC900B46223 /* carvaleton_b.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carvaleton_b.png; sourceTree = "<group>"; };
+		4D78722F1516136900BB7CA2 /* ovmsStatusViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewController.h; sourceTree = "<group>"; };
+		4D7872301516136900BB7CA2 /* ovmsStatusViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsStatusViewController.m; sourceTree = "<group>"; };
 		4D8E597B14B3CB4C00426260 /* parking.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = parking.png; sourceTree = "<group>"; };
 		4D90410A147C787F00D9C8E1 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
-		4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsStatusViewController.h; sourceTree = "<group>"; };
-		4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsStatusViewController.m; sourceTree = "<group>"; };
 		4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsLocationViewController.h; sourceTree = "<group>"; };
 		4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsLocationViewController.m; sourceTree = "<group>"; };
 		4D91CEF91473F24500CBA435 /* 20-gear2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "20-gear2.png"; sourceTree = "<group>"; };
@@ -380,8 +395,6 @@
 		4D5AE35914733757002F5F52 = {
 			isa = PBXGroup;
 			children = (
-				4DA492031510840A004D26E0 /* libz.dylib */,
-				4D69A84814DADA4400CF0F74 /* QuartzCore.framework */,
 				4D5AE36E14733757002F5F52 /* ovms */,
 				4D5AE39A14733758002F5F52 /* ovmsTests */,
 				4D5AE36714733757002F5F52 /* Frameworks */,
@@ -401,6 +414,8 @@
 		4D5AE36714733757002F5F52 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4DA492031510840A004D26E0 /* libz.dylib */,
+				4D69A84814DADA4400CF0F74 /* QuartzCore.framework */,
 				4DBF3761149B7333002323B5 /* SystemConfiguration.framework */,
 				4DE26E5F147E7E3000E3161D /* CoreData.framework */,
 				4D90410A147C787F00D9C8E1 /* CoreLocation.framework */,
@@ -475,6 +490,12 @@
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
 			isa = PBXGroup;
 			children = (
+				4D2D3DD815175ABD0014A0AD /* signalbars-0.png */,
+				4D2D3DD915175ABD0014A0AD /* signalbars-1.png */,
+				4D2D3DDA15175ABD0014A0AD /* signalbars-2.png */,
+				4D2D3DDB15175ABD0014A0AD /* signalbars-3.png */,
+				4D2D3DDC15175ABD0014A0AD /* signalbars-4.png */,
+				4D2D3DDD15175ABD0014A0AD /* signalbars-5.png */,
 				4D777F6514ED2EC900B46223 /* carlock_b.png */,
 				4D777F6614ED2EC900B46223 /* carunlock_b.png */,
 				4D777F6714ED2EC900B46223 /* carvaletoff_b.png */,
@@ -643,8 +664,8 @@
 		4DFAD7FF1475435300416D38 /* Tabs */ = {
 			isa = PBXGroup;
 			children = (
-				4D91CEF21473EBEA00CBA435 /* ovmsStatusViewController.h */,
-				4D91CEF31473EBEA00CBA435 /* ovmsStatusViewController.m */,
+				4D78722F1516136900BB7CA2 /* ovmsStatusViewController.h */,
+				4D7872301516136900BB7CA2 /* ovmsStatusViewController.m */,
 				4DAB2C7014920DB600E1098C /* ovmsBodyViewController.h */,
 				4DAB2C731492109C00E1098C /* ovmsBodyViewController.m */,
 				4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */,
@@ -666,6 +687,8 @@
 				4D69A82B14DACB0900CF0F74 /* ovmsControlParametersViewController.m */,
 				4D69A84E14DBB11F00CF0F74 /* ovmsControlPINEntry.h */,
 				4D69A84F14DBB11F00CF0F74 /* ovmsControlPINEntry.m */,
+				4D6557A81516183B00369AAC /* ovmsVehicleInfo.h */,
+				4D6557A91516183B00369AAC /* ovmsVehicleInfo.m */,
 				4DA91F6E14EE896000106AD4 /* ovmsChargerSettingsViewController.h */,
 				4DA91F6F14EE896000106AD4 /* ovmsChargerSettingsViewController.m */,
 			);
@@ -849,6 +872,12 @@
 				4DC4C1E414F334CC0093F581 /* ovmsControlCellularUsageView.html in Resources */,
 				4DA49201151083A7004D26E0 /* testflight_README.txt in Resources */,
 				4DA49202151083A7004D26E0 /* testflight_release_notes.txt in Resources */,
+				4D2D3DDE15175ABD0014A0AD /* signalbars-0.png in Resources */,
+				4D2D3DDF15175ABD0014A0AD /* signalbars-1.png in Resources */,
+				4D2D3DE015175ABD0014A0AD /* signalbars-2.png in Resources */,
+				4D2D3DE115175ABD0014A0AD /* signalbars-3.png in Resources */,
+				4D2D3DE215175ABD0014A0AD /* signalbars-4.png in Resources */,
+				4D2D3DE315175ABD0014A0AD /* signalbars-5.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -885,7 +914,6 @@
 			files = (
 				4D5AE37514733757002F5F52 /* main.m in Sources */,
 				4D5AE37914733758002F5F52 /* ovmsAppDelegate.m in Sources */,
-				4D91CEF41473EBEA00CBA435 /* ovmsStatusViewController.m in Sources */,
 				4D91CEF71473EBFA00CBA435 /* ovmsLocationViewController.m in Sources */,
 				4DFAD8021475445600416D38 /* crypto_md5.c in Sources */,
 				4DFAD8071475448000416D38 /* crypto_rc4.c in Sources */,
@@ -907,6 +935,8 @@
 				4D69A85014DBB11F00CF0F74 /* ovmsControlPINEntry.m in Sources */,
 				4DA91F7114EE896100106AD4 /* ovmsChargerSettingsViewController.m in Sources */,
 				4D04C86914F28EF4002D6B69 /* MBProgressHUD.m in Sources */,
+				4D7872311516136900BB7CA2 /* ovmsStatusViewController.m in Sources */,
+				4D6557AA1516183B00369AAC /* ovmsVehicleInfo.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
