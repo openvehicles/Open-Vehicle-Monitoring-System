@@ -405,7 +405,6 @@
     [asyncSocket disconnect];
     [self didStopNetworking];
     asyncSocket = NULL;
-    tim = NULL;
     }
 }
 
@@ -476,6 +475,12 @@
   if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
     {
     [self.car_delegate updateCar];
+    }
+
+  if (tim)
+    {
+    [tim invalidate];
+    tim = NULL;
     }
 }
 
@@ -719,7 +724,7 @@
   if (tag==0)
     { // Welcome message
     NSArray *rparts = [response componentsSeparatedByString:@" "];
-    if ([rparts count]<2)
+    if ([rparts count]<4)
       {
       [self serverDisconnect];
       return; // Invalid server response
@@ -825,6 +830,7 @@
   NSString *pushStr = [NSString stringWithFormat:@"%s\r\n",output];
   NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
   [asyncSocket writeData:pushData withTimeout:-1 tag:0];
+  NSLog(@"PING server");
   }
 
 - (BOOL)commandIsFree
