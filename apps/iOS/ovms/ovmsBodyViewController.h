@@ -39,6 +39,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_motor_l;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_temp_battery_l;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_ambient_temp;
+@property (strong, nonatomic) IBOutlet UIImageView *m_car_weather;
 
 @property (strong, nonatomic) IBOutlet UIButton *m_lock_button;
 @property (strong, nonatomic) IBOutlet UIButton *m_valet_button;

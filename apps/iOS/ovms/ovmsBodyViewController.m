@@ -6,6 +6,7 @@
 //  Copyright (c) 2011 Hong Hay Villa. All rights reserved.
 //
 
+#import <QuartzCore/QuartzCore.h>
 #import "ovmsBodyViewController.h"
 #import "ovmsControlPINEntry.h"
 
@@ -34,6 +35,7 @@
 @synthesize m_car_temp_motor_l;
 @synthesize m_car_temp_battery_l;
 @synthesize m_car_ambient_temp;
+@synthesize m_car_weather;
 @synthesize m_lock_button;
 @synthesize m_valet_button;
 @synthesize m_wakeup_button;
@@ -106,6 +108,7 @@
   [self setM_lock_button:nil];
   [self setM_valet_button:nil];
   [self setM_wakeup_button:nil];
+    [self setM_car_weather:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -116,6 +119,16 @@
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
   [self updateCar];
+  
+  // Setup animation for the charging port...
+//  CABasicAnimation *theAnimation;
+//  theAnimation=[CABasicAnimation animationWithKeyPath:@"opacity"];
+//  theAnimation.duration=0.75;
+//  theAnimation.repeatCount= 3.4E38;
+//  theAnimation.autoreverses=YES;
+//  theAnimation.fromValue=[NSNumber numberWithFloat:1.0];
+//  theAnimation.toValue=[NSNumber numberWithFloat:0.35];
+//  [m_car_door_cp.layer addAnimation:theAnimation forKey:@"animateOpacity"];
 }
 
 - (void)viewDidAppear:(BOOL)animated

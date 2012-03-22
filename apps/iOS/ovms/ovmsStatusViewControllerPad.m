@@ -52,6 +52,7 @@
 @synthesize m_car_temp_battery_l;
 @synthesize m_car_ambient_temp;
 @synthesize m_car_valetonoff;
+@synthesize m_car_weather;
 
 @synthesize myMapView;
 @synthesize m_car_location;
@@ -189,6 +190,7 @@
     [self setM_lock_button:nil];
     [self setM_valet_button:nil];
     [self setM_info_button:nil];
+    [self setM_car_weather:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
