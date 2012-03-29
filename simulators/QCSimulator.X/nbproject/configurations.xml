@@ -9,6 +9,10 @@
                    displayName="Library Files"
                    projectFiles="true">
     </logicalFolder>
+    <logicalFolder name="LinkerScript"
+                   displayName="Linker Files"
+                   projectFiles="true">
+    </logicalFolder>
     <logicalFolder name="ObjectFiles"
                    displayName="Object Files"
                    projectFiles="true">

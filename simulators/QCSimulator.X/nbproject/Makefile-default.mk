@@ -19,10 +19,10 @@ CP=cp
 CND_CONF=default
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 IMAGE_TYPE=debug
-FINAL_IMAGE=dist/${CND_CONF}/${IMAGE_TYPE}/DummyCAN.X.${IMAGE_TYPE}.cof
+FINAL_IMAGE=dist/${CND_CONF}/${IMAGE_TYPE}/QCSimulator.X.${IMAGE_TYPE}.cof
 else
 IMAGE_TYPE=production
-FINAL_IMAGE=dist/${CND_CONF}/${IMAGE_TYPE}/DummyCAN.X.${IMAGE_TYPE}.cof
+FINAL_IMAGE=dist/${CND_CONF}/${IMAGE_TYPE}/QCSimulator.X.${IMAGE_TYPE}.cof
 endif
 
 # Object Directory
@@ -65,7 +65,7 @@ MP_AR_DIR=/Applications/microchip/mplabc18/v3.40/bin
 MP_CPP=/Applications/microchip/mplabx/mplab_ide.app/Contents/Resources/mplab_ide/mplab_ide/modules/../../bin/mplab-cpp
 
 .build-conf: ${BUILD_SUBPROJECTS}
-	${MAKE}  -f nbproject/Makefile-default.mk dist/${CND_CONF}/${IMAGE_TYPE}/DummyCAN.X.${IMAGE_TYPE}.cof
+	${MAKE}  -f nbproject/Makefile-default.mk dist/${CND_CONF}/${IMAGE_TYPE}/QCSimulator.X.${IMAGE_TYPE}.cof
 
 MP_PROCESSOR_OPTION=18F2680
 MP_PROCESSOR_OPTION_LD=18f2680
@@ -131,13 +131,13 @@ endif
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: link
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
-dist/${CND_CONF}/${IMAGE_TYPE}/DummyCAN.X.${IMAGE_TYPE}.cof: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk
+dist/${CND_CONF}/${IMAGE_TYPE}/QCSimulator.X.${IMAGE_TYPE}.cof: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk
 	${MKDIR} dist/${CND_CONF}/${IMAGE_TYPE} 
-	${MP_LD} $(MP_EXTRA_LD_PRE)   -p$(MP_PROCESSOR_OPTION_LD)  -w -x -u_DEBUG   -z__MPLAB_BUILD=1  -u_CRUNTIME -z__MPLAB_DEBUG=1 -z__MPLAB_DEBUGGER_PK3=1 $(MP_LINKER_DEBUG_OPTION) -l ${MP_CC_DIR}/../lib  -odist/${CND_CONF}/${IMAGE_TYPE}/DummyCAN.X.${IMAGE_TYPE}.cof ${OBJECTFILES}      
+	${MP_LD} $(MP_EXTRA_LD_PRE)   -p$(MP_PROCESSOR_OPTION_LD)  -w -x -u_DEBUG   -z__MPLAB_BUILD=1  -u_CRUNTIME -z__MPLAB_DEBUG=1 -z__MPLAB_DEBUGGER_PK3=1 $(MP_LINKER_DEBUG_OPTION) -l ${MP_CC_DIR}/../lib  -odist/${CND_CONF}/${IMAGE_TYPE}/QCSimulator.X.${IMAGE_TYPE}.cof ${OBJECTFILES}      
 else
-dist/${CND_CONF}/${IMAGE_TYPE}/DummyCAN.X.${IMAGE_TYPE}.cof: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk
+dist/${CND_CONF}/${IMAGE_TYPE}/QCSimulator.X.${IMAGE_TYPE}.cof: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk
 	${MKDIR} dist/${CND_CONF}/${IMAGE_TYPE} 
-	${MP_LD} $(MP_EXTRA_LD_PRE)   -p$(MP_PROCESSOR_OPTION_LD)  -w    -z__MPLAB_BUILD=1  -u_CRUNTIME -l ${MP_CC_DIR}/../lib  -odist/${CND_CONF}/${IMAGE_TYPE}/DummyCAN.X.${IMAGE_TYPE}.cof ${OBJECTFILES}      
+	${MP_LD} $(MP_EXTRA_LD_PRE)   -p$(MP_PROCESSOR_OPTION_LD)  -w    -z__MPLAB_BUILD=1  -u_CRUNTIME -l ${MP_CC_DIR}/../lib  -odist/${CND_CONF}/${IMAGE_TYPE}/QCSimulator.X.${IMAGE_TYPE}.cof ${OBJECTFILES}      
 endif
 
 
