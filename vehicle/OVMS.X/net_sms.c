@@ -56,7 +56,7 @@ void net_send_sms_start(char* number)
 
 void net_send_sms_rom(char* number, static const rom char* message)
   {
-  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS != 0) return;
+  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
   net_send_sms_start(number);
   net_puts_rom(message);
@@ -68,7 +68,7 @@ void net_sms_params(char* number)
   unsigned char k;
   char *p;
 
-  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS != 0) return;
+  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
   net_send_sms_start(number);
   net_puts_rom("Params:");
@@ -83,7 +83,7 @@ void net_sms_params(char* number)
 
 void net_sms_gps(char* number)
   {
-  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS != 0) return;
+  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
   delay100(2);
   net_send_sms_start(number);
@@ -100,7 +100,7 @@ void net_sms_stat(char* number)
   {
   char *p;
 
-  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS != 0) return;
+  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
   delay100(2);
   net_send_sms_start(number);
@@ -182,7 +182,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       }
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
@@ -196,7 +196,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       }
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
@@ -207,7 +207,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       net_sms_gps(caller);
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
@@ -218,7 +218,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       net_sms_gps(caller);
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
@@ -229,7 +229,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       net_sms_stat(caller);
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
@@ -240,7 +240,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       net_sms_stat(caller);
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
@@ -251,7 +251,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       net_sms_params(caller);
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
@@ -281,7 +281,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       }
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
@@ -312,7 +312,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       }
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
@@ -325,7 +325,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       }
     else
       {
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS == 0)
+      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
         net_send_sms_rom(caller,NET_MSG_DENIED);
       }
     }
