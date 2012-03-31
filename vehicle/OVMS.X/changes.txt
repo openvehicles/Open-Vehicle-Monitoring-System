@@ -28,6 +28,15 @@
 ; THE SOFTWARE.
 */
 
+2012-03-30 1.2.2       End-User firmware 1.2.2
+                       Issue #31 Performance mode bug fix and kludgy workaround
+                       Issue #32 - Bug in net_sms handling CARBITS feature #14
+                       Tesla Roadster v1.5 tested compatible and supported
+
+2012-03-03 1.2.0       End-User firmware 1.2.0
+                       SMS STAT: If car charge port is closed, report "Not charging"
+                       Timeout for NET_buf_mode SMS and IPD
+
 2012-02-24 1.2.0-rc7   Release Candidate #7 for end-user firmware
                        SOC Alert when SOC<5% (SMS and PUSH notification, when car is off and SOC<5%, every 12 hours)
                        Tighten up StartCharge command restriction to refuse if charge substate=0x07 (connect power cable)
