@@ -570,6 +570,8 @@
         }
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
         [self.status_delegate updateStatus];
+      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+        [self.car_delegate updateCar];
       }
       break;
     case 'T': // TIME
@@ -579,6 +581,8 @@
       self.car_lastupdated = time(0) - tick;
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
         [self.status_delegate updateStatus];
+      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+        [self.car_delegate updateCar];
       if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
         [self.location_delegate updateLocation];
       }
@@ -599,9 +603,9 @@
         car_stale_gps = [[lparts objectAtIndex:5] intValue];
         }
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        {
         [self.status_delegate updateStatus];
-        }
+      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
+        [self.car_delegate updateCar];
       if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
         [self.location_delegate updateLocation];
       }

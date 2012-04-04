@@ -148,6 +148,9 @@
 		4DCABEB7151B666100CB3D2A /* wsymbol_389.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DCABE87151B666100CB3D2A /* wsymbol_389.png */; };
 		4DCABEB8151B666100CB3D2A /* wsymbol_392.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DCABE88151B666100CB3D2A /* wsymbol_392.png */; };
 		4DCABEB9151B666100CB3D2A /* wsymbol_395.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DCABE89151B666100CB3D2A /* wsymbol_395.png */; };
+		4DD90164152C3FF6002C2B3B /* roadster_outline_cd.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DD90161152C3FF5002C2B3B /* roadster_outline_cd.png */; };
+		4DD90165152C3FF6002C2B3B /* roadster_outline_cs.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DD90162152C3FF5002C2B3B /* roadster_outline_cs.png */; };
+		4DD90166152C3FF6002C2B3B /* roadster_outline_cu.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DD90163152C3FF6002C2B3B /* roadster_outline_cu.png */; };
 		4DDA222F1476962700BA40AA /* teslapin.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDA222E1476962700BA40AA /* teslapin.png */; };
 		4DDF384714E4246000B4ACC0 /* carlights.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDF384614E4246000B4ACC0 /* carlights.png */; };
 		4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DE26E5F147E7E3000E3161D /* CoreData.framework */; };
@@ -387,6 +390,9 @@
 		4DCABE87151B666100CB3D2A /* wsymbol_389.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = wsymbol_389.png; sourceTree = "<group>"; };
 		4DCABE88151B666100CB3D2A /* wsymbol_392.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = wsymbol_392.png; sourceTree = "<group>"; };
 		4DCABE89151B666100CB3D2A /* wsymbol_395.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = wsymbol_395.png; sourceTree = "<group>"; };
+		4DD90161152C3FF5002C2B3B /* roadster_outline_cd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_cd.png; sourceTree = "<group>"; };
+		4DD90162152C3FF5002C2B3B /* roadster_outline_cs.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_cs.png; sourceTree = "<group>"; };
+		4DD90163152C3FF6002C2B3B /* roadster_outline_cu.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = roadster_outline_cu.png; sourceTree = "<group>"; };
 		4DDA222E1476962700BA40AA /* teslapin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = teslapin.png; sourceTree = "<group>"; };
 		4DDF384614E4246000B4ACC0 /* carlights.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carlights.png; sourceTree = "<group>"; };
 		4DE26E5F147E7E3000E3161D /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -613,8 +619,11 @@
 				4DAB2C75149216C000E1098C /* carlock.png */,
 				4DAB2C76149216C000E1098C /* carunlock.png */,
 				4D6734BF1497927400F7919F /* roadster_outline.png */,
+				4DD90163152C3FF6002C2B3B /* roadster_outline_cu.png */,
 				4D6734BB1497898A00F7919F /* roadster_outline_ce.png */,
 				4D6734B91497898100F7919F /* roadster_outline_cp.png */,
+				4DD90162152C3FF5002C2B3B /* roadster_outline_cs.png */,
+				4DD90161152C3FF5002C2B3B /* roadster_outline_cd.png */,
 				4D6734B31497893F00F7919F /* roadster_outline_rd.png */,
 				4D6734B51497895700F7919F /* roadster_outline_ld.png */,
 				4D6734B71497896B00F7919F /* roadster_outline_hd.png */,
@@ -1083,6 +1092,9 @@
 				4DCABEB9151B666100CB3D2A /* wsymbol_395.png in Resources */,
 				4D939B76152A8B9B00F662B2 /* README.txt in Resources */,
 				4D939B77152A8B9B00F662B2 /* release_notes.txt in Resources */,
+				4DD90164152C3FF6002C2B3B /* roadster_outline_cd.png in Resources */,
+				4DD90165152C3FF6002C2B3B /* roadster_outline_cs.png in Resources */,
+				4DD90166152C3FF6002C2B3B /* roadster_outline_cu.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

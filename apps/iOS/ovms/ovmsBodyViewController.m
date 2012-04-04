@@ -67,18 +67,51 @@
 }
 */
 
+-(void)animateLayer
+  {
+  // Setup animation for the charging port...
+  CABasicAnimation *theAnimation;
+  theAnimation=[CABasicAnimation animationWithKeyPath:@"opacity"];
+  theAnimation.duration=0.75;
+  theAnimation.repeatCount= 3.4E38;
+  theAnimation.autoreverses=YES;
+  theAnimation.fromValue=[NSNumber numberWithFloat:1.0];
+  theAnimation.toValue=[NSNumber numberWithFloat:0.35];
+  [m_car_door_cp.layer removeAllAnimations];
+  [m_car_door_cp.layer addAnimation:theAnimation forKey:@"animateOpacity"];
+  
+  m_car_door_cp.layer.speed = 0.0; // Effectively pauses the animation
+  }
+
+-(void)animatePause
+  {
+  if (m_car_door_cp.layer.speed == 0.0) return;
+  
+  CFTimeInterval pausedTime = [m_car_door_cp.layer convertTime:CACurrentMediaTime() fromLayer:nil];
+  m_car_door_cp.layer.speed = 0.0;
+  m_car_door_cp.layer.timeOffset = pausedTime;
+  }
+
+-(void)animateResume
+  {
+  if (m_car_door_cp.layer.speed == 1.0) return;
+
+  CFTimeInterval pausedTime = [m_car_door_cp.layer timeOffset];
+  m_car_door_cp.layer.speed = 1.0;
+  m_car_door_cp.layer.timeOffset = 0.0;
+  m_car_door_cp.layer.beginTime = 0.0;
+  CFTimeInterval timeSincePause = [m_car_door_cp.layer convertTime:CACurrentMediaTime() fromLayer:nil] - pausedTime;
+  m_car_door_cp.layer.beginTime = timeSincePause;
+  }
+
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
 - (void)viewDidLoad
-{
+  {
   [super viewDidLoad];
   [ovmsAppDelegate myRef].car_delegate = self;
   
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
-  
-//  m_car_lockunlock.userInteractionEnabled = YES;
-//  UITapGestureRecognizer *tap1 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(LockTapped:)];
-//  [m_car_lockunlock addGestureRecognizer:tap1];
-}
+  }
 
 - (void)viewDidUnload
 {
@@ -117,21 +150,13 @@
 }
 
 - (void)viewWillAppear:(BOOL)animated
-{
+  {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
-  [self updateCar];
   
-  // Setup animation for the charging port...
-//  CABasicAnimation *theAnimation;
-//  theAnimation=[CABasicAnimation animationWithKeyPath:@"opacity"];
-//  theAnimation.duration=0.75;
-//  theAnimation.repeatCount= 3.4E38;
-//  theAnimation.autoreverses=YES;
-//  theAnimation.fromValue=[NSNumber numberWithFloat:1.0];
-//  theAnimation.toValue=[NSNumber numberWithFloat:0.35];
-//  [m_car_door_cp.layer addAnimation:theAnimation forKey:@"animateOpacity"];
-}
+  [self animateLayer];
+  [self updateCar];
+  }
 
 - (void)viewDidAppear:(BOOL)animated
 {
@@ -205,11 +230,6 @@
   else
     m_car_door_rd.hidden = 1;
 
-  if ([ovmsAppDelegate myRef].car_doors1 & 0x04)
-    m_car_door_cp.hidden = 0;
-  else
-    m_car_door_cp.hidden = 1;
-
   if ([ovmsAppDelegate myRef].car_doors2 & 0x40)
     m_car_door_hd.hidden = 0;
   else
@@ -219,6 +239,58 @@
     m_car_door_tr.hidden = 0;
   else
     m_car_door_tr.hidden = 1;
+
+  if (([ovmsAppDelegate myRef].car_doors1 & 0x04)==0)
+    {
+    // Charge port door is shut
+    m_car_door_cp.hidden = 1;
+    [self animatePause];
+    }
+  else
+    {
+    // Charge port door is open
+    m_car_door_cp.hidden = 0;
+    int car_chargestate = [ovmsAppDelegate myRef].car_chargestateN;
+    int car_chargesubstate = [ovmsAppDelegate myRef].car_chargesubstate;
+    if (car_chargesubstate == 0x07)
+      {
+      // We need to connect the power cable
+      m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_cu.png"];
+      [self animatePause];
+      }
+    else if ((car_chargestate == 0x0d)||(car_chargestate == 0x101))
+      {
+      // Preparing to charge, or fake 'starting' state
+      m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_ce.png"];
+      [self animateResume];
+      }
+    else if ((car_chargestate == 0x01)||  // Charging
+             (car_chargestate == 0x02)||  // Top-off
+             (car_chargestate == 0x0f)||  // Heating
+             ([ovmsAppDelegate myRef].car_doors1 & 0x10)) // Charging
+      {
+      m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_cp.png"];
+      [self animateResume];
+      }
+    else if (car_chargestate == 0x04)
+      {
+      // Charging done
+      m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_cd.png"];
+      [self animateResume];
+      }
+    else if ((car_chargestate >= 0x15)&&(car_chargestate <= 0x19))
+      {
+      // Stopped
+      m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_cs.png"];
+      [self animateResume];
+      }
+    else
+      {
+      // Fake 0x115 'stoppping' state, or something else not understood
+      m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_cp.png"];
+      [self animatePause];
+      }
+    }
 
   int car_stale_pemtemps = [ovmsAppDelegate myRef].car_stale_pemtemps;
   if (car_stale_pemtemps < 0)
