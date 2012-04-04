@@ -612,16 +612,22 @@
     m_car_temp_pem.hidden = YES;
     m_car_temp_motor.hidden = YES;
     m_car_temp_battery.hidden = YES;
+    m_car_temp_pem_l.textColor = [UIColor grayColor];
+    m_car_temp_motor_l.textColor = [UIColor grayColor];
+    m_car_temp_battery_l.textColor = [UIColor grayColor];
     }
-  else if (car_stale_pemtemps == 0)
+  else if ((car_stale_pemtemps == 0)||(([ovmsAppDelegate myRef].car_doors3 & 0x02)==0))
     {
     // Stale PEM temperatures
     m_car_temp_pem.hidden = NO;
     m_car_temp_motor.hidden = NO;
     m_car_temp_battery.hidden = NO;
     m_car_temp_pem.textColor = [UIColor grayColor];
+    m_car_temp_pem_l.textColor = [UIColor grayColor];
     m_car_temp_motor.textColor = [UIColor grayColor];
+    m_car_temp_motor_l.textColor = [UIColor grayColor];
     m_car_temp_battery.textColor = [UIColor grayColor];
+    m_car_temp_battery_l.textColor = [UIColor grayColor];
     m_car_temp_pem.text = [NSString stringWithFormat:@"%dºC",
                            [ovmsAppDelegate myRef].car_tpem];
     m_car_temp_motor.text = [NSString stringWithFormat:@"%dºC",
@@ -636,8 +642,11 @@
     m_car_temp_motor.hidden = NO;
     m_car_temp_battery.hidden = NO;
     m_car_temp_pem.textColor = [UIColor whiteColor];
+    m_car_temp_pem_l.textColor = [UIColor whiteColor];
     m_car_temp_motor.textColor = [UIColor whiteColor];
+    m_car_temp_motor_l.textColor = [UIColor whiteColor];
     m_car_temp_battery.textColor = [UIColor whiteColor];
+    m_car_temp_battery_l.textColor = [UIColor whiteColor];
     m_car_temp_pem.text = [NSString stringWithFormat:@"%dºC",
                            [ovmsAppDelegate myRef].car_tpem];
     m_car_temp_motor.text = [NSString stringWithFormat:@"%dºC",
@@ -651,7 +660,7 @@
     {
     // No Ambient temperature
     }
-  else if (car_stale_ambienttemps == 0)
+  else if ((car_stale_ambienttemps == 0)||(([ovmsAppDelegate myRef].car_doors3 & 0x02)==0))
     {
     // Stale Ambient temperature
     m_car_ambient_temp.textColor = [UIColor grayColor];
