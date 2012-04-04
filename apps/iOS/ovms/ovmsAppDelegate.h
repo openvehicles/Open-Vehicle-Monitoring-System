@@ -98,7 +98,7 @@
   int car_doors1;
   int car_doors2;
   int car_doors3;
-  int car_state_pemtemps;
+  int car_stale_pemtemps;
   int car_stale_ambienttemps;
   int car_lockstate;
   NSString* car_vin;
@@ -171,7 +171,7 @@
 @property (assign) int car_doors1;
 @property (assign) int car_doors2;
 @property (assign) int car_doors3;
-@property (assign) int car_state_pemtemps;
+@property (assign) int car_stale_pemtemps;
 @property (assign) int car_stale_ambienttemps;
 
 @property (assign) int car_lockstate;

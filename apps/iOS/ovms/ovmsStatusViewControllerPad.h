@@ -54,6 +54,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *m_car_ambient_temp;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_valetonoff;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_weather;
+@property (strong, nonatomic) IBOutlet UIImageView *m_car_tpmsboxes;
 
 @property (strong, nonatomic) IBOutlet MKMapView *myMapView;
 @property (nonatomic, retain) TeslaAnnotation *m_car_location;

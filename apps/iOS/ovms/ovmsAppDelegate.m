@@ -59,7 +59,7 @@
 @synthesize car_doors1;
 @synthesize car_doors2;
 @synthesize car_doors3;
-@synthesize car_state_pemtemps;
+@synthesize car_stale_pemtemps;
 @synthesize car_stale_ambienttemps;
 @synthesize car_lockstate;
 @synthesize car_vin;
@@ -419,7 +419,7 @@
   car_direction = 0;
   car_altitude = 0;
   car_gpslock = 0;
-  car_stale_gps = 0;
+  car_stale_gps = -1;
   
   car_soc = 0;
   car_units = @"-";
@@ -440,8 +440,8 @@
   car_doors1 = 0;
   car_doors2 = 0;
   car_doors3 = 0;
-  car_state_pemtemps = 0;
-  car_stale_ambienttemps = 0;
+  car_stale_pemtemps = -1;
+  car_stale_ambienttemps = -1;
   car_lockstate = 0;
   car_vin = @"";
   car_firmware = @"";
@@ -465,7 +465,7 @@
   car_tpms_fl_temp = 0;
   car_tpms_rl_pressure = 0;
   car_tpms_rl_temp = 0;
-  car_stale_tpms = 0;
+  car_stale_tpms = -1;
 
   if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
     {
@@ -664,8 +664,13 @@
         if ([lparts count] >= 14)
           {
           car_doors3 = [[lparts objectAtIndex:11] intValue];
-          car_state_pemtemps = [[lparts objectAtIndex:12] intValue];
+          car_stale_pemtemps = [[lparts objectAtIndex:12] intValue];
           car_stale_ambienttemps = [[lparts objectAtIndex:13] intValue];
+          }
+        else
+          {
+          car_stale_pemtemps = 1;
+          car_stale_ambienttemps = 1;
           }
         if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
           [self.car_delegate updateCar];
@@ -692,6 +697,8 @@
         {
         car_stale_tpms = [[lparts objectAtIndex:8] intValue];
         }
+      else
+        car_stale_tpms = 1;
       if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
         [self.status_delegate updateStatus];
       if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])

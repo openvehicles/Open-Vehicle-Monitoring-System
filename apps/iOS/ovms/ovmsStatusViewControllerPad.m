@@ -53,6 +53,7 @@
 @synthesize m_car_ambient_temp;
 @synthesize m_car_valetonoff;
 @synthesize m_car_weather;
+@synthesize m_car_tpmsboxes;
 
 @synthesize myMapView;
 @synthesize m_car_location;
@@ -191,6 +192,7 @@
     [self setM_valet_button:nil];
     [self setM_info_button:nil];
     [self setM_car_weather:nil];
+    [self setM_car_tpmsboxes:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -516,52 +518,100 @@
   else
     m_car_door_tr.hidden = 1;
   
-  if ([ovmsAppDelegate myRef].car_tpem > 0)
+  int car_stale_pemtemps = [ovmsAppDelegate myRef].car_stale_pemtemps;
+  if (car_stale_pemtemps < 0)
     {
-    m_car_temp_pem_l.hidden = 0;
+    // No PEM temperatures
+    m_car_temp_pem.hidden = YES;
+    m_car_temp_motor.hidden = YES;
+    m_car_temp_battery.hidden = YES;
+    }
+  else if (car_stale_pemtemps == 0)
+    {
+    // Stale PEM temperatures
+    m_car_temp_pem.hidden = NO;
+    m_car_temp_motor.hidden = NO;
+    m_car_temp_battery.hidden = NO;
+    m_car_temp_pem.textColor = [UIColor grayColor];
+    m_car_temp_motor.textColor = [UIColor grayColor];
+    m_car_temp_battery.textColor = [UIColor grayColor];
     m_car_temp_pem.text = [NSString stringWithFormat:@"%dºC",
                            [ovmsAppDelegate myRef].car_tpem];
-    }
-  else
-    {
-    m_car_temp_pem_l.hidden = 1;
-    m_car_temp_pem.text = @"";
-    }
-  
-  if ([ovmsAppDelegate myRef].car_tmotor > 0)
-    {
-    m_car_temp_motor_l.hidden = 0;
     m_car_temp_motor.text = [NSString stringWithFormat:@"%dºC",
                              [ovmsAppDelegate myRef].car_tmotor];
-    }
-  else
-    {
-    m_car_temp_motor_l.hidden = 1;
-    m_car_temp_motor.text = @"";
-    }
-  
-  if ([ovmsAppDelegate myRef].car_tbattery > 0)
-    {
-    m_car_temp_battery_l.hidden = 0;
     m_car_temp_battery.text = [NSString stringWithFormat:@"%dºC",
                                [ovmsAppDelegate myRef].car_tbattery];
     }
   else
     {
-    m_car_temp_battery_l.hidden = 1;
-    m_car_temp_battery.text = @"";
+    // OK PEM temperatures
+    m_car_temp_pem.hidden = NO;
+    m_car_temp_motor.hidden = NO;
+    m_car_temp_battery.hidden = NO;
+    m_car_temp_pem.textColor = [UIColor whiteColor];
+    m_car_temp_motor.textColor = [UIColor whiteColor];
+    m_car_temp_battery.textColor = [UIColor whiteColor];
+    m_car_temp_pem.text = [NSString stringWithFormat:@"%dºC",
+                           [ovmsAppDelegate myRef].car_tpem];
+    m_car_temp_motor.text = [NSString stringWithFormat:@"%dºC",
+                             [ovmsAppDelegate myRef].car_tmotor];
+    m_car_temp_battery.text = [NSString stringWithFormat:@"%dºC",
+                               [ovmsAppDelegate myRef].car_tbattery];
     }
   
-  if ([ovmsAppDelegate myRef].car_ambient_temp > -127)
+  int car_stale_ambienttemps = [ovmsAppDelegate myRef].car_stale_ambienttemps;
+  if (car_stale_ambienttemps < 0)
     {
+    // No Ambient temperature
+    }
+  else if (car_stale_ambienttemps == 0)
+    {
+    // Stale Ambient temperature
+    m_car_ambient_temp.textColor = [UIColor grayColor];
     m_car_ambient_temp.text = [NSString stringWithFormat:@"%dºC",
                                [ovmsAppDelegate myRef].car_ambient_temp];
     }
   else
     {
-    m_car_ambient_temp.text = @"";
+    // OK Ambient temperature
+    m_car_ambient_temp.textColor = [UIColor whiteColor];
+    m_car_ambient_temp.text = [NSString stringWithFormat:@"%dºC",
+                               [ovmsAppDelegate myRef].car_ambient_temp];
     }
-  
+
+  int car_stale_tpms = [ovmsAppDelegate myRef].car_stale_tpms;
+  if (car_stale_tpms < 0)
+    {
+    // No TPMS
+    m_car_tpmsboxes.hidden = YES;
+    }
+  else if (car_stale_tpms == 0)
+    {
+    // Stale TPMS
+    m_car_tpmsboxes.hidden = NO;
+    m_car_wheel_fr_pressure.textColor = [UIColor grayColor];
+    m_car_wheel_fr_temp.textColor = [UIColor grayColor];
+    m_car_wheel_fl_pressure.textColor = [UIColor grayColor];
+    m_car_wheel_fl_temp.textColor = [UIColor grayColor];
+    m_car_wheel_rr_pressure.textColor = [UIColor grayColor];
+    m_car_wheel_rr_temp.textColor = [UIColor grayColor];
+    m_car_wheel_rl_pressure.textColor = [UIColor grayColor];
+    m_car_wheel_rl_temp.textColor = [UIColor grayColor];
+    }
+  else
+    {
+    // OK TPMS
+    m_car_tpmsboxes.hidden = NO;
+    m_car_wheel_fr_pressure.textColor = [UIColor whiteColor];
+    m_car_wheel_fr_temp.textColor = [UIColor whiteColor];
+    m_car_wheel_fl_pressure.textColor = [UIColor whiteColor];
+    m_car_wheel_fl_temp.textColor = [UIColor whiteColor];
+    m_car_wheel_rr_pressure.textColor = [UIColor whiteColor];
+    m_car_wheel_rr_temp.textColor = [UIColor whiteColor];
+    m_car_wheel_rl_pressure.textColor = [UIColor whiteColor];
+    m_car_wheel_rl_temp.textColor = [UIColor whiteColor];
+    }
+
   if ([ovmsAppDelegate myRef].car_tpms_fr_temp > 0)
     {
     m_car_wheel_fr_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
