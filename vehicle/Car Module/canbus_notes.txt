@@ -34,6 +34,25 @@ Here are some target information that should be on the bus, but are still unknow
 
 Tesla Roadster CAN Bus analysis:
 
+	Charge Timer VDS Feedback
+		B1=06	(timer/plugin setting and timer confirmation)
+
+			B2=1B   (timer/plugin setting)
+				B3=0x01
+				B4=0x00
+				B5=0x00/0x01 (0x00=plugin, 0x01=timer)
+				B6=0x00
+				B7=0x00
+				B8=0x00
+
+			B2=1A	(timer start hour)
+				B3=0x01
+				B4=0x00
+				B5=TimerLSB			(see id#102 B1=0x05 for details on this)
+				B6=TimerMSB			(see id#102 B1=0x05 for details on this)
+				B7=0x00
+				B8=0x00
+
 	UNKNOWN
 		B1=0x07
 			Samples:
@@ -180,7 +199,7 @@ Tesla Roadster CAN Bus analysis:
 	Charger V1.5
 		B1=0x95
 		B2=State 		(0x01=charging, 0x02=top off, 0x04=done, 0x0d=preparing to charge, 0x0f=heating 0x15-0x19=stopped charging)
-		B3=Sub State 		(2=scheduled start, 3=by request, 7=connect power cable, 9=xxMinutes-yyKWHrs,)
+		B3=Sub State 		(2=scheduled start, 3=by request, 5=timerwait?, 7=connect power cable, 9=xxMinutes-yyKWHrs,)
 		B4=0x64			(percentage pre-heating complete)
 		B5=Mode 2008 		(0=standard, 1=storage,3=range,4=performance)
 		B6=Mode 2010 roadster	(0x= standard, 1x=storage,3x=range,4x=performance)
@@ -292,6 +311,28 @@ messages from the VDS are sent on CAN ID # 0x102.
 		N.B. Range mode warning message is "Range Mode limits power. Frequent use will reduce long-term battery life. Continue?"
 		N.B. Performance mode warning message is "Frequent use of Performance Mode will reduce long-term battery life. Continue?"
 
+	Set timer/plugin 
+		B1=05	(timer/plugin setting and timer confirmation)
+
+			B2=1B   (timer/plugin setting)
+				B3=0x00
+				B4=0x00
+				B5=0x00/0x01 (0x00=plugin, 0x01=timer)
+				B6=0x00
+				B7=0x00
+				B8=0x00
+
+			B2=1A	(timer start hour)
+				B3=0x00
+				B4=0x00
+				B5=TimerLSB		\
+				B6=TimerMSB		| (gmthour*60)-1, with special case midnight gmthour=24
+				B7=0x00
+				B8=0x00
+
+		N.B. Empirical values for TimerLSB and TimerMSB (a GMT+0800 car in Hong Kong) are:
+		     1439 (0x059F) for midnight GMT, 59 (0x003B) for 1am GMT, up to 1379 (0x0563) for 11pm GMT.
+
 	Start/Stop charge
 		B1=0x05
 		B2=0x03
@@ -380,7 +421,7 @@ messages from the VDS are sent on CAN ID # 0x102.
 			150ms id#102 0x0A
 		For STOP CHARGE, this should not be necessary (as the car should already be awake if it is charging).
 
-Other miscelaneous messages seen on the bus:
+Other miscellaneous messages seen on the bus:
 
 
 	ID# 0x1A0, samples:
