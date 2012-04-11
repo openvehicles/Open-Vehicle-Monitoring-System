@@ -441,7 +441,7 @@
       m_car_charge_state.hidden = 0;        // The car charge state label (left of slider)
       m_car_charge_type.hidden = 0;         // The car charge type label (left of slider)
       switch ([ovmsAppDelegate myRef].car_chargestateN)
-      {
+        {
         case 0x04:    // Done
         case 0x115:   // Stopping
         case 0x15:    // Stopped
@@ -449,53 +449,67 @@
         case 0x17:    // Stopped
         case 0x18:    // Stopped
         case 0x19:    // Stopped
-        m_car_charge_message.text = @"SLIDE TO CHARGE";
-        m_car_charge_state.text = @"";
-        m_car_charge_type.text = @"";
-        m_car_charge_mode.text = @"";
-        // Slider on the left, message is "Slide to charge"
-        m_charger_slider.value = 0.0;
-        m_car_charge_message.hidden = 0;
-        m_car_charge_state.hidden = 1;
-        m_car_charge_type.hidden = 1;
-        m_battery_charging.hidden = 1;
-        m_car_charge_mode.hidden = 1;
-        break;
-        
+          m_car_charge_message.text = @"SLIDE TO CHARGE";
+          m_car_charge_state.text = @"";
+          m_car_charge_type.text = @"";
+          m_car_charge_mode.text = @"";
+          // Slider on the left, message is "Slide to charge"
+          m_charger_slider.value = 0.0;
+          m_car_charge_message.hidden = 0;
+          m_car_charge_state.hidden = 1;
+          m_car_charge_type.hidden = 1;
+          m_battery_charging.hidden = 1;
+          m_car_charge_mode.hidden = 1;
+          break;
+
+        case 0x0e:    // Wait for schedule charge
+          m_car_charge_message.text = @"TIMED CHARGE";
+          m_car_charge_state.text = @"";
+          m_car_charge_type.text = @"";
+          m_car_charge_mode.text = @"";
+          // Slider on the left, message is "Slide to charge"
+          m_charger_slider.value = 0.0;
+          m_car_charge_message.hidden = 0;
+          m_car_charge_state.hidden = 1;
+          m_car_charge_type.hidden = 1;
+          m_battery_charging.hidden = 1;
+          m_car_charge_mode.hidden = 1;
+          break;
+
         case 0x01:    // Charging
         case 0x101:   // Starting
         case 0x02:    // Top-off
         case 0x0d:    // Preparing to charge
         case 0x0f:    // Heating
-        m_car_charge_state.text = [[ovmsAppDelegate myRef].car_chargestate uppercaseString];
-        m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
-                                  [ovmsAppDelegate myRef].car_linevoltage,
-                                  [ovmsAppDelegate myRef].car_chargecurrent];
-        m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
+          m_car_charge_state.text = [[ovmsAppDelegate myRef].car_chargestate uppercaseString];
+          m_car_charge_type.text = [NSString stringWithFormat:@"%dV @%dA",
+                                    [ovmsAppDelegate myRef].car_linevoltage,
+                                    [ovmsAppDelegate myRef].car_chargecurrent];
+          m_car_charge_mode.text = [NSString stringWithFormat:@"%@ %dA",
                                   [[ovmsAppDelegate myRef].car_chargemode uppercaseString],
                                   [ovmsAppDelegate myRef].car_chargelimit];
-        // Slider on the right, message blank
-        m_charger_slider.value = 1.0;        
-        m_car_charge_message.hidden = 1;
-        m_car_charge_state.hidden = 0;
-        m_car_charge_type.hidden = 0;
-        m_battery_charging.hidden = 0;
-        m_car_charge_mode.hidden = 0;
-        break;
+          // Slider on the right, message blank
+          m_charger_slider.value = 1.0;        
+          m_car_charge_message.hidden = 1;
+          m_car_charge_state.hidden = 0;
+          m_car_charge_type.hidden = 0;
+          m_battery_charging.hidden = 0;
+          m_car_charge_mode.hidden = 0;
+          break;
         
         default:
-        m_car_charge_state.text = @"";
-        m_car_charge_type.text = @"";
-        m_car_charge_mode.text = @"";
-        // Slider on the right, message blank
-        m_charger_slider.value = 1.0;
-        m_car_charge_message.hidden = 1;
-        m_car_charge_state.hidden = 0;
-        m_car_charge_type.hidden = 0;
-        m_battery_charging.hidden = 1;
-        m_car_charge_mode.hidden = 1;
-        break;
-      }
+          m_car_charge_state.text = @"";
+          m_car_charge_type.text = @"";
+          m_car_charge_mode.text = @"";
+          // Slider on the right, message blank
+          m_charger_slider.value = 1.0;
+          m_car_charge_message.hidden = 1;
+          m_car_charge_state.hidden = 0;
+          m_car_charge_type.hidden = 0;
+          m_battery_charging.hidden = 1;
+          m_car_charge_mode.hidden = 1;
+          break;
+        }
     }
 }
 
