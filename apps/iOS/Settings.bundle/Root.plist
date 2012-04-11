@@ -47,6 +47,12 @@
 			<string>PSTextFieldSpecifier</string>
 		</dict>
 		<dict>
+			<key>Title</key>
+			<string>www.openvehicles.com</string>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+		</dict>
+		<dict>
 			<key>AutocapitalizationType</key>
 			<string>None</string>
 			<key>AutocorrectionType</key>

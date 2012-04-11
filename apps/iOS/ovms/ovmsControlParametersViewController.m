@@ -228,7 +228,7 @@
       [cellLabel setText:[NSString stringWithFormat:@"#%d: Registered Telephone",indexPath.row]];
       break;
     case PARAM_REGPASS:
-      [cellLabel setText:[NSString stringWithFormat:@"#%d: Registration Password",indexPath.row]];
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: User Password",indexPath.row]];
       break;
     case PARAM_MILESKM:
       [cellLabel setText:[NSString stringWithFormat:@"#%d: Miles/Km",indexPath.row]];

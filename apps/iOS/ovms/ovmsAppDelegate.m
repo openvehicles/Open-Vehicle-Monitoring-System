@@ -97,7 +97,9 @@
   // Initialise TestFlight
   [TestFlight takeOff:@"5a4beeb296dd93d1971d64a94e74d9b6_NDM1MDAyMDExLTExLTI2IDAzOjQ0OjQxLjU1NjcxNQ"];
 #ifdef DEBUG
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   [TestFlight setDeviceIdentifier:[[UIDevice currentDevice] uniqueIdentifier]];
+#pragma GCC diagnostic warning "-Wdeprecated-declarations"
 #endif
 
   // Set the application defaults

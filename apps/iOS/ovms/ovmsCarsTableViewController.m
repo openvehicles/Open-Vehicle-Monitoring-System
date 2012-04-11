@@ -43,8 +43,6 @@
  
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
-  
-  self.title = @"Cars";
 }
 
 - (void)viewDidUnload
@@ -78,17 +76,24 @@
     Cars *car = [_cars objectAtIndex:k];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow: k inSection: 0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-    UIButton *info = (UIButton*)[cell viewWithTag:3];
+
+    UIImageView *iview = (UIImageView*)[cell viewWithTag:8];
+    UIButton *info = (UIButton*)[cell viewWithTag:5];
+    iview.hidden = YES;
+    info.hidden = YES;
+    info.enabled = NO;    
+    
+    UIButton *disclosure = (UIButton*)[cell viewWithTag:3];
     if ([car.vehicleid isEqualToString:[ovmsAppDelegate myRef].sel_car])
       {
       [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
-      info.enabled = YES;
-      info.hidden = NO;
+      disclosure.enabled = YES;
+      disclosure.hidden = NO;
       }
     else
       {
-      info.enabled = NO;
-      info.hidden = YES;
+      disclosure.enabled = NO;
+      disclosure.hidden = YES;
       }
     }
 }
@@ -216,17 +221,17 @@
     Cars *car = [_cars objectAtIndex:k];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow: k inSection: 0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-    UIButton *info = (UIButton*)[cell viewWithTag:3];
+    UIButton *disclosure = (UIButton*)[cell viewWithTag:3];
     if ([car.vehicleid isEqualToString:[ovmsAppDelegate myRef].sel_car])
       {
       [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
-      info.enabled = YES;
-      info.hidden = NO;
+      disclosure.enabled = YES;
+      disclosure.hidden = NO;
       }
     else
       {
-      info.enabled = NO;
-      info.hidden = YES;
+      disclosure.enabled = NO;
+      disclosure.hidden = YES;
       }
     }
 }
