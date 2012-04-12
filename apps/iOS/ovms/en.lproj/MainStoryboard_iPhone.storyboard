@@ -172,21 +172,6 @@
                                     <segue destination="u5C-fS-YrG" kind="modal" identifier="ChargerSettings" modalTransitionStyle="coverVertical" id="WmQ-jV-fGN"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" alpha="0.5" tag="300" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" id="Oiu-bi-QIu" userLabel="Info Button">
-                                <rect key="frame" x="294" y="337" width="18" height="19"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
-                                <state key="normal">
-                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
-                                </state>
-                                <state key="highlighted">
-                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                </state>
-                                <connections>
-                                    <segue destination="Ohb-tf-Jjj" kind="modal" identifier="VehicleInfo" modalTransitionStyle="coverVertical" id="vi1-SO-83A"/>
-                                </connections>
-                            </button>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512112140656" green="0.14509804546833038" blue="0.25098040699958801" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -218,7 +203,6 @@
                         <outlet property="m_charger_plug" destination="Geg-T8-Lqj" id="ZKY-mj-LKI"/>
                         <outlet property="m_charger_slider" destination="Tjp-Kr-c3l" id="gn2-Eq-8pI"/>
                         <outlet property="m_control_button" destination="A0l-T7-xJ2" id="Hwg-uq-AD9"/>
-                        <outlet property="m_info_button" destination="Oiu-bi-QIu" id="Rpd-Bg-DhK"/>
                     </connections>
                 </viewController>
             </objects>
@@ -313,7 +297,7 @@
                                             <color key="shadowColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                             <size key="shadowOffset" width="0.0" height="0.0"/>
                                         </label>
-                                        <button opaque="NO" tag="3" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="detailDisclosure" lineBreakMode="middleTruncation" id="fjw-OR-BUu">
+                                        <button hidden="YES" opaque="NO" tag="3" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="detailDisclosure" lineBreakMode="middleTruncation" id="fjw-OR-BUu" userLabel="disclosure">
                                             <rect key="frame" x="275" y="56" width="29" height="31"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <fontDescription key="fontDescription" type="boldSystem" size="button"/>
@@ -329,11 +313,11 @@
                                             </connections>
                                         </button>
                                         <imageView hidden="YES" userInteractionEnabled="NO" tag="8" contentMode="scaleToFill" image="signalbars-5.png" id="3hC-19-QT3">
-                                            <rect key="frame" x="239" y="56" width="31" height="31"/>
+                                            <rect key="frame" x="14" y="96" width="31" height="31"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         </imageView>
-                                        <button hidden="YES" opaque="NO" tag="5" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" id="G9S-Yv-Uag">
-                                            <rect key="frame" x="281" y="102" width="18" height="19"/>
+                                        <button hidden="YES" opaque="NO" tag="5" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" id="G9S-Yv-Uag" userLabel="info">
+                                            <rect key="frame" x="282" y="101" width="18" height="19"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <fontDescription key="fontDescription" type="boldSystem" size="button"/>
                                             <state key="normal">
@@ -343,6 +327,9 @@
                                             <state key="highlighted">
                                                 <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                             </state>
+                                            <connections>
+                                                <segue destination="Ohb-tf-Jjj" kind="modal" identifier="infoView" modalTransitionStyle="coverVertical" id="297-dw-DXz"/>
+                                            </connections>
                                         </button>
                                     </subviews>
                                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -434,7 +421,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="1507" y="1275"/>
+            <point key="canvasLocation" x="1518" y="1563"/>
         </scene>
         <!--Navigation Controller - Location-->
         <scene sceneID="sZB-Ex-xt6">
@@ -1240,17 +1227,6 @@
                                 <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="CAN Write" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="wg4-Nw-rqO">
-                                <rect key="frame" x="20" y="214" width="81" height="21"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <switch opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" id="bU8-9b-Bjn">
-                                <rect key="frame" x="176" y="211" width="79" height="27"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                            </switch>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="signalbars-5.png" id="ceb-zL-0MD">
                                 <rect key="frame" x="95" y="173" width="31" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -1260,7 +1236,6 @@
                     </view>
                     <navigationItem key="navigationItem" title="Vehicle PIN" id="3px-dL-bF0"/>
                     <connections>
-                        <outlet property="m_canwrite" destination="bU8-9b-Bjn" id="afy-Us-Xni"/>
                         <outlet property="m_carfirmware" destination="5vj-ow-P5Q" id="qf3-SD-JdI"/>
                         <outlet property="m_gsm" destination="kAU-ia-0FE" id="wBI-Mx-Bh9"/>
                         <outlet property="m_gsm_signalbars" destination="ceb-zL-0MD" id="b1L-F2-L2c"/>
@@ -1271,7 +1246,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="1074" y="-1027"/>
+            <point key="canvasLocation" x="1518" y="1001"/>
         </scene>
     </scenes>
     <resources>
@@ -1301,6 +1276,153 @@
         <image name="tirepress_letterbox.png" width="534" height="610"/>
         <image name="wsymbol_113.png" width="128" height="128"/>
     </resources>
+    <classes>
+        <class className="ovmsBodyViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsBodyViewController.h"/>
+            <relationships>
+                <relationship kind="action" name="WakeupButton:"/>
+                <relationship kind="outlet" name="m_car_ambient_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_door_cp" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_hd" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_ld" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_rd" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_door_tr" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_lights" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_lockunlock" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_outlineimage" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_temp_battery" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_battery_l" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_motor" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_motor_l" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_pem" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_temp_pem_l" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_tpmsboxes" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_valetonoff" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_weather" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_wheel_fl_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fl_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fr_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_fr_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rl_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rl_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rr_pressure" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_wheel_rr_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_lock_button" candidateClass="UIButton"/>
+                <relationship kind="outlet" name="m_valet_button" candidateClass="UIButton"/>
+                <relationship kind="outlet" name="m_wakeup_button" candidateClass="UIButton"/>
+            </relationships>
+        </class>
+        <class className="ovmsCarsFormViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
+                <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehicleid" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="vehiclelabel" candidateClass="UITextField"/>
+            </relationships>
+        </class>
+        <class className="ovmsCarsTableViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsTableViewController.h"/>
+        </class>
+        <class className="ovmsChargerSettingsViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsChargerSettingsViewController.h"/>
+            <relationships>
+                <relationship kind="action" name="CancelButton:"/>
+                <relationship kind="action" name="DoneButton:"/>
+                <relationship kind="action" name="ModeChanged:"/>
+                <relationship kind="outlet" name="m_charger_current" candidateClass="UIPickerView"/>
+                <relationship kind="outlet" name="m_charger_mode" candidateClass="UISegmentedControl"/>
+                <relationship kind="outlet" name="m_charger_warning" candidateClass="UILabel"/>
+            </relationships>
+        </class>
+        <class className="ovmsControlCellularUsageViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsControlCellularUsageViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="m_webview" candidateClass="UIWebView"/>
+            </relationships>
+        </class>
+        <class className="ovmsControlFeaturesViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsControlFeaturesViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="m_table" candidateClass="UITableView"/>
+            </relationships>
+        </class>
+        <class className="ovmsControlPINEntry" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsControlPINEntry.h"/>
+            <relationships>
+                <relationship kind="action" name="Cancel:"/>
+                <relationship kind="action" name="Done:"/>
+                <relationship kind="action" name="Edited:"/>
+                <relationship kind="outlet" name="m_done" candidateClass="UIBarButtonItem"/>
+                <relationship kind="outlet" name="m_message" candidateClass="UITextView"/>
+                <relationship kind="outlet" name="m_navbar" candidateClass="UINavigationBar"/>
+                <relationship kind="outlet" name="m_pin" candidateClass="UITextField"/>
+            </relationships>
+        </class>
+        <class className="ovmsControlParametersViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsControlParametersViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="m_table" candidateClass="UITableView"/>
+            </relationships>
+        </class>
+        <class className="ovmsControlViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsControlViewController.h"/>
+            <relationships>
+                <relationship kind="action" name="cellularUsageButton:"/>
+                <relationship kind="action" name="doneButton:"/>
+                <relationship kind="action" name="featuresButton:"/>
+                <relationship kind="action" name="parametersButton:"/>
+                <relationship kind="action" name="resetModuleButton:"/>
+                <relationship kind="outlet" name="m_chargemode" candidateClass="UISegmentedControl"/>
+            </relationships>
+        </class>
+        <class className="ovmsLocationViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsLocationViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
+            </relationships>
+        </class>
+        <class className="ovmsStatusViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewController.h"/>
+            <relationships>
+                <relationship kind="action" name="ChargeSliderTouch:"/>
+                <relationship kind="action" name="ChargeSliderValue:"/>
+                <relationship kind="outlet" name="m_battery_button" candidateClass="UIButton"/>
+                <relationship kind="outlet" name="m_battery_charging" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_charge_message" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_charge_mode" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_charge_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_charge_type" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_connection_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_connection_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_parking_image" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_car_parking_state" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_range_estimated" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_range_ideal" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_car_soc" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_charger_plug" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_charger_slider" candidateClass="UISlider"/>
+                <relationship kind="outlet" name="m_control_button" candidateClass="UIBarButtonItem"/>
+            </relationships>
+        </class>
+        <class className="ovmsVehicleInfo" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsVehicleInfo.h"/>
+            <relationships>
+                <relationship kind="action" name="Done:"/>
+                <relationship kind="outlet" name="m_canwrite" candidateClass="UISwitch"/>
+                <relationship kind="outlet" name="m_carfirmware" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="m_gsm" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="m_gsm_signalbars" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="m_serverfirmware" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="m_type" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="m_vehicleid" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="m_vin" candidateClass="UITextField"/>
+            </relationships>
+        </class>
+    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>

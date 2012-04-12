@@ -14,7 +14,6 @@
 @synthesize m_vin;
 @synthesize m_type;
 @synthesize m_gsm;
-@synthesize m_canwrite;
 @synthesize m_serverfirmware;
 @synthesize m_carfirmware;
 @synthesize m_gsm_signalbars;
@@ -40,7 +39,6 @@
   [self setM_vin:nil];
   [self setM_type:nil];
   [self setM_gsm:nil];
-  [self setM_canwrite:nil];
   [self setM_serverfirmware:nil];
   [self setM_carfirmware:nil];
   [self setM_gsm_signalbars:nil];
@@ -61,7 +59,6 @@
   m_vehicleid.text = [ovmsAppDelegate myRef].sel_car;
   m_vin.text = [ovmsAppDelegate myRef].car_vin;
   m_type.text = [ovmsAppDelegate myRef].car_type;
-  m_canwrite.on = [ovmsAppDelegate myRef].car_write_enabled;
   m_serverfirmware.text = [ovmsAppDelegate myRef].server_firmware;
   m_carfirmware.text = [ovmsAppDelegate myRef].car_firmware;
   

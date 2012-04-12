@@ -108,7 +108,6 @@
 - (void)viewDidLoad
   {
   [super viewDidLoad];
-  [ovmsAppDelegate myRef].car_delegate = self;
   
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
   }
@@ -153,20 +152,23 @@
   {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
-  
+
+  [[ovmsAppDelegate myRef] registerForUpdate:self];
+
   [self animateLayer];
-  [self updateCar];
+  [self update];
   }
 
 - (void)viewDidAppear:(BOOL)animated
-{
+  {
   [super viewDidAppear:animated];
-}
+  }
 
 - (void)viewWillDisappear:(BOOL)animated
-{
+  {
 	[super viewWillDisappear:animated];
-}
+  [[ovmsAppDelegate myRef] deregisterFromUpdate:self];
+  }
 
 - (void)viewDidDisappear:(BOOL)animated
 {
@@ -186,7 +188,7 @@
     }
 }
 
--(void) updateCar
+-(void) update
 {
   if ([ovmsAppDelegate myRef].car_online)
     {
@@ -258,9 +260,9 @@
       m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_cu.png"];
       [self animatePause];
       }
-    else if ((car_chargestate == 0x0d)||(car_chargestate == 0x101))
+    else if ((car_chargestate == 0x0d)||(car_chargestate == 0x0e)||(car_chargestate == 0x101))
       {
-      // Preparing to charge, or fake 'starting' state
+      // Preparing to charge, timer wait, or fake 'starting' state
       m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_ce.png"];
       [self animateResume];
       }

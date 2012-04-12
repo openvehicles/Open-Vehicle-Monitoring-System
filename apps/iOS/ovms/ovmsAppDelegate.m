@@ -26,6 +26,8 @@
 @synthesize managedObjectModel = __managedObjectModel;
 @synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
 
+@synthesize update_delegates;
+
 @synthesize car_lastupdated;
 @synthesize car_connected;
 @synthesize car_paranoid;
@@ -469,18 +471,7 @@
   car_tpms_rl_temp = 0;
   car_stale_tpms = -1;
 
-  if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
-    {
-    [self.location_delegate updateLocation];
-    }
-  if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-    {
-    [self.status_delegate updateStatus];
-    }
-  if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-    {
-    [self.car_delegate updateCar];
-    }
+  [self notifyUpdates];
 
   if (tim)
     {
@@ -536,8 +527,6 @@
       {
       self.car_connected = [cmd intValue];
       if (self.car_connected==0) self.car_online=NO;
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        [self.status_delegate updateStatus];
       }
       break;
     case 'P': // PUSH notification
@@ -570,10 +559,6 @@
         car_chargestateN = [[lparts objectAtIndex:13] intValue];
         car_chargemodeN = [[lparts objectAtIndex:14] intValue];
         }
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        [self.status_delegate updateStatus];
-      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-        [self.car_delegate updateCar];
       }
       break;
     case 'T': // TIME
@@ -581,12 +566,6 @@
       int tick = [cmd intValue];
       if ((car_connected>0)&&(tick==0)) car_online=YES;
       self.car_lastupdated = time(0) - tick;
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        [self.status_delegate updateStatus];
-      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-        [self.car_delegate updateCar];
-      if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
-        [self.location_delegate updateLocation];
       }
       break;
     case 'L': // LOCATION
@@ -604,12 +583,6 @@
         car_gpslock = [[lparts objectAtIndex:4] intValue];
         car_stale_gps = [[lparts objectAtIndex:5] intValue];
         }
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        [self.status_delegate updateStatus];
-      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-        [self.car_delegate updateCar];
-      if ([self.location_delegate conformsToProtocol:@protocol(ovmsLocationDelegate)])
-        [self.location_delegate updateLocation];
       }
       break;
     case 'F': // CAR FIRMWARE
@@ -626,10 +599,6 @@
         car_write_enabled = [[lparts objectAtIndex:3] intValue];
         car_type = [lparts objectAtIndex:4];
         }
-      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-        [self.car_delegate updateCar];
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        [self.status_delegate updateStatus];
       }
       break;
     case 'f': // SERVER FIRMWARE
@@ -639,10 +608,6 @@
         {
         server_firmware = [lparts objectAtIndex:0];
         }
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        [self.status_delegate updateStatus];
-      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-        [self.car_delegate updateCar];
       }
       break;
     case 'D': // CAR ENVIRONMENT
@@ -678,10 +643,6 @@
           car_stale_pemtemps = 1;
           car_stale_ambienttemps = 1;
           }
-        if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-          [self.car_delegate updateCar];
-        if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-          [self.status_delegate updateStatus];
         }
       }
       break;
@@ -705,12 +666,37 @@
         }
       else
         car_stale_tpms = 1;
-      if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-        [self.status_delegate updateStatus];
-      if ([self.car_delegate conformsToProtocol:@protocol(ovmsCarDelegate)])
-        [self.car_delegate updateCar];
       }
       break;
+    }
+
+  [self notifyUpdates];
+  }
+
+- (void)registerForUpdate:(id)target
+  {
+  if (update_delegates == nil)
+    update_delegates = [[NSMutableSet alloc] init];
+  
+  [update_delegates addObject:target];
+  }
+
+- (void)deregisterFromUpdate:(id)target
+  {
+  [update_delegates removeObject:target];
+  }
+
+- (void)notifyUpdates
+  {
+  if (update_delegates == nil) return;
+  
+  NSEnumerator *enumerator = [update_delegates objectEnumerator];
+  id target;
+  
+  while ((target = [enumerator nextObject]))
+    {
+    if ([target conformsToProtocol:@protocol(ovmsUpdateDelegate)])
+      [target update];
     }
   }
 
@@ -1029,10 +1015,7 @@
   self.car_chargecurrent = 0;
   self.car_chargestate = @"starting";
   self.car_chargestateN = 0x101;
-  if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-    {
-    [self.status_delegate updateStatus];
-    }
+  [self notifyUpdates];
   [TestFlight passCheckpoint:@"COMMAND_STARTCHARGE"];
   }
 
@@ -1044,10 +1027,7 @@
   self.car_chargecurrent = 0;
   self.car_chargestate = @"stopping";
   self.car_chargestateN = 0x115;
-  if ([self.status_delegate conformsToProtocol:@protocol(ovmsStatusDelegate)])
-    {
-    [self.status_delegate updateStatus];
-    }
+  [self notifyUpdates];
   [TestFlight passCheckpoint:@"COMMAND_STOPCHARGE"];
   }
 

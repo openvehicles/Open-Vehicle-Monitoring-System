@@ -14,7 +14,6 @@
 @property (strong, nonatomic) IBOutlet UITextField *m_vin;
 @property (strong, nonatomic) IBOutlet UITextField *m_type;
 @property (strong, nonatomic) IBOutlet UITextField *m_gsm;
-@property (strong, nonatomic) IBOutlet UISwitch *m_canwrite;
 @property (strong, nonatomic) IBOutlet UITextField *m_serverfirmware;
 @property (strong, nonatomic) IBOutlet UITextField *m_carfirmware;
 @property (strong, nonatomic) IBOutlet UIImageView *m_gsm_signalbars;

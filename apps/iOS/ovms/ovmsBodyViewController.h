@@ -10,7 +10,7 @@
 #import "ovmsAppDelegate.h"
 #import "ovmsControlPINEntry.h"
 
-@interface ovmsBodyViewController : UIViewController <ovmsCarDelegate, ovmsControlPINEntryDelegate, UIActionSheetDelegate>
+@interface ovmsBodyViewController : UIViewController <ovmsUpdateDelegate, ovmsControlPINEntryDelegate, UIActionSheetDelegate>
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_lockunlock;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_valetonoff;

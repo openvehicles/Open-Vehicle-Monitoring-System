@@ -25,7 +25,6 @@
 @synthesize m_charger_slider;
 @synthesize m_control_button;
 @synthesize m_battery_button;
-@synthesize m_info_button;
 @synthesize m_car_charge_message;
 @synthesize m_car_charge_mode;
 @synthesize m_battery_charging;
@@ -57,7 +56,7 @@
   
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
 
-  [self updateStatus];
+  [self update];
 }
 
 - (void)viewDidUnload
@@ -80,7 +79,6 @@
   [self setM_car_charge_message:nil];
   [self setM_control_button:nil];
   [self setM_battery_button:nil];
-    [self setM_info_button:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -90,7 +88,10 @@
 {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
-  [self updateStatus];
+  
+  [[ovmsAppDelegate myRef] registerForUpdate:self];
+
+  [self update];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -101,6 +102,7 @@
 - (void)viewWillDisappear:(BOOL)animated
 {
 	[super viewWillDisappear:animated];
+  [[ovmsAppDelegate myRef] deregisterFromUpdate:self];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -121,7 +123,7 @@
     }
 }
 
--(void) updateStatus
+-(void) update
   {
   NSString* units;
   if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
@@ -207,7 +209,6 @@
     self.navigationItem.rightBarButtonItem = m_control_button;
     m_control_button.enabled=YES;
     m_battery_button.enabled=YES;
-    m_info_button.hidden=NO;
     [m_car_connection_image stopAnimating];
     m_car_connection_image.animationImages = nil;
     m_car_connection_image.image=[UIImage imageNamed:imagewanted];
@@ -217,7 +218,6 @@
     self.navigationItem.rightBarButtonItem = nil;
     m_control_button.enabled=NO;
     m_battery_button.enabled=NO;
-    m_info_button.hidden=YES;
     NSArray *images = [[NSArray alloc] initWithObjects:
                         [UIImage imageNamed:@"Nothing.png"],
                         [UIImage imageNamed:imagewanted],
@@ -247,7 +247,7 @@
     m_car_parking_image.hidden = 0;
     m_car_parking_state.text = [NSString stringWithFormat:@"%d mins",parktime/60];
     }
-  else if (parktime < (3600*24))
+  else if (parktime < (3600*24*2))
     {
     m_car_parking_image.hidden = 0;
     m_car_parking_state.text = [NSString stringWithFormat:@"%02d:%02d",
@@ -257,7 +257,7 @@
   else
     {
     m_car_parking_image.hidden = 0;
-    m_car_parking_state.text = [NSString stringWithFormat:@"%d hours",parktime/3600];
+    m_car_parking_state.text = [NSString stringWithFormat:@"%d days",parktime/(3600*24)];
     }
 
   m_car_image.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];

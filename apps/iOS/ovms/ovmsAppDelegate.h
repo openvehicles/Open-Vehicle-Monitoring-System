@@ -20,19 +20,9 @@
 @class GCDAsyncSocket;
 @class Reachability;
 
-@protocol ovmsLocationDelegate
+@protocol ovmsUpdateDelegate
 @required
--(void) updateLocation;
-@end
-
-@protocol ovmsStatusDelegate
-@required
--(void) updateStatus;
-@end
-
-@protocol ovmsCarDelegate
-@required
--(void) updateCar;
+-(void) update;
 @end
 
 @protocol ovmsCommandDelegate
@@ -53,6 +43,8 @@
   NSString* pmToken;
   RC4_CTX pmCrypto;
   MD5_CTX pmDigest;
+  
+  NSMutableSet* update_delegates;
   
   id location_delegate;
   id status_delegate;
@@ -138,6 +130,8 @@
 @property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
 @property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 
+@property (strong, nonatomic) NSMutableSet* update_delegates;
+
 @property (assign) time_t car_lastupdated;
 @property (assign) int car_connected;
 @property (assign) BOOL car_paranoid;
@@ -209,6 +203,9 @@
 - (void)serverClearState;
 - (void)handleCommand:(char)code command:(NSString*)cmd;
 - (void)switchCar:(NSString*)car;
+
+- (void)registerForUpdate:(id)target;
+- (void)deregisterFromUpdate:(id)target;
 
 - (void)onTick:(NSTimer *)timer;
 

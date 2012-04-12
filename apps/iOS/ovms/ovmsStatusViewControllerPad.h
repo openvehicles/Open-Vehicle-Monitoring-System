@@ -11,7 +11,7 @@
 #import "ovmsAppDelegate.h"
 #import "ovmsControlPINEntry.h"
 
-@interface ovmsStatusViewControllerPad : UIViewController <MKMapViewDelegate, ovmsStatusDelegate, ovmsCarDelegate, ovmsLocationDelegate, ovmsControlPINEntryDelegate, UIActionSheetDelegate>
+@interface ovmsStatusViewControllerPad : UIViewController <MKMapViewDelegate, ovmsUpdateDelegate, ovmsControlPINEntryDelegate, UIActionSheetDelegate>
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_connection_image;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_connection_state;
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_image;
@@ -64,7 +64,6 @@
 @property (strong, nonatomic) IBOutlet UIButton *m_wakeup_button;
 @property (strong, nonatomic) IBOutlet UIButton *m_lock_button;
 @property (strong, nonatomic) IBOutlet UIButton *m_valet_button;
-@property (strong, nonatomic) IBOutlet UIButton *m_info_button;
 
 -(void)displayMYMap;
 - (IBAction)ChargeSliderTouch:(id)sender;

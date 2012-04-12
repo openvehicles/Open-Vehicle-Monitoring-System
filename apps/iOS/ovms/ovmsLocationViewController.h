@@ -25,7 +25,7 @@
 
 @end
 
-@interface ovmsLocationViewController : UIViewController <MKMapViewDelegate, ovmsLocationDelegate> 
+@interface ovmsLocationViewController : UIViewController <MKMapViewDelegate, ovmsUpdateDelegate> 
 
 @property (strong, nonatomic) IBOutlet MKMapView *myMapView;
 @property (nonatomic, retain) TeslaAnnotation *m_car_location;

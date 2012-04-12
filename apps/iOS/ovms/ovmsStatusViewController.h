@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "ovmsAppDelegate.h"
 
-@interface ovmsStatusViewController : UIViewController <ovmsStatusDelegate>
+@interface ovmsStatusViewController : UIViewController <ovmsUpdateDelegate>
 
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_connection_image;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_connection_state;
@@ -29,7 +29,6 @@
 @property (strong, nonatomic) IBOutlet UISlider *m_charger_slider;
 @property (strong, nonatomic) IBOutlet UIBarButtonItem *m_control_button;
 @property (strong, nonatomic) IBOutlet UIButton *m_battery_button;
-@property (strong, nonatomic) IBOutlet UIButton *m_info_button;
 
 - (IBAction)ChargeSliderTouch:(id)sender;
 - (IBAction)ChargeSliderValue:(id)sender;

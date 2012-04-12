@@ -45,7 +45,7 @@
   // Release any cached data, images, etc that aren't in use.
 }
 
--(void) updateLocation
+-(void) update
 {
   CLLocationCoordinate2D location = [ovmsAppDelegate myRef].car_location;
   
@@ -102,6 +102,9 @@
 {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
+
+  [[ovmsAppDelegate myRef] registerForUpdate:self];
+
   [self displayMYMap];
 }
 
@@ -113,6 +116,7 @@
 - (void)viewWillDisappear:(BOOL)animated
 {
 	[super viewWillDisappear:animated];
+  [[ovmsAppDelegate myRef] deregisterFromUpdate:self];
 }
 
 - (void)viewDidDisappear:(BOOL)animated

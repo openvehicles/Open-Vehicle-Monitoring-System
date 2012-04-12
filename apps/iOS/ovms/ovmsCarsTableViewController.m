@@ -76,12 +76,6 @@
     Cars *car = [_cars objectAtIndex:k];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow: k inSection: 0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-
-    UIImageView *iview = (UIImageView*)[cell viewWithTag:8];
-    UIButton *info = (UIButton*)[cell viewWithTag:5];
-    iview.hidden = YES;
-    info.hidden = YES;
-    info.enabled = NO;    
     
     UIButton *disclosure = (UIButton*)[cell viewWithTag:3];
     if ([car.vehicleid isEqualToString:[ovmsAppDelegate myRef].sel_car])
@@ -96,6 +90,9 @@
       disclosure.hidden = YES;
       }
     }
+  
+  [[ovmsAppDelegate myRef] registerForUpdate:self];
+  [self update];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -106,6 +103,7 @@
 - (void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
+  [[ovmsAppDelegate myRef] deregisterFromUpdate:self];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -134,6 +132,61 @@
     [[segue destinationViewController] setCarEditing:nil];
     }
 }
+
+- (void)update
+  {
+  BOOL enabled = [ovmsAppDelegate myRef].car_online;
+
+  for (int k=0;k<[_cars count]; k++)
+    {
+    Cars *car = [_cars objectAtIndex:k];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow: k inSection: 0];
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    UIButton *disclosure = (UIButton*)[cell viewWithTag:3];
+    UIImageView *iview = (UIImageView*)[cell viewWithTag:8];
+    UIButton *info = (UIButton*)[cell viewWithTag:5];
+    if ([car.vehicleid isEqualToString:[ovmsAppDelegate myRef].sel_car])
+      {
+      iview.hidden = !enabled;
+      info.hidden = !enabled;
+      info.enabled = enabled;
+      info.highlighted = NO;
+      
+      int car_gsmlevel = [ovmsAppDelegate myRef].car_gsmlevel;
+      int car_gsmdbm = 0;
+      if (car_gsmlevel <= 31)
+        car_gsmdbm = -113 + (car_gsmlevel*2);
+      
+      int car_signalbars = 0;
+      if ((car_gsmdbm < -121)||(car_gsmdbm >= 0))
+        car_signalbars = 0;
+      else if (car_gsmdbm < -107)
+        car_signalbars = 1;
+      else if (car_gsmdbm < -98)
+        car_signalbars = 2;
+      else if (car_gsmdbm < -87)
+        car_signalbars = 3;
+      else if (car_gsmdbm < -76)
+        car_signalbars = 4;
+      else
+        car_signalbars = 5;
+      
+      iview.image = [UIImage imageNamed:[NSString stringWithFormat:@"signalbars-%d.png",car_signalbars]];      
+
+      disclosure.enabled = YES;
+      disclosure.hidden = NO;
+      }
+    else
+      {
+      iview.hidden = YES;
+      info.hidden = YES;
+      info.enabled = NO;
+      info.highlighted = NO;
+      disclosure.enabled = NO;
+      disclosure.hidden = YES;
+      }
+    }
+  }
 
 #pragma mark - Table view data source
 
@@ -172,9 +225,13 @@
   return cell;
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-  return 144;
-}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+  {
+  if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+    return 200;
+  else
+    return 144;
+  }
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
