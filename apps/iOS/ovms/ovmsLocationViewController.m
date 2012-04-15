@@ -177,8 +177,8 @@
   {
   static NSString *teslaAnnotationIdentifier=@"TeslaAnnotationIdentifier";
   
- if ([annotation isKindOfClass:[MKUserLocation class]])
- return nil;
+  if ([annotation isKindOfClass:[MKUserLocation class]])
+  return nil;
  
   if([annotation isKindOfClass:[TeslaAnnotation class]])
     {

@@ -16,6 +16,7 @@
 @property (strong, nonatomic) IBOutlet UITextField *m_gsm;
 @property (strong, nonatomic) IBOutlet UITextField *m_serverfirmware;
 @property (strong, nonatomic) IBOutlet UITextField *m_carfirmware;
+@property (strong, nonatomic) IBOutlet UITextField *m_appfirmware;
 @property (strong, nonatomic) IBOutlet UIImageView *m_gsm_signalbars;
 
 - (IBAction)Done:(id)sender;

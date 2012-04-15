@@ -16,6 +16,7 @@
 @synthesize m_gsm;
 @synthesize m_serverfirmware;
 @synthesize m_carfirmware;
+@synthesize m_appfirmware;
 @synthesize m_gsm_signalbars;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -41,6 +42,7 @@
   [self setM_gsm:nil];
   [self setM_serverfirmware:nil];
   [self setM_carfirmware:nil];
+  [self setM_appfirmware:nil];
   [self setM_gsm_signalbars:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
@@ -61,7 +63,10 @@
   m_type.text = [ovmsAppDelegate myRef].car_type;
   m_serverfirmware.text = [ovmsAppDelegate myRef].server_firmware;
   m_carfirmware.text = [ovmsAppDelegate myRef].car_firmware;
-  
+  m_appfirmware.text = [NSString stringWithFormat:@"%@ (%@)",
+                        [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"],
+                        [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString*)kCFBundleVersionKey]];
+ 
   int car_gsmlevel = [ovmsAppDelegate myRef].car_gsmlevel;
   int car_gsmdbm = 0;
   if (car_gsmlevel <= 31)
