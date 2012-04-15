@@ -180,19 +180,30 @@
  if ([annotation isKindOfClass:[MKUserLocation class]])
  return nil;
  
-  if([annotation isKindOfClass:[TeslaAnnotation class]]){
-    //Try to get an unused annotation, similar to uitableviewcells
-//    MKAnnotationView *annotationView=[mapView dequeueReusableAnnotationViewWithIdentifier:teslaAnnotationIdentifier];
-    //If one isn't available, create a new one
-//    if(!annotationView){
-      MKAnnotationView *annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:teslaAnnotationIdentifier];
-      //Here's where the magic happens
-      annotationView.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
-      annotationView.contentMode = UIViewContentModeScaleAspectFill;
-      annotationView.bounds = CGRectMake(0, 0, 32, 32);
-//    }
+  if([annotation isKindOfClass:[TeslaAnnotation class]])
+    {
+    MKAnnotationView *annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:teslaAnnotationIdentifier];
+
+    //Here's where the magic happens
+    annotationView.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
+    annotationView.contentMode = UIViewContentModeScaleAspectFill;
+    annotationView.bounds = CGRectMake(0, 0, 32, 32);
+    int cardirection = ([ovmsAppDelegate myRef].car_direction)%360;
+    if (cardirection <= 180)
+      {
+      // Simple rotational transformation...
+      float rad = DEGREES_TO_RADIANS(cardirection-90);
+      annotationView.transform = CGAffineTransformMakeRotation(rad);
+      }
+    else
+      {
+      // Vertical flip, plus transformation...
+      float rad = DEGREES_TO_RADIANS(cardirection-90);
+      annotationView.transform = CGAffineTransformMakeRotation(rad);
+      annotationView.transform = CGAffineTransformScale(annotationView.transform, 1, -1);      
+      }
     return annotationView;
-  }
+    }
   return nil;
 }
 

@@ -10,6 +10,9 @@
 #import "ovmsAppDelegate.h"
 #import <MapKit/MapKit.h>
 
+#import <math.h>
+
+#define DEGREES_TO_RADIANS(angle) ((angle) / 180.0 * M_PI)
 
 @interface TeslaAnnotation : NSObject <MKAnnotation> {
   NSString *_name;
