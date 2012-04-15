@@ -384,13 +384,7 @@
                         <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="Status" image="49-battery.png" id="ltk-Aa-W7F"/>
-                    <navigationItem key="navigationItem" id="6ol-L2-L2d">
-                        <barButtonItem key="rightBarButtonItem" title="Control" id="EPY-sf-guK">
-                            <connections>
-                                <segue destination="h2F-ed-J2N" kind="modal" modalTransitionStyle="flipHorizontal" id="pH7-dQ-jBX"/>
-                            </connections>
-                        </barButtonItem>
-                    </navigationItem>
+                    <navigationItem key="navigationItem" id="6ol-L2-L2d"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                     <connections>
                         <outlet property="m_battery_button" destination="ULr-Iw-zpV" id="F3h-rM-NQT"/>
@@ -436,7 +430,6 @@
                         <outlet property="m_car_wheel_rr_temp" destination="rFG-Ei-We6" id="Mec-On-G8m"/>
                         <outlet property="m_charger_plug" destination="mDO-4f-x0R" id="vR0-by-wfZ"/>
                         <outlet property="m_charger_slider" destination="aiv-UH-I7F" id="QE8-i4-fEl"/>
-                        <outlet property="m_control_button" destination="EPY-sf-guK" id="2x1-6J-udu"/>
                         <outlet property="m_lock_button" destination="Zqf-bg-cI2" id="Pnf-EO-fSC"/>
                         <outlet property="m_valet_button" destination="NLZ-1v-Ycb" id="ULE-H3-1rI"/>
                         <outlet property="m_wakeup_button" destination="5lR-um-MVo" id="jSy-Av-QFh"/>
@@ -444,7 +437,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="2882" y="-154"/>
+            <point key="canvasLocation" x="2876" y="-154"/>
         </scene>
         <!--Tab Bar Controller-->
         <scene sceneID="LBL-91-hfX">
@@ -628,9 +621,15 @@
                     </view>
                     <navigationItem key="navigationItem" id="4So-nH-Sz0">
                         <barButtonItem key="backBarButtonItem" title="Cancel" id="ihC-oO-yDM"/>
+                        <barButtonItem key="rightBarButtonItem" title="Control" id="EPY-sf-guK">
+                            <connections>
+                                <segue destination="h2F-ed-J2N" kind="modal" modalTransitionStyle="coverVertical" id="pH7-dQ-jBX"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                     <connections>
+                        <outlet property="m_control_button" destination="EPY-sf-guK" id="x5E-5D-9HC"/>
                         <outlet property="vehicleImage" destination="wi3-LI-KEr" id="XY3-RO-DoT"/>
                         <outlet property="vehicleNetPass" destination="jqJ-0m-0Kb" id="ykw-j4-7qQ"/>
                         <outlet property="vehicleUserPass" destination="a9K-DJ-xW8" id="mzn-9f-l0K"/>
@@ -811,7 +810,7 @@
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="4636" y="-154"/>
+            <point key="canvasLocation" x="5612" y="2134"/>
         </scene>
         <!--Ovms Control Parameters View Controller - Parameters-->
         <scene sceneID="ygi-DR-Mdt">
@@ -865,7 +864,7 @@
                     </connections>
                 </tableViewController>
             </objects>
-            <point key="canvasLocation" x="5706" y="-1288"/>
+            <point key="canvasLocation" x="6682" y="1000"/>
         </scene>
         <!--Ovms Control Features View Controller - Features-->
         <scene sceneID="obE-2C-ur6">
@@ -919,7 +918,7 @@
                     </connections>
                 </tableViewController>
             </objects>
-            <point key="canvasLocation" x="5713" y="-159"/>
+            <point key="canvasLocation" x="6689" y="2129"/>
         </scene>
         <!--Ovms Control Cellular Usage View Controller - Cellular Usage-->
         <scene sceneID="LIk-ze-YtR">
@@ -949,7 +948,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="5713" y="979"/>
+            <point key="canvasLocation" x="6689" y="3267"/>
         </scene>
         <!--Ovms Charger Settings View Controller - Charger Settings-->
         <scene sceneID="Yzm-Sm-p8d">
@@ -1057,7 +1056,7 @@
                     </connections>
                 </navigationController>
             </objects>
-            <point key="canvasLocation" x="3759" y="-154"/>
+            <point key="canvasLocation" x="4735" y="2134"/>
         </scene>
         <!--Ovms Vehicle Info - Vehicle PIN-->
         <scene sceneID="oRQ-rZ-l3V">
@@ -1218,6 +1217,7 @@
         <class className="ovmsCarsFormViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsCarsFormViewController.h"/>
             <relationships>
+                <relationship kind="outlet" name="m_control_button" candidateClass="UIBarButtonItem"/>
                 <relationship kind="outlet" name="vehicleImage" candidateClass="UIPickerView"/>
                 <relationship kind="outlet" name="vehicleNetPass" candidateClass="UITextField"/>
                 <relationship kind="outlet" name="vehicleUserPass" candidateClass="UITextField"/>
@@ -1341,7 +1341,6 @@
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsVehicleInfo.h"/>
             <relationships>
                 <relationship kind="action" name="Done:"/>
-                <relationship kind="outlet" name="m_canwrite" candidateClass="UISwitch"/>
                 <relationship kind="outlet" name="m_carfirmware" candidateClass="UITextField"/>
                 <relationship kind="outlet" name="m_gsm" candidateClass="UITextField"/>
                 <relationship kind="outlet" name="m_gsm_signalbars" candidateClass="UIImageView"/>

@@ -595,9 +595,9 @@
       m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_cu.png"];
       [self animatePause];
       }
-    else if ((car_chargestate == 0x0d)||(car_chargestate == 0x101))
+    else if ((car_chargestate == 0x0d)||(car_chargestate == 0x0e)||(car_chargestate == 0x101))
       {
-      // Preparing to charge, or fake 'starting' state
+      // Preparing to charge, timer wait, or fake 'starting' state
       m_car_door_cp.image = [UIImage imageNamed:@"roadster_outline_ce.png"];
       [self animateResume];
       }
@@ -985,26 +985,36 @@
 
 - (MKAnnotationView *)mapView:(MKMapView *)mapView
             viewForAnnotation:(id <MKAnnotation>)annotation
-{
+  {
   static NSString *teslaAnnotationIdentifier=@"TeslaAnnotationIdentifier";
   
   if ([annotation isKindOfClass:[MKUserLocation class]])
     return nil;
   
-  if([annotation isKindOfClass:[TeslaAnnotation class]]){
-    //Try to get an unused annotation, similar to uitableviewcells
-    //    MKAnnotationView *annotationView=[mapView dequeueReusableAnnotationViewWithIdentifier:teslaAnnotationIdentifier];
-    //If one isn't available, create a new one
-    //    if(!annotationView){
+  if([annotation isKindOfClass:[TeslaAnnotation class]])
+    {
     MKAnnotationView *annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:teslaAnnotationIdentifier];
     //Here's where the magic happens
     annotationView.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
     annotationView.contentMode = UIViewContentModeScaleAspectFill;
     annotationView.bounds = CGRectMake(0, 0, 32, 32);
-    //    }
+    int cardirection = ([ovmsAppDelegate myRef].car_direction)%360;
+    if (cardirection <= 180)
+      {
+      // Simple rotational transformation...
+      float rad = DEGREES_TO_RADIANS(cardirection-90);
+      annotationView.transform = CGAffineTransformMakeRotation(rad);
+      }
+    else
+      {
+      // Vertical flip, plus transformation...
+      float rad = DEGREES_TO_RADIANS(cardirection-90);
+      annotationView.transform = CGAffineTransformMakeRotation(rad);
+      annotationView.transform = CGAffineTransformScale(annotationView.transform, 1, -1);      
+      }
     return annotationView;
-  }
+    }
   return nil;
-}
+  }
 
 @end

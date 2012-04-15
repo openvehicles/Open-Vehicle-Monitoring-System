@@ -11,6 +11,10 @@
 #import "ovmsAppDelegate.h"
 #import "ovmsControlPINEntry.h"
 
+#import <math.h>
+
+#define DEGREES_TO_RADIANS(angle) ((angle) / 180.0 * M_PI)
+
 @interface ovmsStatusViewControllerPad : UIViewController <MKMapViewDelegate, ovmsUpdateDelegate, ovmsControlPINEntryDelegate, UIActionSheetDelegate>
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_connection_image;
 @property (strong, nonatomic) IBOutlet UILabel *m_car_connection_state;

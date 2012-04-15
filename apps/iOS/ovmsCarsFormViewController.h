@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "ovmsAppDelegate.h"
 
-@interface ovmsCarsFormViewController : UIViewController <UITextFieldDelegate, UIPickerViewDataSource, UIPickerViewDelegate>
+@interface ovmsCarsFormViewController : UIViewController <ovmsUpdateDelegate, UITextFieldDelegate, UIPickerViewDataSource, UIPickerViewDelegate>
 {
   NSMutableArray            *carImages;
   NSString *_carEditing;
@@ -25,5 +25,7 @@
 @property (strong, nonatomic) IBOutlet UITextField *vehicleNetPass;
 @property (strong, nonatomic) IBOutlet UITextField *vehicleUserPass;
 @property (strong, nonatomic) IBOutlet UIPickerView *vehicleImage;
+
+@property (strong, nonatomic) IBOutlet UIBarButtonItem *m_control_button;
 
 @end

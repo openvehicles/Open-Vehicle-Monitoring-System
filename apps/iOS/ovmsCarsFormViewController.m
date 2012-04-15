@@ -21,6 +21,7 @@
 @synthesize vehicleNetPass;
 @synthesize vehicleUserPass;
 @synthesize vehicleImage;
+@synthesize m_control_button;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -74,7 +75,7 @@
   [self setVehicleUserPass:nil];
   [self setVehicleImage:nil];
   [self setContext:nil];
-
+  [self setM_control_button:nil];
   [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -135,6 +136,8 @@
         }
       }
     }
+  [[ovmsAppDelegate myRef] registerForUpdate:self];
+  [self update];
 }
 
 -(void) viewWillDisappear:(BOOL)animated {
@@ -197,6 +200,7 @@
     // Switch the car
     [[ovmsAppDelegate myRef] switchCar:vehicleid.text];
   }
+  [[ovmsAppDelegate myRef] deregisterFromUpdate:self];
   [super viewWillDisappear:animated];
 }
 
@@ -204,6 +208,20 @@
 {
   _carEditing = newCarEditing;
 }
+
+- (void)update
+  {
+  if (([ovmsAppDelegate myRef].car_online)&&(self.carEditing!=nil))
+    {
+    self.navigationItem.rightBarButtonItem = m_control_button;
+    m_control_button.enabled=YES;
+    }
+  else
+    {
+    self.navigationItem.rightBarButtonItem = nil;
+    m_control_button.enabled=NO;
+    }
+  }
 
 #pragma mark -
 #pragma mark PickerView DataSource

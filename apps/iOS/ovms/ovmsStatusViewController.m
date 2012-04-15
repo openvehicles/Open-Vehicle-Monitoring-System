@@ -23,7 +23,6 @@
 @synthesize m_car_range_estimated;
 @synthesize m_charger_plug;
 @synthesize m_charger_slider;
-@synthesize m_control_button;
 @synthesize m_battery_button;
 @synthesize m_car_charge_message;
 @synthesize m_car_charge_mode;
@@ -77,7 +76,6 @@
   [self setM_charger_plug:nil];
   [self setM_charger_slider:nil];
   [self setM_car_charge_message:nil];
-  [self setM_control_button:nil];
   [self setM_battery_button:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
@@ -206,8 +204,6 @@
 
   if ([ovmsAppDelegate myRef].car_online)
     {
-    self.navigationItem.rightBarButtonItem = m_control_button;
-    m_control_button.enabled=YES;
     m_battery_button.enabled=YES;
     [m_car_connection_image stopAnimating];
     m_car_connection_image.animationImages = nil;
@@ -215,8 +211,6 @@
     }
   else
     {
-    self.navigationItem.rightBarButtonItem = nil;
-    m_control_button.enabled=NO;
     m_battery_button.enabled=NO;
     NSArray *images = [[NSArray alloc] initWithObjects:
                         [UIImage imageNamed:@"Nothing.png"],
