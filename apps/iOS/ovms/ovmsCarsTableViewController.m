@@ -279,11 +279,13 @@
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow: k inSection: 0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     UIButton *disclosure = (UIButton*)[cell viewWithTag:3];
+    UIButton *info = (UIButton*)[cell viewWithTag:5];
     if ([car.vehicleid isEqualToString:[ovmsAppDelegate myRef].sel_car])
       {
       [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
       disclosure.enabled = YES;
       disclosure.hidden = NO;
+      info.highlighted = NO;
       }
     else
       {
