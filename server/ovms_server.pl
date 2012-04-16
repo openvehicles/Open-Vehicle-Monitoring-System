@@ -15,10 +15,11 @@ use Crypt::RC4::XS;
 use MIME::Base64;
 use JSON::XS;
 use URI::Escape;
+use HTTP::Parser::XS qw(parse_http_request);
 
 # Global Variables
 
-my $VERSION = "1.2.0-20120319";
+my $VERSION = "1.2.1-20120415";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my %conns;
 my $utilisations;
@@ -448,6 +449,20 @@ tcp_server undef, 6867, sub
   AE::log info => "#$fn - new connection from $host:$port";
   my $handle; $handle = new AnyEvent::Handle(fh => $fh, on_error => \&io_error, on_rtimeout => \&io_timeout, keepalive => 1, no_delay => 1, rtimeout => 30);
   $handle->push_read (line => \&io_line);
+
+  $conns{$fn}{'fh'} = $fh;
+  $conns{$fn}{'handle'} = $handle;
+  };
+
+# A TCP listener
+tcp_server undef, 6868, sub
+  {
+  my ($fh, $host, $port) = @_;
+  my $key = "$host:$port";
+  $fh->blocking(0);
+  my $fn = $fh->fileno();
+  AE::log info => "#$fn - new connection from $host:$port";
+  my $handle; $handle = new AnyEvent::Handle(fh => $fh, on_error => \&http_io_error, on_rtimeout => \&http_io_timeout, on_read => \&http_io_read, keepalive => 1, no_delay => 1, rtimeout => 30);
 
   $conns{$fn}{'fh'} = $fh;
   $conns{$fn}{'handle'} = $handle;
@@ -1119,3 +1134,123 @@ sub c2dm_tim
     $c2dm_running = 0;
     }
   }
+
+sub http_io_error
+  {
+  my ($hdl, $fatal, $msg) = @_;
+  }
+
+sub http_io_timeout
+  {
+  my ($hdl) = @_;
+
+  my $fn=$hdl->fh->fileno();
+  delete $conns{$fn};
+  AE::log info => "HTTP connection #$fn timed out";
+  }
+
+sub http_io_read
+  {
+  my ($hdl) = @_;
+  my $fn = $hdl->fh->fileno();
+
+  my %env;
+  my $ret = parse_http_request($hdl->rbuf,\%env);
+  if ($ret == -2)
+    {
+    AE::log info => "Got ".length($hdl->rbuf)." byte(s), but not complete";
+    return;   # request is incomplete
+    }
+  elsif ($ret == -1)
+    {
+    # request is broken
+    delete $conns{$fn};
+    AE::log error => "fatal: bad http request - terminated";
+    }
+  else
+    {
+    # $ret includes the size of the request, %env now contains a PSGI
+    # request, if it is a POST / PUT request, read request content by
+    # yourself
+    AE::log info => "Got HTTP request";
+    foreach (sort keys %env)
+      {
+      AE::log info => "  $_: ".$env{$_};
+      }
+    my $path = $env{'PATH_INFO'};
+    my %params;
+    foreach (split /\&/,$env{'QUERY_STRING'})
+      {
+      $params{$1}=$2 if (/^([^=]+)\=(.+)/);
+      }
+    AE::log info => "Request: $path";
+    foreach (sort keys %params)
+      {
+      AE::log info => "  $_: ".$params{$_};
+      }
+    if ($path eq '/group')
+      {
+      &http_group($hdl,$fn,$params{'id'},$params{'format'});
+      }
+    $hdl->on_drain(\&http_io_drain);
+    }
+  }
+
+sub http_io_drain
+  {
+  my ($hdl) = @_;
+  my $fn=$hdl->fh->fileno();
+  delete $conns{$fn};
+  AE::log info => "HTTP connection #$fn done";
+  }
+
+sub http_group
+  {
+  my ($hdl,$fn,$id,$format) = @_;
+
+  my @result;
+
+  push @result,"HTTP/1.0 200 OK";
+  push @result,"Expires: -1";
+  push @result,"Content-Type: application/vnd.google-earth.kml+xml";
+  push @result,"";
+
+  push @result,<<"EOT";
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>Open Vehicles KML for HKCARS</name>
+  <Style id="icon">
+    <IconStyle>
+      <Icon>
+        <href>http://www.stegen.com/pub/teslapin.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+EOT
+
+foreach (sort keys %{$group_msgs{$id}})
+  {
+  my ($vehicleid,$groupmsg) = ($_,$group_msgs{$id}{$_});
+  my ($soc,$speed,$direction,$altitude,$gpslock,$stalegps,$latitude,$longitude) = split(/,/,$groupmsg);
+
+  push @result,<<"EOT";
+  <Placemark>
+    <name>$vehicleid</name>
+    <description>$speed Kph, $altitude Mtrs</description>
+    <styleUrl>#icon</styleUrl>
+    <Point>
+      <coordinates>$longitude,$latitude</coordinates>
+    </Point>
+  </Placemark>
+EOT
+  }
+
+  push @result,<<"EOT";
+</Document>
+</kml>
+EOT
+
+  $hdl->push_write(join("\n",@result));
+  }
+
