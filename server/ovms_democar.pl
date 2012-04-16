@@ -223,6 +223,7 @@ sub statmsg
   my ($front,$back) = ($ambiant+2,$ambiant+6);
   my ($pem,$motor,$battery) = ($ambiant+10,$ambiant+20,$ambiant+5);
   my $cb = ($travelling == 0)?124:160;
+  my $speed = ($travelling == 0)?0:55;
 
   print STDERR "  Sending status...\n";
   $handle->push_write(encode_base64($txcipher->RC4("MP-0 F1.2.0,VIN123456789012345,5,0,TR"),'')."\r\n");
@@ -230,6 +231,7 @@ sub statmsg
   $handle->push_write(encode_base64($txcipher->RC4("MP-0 L$lat,$lon,90,0,1,1"),'')."\r\n");
   $handle->push_write(encode_base64($txcipher->RC4("MP-0 D$cb,0,5,$pem,$motor,$battery,$trip,$odometer,50,0,$ambiant,0,1,1"),"")."\r\n");
   $handle->push_write(encode_base64($txcipher->RC4("MP-0 W29,$front,40,$back,29,$front,40,$back,1"),"")."\r\n");
+  $handle->push_write(encode_base64($txcipher->RC4("MP-0 gDEMOCARS,$soc,$speed,90,0,1,120,$lat,$lon"),'')."\r\n");
   }
 
 sub getambiant
