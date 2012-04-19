@@ -21,8 +21,9 @@
 @class Reachability;
 
 @protocol ovmsUpdateDelegate
-@required
+@optional
 -(void) update;
+-(void) groupUpdate:(NSArray*)result;
 @end
 
 @protocol ovmsCommandDelegate
@@ -203,6 +204,7 @@
 - (void)serverClearState;
 - (void)handleCommand:(char)code command:(NSString*)cmd;
 - (void)switchCar:(NSString*)car;
+- (void)subscribeGroups;
 
 - (void)registerForUpdate:(id)target;
 - (void)deregisterFromUpdate:(id)target;

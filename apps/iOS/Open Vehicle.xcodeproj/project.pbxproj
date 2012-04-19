@@ -61,6 +61,7 @@
 		4D69A85A14DFC6F400CF0F74 /* tirepress_letterbox.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85914DFC6F400CF0F74 /* tirepress_letterbox.png */; };
 		4D69A85D14DFCB0E00CF0F74 /* charger_button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85B14DFCB0D00CF0F74 /* charger_button.png */; };
 		4D69A85E14DFCB0E00CF0F74 /* charger_plug.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D69A85C14DFCB0E00CF0F74 /* charger_plug.png */; };
+		4D731E57153C3F0C0010921B /* ovmsGroupsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D731E56153C3F0C0010921B /* ovmsGroupsTableViewController.m */; };
 		4D7439F8148F961600090BBA /* connection_good_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F6148F961600090BBA /* connection_good_paranoid.png */; };
 		4D7439F9148F961600090BBA /* connection_bad_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439F7148F961600090BBA /* connection_bad_paranoid.png */; };
 		4D7439FC148F9CA400090BBA /* connection_unknown_paranoid.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */; };
@@ -295,6 +296,8 @@
 		4D69A85914DFC6F400CF0F74 /* tirepress_letterbox.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tirepress_letterbox.png; sourceTree = "<group>"; };
 		4D69A85B14DFCB0D00CF0F74 /* charger_button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = charger_button.png; sourceTree = "<group>"; };
 		4D69A85C14DFCB0E00CF0F74 /* charger_plug.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = charger_plug.png; sourceTree = "<group>"; };
+		4D731E55153C3F0C0010921B /* ovmsGroupsTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsGroupsTableViewController.h; sourceTree = SOURCE_ROOT; };
+		4D731E56153C3F0C0010921B /* ovmsGroupsTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsGroupsTableViewController.m; sourceTree = SOURCE_ROOT; };
 		4D7439F6148F961600090BBA /* connection_good_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_good_paranoid.png; sourceTree = "<group>"; };
 		4D7439F7148F961600090BBA /* connection_bad_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_bad_paranoid.png; sourceTree = "<group>"; };
 		4D7439FB148F9CA400090BBA /* connection_unknown_paranoid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = connection_unknown_paranoid.png; sourceTree = "<group>"; };
@@ -837,6 +840,8 @@
 				4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */,
 				4D0A96AD14939616000B74FC /* ovmsStatusViewControllerPad.h */,
 				4D0A96AE14939616000B74FC /* ovmsStatusViewControllerPad.m */,
+				4D731E55153C3F0C0010921B /* ovmsGroupsTableViewController.h */,
+				4D731E56153C3F0C0010921B /* ovmsGroupsTableViewController.m */,
 				4DAD5323147D301C00949EE8 /* ovmsCarsTableViewController.h */,
 				4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */,
 				4DAD532A147D317300949EE8 /* ovmsCarsFormViewController.h */,
@@ -1154,6 +1159,7 @@
 				4D04C86914F28EF4002D6B69 /* MBProgressHUD.m in Sources */,
 				4D7872311516136900BB7CA2 /* ovmsStatusViewController.m in Sources */,
 				4D6557AA1516183B00369AAC /* ovmsVehicleInfo.m in Sources */,
+				4D731E57153C3F0C0010921B /* ovmsGroupsTableViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
