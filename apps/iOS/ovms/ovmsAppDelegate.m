@@ -115,6 +115,7 @@
                                                             @"DEMO", @"selUserPass",
                                                             @"car_models_signaturered.png", @"selImagePath",
                                                             @"", @"apnsDeviceid",
+                                                            @"", @"locationGroups",
                                                             nil];
   [defaults registerDefaults:appDefaults];
   [defaults synchronize];
@@ -328,6 +329,36 @@
       }
     }
 }
+
+- (void)subscribeGroups
+  {
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  NSString *defaultsLG = [defaults stringForKey:@"locationGroups"];
+  if ([defaultsLG length]>0)
+    {
+    NSEnumerator *enumerator = [[defaultsLG componentsSeparatedByString:@" "] objectEnumerator];
+    id target;    
+    while ((target = [enumerator nextObject]))
+      {
+      NSArray *gp = [target componentsSeparatedByString:@","];
+      NSString *groupname = [gp objectAtIndex:0];
+      BOOL groupenabled = [[gp objectAtIndex:1] intValue];
+      if (groupenabled)
+        {
+        char buf[1024];
+        char output[1024];
+        NSString* cmd = [NSString stringWithFormat:@"MP-0 G%@",groupname];
+        strcpy(buf, [cmd UTF8String]);
+        int len = strlen(buf);
+        RC4_crypt(&txCrypto, (uint8_t*)buf, (uint8_t*)buf, len);
+        base64encode((uint8_t*)buf, len, (uint8_t*)output);
+        NSString *pushStr = [NSString stringWithFormat:@"%s\r\n",output];
+        NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
+        [asyncSocket writeData:pushData withTimeout:-1 tag:0];
+        }
+      }
+    }
+  }
 
 - (void)didStartNetworking
 {
@@ -610,6 +641,12 @@
         }
       }
       break;
+    case 'g': // GROUP UPDATE
+      {
+      NSArray *lparts = [cmd componentsSeparatedByString:@","];
+      [self notifyGroupUpdates:lparts];
+      }
+      break;
     case 'D': // CAR ENVIRONMENT
       {
       NSArray *lparts = [cmd componentsSeparatedByString:@","];
@@ -695,8 +732,24 @@
   
   while ((target = [enumerator nextObject]))
     {
-    if ([target conformsToProtocol:@protocol(ovmsUpdateDelegate)])
+    if (([target conformsToProtocol:@protocol(ovmsUpdateDelegate)])&&
+        ([target respondsToSelector:@selector(update)]))
       [target update];
+    }
+  }
+
+- (void)notifyGroupUpdates:(NSArray*)result
+  {
+  if (update_delegates == nil) return;
+  
+  NSEnumerator *enumerator = [update_delegates objectEnumerator];
+  id target;
+  
+  while ((target = [enumerator nextObject]))
+    {
+    if (([target conformsToProtocol:@protocol(ovmsUpdateDelegate)])&&
+        ([target respondsToSelector:@selector(groupUpdate)]))
+      [target groupUpdate:result];
     }
   }
 
@@ -798,7 +851,9 @@
       NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
       [asyncSocket writeData:pushData withTimeout:-1 tag:0];    
       }
-      
+    
+    [self subscribeGroups];
+
     [TestFlight passCheckpoint:@"CONNECTED_TO_CAR"];
     }
   else if (tag==1)
