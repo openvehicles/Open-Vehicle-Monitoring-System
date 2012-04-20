@@ -92,6 +92,8 @@ my ($substate,$stateN,$modeN) = (7,13,0);
 my $trip = $dist;
 my $odometer = $dist;
 my $chargetime = 0;
+my $appsconnected = 0;
+my $lastupdated = 0;
 
 my ($ambiant,$nextambiant)=(0,0);
 &getambiant();
@@ -164,9 +166,14 @@ sub io_line
     print STDERR "  Sending message $encrypted\n";
     print $hdl->push_write("$encrypted\r\n");
     }
-  elsif (($line =~ /^MP-0 Z(\d+)/)&&($1>0))
+  elsif ($line =~ /^MP-0 Z(\d+)/)
     { # One or more apps connected...
-    &statmsg();
+    $appsconnected = $1;
+    if ($appsconnected>0)
+      {
+      $lastupdate = 0;
+      &statmsg();
+      }
     }
   elsif ($line =~ /^MP-0 C(\d+)/)
     { # A command...
@@ -185,13 +192,38 @@ sub statmsg
   my $cb = ($travelling == 0)?124:160;
   my ($ikmideal,$ikmest) = (int($kmideal),int($kmest));
 
-  print STDERR "  Sending status...\n";
-  $handle->push_write(encode_base64($txcipher->RC4("MP-0 F1.2.0,VIN123456789012346,5,0,TR"),'')."\r\n");
-  $handle->push_write(encode_base64($txcipher->RC4("MP-0 S$soc,K,$volts,$amps,$state,$mode,$ikmideal,$ikmest,13,$chargetime,0,0,$substate,$stateN,$modeN"),'')."\r\n");
-  $handle->push_write(encode_base64($txcipher->RC4("MP-0 L$lat,$lon,$bearing,0,1,1"),'')."\r\n");
-  $handle->push_write(encode_base64($txcipher->RC4("MP-0 D$cb,0,5,$pem,$motor,$battery,$trip,$odometer,$speed,0,$ambiant,0,1,1"),"")."\r\n");
-  $handle->push_write(encode_base64($txcipher->RC4("MP-0 W29,$front,40,$back,29,$front,40,$back,1"),"")."\r\n");
-  $handle->push_write(encode_base64($txcipher->RC4("MP-0 gDEMOCARS,$soc,$speed,$bearing,0,1,120,$lat,$lon"),'')."\r\n");
+  my $updates=0;
+  $updates+= &sendmessage("F","1.2.0,VIN123456789012346,5,0,TR");
+  $updates+= &sendmessage("S","$soc,K,$volts,$amps,$state,$mode,$ikmideal,$ikmest,13,$chargetime,0,0,$substate,$stateN,$modeN");
+  $updates+= &sendmessage("L","$lat,$lon,$bearing,0,1,1");
+  $updates+= &sendmessage("D","$cb,0,5,$pem,$motor,$battery,$trip,$odometer,$speed,0,$ambiant,0,1,1");
+  $updates+= &sendmessage("W","29,$front,40,$back,29,$front,40,$back,1");
+  $updates+= &sendmessage("g","DEMOCARS,$soc,$speed,$bearing,0,1,120,$lat,$lon");
+
+  $lastupdated = time if ($updates>0);
+  }
+
+my %prevmessages;
+sub sendmessage
+  {
+  my ($code,$data) = @_;
+
+  my $updates = 0;
+
+  my $forceupdate = (($lastupdated==0)||((time-$lastupdated)>=600))?1:0;
+
+  if (($forceupdate)||($appsconnected > 0))
+    {
+    if ((!defined $prevmessages{$code})||($prevmessages{$code} ne $data)||$forceupdate)
+      {
+      print STDERR "  Sending $code $data\n";
+      $handle->push_write(encode_base64($txcipher->RC4("MP-0 $code$data"),'')."\r\n");
+      $prevmessages{$code} = $data;
+      $updates++;
+      }
+    }
+
+  return $updates;
   }
 
 sub getambiant
@@ -204,6 +236,6 @@ sub getambiant
     $ambiant = $1;
     print "    Ambiant is $ambiant celcius\n";
     }
-  $nextambiant = 60;  
+  $nextambiant = 1800;
   }
 
