@@ -8,124 +8,61 @@
 
 #import "ovmsLocationViewController.h"
 
-@implementation TeslaAnnotation
-
-@synthesize name = _name;
-@synthesize description = _description;
-@synthesize coordinate = _coordinate;
-
--(id) initWithCoordinate:(CLLocationCoordinate2D) coordinate{
-  self=[super init];
-  if(self){
-    _coordinate=coordinate;
-  }
-  return self;
-}
-
--(void)setCoordinate:(CLLocationCoordinate2D)newCoordinate
-{
-  _coordinate=newCoordinate;
-}
-
--(void) dealloc{
-  self.name = nil;
-  self.description = nil;
-}
-
-@end
-
 @implementation ovmsLocationViewController
 
 @synthesize myMapView;
 @synthesize m_car_location;
 
 - (void)didReceiveMemoryWarning
-{
+  {
   [super didReceiveMemoryWarning];
   // Release any cached data, images, etc that aren't in use.
-}
-
--(void) update
-{
-  CLLocationCoordinate2D location = [ovmsAppDelegate myRef].car_location;
-  
-  MKCoordinateRegion region = myMapView.region;
-  if ( (region.center.latitude != location.latitude)&&
-       (region.center.longitude != location.longitude) )
-    {
-    if (self.m_car_location)
-      {
-      [self.m_car_location setCoordinate: location];
-      }
-    else
-      {
-        // Remove all existing annotations
-      for (int k=0; k < [myMapView.annotations count]; k++)
-        { 
-        if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[TeslaAnnotation class]])
-          {
-          [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
-          }
-        }
-    
-      TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
-      pa.name = @"EV915";
-      pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
-      [myMapView addAnnotation:pa];
-      self.m_car_location = pa;
-      }
-    
-    region.center=location;
-    [myMapView setRegion:region animated:YES];
-    }
-}
+  }
 
 #pragma mark - View lifecycle
 
 - (void)viewDidLoad
-{
+  {
   [super viewDidLoad];
   
 	// Do any additional setup after loading the view, typically from a nib.
-  [NSThread detachNewThreadSelector:@selector(displayMYMap) toTarget:self withObject:nil]; 
-  [ovmsAppDelegate myRef].location_delegate = self;
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
-}
+  [NSThread detachNewThreadSelector:@selector(displayMYMap) toTarget:self withObject:nil];
+  }
 
 - (void)viewDidUnload
-{
+  {
   [self setMyMapView:nil];
   [super viewDidUnload];
-}
+  }
 
 - (void)viewWillAppear:(BOOL)animated
-{
+  {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
 
   [[ovmsAppDelegate myRef] registerForUpdate:self];
-
   [self displayMYMap];
-}
+  }
 
 - (void)viewDidAppear:(BOOL)animated
-{
+  {
   [super viewDidAppear:animated];
-}
+  }
 
 - (void)viewWillDisappear:(BOOL)animated
-{
+  {
 	[super viewWillDisappear:animated];
   [[ovmsAppDelegate myRef] deregisterFromUpdate:self];
-}
+  }
 
 - (void)viewDidDisappear:(BOOL)animated
-{
+  {
 	[super viewDidDisappear:animated];
-}
+  }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
+  {
   // Return YES for supported orientations
   if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
     {
@@ -135,10 +72,56 @@
     {
     return YES;
     }
-}
+  }
+
+-(void) update
+  {
+  // The car has reported updated information, and we may need to reflect that
+  CLLocationCoordinate2D location = [ovmsAppDelegate myRef].car_location;
+  
+  MKCoordinateRegion region = myMapView.region;
+  if ( (region.center.latitude != location.latitude)&&
+      (region.center.longitude != location.longitude) )
+    {
+    if (self.m_car_location)
+      {
+      [UIView beginAnimations:@"ovmsVehicleAnnotationAnimation" context:nil];
+      [UIView setAnimationBeginsFromCurrentState:YES];
+      [UIView setAnimationDuration:5.0];
+      [UIView setAnimationCurve:UIViewAnimationCurveLinear];
+      [self.m_car_location setDirection:[ovmsAppDelegate myRef].car_direction%360];
+      [self.m_car_location setCoordinate: location];
+      region.center=location;
+      [myMapView setRegion:region animated:NO];
+      [UIView commitAnimations];
+      //      [UIView setAnimationDidStopSelector:@selector(animationDidStop:finished:context:)];
+      }
+    else
+      {
+      // Remove all existing annotations
+      for (int k=0; k < [myMapView.annotations count]; k++)
+        { 
+          if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[ovmsVehicleAnnotation class]])
+            {
+            [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
+            }
+        }
+      
+      ovmsVehicleAnnotation *pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
+      [pa setTitle:@"EV915"];
+      [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
+      [pa setImagefile:[ovmsAppDelegate myRef].sel_imagepath];
+      [pa setDirection:([ovmsAppDelegate myRef].car_direction)%360];
+      [myMapView addAnnotation:pa];
+      self.m_car_location = pa;
+      region.center=location;
+      [myMapView setRegion:region animated:YES];
+      }
+    }
+  }
 
 -(void)displayMYMap
-{
+  {
   MKCoordinateRegion region; 
   MKCoordinateSpan span; 
   span.latitudeDelta=0.01; 
@@ -152,7 +135,7 @@
   // Remove all existing annotations
   for (int k=0; k < [myMapView.annotations count]; k++)
     { 
-      if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[TeslaAnnotation class]])
+      if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[ovmsVehicleAnnotation class]])
         {
         [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
         }
@@ -161,50 +144,39 @@
   if ((location.latitude != 0)||(location.longitude != 0))
     {
     // Add in the new annotation for current car location
-    TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
-    pa.name = @"EV915";
-    pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
+    ovmsVehicleAnnotation *pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
+    [pa setTitle:@"EV915"];
+    [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
+    [pa setImagefile:[ovmsAppDelegate myRef].sel_imagepath];
+    [pa setDirection:([ovmsAppDelegate myRef].car_direction)%360];
     [myMapView addAnnotation:pa];
     self.m_car_location = pa;
     }
   
   [myMapView setRegion:region animated:YES]; 
   [myMapView regionThatFits:region]; 
-}
+  }
 
  - (MKAnnotationView *)mapView:(MKMapView *)mapView
- viewForAnnotation:(id <MKAnnotation>)annotation
+                                viewForAnnotation:(id <MKAnnotation>)annotation
   {
-  static NSString *teslaAnnotationIdentifier=@"TeslaAnnotationIdentifier";
+  // Provide a custom view for the ovmsVehicleAnnotation
+  
+  static NSString *ovmsAnnotationIdentifier=@"OVMSAnnotationIdentifier";
   
   if ([annotation isKindOfClass:[MKUserLocation class]])
-  return nil;
+    return nil;
  
-  if([annotation isKindOfClass:[TeslaAnnotation class]])
+  if([annotation isKindOfClass:[ovmsVehicleAnnotation class]])
     {
-    MKAnnotationView *annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:teslaAnnotationIdentifier];
+    MKAnnotationView *annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:ovmsAnnotationIdentifier];
 
     //Here's where the magic happens
-    annotationView.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
-    annotationView.contentMode = UIViewContentModeScaleAspectFill;
-    annotationView.bounds = CGRectMake(0, 0, 32, 32);
-    int cardirection = ([ovmsAppDelegate myRef].car_direction)%360;
-    if (cardirection <= 180)
-      {
-      // Simple rotational transformation...
-      float rad = DEGREES_TO_RADIANS(cardirection-90);
-      annotationView.transform = CGAffineTransformMakeRotation(rad);
-      }
-    else
-      {
-      // Vertical flip, plus transformation...
-      float rad = DEGREES_TO_RADIANS(cardirection-90);
-      annotationView.transform = CGAffineTransformMakeRotation(rad);
-      annotationView.transform = CGAffineTransformScale(annotationView.transform, 1, -1);      
-      }
+    ovmsVehicleAnnotation *pa = (ovmsVehicleAnnotation*)annotation;
+    [pa setupView:annotationView mapView:myMapView];
     return annotationView;
     }
   return nil;
-}
+  }
 
 @end

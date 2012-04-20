@@ -51,8 +51,6 @@
   [m_charger_slider setMinimumTrackImage:stetchLeftTrack forState:UIControlStateNormal];
   [m_charger_slider setMaximumTrackImage:stetchRightTrack forState:UIControlStateNormal];
   
-  [ovmsAppDelegate myRef].status_delegate = self;
-  
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
 
   [self update];

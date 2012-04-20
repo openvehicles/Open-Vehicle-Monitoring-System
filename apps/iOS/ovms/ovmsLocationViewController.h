@@ -7,32 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "ovmsAppDelegate.h"
 #import <MapKit/MapKit.h>
-
-#import <math.h>
-
-#define DEGREES_TO_RADIANS(angle) ((angle) / 180.0 * M_PI)
-
-@interface TeslaAnnotation : NSObject <MKAnnotation> {
-  NSString *_name;
-  NSString *_description;
-  CLLocationCoordinate2D _coordinate;
-}
-@property (nonatomic, retain) NSString *name;
-@property (nonatomic, retain) NSString *description;
-@property (nonatomic, readonly) CLLocationCoordinate2D coordinate;
-
--(id) initWithCoordinate:(CLLocationCoordinate2D) coordinate;
--(void)setCoordinate:(CLLocationCoordinate2D)newCoordinate;
-
-@end
+#import "ovmsAppDelegate.h"
+#import "ovmsVehicleAnnotation.h"
 
 @interface ovmsLocationViewController : UIViewController <MKMapViewDelegate, ovmsUpdateDelegate> 
 
 @property (strong, nonatomic) IBOutlet MKMapView *myMapView;
-@property (nonatomic, retain) TeslaAnnotation *m_car_location;
-
--(void)displayMYMap;
+@property (nonatomic, retain) ovmsVehicleAnnotation *m_car_location;
 
 @end

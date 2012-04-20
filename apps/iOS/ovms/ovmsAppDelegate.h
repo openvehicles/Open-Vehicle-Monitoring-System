@@ -46,10 +46,6 @@
   MD5_CTX pmDigest;
   
   NSMutableSet* update_delegates;
-  
-  id location_delegate;
-  id status_delegate;
-  id car_delegate;
   id command_delegate;
   
   NSString* apns_deviceid;
@@ -138,14 +134,12 @@
 @property (assign) BOOL car_paranoid;
 @property (assign) BOOL car_online;
 
-@property (strong, nonatomic) id location_delegate;
 @property (assign) CLLocationCoordinate2D car_location;
 @property (assign) int car_direction;
 @property (assign) int car_altitude;
 @property (assign) int car_gpslock;
 @property (assign) int car_stale_gps;
 
-@property (strong, nonatomic) id status_delegate;
 @property (assign) int car_soc;
 @property (strong, nonatomic) NSString* car_units;
 @property (assign) int car_linevoltage;
@@ -162,7 +156,6 @@
 @property (assign) int car_chargestateN;
 @property (assign) int car_chargemodeN;
 
-@property (strong, nonatomic) id car_delegate;
 @property (assign) int car_doors1;
 @property (assign) int car_doors2;
 @property (assign) int car_doors3;

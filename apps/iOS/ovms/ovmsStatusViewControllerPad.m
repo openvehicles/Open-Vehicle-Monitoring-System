@@ -142,10 +142,6 @@
   [m_charger_slider setMinimumTrackImage:stetchLeftTrack forState:UIControlStateNormal];
   [m_charger_slider setMaximumTrackImage:stetchRightTrack forState:UIControlStateNormal];
 
-  [ovmsAppDelegate myRef].status_delegate = self;
-  [ovmsAppDelegate myRef].location_delegate = self;
-  [ovmsAppDelegate myRef].car_delegate = self;
-
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
   
   [self update];
@@ -802,15 +798,15 @@
       // Remove all existing annotations
       for (int k=0; k < [myMapView.annotations count]; k++)
         { 
-          if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[TeslaAnnotation class]])
+          if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[ovmsVehicleAnnotation class]])
             {
             [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
             }
         }
     
-      TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
-      pa.name = @"EV915";
-      pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
+      ovmsVehicleAnnotation *pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
+      [pa setTitle:@"EV915"];
+      [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
       [myMapView addAnnotation:pa];
       self.m_car_location = pa;
       }
@@ -835,7 +831,7 @@
   // Remove all existing annotations
   for (int k=0; k < [myMapView.annotations count]; k++)
     { 
-      if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[TeslaAnnotation class]])
+      if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[ovmsVehicleAnnotation class]])
         {
         [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
         }
@@ -844,9 +840,9 @@
   if ((location.latitude != 0)||(location.longitude != 0))
     {
     // Add in the new annotation for current car location
-    TeslaAnnotation *pa = [[TeslaAnnotation alloc] initWithCoordinate:location];
-    pa.name = @"EV915";
-    pa.description = [NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude];
+    ovmsVehicleAnnotation *pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
+    [pa setTitle:@"EV915"];
+    [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
     [myMapView addAnnotation:pa];
     self.m_car_location = pa;
     }
@@ -986,14 +982,14 @@
 - (MKAnnotationView *)mapView:(MKMapView *)mapView
             viewForAnnotation:(id <MKAnnotation>)annotation
   {
-  static NSString *teslaAnnotationIdentifier=@"TeslaAnnotationIdentifier";
+  static NSString *ovmsAnnotationIdentifier=@"OVMSAnnotationIdentifier";
   
   if ([annotation isKindOfClass:[MKUserLocation class]])
     return nil;
   
-  if([annotation isKindOfClass:[TeslaAnnotation class]])
+  if([annotation isKindOfClass:[ovmsVehicleAnnotation class]])
     {
-    MKAnnotationView *annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:teslaAnnotationIdentifier];
+    MKAnnotationView *annotationView=[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:ovmsAnnotationIdentifier];
     //Here's where the magic happens
     annotationView.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
     annotationView.contentMode = UIViewContentModeScaleAspectFill;

@@ -23,6 +23,7 @@
 		4D2D3DE315175ABD0014A0AD /* signalbars-5.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D2D3DDD15175ABD0014A0AD /* signalbars-5.png */; };
 		4D3C35C914EAA42000126F47 /* Nothing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D3C35C814EAA42000126F47 /* Nothing.png */; };
 		4D3C35CB14EAA43300126F47 /* charger_blank.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D3C35CA14EAA43300126F47 /* charger_blank.png */; };
+		4D5849DD15417E5D000AA256 /* ovmsVehicleAnnotation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5849DC15417E5D000AA256 /* ovmsVehicleAnnotation.m */; };
 		4D5AE36914733757002F5F52 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36814733757002F5F52 /* UIKit.framework */; };
 		4D5AE36B14733757002F5F52 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36A14733757002F5F52 /* Foundation.framework */; };
 		4D5AE36D14733757002F5F52 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5AE36C14733757002F5F52 /* CoreGraphics.framework */; };
@@ -247,6 +248,8 @@
 		4D2D3DDD15175ABD0014A0AD /* signalbars-5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "signalbars-5.png"; sourceTree = "<group>"; };
 		4D3C35C814EAA42000126F47 /* Nothing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Nothing.png; sourceTree = "<group>"; };
 		4D3C35CA14EAA43300126F47 /* charger_blank.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = charger_blank.png; sourceTree = "<group>"; };
+		4D5849DB15417E5D000AA256 /* ovmsVehicleAnnotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsVehicleAnnotation.h; sourceTree = "<group>"; };
+		4D5849DC15417E5D000AA256 /* ovmsVehicleAnnotation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsVehicleAnnotation.m; sourceTree = "<group>"; };
 		4D5AE36414733757002F5F52 /* Open Vehicle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Open Vehicle.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D5AE36814733757002F5F52 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		4D5AE36A14733757002F5F52 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -838,6 +841,8 @@
 				4DAB2C731492109C00E1098C /* ovmsBodyViewController.m */,
 				4D91CEF51473EBFA00CBA435 /* ovmsLocationViewController.h */,
 				4D91CEF61473EBFA00CBA435 /* ovmsLocationViewController.m */,
+				4D5849DB15417E5D000AA256 /* ovmsVehicleAnnotation.h */,
+				4D5849DC15417E5D000AA256 /* ovmsVehicleAnnotation.m */,
 				4D0A96AD14939616000B74FC /* ovmsStatusViewControllerPad.h */,
 				4D0A96AE14939616000B74FC /* ovmsStatusViewControllerPad.m */,
 				4D731E55153C3F0C0010921B /* ovmsGroupsTableViewController.h */,
@@ -1160,6 +1165,7 @@
 				4D7872311516136900BB7CA2 /* ovmsStatusViewController.m in Sources */,
 				4D6557AA1516183B00369AAC /* ovmsVehicleInfo.m in Sources */,
 				4D731E57153C3F0C0010921B /* ovmsGroupsTableViewController.m in Sources */,
+				4D5849DD15417E5D000AA256 /* ovmsVehicleAnnotation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

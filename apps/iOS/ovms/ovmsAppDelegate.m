@@ -33,14 +33,12 @@
 @synthesize car_paranoid;
 @synthesize car_online;
 
-@synthesize location_delegate;
 @synthesize car_location;
 @synthesize car_direction;
 @synthesize car_altitude;
 @synthesize car_gpslock;
 @synthesize car_stale_gps;
 
-@synthesize status_delegate;
 @synthesize car_soc;
 @synthesize car_units;
 @synthesize car_linevoltage;
@@ -57,7 +55,6 @@
 @synthesize car_chargestateN;
 @synthesize car_chargemodeN;
 
-@synthesize car_delegate;
 @synthesize car_doors1;
 @synthesize car_doors2;
 @synthesize car_doors3;

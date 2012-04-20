@@ -61,7 +61,7 @@
 @property (strong, nonatomic) IBOutlet UIImageView *m_car_tpmsboxes;
 
 @property (strong, nonatomic) IBOutlet MKMapView *myMapView;
-@property (nonatomic, retain) TeslaAnnotation *m_car_location;
+@property (nonatomic, retain) ovmsVehicleAnnotation *m_car_location;
 @property (strong, nonatomic) IBOutlet UIBarButtonItem *m_control_button;
 @property (strong, nonatomic) IBOutlet UISlider *m_charger_slider;
 @property (strong, nonatomic) IBOutlet UIButton *m_battery_button;
@@ -69,7 +69,6 @@
 @property (strong, nonatomic) IBOutlet UIButton *m_lock_button;
 @property (strong, nonatomic) IBOutlet UIButton *m_valet_button;
 
--(void)displayMYMap;
 - (IBAction)ChargeSliderTouch:(id)sender;
 - (IBAction)ChargeSliderValue:(id)sender;
 - (IBAction)WakeupButton:(id)sender;
