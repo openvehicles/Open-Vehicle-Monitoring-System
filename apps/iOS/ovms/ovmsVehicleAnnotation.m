@@ -81,25 +81,15 @@
 
   if (!imageset)
     {
-    NSString *carimage = [NSString stringWithFormat:@"%@",imagefile];
+    NSString *carimage = [NSString stringWithFormat:@"map_%@",imagefile];
     annotationView.image=[UIImage imageNamed:carimage];
     annotationView.contentMode = UIViewContentModeScaleAspectFill;
-    annotationView.bounds = CGRectMake(0, 0, 32, 32);
+    annotationView.bounds = CGRectMake(0, 0, 48, 48);
     imageset = YES;
     }
-  if (direction <= 180)
-    {
-    // Simple rotational transformation...
-    float rad = DEGREES_TO_RADIANS(direction-90);
-    annotationView.transform = CGAffineTransformMakeRotation(rad);
-    }
-  else
-    {
-    // Vertical flip, plus transformation...
-    float rad = DEGREES_TO_RADIANS(direction-90);
-    annotationView.transform = CGAffineTransformMakeRotation(rad);
-//    annotationView.transform = CGAffineTransformScale(annotationView.transform, 1, -1);      
-    }
+  // Simple rotational transformation...
+  float rad = DEGREES_TO_RADIANS(direction);
+  annotationView.transform = CGAffineTransformMakeRotation(rad);
   }
 
 -(void)updateAnnotationView

@@ -24,10 +24,6 @@
 - (void)viewDidLoad
   {
   [super viewDidLoad];
-  
-	// Do any additional setup after loading the view, typically from a nib.
-  self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
-  [NSThread detachNewThreadSelector:@selector(displayMYMap) toTarget:self withObject:nil];
   }
 
 - (void)viewDidUnload
@@ -42,7 +38,8 @@
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
 
   [[ovmsAppDelegate myRef] registerForUpdate:self];
-  [self displayMYMap];
+  self.m_car_location = nil;
+  [self update];
   }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -107,6 +104,7 @@
             }
         }
       
+      // Create the vehicle annotation
       ovmsVehicleAnnotation *pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
       [pa setTitle:@"EV915"];
       [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
@@ -114,47 +112,17 @@
       [pa setDirection:([ovmsAppDelegate myRef].car_direction)%360];
       [myMapView addAnnotation:pa];
       self.m_car_location = pa;
+      
+      // Setup the map to surround the vehicle
+      MKCoordinateSpan span; 
+      span.latitudeDelta=0.01; 
+      span.longitudeDelta=0.01; 
+      region.span=span; 
       region.center=location;
       [myMapView setRegion:region animated:YES];
+      [myMapView regionThatFits:region]; 
       }
     }
-  }
-
--(void)displayMYMap
-  {
-  MKCoordinateRegion region; 
-  MKCoordinateSpan span; 
-  span.latitudeDelta=0.01; 
-  span.longitudeDelta=0.01; 
-
-  CLLocationCoordinate2D location = [ovmsAppDelegate myRef].car_location;
-    
-  region.span=span; 
-  region.center=location; 
-
-  // Remove all existing annotations
-  for (int k=0; k < [myMapView.annotations count]; k++)
-    { 
-      if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[ovmsVehicleAnnotation class]])
-        {
-        [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
-        }
-    }
-
-  if ((location.latitude != 0)||(location.longitude != 0))
-    {
-    // Add in the new annotation for current car location
-    ovmsVehicleAnnotation *pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
-    [pa setTitle:@"EV915"];
-    [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
-    [pa setImagefile:[ovmsAppDelegate myRef].sel_imagepath];
-    [pa setDirection:([ovmsAppDelegate myRef].car_direction)%360];
-    [myMapView addAnnotation:pa];
-    self.m_car_location = pa;
-    }
-  
-  [myMapView setRegion:region animated:YES]; 
-  [myMapView regionThatFits:region]; 
   }
 
  - (MKAnnotationView *)mapView:(MKMapView *)mapView
