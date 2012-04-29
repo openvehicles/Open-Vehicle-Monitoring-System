@@ -62,6 +62,11 @@
 
 @property (strong, nonatomic) IBOutlet MKMapView *myMapView;
 @property (nonatomic, retain) ovmsVehicleAnnotation *m_car_location;
+@property (strong, nonatomic) NSMutableDictionary* m_groupcar_locations;
+@property (assign) BOOL m_autotrack;
+@property (assign) MKCoordinateRegion m_lastregion;
+@property (strong, nonatomic) IBOutlet UIBarButtonItem *m_locationsnap;
+
 @property (strong, nonatomic) IBOutlet UIBarButtonItem *m_control_button;
 @property (strong, nonatomic) IBOutlet UISlider *m_charger_slider;
 @property (strong, nonatomic) IBOutlet UIButton *m_battery_button;
@@ -72,5 +77,11 @@
 - (IBAction)ChargeSliderTouch:(id)sender;
 - (IBAction)ChargeSliderValue:(id)sender;
 - (IBAction)WakeupButton:(id)sender;
+- (IBAction)locationSnapped:(id)sender;
+
+-(void) update;
+-(void) groupUpdate:(NSArray*)result;
+
+-(void)zoomToFitMapAnnotations:(MKMapView*)mapView;
 
 @end

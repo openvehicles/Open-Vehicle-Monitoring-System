@@ -771,7 +771,6 @@
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
   {
   NSString *reply = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-  NSLog(@"weather %@",reply);
   NSArray *wla = [reply componentsSeparatedByString:@"\n"];
   for (NSString *wl in wla)
     {

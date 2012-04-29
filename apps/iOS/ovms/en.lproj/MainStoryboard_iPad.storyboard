@@ -24,7 +24,7 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" id="Oqg-IH-ZKz">
-                                <rect key="frame" x="20" y="417" width="728" height="474"/>
+                                <rect key="frame" x="21" y="416" width="728" height="474"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                 <connections>
                                     <outlet property="delegate" destination="KQf-3p-4Zw" id="rvb-1p-bzU"/>
@@ -157,7 +157,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="-" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="Yoj-z0-WNw">
-                                <rect key="frame" x="424.5" y="271" width="50" height="18"/>
+                                <rect key="frame" x="425" y="270" width="50" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="13"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -384,7 +384,18 @@
                         <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="Status" image="49-battery.png" id="ltk-Aa-W7F"/>
-                    <navigationItem key="navigationItem" id="6ol-L2-L2d"/>
+                    <navigationItem key="navigationItem" id="6ol-L2-L2d">
+                        <barButtonItem key="leftBarButtonItem" image="193-location-arrow-white.png" id="73Q-Ll-2FM">
+                            <connections>
+                                <action selector="locationSnapped:" destination="KQf-3p-4Zw" id="50M-YM-yqF"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem key="rightBarButtonItem" title="Groups" id="Pwt-Ds-XPp">
+                            <connections>
+                                <segue destination="vRM-9f-ikW" kind="modal" modalTransitionStyle="coverVertical" id="yZ2-IQ-qtw"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                     <connections>
                         <outlet property="m_battery_button" destination="ULr-Iw-zpV" id="F3h-rM-NQT"/>
@@ -430,6 +441,7 @@
                         <outlet property="m_car_wheel_rr_temp" destination="rFG-Ei-We6" id="Mec-On-G8m"/>
                         <outlet property="m_charger_plug" destination="mDO-4f-x0R" id="vR0-by-wfZ"/>
                         <outlet property="m_charger_slider" destination="aiv-UH-I7F" id="QE8-i4-fEl"/>
+                        <outlet property="m_locationsnap" destination="73Q-Ll-2FM" id="OmQ-iB-DhY"/>
                         <outlet property="m_lock_button" destination="Zqf-bg-cI2" id="Pnf-EO-fSC"/>
                         <outlet property="m_valet_button" destination="NLZ-1v-Ycb" id="ULE-H3-1rI"/>
                         <outlet property="m_wakeup_button" destination="5lR-um-MVo" id="jSy-Av-QFh"/>
@@ -1201,8 +1213,85 @@
             </objects>
             <point key="canvasLocation" x="3759" y="1007"/>
         </scene>
+        <!--Navigation Controller - Settings-->
+        <scene sceneID="rYI-k8-JM1">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ciW-y1-kp0" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <navigationController definesPresentationContext="YES" id="vRM-9f-ikW" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Settings" image="20-gear2.png" id="auo-uH-d2u"/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <navigationBar key="navigationBar" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" barStyle="blackOpaque" id="4JT-AB-g5R">
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="nW2-wt-pCM" kind="relationship" relationship="rootViewController" id="4io-ue-DSB"/>
+                    </connections>
+                </navigationController>
+            </objects>
+            <point key="canvasLocation" x="3759" y="-154"/>
+        </scene>
+        <!--Ovms Groups Table View Controller - Groups-->
+        <scene sceneID="6YK-BW-tHL">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="DKe-QX-fRr" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <tableViewController id="nW2-wt-pCM" customClass="ovmsGroupsTableViewController" sceneMemberID="viewController">
+                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" allowsSelection="NO" rowHeight="56" sectionHeaderHeight="22" sectionFooterHeight="22" id="3qZ-Mr-BjH">
+                        <rect key="frame" x="0.0" y="64" width="768" height="960"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" indentationWidth="10" reuseIdentifier="GroupCell" rowHeight="56" id="ect-yi-Gyy">
+                                <rect key="frame" x="0.0" y="22" width="768" height="56"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                    <rect key="frame" x="0.0" y="0.0" width="768" height="55"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <textField opaque="NO" clipsSubviews="YES" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" minimumFontSize="17" clearButtonMode="whileEditing" id="rmK-Pu-Kzw">
+                                            <rect key="frame" x="20" y="12" width="208" height="31"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                            <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                                            <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                            <textInputTraits key="textInputTraits" autocapitalizationType="allCharacters"/>
+                                            <connections>
+                                                <action selector="endedit:" destination="nW2-wt-pCM" eventType="editingDidEnd" id="yS1-1b-2AN"/>
+                                                <outlet property="delegate" destination="nW2-wt-pCM" id="TBb-yX-q9P"/>
+                                            </connections>
+                                        </textField>
+                                        <switch opaque="NO" tag="2" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" id="iCD-og-JUK">
+                                            <rect key="frame" x="684" y="14" width="79" height="27"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                            <connections>
+                                                <action selector="endswitchedit:" destination="nW2-wt-pCM" eventType="valueChanged" id="oH9-Kf-7C7"/>
+                                            </connections>
+                                        </switch>
+                                    </subviews>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </view>
+                                <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="nW2-wt-pCM" id="cNY-Ij-cQr"/>
+                            <outlet property="delegate" destination="nW2-wt-pCM" id="C63-E6-qNJ"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Groups" id="fpI-Wc-eG8">
+                        <barButtonItem key="leftBarButtonItem" title="Back" id="OYU-D2-ary">
+                            <connections>
+                                <action selector="done:" destination="nW2-wt-pCM" id="1qT-xl-Gyj"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                </tableViewController>
+            </objects>
+            <point key="canvasLocation" x="4611" y="-154"/>
+        </scene>
     </scenes>
     <resources>
+        <image name="193-location-arrow-white.png" width="20" height="20"/>
         <image name="20-gear2.png" width="26" height="28"/>
         <image name="49-battery.png" width="26" height="14"/>
         <image name="battery_000.png" width="268" height="70"/>
@@ -1294,12 +1383,21 @@
                 <relationship kind="outlet" name="m_chargemode" candidateClass="UISegmentedControl"/>
             </relationships>
         </class>
+        <class className="ovmsGroupsTableViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsGroupsTableViewController.h"/>
+            <relationships>
+                <relationship kind="action" name="done:"/>
+                <relationship kind="action" name="endedit:"/>
+                <relationship kind="action" name="endswitchedit:"/>
+            </relationships>
+        </class>
         <class className="ovmsStatusViewControllerPad" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsStatusViewControllerPad.h"/>
             <relationships>
                 <relationship kind="action" name="ChargeSliderTouch:"/>
                 <relationship kind="action" name="ChargeSliderValue:"/>
                 <relationship kind="action" name="WakeupButton:"/>
+                <relationship kind="action" name="locationSnapped:"/>
                 <relationship kind="outlet" name="m_battery_button" candidateClass="UIButton"/>
                 <relationship kind="outlet" name="m_battery_charging" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_battery_front" candidateClass="UIImageView"/>
@@ -1345,6 +1443,7 @@
                 <relationship kind="outlet" name="m_charger_plug" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="m_charger_slider" candidateClass="UISlider"/>
                 <relationship kind="outlet" name="m_control_button" candidateClass="UIBarButtonItem"/>
+                <relationship kind="outlet" name="m_locationsnap" candidateClass="UIBarButtonItem"/>
                 <relationship kind="outlet" name="m_lock_button" candidateClass="UIButton"/>
                 <relationship kind="outlet" name="m_valet_button" candidateClass="UIButton"/>
                 <relationship kind="outlet" name="m_wakeup_button" candidateClass="UIButton"/>
