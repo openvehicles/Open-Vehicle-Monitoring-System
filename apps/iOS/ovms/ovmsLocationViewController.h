@@ -25,4 +25,6 @@
 -(void) update;
 -(void) groupUpdate:(NSArray*)result;
 
+-(void)zoomToFitMapAnnotations:(MKMapView*)mapView;
+
 @end
