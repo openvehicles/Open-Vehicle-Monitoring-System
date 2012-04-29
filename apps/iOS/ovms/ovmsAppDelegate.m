@@ -745,7 +745,7 @@
   while ((target = [enumerator nextObject]))
     {
     if (([target conformsToProtocol:@protocol(ovmsUpdateDelegate)])&&
-        ([target respondsToSelector:@selector(groupUpdate)]))
+        ([target respondsToSelector:@selector(groupUpdate:)]))
       [target groupUpdate:result];
     }
   }

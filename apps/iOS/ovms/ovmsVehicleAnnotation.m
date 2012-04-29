@@ -17,6 +17,8 @@
 @synthesize subtitle;
 @synthesize imagefile;
 @synthesize direction;
+@synthesize speed;
+@synthesize groupcar;
 
 -(id) initWithCoordinate:(CLLocationCoordinate2D) newCoordinate
   {
@@ -31,6 +33,8 @@
     subtitle = @"";
     imagefile = @"";
     direction = -1;
+    speed = 0;
+    groupcar = NO;
     }
   
   return self;
@@ -74,6 +78,24 @@
     }
   }
 
+-(void)setSpeed:(int)newSpeed
+  {
+  if (speed != newSpeed)
+    {
+    speed = newSpeed;
+    [self updateAnnotationView];
+    }
+  }
+
+-(void)setGroupCar:(BOOL)newGroupCar
+  {
+  if (groupcar != newGroupCar)
+    {
+    groupcar = newGroupCar;
+    [self updateAnnotationView];
+    }
+  }
+
 -(void)setupView:(MKAnnotationView*)annotationView mapView:(MKMapView*)mapView;
   {
   if (mapView != nil)
@@ -81,10 +103,18 @@
 
   if (!imageset)
     {
-    NSString *carimage = [NSString stringWithFormat:@"map_%@",imagefile];
+    NSString *carimage;
+    carimage = [NSString stringWithFormat:@"map_%@",imagefile];
     annotationView.image=[UIImage imageNamed:carimage];
     annotationView.contentMode = UIViewContentModeScaleAspectFill;
-    annotationView.bounds = CGRectMake(0, 0, 48, 48);
+    if (groupcar)
+      {
+      annotationView.bounds = CGRectMake(0, 0, 32, 32);
+      }
+    else
+      {
+      annotationView.bounds = CGRectMake(0, 0, 48, 48);
+      }
     imageset = YES;
     }
   // Simple rotational transformation...
@@ -101,6 +131,12 @@
     {
     [self setupView:aView mapView:nil];
     }
+  }
+
+-(void)redrawView
+  {
+  imageset = NO;
+  [self updateAnnotationView];
   }
 
 -(void) dealloc

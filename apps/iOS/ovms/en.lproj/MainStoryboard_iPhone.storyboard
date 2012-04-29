@@ -216,6 +216,11 @@
                     </view>
                     <tabBarItem key="tabBarItem" title="Location" image="74-location.png" id="6"/>
                     <navigationItem key="navigationItem" id="OPu-VM-BCk">
+                        <barButtonItem key="leftBarButtonItem" image="193-location-arrow-white.png" id="Erp-lF-L2G">
+                            <connections>
+                                <action selector="locationSnapped:" destination="3" id="G0K-LL-UK8"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" title="Groups" id="JX1-Ov-tUi">
                             <connections>
                                 <segue destination="zJt-YK-6ec" kind="modal" modalTransitionStyle="coverVertical" id="Pgy-20-H1Y"/>
@@ -223,6 +228,7 @@
                         </barButtonItem>
                     </navigationItem>
                     <connections>
+                        <outlet property="m_locationsnap" destination="Erp-lF-L2G" id="gel-ty-uug"/>
                         <outlet property="myMapView" destination="17" id="D7r-5K-gLy"/>
                     </connections>
                 </viewController>
@@ -370,7 +376,7 @@
                                     <outlet property="delegate" destination="BXs-pp-JHG" id="Ch0-He-R6a"/>
                                 </connections>
                             </textField>
-                            <textField opaque="NO" clipsSubviews="YES" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Network Password" minimumFontSize="17" clearButtonMode="whileEditing" id="OjM-14-eqm">
+                            <textField opaque="NO" clipsSubviews="YES" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="OVMS Server Password" minimumFontSize="17" clearButtonMode="whileEditing" id="OjM-14-eqm">
                                 <rect key="frame" x="20" y="78" width="280" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -379,7 +385,7 @@
                                     <outlet property="delegate" destination="BXs-pp-JHG" id="LCI-rP-Q67"/>
                                 </connections>
                             </textField>
-                            <textField opaque="NO" clipsSubviews="YES" tag="2" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Label" minimumFontSize="17" clearButtonMode="whileEditing" id="DwN-wJ-AKO">
+                            <textField opaque="NO" clipsSubviews="YES" tag="2" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Vehicle Label" minimumFontSize="17" clearButtonMode="whileEditing" id="DwN-wJ-AKO">
                                 <rect key="frame" x="20" y="44" width="280" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -388,7 +394,7 @@
                                     <outlet property="delegate" destination="BXs-pp-JHG" id="3du-KA-VbZ"/>
                                 </connections>
                             </textField>
-                            <textField opaque="NO" clipsSubviews="YES" tag="4" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="User Password" minimumFontSize="17" clearButtonMode="whileEditing" id="LRB-n2-dGM">
+                            <textField opaque="NO" clipsSubviews="YES" tag="4" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="OVMS Module Password" minimumFontSize="17" clearButtonMode="whileEditing" id="LRB-n2-dGM">
                                 <rect key="frame" x="20" y="112" width="280" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -1343,6 +1349,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="193-location-arrow-white.png" width="20" height="20"/>
         <image name="20-gear2.png" width="26" height="28"/>
         <image name="49-battery.png" width="26" height="14"/>
         <image name="54-lock.png" width="20" height="24"/>
@@ -1476,13 +1483,14 @@
             <relationships>
                 <relationship kind="action" name="done:"/>
                 <relationship kind="action" name="endedit:"/>
-                <relationship kind="action" name="endswitch:"/>
                 <relationship kind="action" name="endswitchedit:"/>
             </relationships>
         </class>
         <class className="ovmsLocationViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsLocationViewController.h"/>
             <relationships>
+                <relationship kind="action" name="locationSnapped:"/>
+                <relationship kind="outlet" name="m_locationsnap" candidateClass="UIBarButtonItem"/>
                 <relationship kind="outlet" name="myMapView" candidateClass="MKMapView"/>
             </relationships>
         </class>

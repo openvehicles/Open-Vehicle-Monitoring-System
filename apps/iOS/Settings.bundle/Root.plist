@@ -16,7 +16,7 @@
 			<key>AutocorrectionType</key>
 			<string>No</string>
 			<key>DefaultValue</key>
-			<string>www.openvehicles.com</string>
+			<string>tmc.openvehicles.com</string>
 			<key>IsSecure</key>
 			<false/>
 			<key>Key</key>

@@ -221,7 +221,18 @@
   // get the cell imageview using its tag and set it
   UIImageView *cellImage = (UIImageView *)[cell viewWithTag:2];
   [cellImage setImage:[UIImage imageNamed:[NSString stringWithFormat:car.imagepath, indexPath.row]]];
-  
+
+  // Init the other parts
+  UIButton *disclosure = (UIButton*)[cell viewWithTag:3];
+  disclosure.enabled = NO;
+  disclosure.hidden = YES;
+  UIImageView *iview = (UIImageView*)[cell viewWithTag:8];
+  iview.hidden = YES;
+  UIButton *info = (UIButton*)[cell viewWithTag:5];
+  info.hidden = YES;
+  info.enabled = NO;
+  info.highlighted = NO;
+
   return cell;
 }
 

@@ -100,6 +100,7 @@
 		4D91CF691473FE0900CBA435 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D91CF681473FE0900CBA435 /* MapKit.framework */; };
 		4D939B76152A8B9B00F662B2 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4D939B74152A8B9B00F662B2 /* README.txt */; };
 		4D939B77152A8B9B00F662B2 /* release_notes.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4D939B75152A8B9B00F662B2 /* release_notes.txt */; };
+		4D99986D154C0CCA00214F2A /* 193-location-arrow-white.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D99986C154C0CCA00214F2A /* 193-location-arrow-white.png */; };
 		4DA49200151083A7004D26E0 /* libTestFlight.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DA491FC151083A7004D26E0 /* libTestFlight.a */; };
 		4DA492041510840A004D26E0 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DA492031510840A004D26E0 /* libz.dylib */; };
 		4DA91F7114EE896100106AD4 /* ovmsChargerSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DA91F6F14EE896000106AD4 /* ovmsChargerSettingsViewController.m */; };
@@ -354,6 +355,7 @@
 		4D91CF681473FE0900CBA435 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		4D939B74152A8B9B00F662B2 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		4D939B75152A8B9B00F662B2 /* release_notes.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = release_notes.txt; sourceTree = "<group>"; };
+		4D99986C154C0CCA00214F2A /* 193-location-arrow-white.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "193-location-arrow-white.png"; sourceTree = "<group>"; };
 		4DA491FC151083A7004D26E0 /* libTestFlight.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libTestFlight.a; sourceTree = "<group>"; };
 		4DA491FD151083A7004D26E0 /* TestFlight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestFlight.h; sourceTree = "<group>"; };
 		4DA492031510840A004D26E0 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
@@ -700,6 +702,7 @@
 				4D91CEF91473F24500CBA435 /* 20-gear2.png */,
 				4D91CF051473F2CC00CBA435 /* 81-dashboard.png */,
 				4D91CEFD1473F27D00CBA435 /* 51-outlet.png */,
+				4D99986C154C0CCA00214F2A /* 193-location-arrow-white.png */,
 				4D91CF071473F33400CBA435 /* 193-location-arrow.png */,
 				4D91CEFF1473F29400CBA435 /* 54-lock.png */,
 				4D91CF031473F2BE00CBA435 /* 77-ekg.png */,
@@ -1170,6 +1173,7 @@
 				4D82FA8A15482A66009D73E8 /* map_car_roadster_thundergray.png in Resources */,
 				4D82FA8B15482A66009D73E8 /* map_car_roadster_twilightblue.png in Resources */,
 				4D82FA8C15482A66009D73E8 /* map_car_roadster_veryorange.png in Resources */,
+				4D99986D154C0CCA00214F2A /* 193-location-arrow-white.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

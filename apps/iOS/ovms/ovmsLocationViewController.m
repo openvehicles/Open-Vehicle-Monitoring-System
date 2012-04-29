@@ -12,6 +12,10 @@
 
 @synthesize myMapView;
 @synthesize m_car_location;
+@synthesize m_groupcar_locations;
+@synthesize m_locationsnap;
+@synthesize m_autotrack;
+@synthesize m_lastregion;
 
 - (void)didReceiveMemoryWarning
   {
@@ -29,6 +33,7 @@
 - (void)viewDidUnload
   {
   [self setMyMapView:nil];
+    [self setM_locationsnap:nil];
   [super viewDidUnload];
   }
 
@@ -36,9 +41,14 @@
   {
   [super viewWillAppear:animated];
   self.navigationItem.title = [ovmsAppDelegate myRef].sel_label;
+  
+  self.m_car_location = nil;
+  if (m_groupcar_locations == nil)
+    m_groupcar_locations = [[NSMutableDictionary alloc] init];
+  self.m_autotrack = YES;
+  m_locationsnap.style = UIBarButtonItemStyleDone;
 
   [[ovmsAppDelegate myRef] registerForUpdate:self];
-  self.m_car_location = nil;
   [self update];
   }
 
@@ -50,6 +60,24 @@
 - (void)viewWillDisappear:(BOOL)animated
   {
 	[super viewWillDisappear:animated];
+  
+  // As we are about to disappear, remove all the car location objects
+
+  // Remove all existing annotations
+  for (int k=0; k < [myMapView.annotations count]; k++)
+    { 
+      if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[ovmsVehicleAnnotation class]])
+        {
+        [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
+        }
+    }
+  self.m_car_location = nil;
+  if (m_groupcar_locations != nil)
+    {
+    [m_groupcar_locations removeAllObjects];
+    m_groupcar_locations = nil;
+    }
+
   [[ovmsAppDelegate myRef] deregisterFromUpdate:self];
   }
 
@@ -71,6 +99,22 @@
     }
   }
 
+- (IBAction)locationSnapped:(id)sender
+  {
+  if (self.m_autotrack)
+    {
+    // Turn off autotrack
+    self.m_autotrack = NO;
+    m_locationsnap.style = UIBarButtonItemStyleBordered;
+    }
+  else
+    {
+    // Turn on autotrack
+    self.m_autotrack = YES;
+    m_locationsnap.style = UIBarButtonItemStyleDone;
+    }
+  }
+
 -(void) update
   {
   // The car has reported updated information, and we may need to reflect that
@@ -87,9 +131,13 @@
       [UIView setAnimationDuration:5.0];
       [UIView setAnimationCurve:UIViewAnimationCurveLinear];
       [self.m_car_location setDirection:[ovmsAppDelegate myRef].car_direction%360];
+      [self.m_car_location setSpeed:[ovmsAppDelegate myRef].car_speed];
       [self.m_car_location setCoordinate: location];
-      region.center=location;
-      [myMapView setRegion:region animated:NO];
+      if (self.m_autotrack)
+        {
+        region.center=location;
+        [myMapView setRegion:region animated:NO];
+        }
       [UIView commitAnimations];
       //      [UIView setAnimationDidStopSelector:@selector(animationDidStop:finished:context:)];
       }
@@ -98,18 +146,19 @@
       // Remove all existing annotations
       for (int k=0; k < [myMapView.annotations count]; k++)
         { 
-          if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[ovmsVehicleAnnotation class]])
-            {
-            [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
-            }
+        if ([[myMapView.annotations objectAtIndex:k] isKindOfClass:[ovmsVehicleAnnotation class]])
+          {
+          [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
+          }
         }
       
       // Create the vehicle annotation
       ovmsVehicleAnnotation *pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
-      [pa setTitle:@"EV915"];
+      [pa setTitle:[ovmsAppDelegate myRef].sel_car];
       [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
       [pa setImagefile:[ovmsAppDelegate myRef].sel_imagepath];
       [pa setDirection:([ovmsAppDelegate myRef].car_direction)%360];
+      [pa setSpeed:[ovmsAppDelegate myRef].car_speed];
       [myMapView addAnnotation:pa];
       self.m_car_location = pa;
       
@@ -123,6 +172,56 @@
       [myMapView regionThatFits:region]; 
       }
     }
+  }
+
+-(void) groupUpdate:(NSArray*)result
+  {
+  if (m_groupcar_locations == nil) return;
+
+  if ([result count]>=10)
+    {
+    NSString *vehicleid = [result objectAtIndex:0];
+    //NSString *groupid = [result objectAtIndex:1];
+    //int soc = [[result objectAtIndex:2] intValue];
+    int speed = [[result objectAtIndex:3] intValue];
+    int direction = [[result objectAtIndex:4] intValue];
+    //int altitude = [[result objectAtIndex:5] intValue];
+    int gpslock = [[result objectAtIndex:6] intValue];
+    int stalegps = [[result objectAtIndex:7] intValue];
+    CLLocationCoordinate2D location = CLLocationCoordinate2DMake(
+                                        [[result objectAtIndex:8] doubleValue], 
+                                        [[result objectAtIndex:9] doubleValue]);
+
+    if ((gpslock < 1)||(stalegps<1)) return; // No GPS lock or data
+    if ([vehicleid isEqualToString:[ovmsAppDelegate myRef].sel_car]) return; // Not the selected car 
+
+    NSLog(@"groupUpdate for %@", vehicleid);
+    ovmsVehicleAnnotation *pa = [m_groupcar_locations objectForKey:vehicleid];
+    if (pa != nil)
+      {
+      // Update an existing car
+      [pa setCoordinate:location];
+      [pa setTitle:vehicleid];
+      [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
+      [pa setImagefile:@"connection_good.png"];
+      [pa setDirection:direction];
+      [pa setSpeed:speed];
+      }
+    else
+      {
+      // Create a new car
+      pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
+      [pa setGroupCar:YES];
+      [pa setTitle:vehicleid];
+      [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
+      [pa setImagefile:@"car_roadster_obsidianblack.png"];
+      [pa setDirection:direction%360];
+      [pa setSpeed:speed];
+      [m_groupcar_locations setObject:pa forKey:vehicleid];
+      [myMapView addAnnotation:pa];
+      NSLog(@"groupCarCreated %@ count=%d", vehicleid,[[myMapView annotations] count]);
+      }
+    }  
   }
 
  - (MKAnnotationView *)mapView:(MKMapView *)mapView
@@ -141,10 +240,47 @@
 
     //Here's where the magic happens
     ovmsVehicleAnnotation *pa = (ovmsVehicleAnnotation*)annotation;
+    NSLog(@"setupView for %@", pa.title);
     [pa setupView:annotationView mapView:myMapView];
     return annotationView;
     }
   return nil;
+  }
+
+- (void)mapView:(MKMapView *)mapView regionWillChangeAnimated:(BOOL)animated
+  {
+  m_lastregion = mapView.region;
+  }
+
+- (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated
+  {
+  MKCoordinateRegion newRegion = mapView.region;
+  if (((m_lastregion.span.latitudeDelta/newRegion.span.latitudeDelta) > 1.5)||
+      ((m_lastregion.span.latitudeDelta/newRegion.span.latitudeDelta) < 0.75))
+    {
+    NSLog(@"Zoomed");
+    // Kludgy redraw of all annotations, by removing then replacing the annotations...
+    for (int k=0; k < [myMapView.annotations count]; k++)
+      {
+      ovmsVehicleAnnotation *pa = [myMapView.annotations objectAtIndex:k];
+      if ([pa isKindOfClass:[ovmsVehicleAnnotation class]])
+        {
+        [myMapView removeAnnotation:[myMapView.annotations objectAtIndex:k]];
+        }
+      }
+    if (m_car_location != nil)
+      {
+      [myMapView addAnnotation:m_car_location];
+      [m_car_location redrawView];
+      }
+    NSEnumerator *enumerator = [m_groupcar_locations objectEnumerator];
+    ovmsVehicleAnnotation *pa;    
+    while ((pa = [enumerator nextObject]))
+      {
+      [myMapView addAnnotation:pa];
+      [pa redrawView];
+      }
+    }
   }
 
 @end

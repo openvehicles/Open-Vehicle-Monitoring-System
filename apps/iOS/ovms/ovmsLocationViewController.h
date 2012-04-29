@@ -15,5 +15,14 @@
 
 @property (strong, nonatomic) IBOutlet MKMapView *myMapView;
 @property (nonatomic, retain) ovmsVehicleAnnotation *m_car_location;
+@property (strong, nonatomic) NSMutableDictionary* m_groupcar_locations;
+@property (strong, nonatomic) IBOutlet UIBarButtonItem *m_locationsnap;
+@property (assign) BOOL m_autotrack;
+@property (assign) MKCoordinateRegion m_lastregion;
+
+- (IBAction)locationSnapped:(id)sender;
+
+-(void) update;
+-(void) groupUpdate:(NSArray*)result;
 
 @end
