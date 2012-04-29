@@ -693,7 +693,7 @@
                                     <segue destination="cgm-Vv-Biu" kind="modal" identifier="ValetMode" modalTransitionStyle="coverVertical" id="SdP-q6-QTx"/>
                                 </connections>
                             </button>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="wsymbol_113.png" id="J2r-IJ-j7d">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="wsymbol_395.png" id="J2r-IJ-j7d">
                                 <rect key="frame" x="46" y="146" width="16" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
@@ -1374,7 +1374,7 @@
         <image name="roadster_outline_tr.png" width="304" height="606"/>
         <image name="signalbars-5.png" width="256" height="256"/>
         <image name="tirepress_letterbox.png" width="534" height="610"/>
-        <image name="wsymbol_113.png" width="128" height="128"/>
+        <image name="wsymbol_395.png" width="128" height="128"/>
     </resources>
     <classes>
         <class className="ovmsBodyViewController" superclassName="UIViewController">

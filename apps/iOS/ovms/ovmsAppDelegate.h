@@ -113,6 +113,8 @@
   float car_tpms_rl_pressure;
   int car_tpms_rl_temp;
   int car_stale_tpms;
+
+  int car_ambient_weather;
 }
 
 @property (strong, nonatomic) UIWindow *window;
@@ -187,6 +189,8 @@
 @property (assign) int car_tpms_rl_temp;
 @property (assign) int car_stale_tpms;
 
+@property (assign) int car_ambient_weather;
+
 + (ovmsAppDelegate *) myRef;
 - (void)saveContext;
 - (NSURL *)applicationDocumentsDirectory;
@@ -201,6 +205,9 @@
 
 - (void)registerForUpdate:(id)target;
 - (void)deregisterFromUpdate:(id)target;
+
+- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data;
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error;
 
 - (void)onTick:(NSTimer *)timer;
 

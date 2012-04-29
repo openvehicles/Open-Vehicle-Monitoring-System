@@ -533,7 +533,19 @@
     m_valet_button.enabled=NO;
     m_wakeup_button.enabled=NO;    
     }
-  
+
+  int car_ambient_weather = [ovmsAppDelegate myRef].car_ambient_weather;
+  if (car_ambient_weather <= 0)
+    {
+    m_car_weather.hidden = YES;
+    }
+  else
+    {
+    m_car_weather.image = [UIImage imageNamed:
+                           [NSString stringWithFormat:@"wsymbol_%d.png",car_ambient_weather]];
+    m_car_weather.hidden = NO;
+    }
+
   m_car_outlineimage.image=[UIImage
                             imageNamed:[NSString stringWithFormat:@"ol_%@",
                                         [ovmsAppDelegate myRef].sel_imagepath]];

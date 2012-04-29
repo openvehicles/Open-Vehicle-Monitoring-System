@@ -85,6 +85,8 @@
 @synthesize car_tpms_rl_temp;
 @synthesize car_stale_tpms;
 
+@synthesize car_ambient_weather;
+
 + (ovmsAppDelegate *) myRef
 {
   //return self;
@@ -244,6 +246,7 @@
     /*
      Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
      */
+  car_ambient_weather = -1;
   [self serverConnect];
 }
 
@@ -498,6 +501,8 @@
   car_tpms_rl_pressure = 0;
   car_tpms_rl_temp = 0;
   car_stale_tpms = -1;
+  
+  car_ambient_weather = -1;
 
   [self notifyUpdates];
 
@@ -610,6 +615,19 @@
         car_altitude = [[lparts objectAtIndex:3] intValue];
         car_gpslock = [[lparts objectAtIndex:4] intValue];
         car_stale_gps = [[lparts objectAtIndex:5] intValue];
+        }
+      if (car_ambient_weather < 0)
+        {
+        // We need to launch an async request to get the weather at the car's location
+        car_ambient_weather = 0; // "0" means request pending...
+        NSString *reqString = [NSString stringWithFormat:
+                               @"http://free.worldweatheronline.com/feed/weather.ashx?q=%0.3f,%0.3f&format=csv&num_of_days=2&key=49cd7ebb0d125043122103",
+                               car_location.latitude, car_location.longitude];
+        NSURL *theURL =  [[NSURL alloc]initWithString:reqString];
+        NSURLRequest *theRequest=[NSURLRequest requestWithURL:theURL
+                                                  cachePolicy:NSURLRequestUseProtocolCachePolicy
+                                              timeoutInterval:60.0];
+        [NSURLConnection connectionWithRequest:theRequest delegate:self];
         }
       }
       break;
@@ -749,6 +767,31 @@
       [target groupUpdate:result];
     }
   }
+
+- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
+  {
+  NSString *reply = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+  NSLog(@"weather %@",reply);
+  NSArray *wla = [reply componentsSeparatedByString:@"\n"];
+  for (NSString *wl in wla)
+    {
+    if ((car_ambient_weather<=0)&&
+        ([wl characterAtIndex:0] != '#'))
+      {
+      // We can assume this is the first line of the good response
+      NSArray *rt = [wl componentsSeparatedByString:@","];
+      car_ambient_weather = [[rt objectAtIndex:2] intValue];
+      }
+    }
+  [self notifyUpdates];
+  }
+
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
+  {
+  car_ambient_weather = -2;
+  [self notifyUpdates];
+  }
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Socket Delegate
