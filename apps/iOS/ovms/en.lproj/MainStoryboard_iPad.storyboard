@@ -31,7 +31,7 @@
                                 </connections>
                             </mapView>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="car_roadster_thundergray.png" id="s2N-H5-QE1" userLabel="car_image">
-                                <rect key="frame" x="20" y="0.0" width="388" height="180"/>
+                                <rect key="frame" x="44" y="20" width="320" height="130"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="left" image="battery_000.png" id="SL7-PT-bkj" userLabel="battery_back">
@@ -1298,7 +1298,7 @@
         <image name="battery_100.png" width="268" height="70"/>
         <image name="battery_coppertops.png" width="268" height="70"/>
         <image name="battery_textbox.png" width="466" height="76"/>
-        <image name="car_roadster_thundergray.png" width="327" height="151"/>
+        <image name="car_roadster_thundergray.png" width="654" height="302"/>
         <image name="carlights.png" width="304" height="634"/>
         <image name="carunlock.png" width="304" height="606"/>
         <image name="carvaletoff.png" width="304" height="606"/>

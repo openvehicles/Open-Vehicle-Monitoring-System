@@ -917,7 +917,7 @@
       [pa setGroupCar:YES];
       [pa setTitle:vehicleid];
       [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
-      [pa setImagefile:@"car_roadster_obsidianblack.png"];
+      [pa setImagefile:@"car_default.png"];
       [pa setDirection:direction%360];
       [pa setSpeed:speed];
       [m_groupcar_locations setObject:pa forKey:vehicleid];

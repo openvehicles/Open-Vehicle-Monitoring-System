@@ -59,7 +59,8 @@
   NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:bundleRoot error:nil];
   for (NSString *tString in dirContents)
     {
-    if ([tString hasPrefix:@"car_"] && [tString hasSuffix:@".png"])
+    if (([tString hasPrefix:@"car_roadster"] || [tString hasPrefix:@"car_default"])
+        && [tString hasSuffix:@".png"])
       {
       [self.carImages addObject: tString];
       }
@@ -238,14 +239,14 @@
 
 - (CGFloat)pickerView:(UIPickerView *)pickerView rowHeightForComponent:(NSInteger)component
 {
-  return 151;
+  return 140;
 }
 
 - (UIView *)pickerView:(UIPickerView *)pickerView viewForRow:(NSInteger)row
           forComponent:(NSInteger)component reusingView:(UIView *)view
 {
   UIImageView *newview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:[carImages objectAtIndex:row]]];
-  newview.frame = CGRectMake(0, 0, 320, 151);
+  newview.frame = CGRectMake(0, 0, 320, 140);
   newview.contentMode =  UIViewContentModeScaleAspectFit;
   return newview;
 }
