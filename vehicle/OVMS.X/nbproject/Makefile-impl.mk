@@ -27,11 +27,11 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 PROJECTNAME=OVMS.X
 
 # Active Configuration
-DEFAULTCONF=Production
+DEFAULTCONF=TR_Production
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=Production Quality_Control Experimental 
+ALLCONFS=TR_Production TR_Quality_Control TR_Experimental VA_Experimental 
 
 
 # build

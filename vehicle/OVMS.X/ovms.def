@@ -46,3 +46,11 @@
 // (by SMS and net PUSH msg) every twelve hours, until such time as the SOC
 // recovers to at least 5%.
 #define OVMS_SOCALERT
+
+// The OVMS project started with support for v2.x Tesla Roadsters, and was
+// then extended to support v1.5 Tesla Roadsters. Now, it is being extended
+// to support other car types as well, with the first being the Volt/Ampera.
+// So, we now have switches to control which car type is to be built. Only
+// one of the following should be defined.
+//#define OVMS_CAR_TESLAROADSTER
+//#define OVMS_CAR_VOLTAMPERA
