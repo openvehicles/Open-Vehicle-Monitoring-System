@@ -39,6 +39,8 @@
 #include "can.h"
 #include "net.h"
 
+#define OVMS_FIRMWARE_VERSION 1,2,5
+
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
 #define FEATURE_SPEEDO       0x00 // Speedometer feature
@@ -63,6 +65,7 @@
 // the vehicle normal operations.
 
 #pragma udata
+extern unsigned char ovms_firmware[3]; // Firmware version
 extern unsigned int car_linevoltage; // Line Voltage
 extern unsigned char car_chargecurrent; // Charge Current
 extern unsigned char car_chargelimit; // Charge Limit (amps)

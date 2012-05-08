@@ -36,6 +36,7 @@
 #include "net_sms.h"
 #include "net_msg.h"
 #include "utils.h"
+#include "led.h"
 
 // NET data
 #pragma udata
@@ -98,6 +99,7 @@ void low_isr(void)
   {
   // call of library module function, MUST
   UARTIntISR();
+  led_isr();
   }
 
 ////////////////////////////////////////////////////////////////////////

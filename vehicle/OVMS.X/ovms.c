@@ -36,6 +36,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "ovms.h"
+#include "utils.h"
+#include "led.h"
 
 // Configuration settings
 #pragma	config FCMEN = OFF,      IESO = OFF
@@ -62,6 +64,7 @@
 
 // Global data
 #pragma udata
+unsigned char ovms_firmware[3] = {OVMS_FIRMWARE_VERSION}; // Firmware version
 unsigned int car_linevoltage = 0; // Line Voltage
 unsigned char car_chargecurrent = 0; // Charge Current
 unsigned char car_chargelimit = 0; // Charge Limit (amps)
@@ -130,9 +133,32 @@ void main(void)
   T0CON = 0b10000111; // @ 5Mhz => 51.2uS
 
   // Initialisation...
+  led_initialise();
   par_initialise();
   can_initialise();
   net_initialise();
+
+  // Startup sequence...
+  // Holding the RED led on, pulse out the firmware version on the GREEN led
+  delay100(10); // Delay 1 second
+  led_set(OVMS_LED_RED,OVMS_LED_ON);
+  led_set(OVMS_LED_GRN, ovms_firmware[0]);
+  led_start();
+  delay100(35); // Delay 3.5 seconds
+  ClrWdt();		// Clear Watchdog Timer
+  led_set(OVMS_LED_GRN, ovms_firmware[1]);
+  led_start();
+  delay100(35); // Delay 3.5 seconds
+  ClrWdt();		// Clear Watchdog Timer
+  led_set(OVMS_LED_GRN, ovms_firmware[2]);
+  led_start();
+  delay100(35); // Delay 3.5 seconds
+  ClrWdt();		// Clear Watchdog Timer
+  led_set(OVMS_LED_GRN, OVMS_LED_OFF);
+  led_set(OVMS_LED_RED, OVMS_LED_OFF);
+  led_start();
+  delay100(10); // Delay 1 second
+  ClrWdt();		// Clear Watchdog Timer
 
   // Proceed to main loop
   y = 0; // Last TMR0H

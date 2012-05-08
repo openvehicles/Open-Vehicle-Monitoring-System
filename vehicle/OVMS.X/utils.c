@@ -66,13 +66,13 @@ void delay100(unsigned char n)
 // Set the status of the NET (GREEN) led
 void led_net(unsigned char led)
   {
-  PORTCbits.RC5 = led;
+//  PORTCbits.RC5 = led;
   }
 
 // Set the status of the ACT (RED) led
 void led_act(unsigned char led)
   {
-  PORTCbits.RC4 = led;
+//  PORTCbits.RC4 = led;
   }
 
 // Cold restart the SIM900 modem

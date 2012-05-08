@@ -32,7 +32,7 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/UARTIntC.o ${OBJECTDIR}/can_voltampera.o ${OBJECTDIR}/crypt_base64.o ${OBJECTDIR}/crypt_hmac.o ${OBJECTDIR}/crypt_md5.o ${OBJECTDIR}/crypt_rc4.o ${OBJECTDIR}/net.o ${OBJECTDIR}/net_msg.o ${OBJECTDIR}/net_sms.o ${OBJECTDIR}/ovms.o ${OBJECTDIR}/params.o ${OBJECTDIR}/utils.o
+OBJECTFILES=${OBJECTDIR}/UARTIntC.o ${OBJECTDIR}/can_voltampera.o ${OBJECTDIR}/crypt_base64.o ${OBJECTDIR}/crypt_hmac.o ${OBJECTDIR}/crypt_md5.o ${OBJECTDIR}/crypt_rc4.o ${OBJECTDIR}/led.o ${OBJECTDIR}/net.o ${OBJECTDIR}/net_msg.o ${OBJECTDIR}/net_sms.o ${OBJECTDIR}/ovms.o ${OBJECTDIR}/params.o ${OBJECTDIR}/utils.o
 
 
 CFLAGS=
@@ -171,6 +171,18 @@ ifneq (,$(findstring MINGW32,$(OS_CURRENT)))
 	cat ${OBJECTDIR}/can_voltampera.o.temp | sed -e 's/\\\ /__SPACES__/g' -e's/\\$$/__EOL__/g' -e 's/\\/\//g' -e 's/__SPACES__/\\\ /g' -e 's/__EOL__/\\/g' >> ${OBJECTDIR}/can_voltampera.o.d
 else
 	cat ${OBJECTDIR}/can_voltampera.o.temp >> ${OBJECTDIR}/can_voltampera.o.d
+endif
+	${RM} __temp_cpp_output__
+${OBJECTDIR}/led.o: led.c  nbproject/Makefile-${CND_CONF}.mk
+	${RM} ${OBJECTDIR}/led.o.d 
+	${MKDIR} ${OBJECTDIR} 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_VOLTAMPERA  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/led.o   led.c  > ${OBJECTDIR}/led.err 2>&1 ; if [ $$? -eq 0 ] ; then cat ${OBJECTDIR}/led.err | sed 's/\(^.*:.*:\)\(Warning\)\(.*$$\)/\1 \2:\3/g' ; else cat ${OBJECTDIR}/led.err | sed 's/\(^.*:.*:\)\(Error\)\(.*$$\)/\1 \2:\3/g' ; exit 1 ; fi
+	${MP_CPP}  -MMD ${OBJECTDIR}/led.o.temp led.c __temp_cpp_output__ -D OVMS_CAR_VOLTAMPERA -D __18F2680 -D __18CXX -I /Applications/microchip/mplabc18/v3.40/bin/../h  -D__18F2680
+	printf "%s/" ${OBJECTDIR} > ${OBJECTDIR}/led.o.d
+ifneq (,$(findstring MINGW32,$(OS_CURRENT)))
+	cat ${OBJECTDIR}/led.o.temp | sed -e 's/\\\ /__SPACES__/g' -e's/\\$$/__EOL__/g' -e 's/\\/\//g' -e 's/__SPACES__/\\\ /g' -e 's/__EOL__/\\/g' >> ${OBJECTDIR}/led.o.d
+else
+	cat ${OBJECTDIR}/led.o.temp >> ${OBJECTDIR}/led.o.d
 endif
 	${RM} __temp_cpp_output__
 ${OBJECTDIR}/net_sms.o: net_sms.c  nbproject/Makefile-${CND_CONF}.mk
@@ -316,6 +328,18 @@ ifneq (,$(findstring MINGW32,$(OS_CURRENT)))
 	cat ${OBJECTDIR}/can_voltampera.o.temp | sed -e 's/\\\ /__SPACES__/g' -e's/\\$$/__EOL__/g' -e 's/\\/\//g' -e 's/__SPACES__/\\\ /g' -e 's/__EOL__/\\/g' >> ${OBJECTDIR}/can_voltampera.o.d
 else
 	cat ${OBJECTDIR}/can_voltampera.o.temp >> ${OBJECTDIR}/can_voltampera.o.d
+endif
+	${RM} __temp_cpp_output__
+${OBJECTDIR}/led.o: led.c  nbproject/Makefile-${CND_CONF}.mk
+	${RM} ${OBJECTDIR}/led.o.d 
+	${MKDIR} ${OBJECTDIR} 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_VOLTAMPERA  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/led.o   led.c  > ${OBJECTDIR}/led.err 2>&1 ; if [ $$? -eq 0 ] ; then cat ${OBJECTDIR}/led.err | sed 's/\(^.*:.*:\)\(Warning\)\(.*$$\)/\1 \2:\3/g' ; else cat ${OBJECTDIR}/led.err | sed 's/\(^.*:.*:\)\(Error\)\(.*$$\)/\1 \2:\3/g' ; exit 1 ; fi
+	${MP_CPP}  -MMD ${OBJECTDIR}/led.o.temp led.c __temp_cpp_output__ -D OVMS_CAR_VOLTAMPERA -D __18F2680 -D __18CXX -I /Applications/microchip/mplabc18/v3.40/bin/../h  -D__18F2680
+	printf "%s/" ${OBJECTDIR} > ${OBJECTDIR}/led.o.d
+ifneq (,$(findstring MINGW32,$(OS_CURRENT)))
+	cat ${OBJECTDIR}/led.o.temp | sed -e 's/\\\ /__SPACES__/g' -e's/\\$$/__EOL__/g' -e 's/\\/\//g' -e 's/__SPACES__/\\\ /g' -e 's/__EOL__/\\/g' >> ${OBJECTDIR}/led.o.d
+else
+	cat ${OBJECTDIR}/led.o.temp >> ${OBJECTDIR}/led.o.d
 endif
 	${RM} __temp_cpp_output__
 ${OBJECTDIR}/net_sms.o: net_sms.c  nbproject/Makefile-${CND_CONF}.mk
