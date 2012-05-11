@@ -67,9 +67,11 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
-rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
+rom char NET_INIT1[] = "AT+CSMINS?\r";
+rom char NET_INIT2[] = "AT+CPIN?\r";
+rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
-//rom char NET_INIT[] = "AT+IPR?;+CPIN?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
+//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
 //rom char NET_COPS[] = "AT+COPS=4,0,\"3(2G)\"\r";
 
 rom char NET_WAKEUP[] = "AT\r";
@@ -296,24 +298,22 @@ void net_state_enter(unsigned char newstate)
   switch(net_state)
     {
     case NET_STATE_START:
+      led_set(OVMS_LED_GRN,NET_LED_WAKEUP);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
       net_timeout_goto = NET_STATE_HARDRESET;
-      net_timeout_ticks = 12; // modem cold start takes 5 secs, warm restart takes 2 secs, 3 secs required for autobuad sync, 12 secs should be sufficient for everything
-      net_state_vchar = 1;
+      net_timeout_ticks = 20; // modem cold start takes 5 secs, warm restart takes 2 secs, 3 secs required for autobuad sync, 20 secs should be sufficient for everything
       net_apps_connected = 0;
-      led_act(net_state_vchar);
       net_msg_init();
       break;
     case NET_STATE_SOFTRESET:
-      led_act(0);
-      led_net(0);
       net_timeout_goto = 0;
       break;
     case NET_STATE_HARDRESET:
+      led_set(OVMS_LED_GRN,OVMS_LED_ON);
+      led_set(OVMS_LED_RED,OVMS_LED_ON);
       modem_reboot();
       net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 2;
-      led_net(0);
-      led_act(1);
       net_state_vchar = 0;
       net_apps_connected = 0;
       net_msg_disconnected();
@@ -326,8 +326,6 @@ void net_state_enter(unsigned char newstate)
       net_msg_disconnected();
       delay100(10);
       net_puts_rom("AT+CIPSHUT\r");
-      led_net(1);
-      led_act(1);
       break;
     case NET_STATE_HARDSTOP2:
       net_timeout_goto = NET_STATE_STOP;
@@ -336,22 +334,53 @@ void net_state_enter(unsigned char newstate)
       modem_reboot();
       break;
     case NET_STATE_STOP:
-      led_act(0);
-      led_net(0);
+      led_set(OVMS_LED_GRN,OVMS_LED_OFF);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
       reset_cpu();
       break;
     case NET_STATE_DOINIT:
+      led_set(OVMS_LED_GRN,NET_LED_INITSIM1);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
+      net_timeout_goto = NET_STATE_HARDRESET;
+      net_timeout_ticks = 95;
+      net_state_vchar = 0;
+      net_puts_rom(NET_INIT1);
+      break;
+    case NET_STATE_DOINIT2:
+      led_set(OVMS_LED_GRN,NET_LED_INITSIM2);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
+      net_timeout_goto = NET_STATE_HARDRESET;
+      net_timeout_ticks = 95;
+      net_state_vchar = 0;
+      net_puts_rom(NET_INIT2);
+      break;
+    case NET_STATE_DOINIT3:
+      led_set(OVMS_LED_GRN,NET_LED_INITSIM3);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
       net_timeout_goto = NET_STATE_HARDRESET;
       net_timeout_ticks = 35;
-      led_act(0);
-      led_net(0);
-      net_puts_rom(NET_INIT);
+      net_state_vchar = 0;
+      net_puts_rom(NET_INIT3);
+      break;
+    case NET_STATE_NETINITP:
+      led_set(OVMS_LED_GRN,NET_LED_NETINIT);
+      if (--net_state_vint > 0)
+        {
+        led_set(OVMS_LED_RED,NET_LED_ERRGPRSRETRY);
+        net_timeout_goto = NET_STATE_DONETINIT;
+        }
+      else
+        {
+        led_set(OVMS_LED_RED,NET_LED_ERRGPRSFAIL);
+        net_timeout_goto = NET_STATE_SOFTRESET;
+        }
+      net_timeout_ticks = 6;
       break;
     case NET_STATE_DONETINIT:
+      led_set(OVMS_LED_GRN,NET_LED_NETINIT);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
       net_watchdog=0; // Disable watchdog, as we have connectivity
       net_reg = 0x05; // Assume connectivity (as COPS worked)
-      led_net(1);
-      led_act(0);
       p = par_get(PARAM_GPRSAPN);
       if ((p[0] != '\0')&&(PORTAbits.RA0==0)) // APN defined AND switch is set to GPRS mode
         {
@@ -368,6 +397,8 @@ void net_state_enter(unsigned char newstate)
         net_state = NET_STATE_READY;
       // N.B. Drop through without a break
     case NET_STATE_READY:
+      led_set(OVMS_LED_GRN,NET_LED_READY);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
       net_msg_sendpending = 0;
       net_timeout_goto = 0;
       net_state_vchar = 0;
@@ -377,10 +408,10 @@ void net_state_enter(unsigned char newstate)
         net_watchdog = 0; // Disable net watchdog
       break;
     case NET_STATE_COPS:
+      led_set(OVMS_LED_GRN,NET_LED_COPS);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
       delay100(2);
       net_timeout_goto = NET_STATE_HARDRESET;
-      net_state_vchar = 0;
-      led_net(net_state_vchar);
       net_timeout_ticks = 240;
       net_msg_disconnected();
       net_puts_rom(NET_COPS);
@@ -405,7 +436,7 @@ void net_state_activity()
       { // Treat this as a network registration
       net_watchdog=0; // Disable watchdog, as we have connectivity
       net_reg = 0x05;
-      led_net(1);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
       }
     net_sms_in(net_caller,net_buf,net_buf_pos);
     return;
@@ -422,10 +453,46 @@ void net_state_activity()
     case NET_STATE_START:
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         {
+        // OK response from the modem
+        led_set(OVMS_LED_RED,OVMS_LED_OFF);
         net_state_enter(NET_STATE_DOINIT);
         }
       break;
     case NET_STATE_DOINIT:
+      if ((net_buf_pos >= 4)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='S')&&(net_buf[3]=='M'))
+        {
+        if (net_buf[strlen(net_buf)-1] != '1')
+          {
+          // The SIM card is not inserted
+          led_set(OVMS_LED_RED,NET_LED_ERRSIM1);
+          net_state_vchar = 1;
+          }
+        }
+      else if ((net_state_vchar==0)&&(net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
+        {
+        // The SIM card is inserted
+        led_set(OVMS_LED_RED,OVMS_LED_OFF);
+        net_state_enter(NET_STATE_DOINIT2);
+        }
+      break;
+    case NET_STATE_DOINIT2:
+      if ((net_buf_pos >= 8)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='P')&&(net_buf[3]=='I'))
+        {
+        if (net_buf[7] != 'R')
+          {
+          // The SIM card has some form of pin lock
+          led_set(OVMS_LED_RED,NET_LED_ERRSIM2);
+          net_state_vchar = 1;
+          }
+        }
+      else if ((net_state_vchar==0)&&(net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
+        {
+        // The SIM card has no pin lock
+        led_set(OVMS_LED_RED,OVMS_LED_OFF);
+        net_state_enter(NET_STATE_DOINIT3);
+        }
+      break;
+    case NET_STATE_DOINIT3:
       if ((net_buf_pos >= 6)&&(net_buf[0] == '+')&&(net_buf[1] == 'I')&&(net_buf[2] == 'P')&&(net_buf[3] == 'R')&&(net_buf[6] != '9'))
         {
         // +IPR != 9600
@@ -434,12 +501,16 @@ void net_state_activity()
         }
       else if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         {
+        led_set(OVMS_LED_RED,OVMS_LED_OFF);
         net_state_enter(NET_STATE_COPS);
         }
       break;
     case NET_STATE_COPS:
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
+        {
+        net_state_vint = 10; // Count-down for DONETINIT attempts
         net_state_enter(NET_STATE_DONETINIT); // COPS reconnect was OK
+        }
       else if ( ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R')) ||
               (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0) )
         net_state_enter(NET_STATE_SOFTRESET); // Reset the entire async
@@ -452,15 +523,13 @@ void net_state_activity()
         if ((net_state_vchar == 2)||
                 (net_state_vchar == 3))// ERROR response to AT+CSTT OR AT+CIICR
           {
-          // try setting up GPRS again
-          led_act(0);
-          net_state_enter(NET_STATE_DONETINIT);
+          // try setting up GPRS again, after short pause
+          net_state_enter(NET_STATE_NETINITP);
           }
         else if (net_state_vchar == 5) // ERROR response to AT+CIFSR
           {
           // This is a nasty case. The GPRS has locked up.
           // The only solution I can find is a hard reset of the modem
-          led_act(0);
           net_state_enter(NET_STATE_HARDRESET);
           }
         }
@@ -490,6 +559,7 @@ void net_state_activity()
             net_puts_rom("\"\r");
             break;
           case 3:
+            led_set(OVMS_LED_GRN,NET_LED_NETAPNOK);
             net_puts_rom("AT+CIICR\r");
             break;
           case 4:
@@ -502,6 +572,7 @@ void net_state_activity()
             net_puts_rom("AT+CLPORT=\"TCP\",\"6867\"\r");
             break;
           case 7:
+            led_set(OVMS_LED_GRN,NET_LED_NETCALL);
             net_puts_rom("AT+CIPSTART=\"TCP\",\"");
             net_puts_ram(par_get(PARAM_SERVERIP));
             net_puts_rom("\",\"6867\"\r");
@@ -531,12 +602,12 @@ void net_state_activity()
         if ((net_reg == 0x01)||(net_reg == 0x05)) // Registered to network?
           {
           net_watchdog=0; // Disable watchdog, as we have connectivity
-          led_net(1);
+          led_set(OVMS_LED_RED,OVMS_LED_OFF);
           }
         else if (net_watchdog == 0)
           {
           net_watchdog = 120; // We need connectivity within 120 seconds
-          led_net(0);
+          led_set(OVMS_LED_RED,NET_LED_ERRLOSTSIG);
           }
         }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"+CLIP", 5) == 0)
@@ -545,7 +616,7 @@ void net_state_activity()
           { // Treat this as a network registration
           net_watchdog=0; // Disable watchdog, as we have connectivity
           net_reg = 0x05;
-          led_net(1);
+          led_set(OVMS_LED_RED,OVMS_LED_OFF);
           }
         delay100(1);
         net_puts_rom(NET_HANGUP);
@@ -555,6 +626,7 @@ void net_state_activity()
         {
         if (net_link == 0)
           {
+          led_set(OVMS_LED_GRN,NET_LED_READYGPRS);
           net_msg_start();
           net_msg_register();
           net_msg_send();
@@ -567,6 +639,7 @@ void net_state_activity()
           {
           if (net_link == 0)
             {
+            led_set(OVMS_LED_GRN,NET_LED_READYGPRS);
             net_msg_start();
             net_msg_register();
             net_msg_send();
@@ -576,6 +649,7 @@ void net_state_activity()
         else
           {
           net_link = 0;
+          led_set(OVMS_LED_GRN,NET_LED_READY);
           if ((net_reg == 0x01)||(net_reg == 0x05))
             {
             // We have a GSM network, but CIPSTATUS is not up
@@ -625,20 +699,31 @@ void net_state_ticker1(void)
   switch (net_state)
     {
     case NET_STATE_START:
-      net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
-      led_act(net_state_vchar);
+      if (net_timeout_ticks < 5)
+        {
+        // We are about to timeout, so let's set the error code...
+        led_set(OVMS_LED_RED,NET_LED_ERRMODEM);
+        }
       net_puts_rom(NET_WAKEUP);
       break;
-
-     // Timeout to short, if not connected within 10 sec
-//    case NET_STATE_DOINIT:
-//      if ((net_timeout_ticks==10)||(net_timeout_ticks==20))
-//        net_puts_rom(NET_INIT); // Try again...
-//      break;
+    case NET_STATE_DOINIT:
+      if ((net_timeout_ticks % 3)==0)
+        net_puts_rom(NET_INIT1);
+      break;
+    case NET_STATE_DOINIT2:
+      if ((net_timeout_ticks % 3)==0)
+        net_puts_rom(NET_INIT2);
+      break;
+    case NET_STATE_DOINIT3:
+      if ((net_timeout_ticks % 3)==0)
+        net_puts_rom(NET_INIT3);
+      break;
     case NET_STATE_COPS:
-      net_state_vchar = net_state_vchar ^ 1; // Toggle LED on/off
-      led_net(net_state_vchar);
-      led_act(net_state_vchar^1);
+      if (net_timeout_ticks < 20)
+        {
+        // We are about to timeout, so let's set the error code...
+        led_set(OVMS_LED_RED,NET_LED_ERRCOPS);
+        }
       break;
     case NET_STATE_SOFTRESET:
       net_state_enter(NET_STATE_START);
@@ -909,13 +994,6 @@ void net_ticker(void)
 //
 void net_ticker10th(void)
   {
-  if ((net_state==NET_STATE_READY)&&(net_link==1))
-    {
-    if (TMR0H < 1)
-      led_act(1);
-    else
-      led_act(0);
-    }
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -929,7 +1007,6 @@ void net_initialise(void)
   TRISC = 0x80; // Port C RC0-6 output, RC7 input
   UARTIntInit();
 
-  led_net(0);
   net_reg = 0;
   net_state_enter(NET_STATE_START);
   }

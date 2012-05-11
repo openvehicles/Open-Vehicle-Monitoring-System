@@ -86,7 +86,7 @@ unsigned long car_time = 0; // UTC Time
 unsigned long car_parktime = 0; // UTC time car was parked (or 0 if not)
 signed char car_ambient_temp = -127; // Ambient Temperature (celcius)
 unsigned char car_vin[18] = "-----------------"; // VIN
-unsigned char car_type[3]; // Car Type
+unsigned char car_type[5]; // Car Type
 signed char car_tpem = 0; // Tpem
 signed char car_tmotor = 0; // Tmotor
 signed char car_tbattery = 0; // Tbattery
@@ -142,6 +142,9 @@ void main(void)
   // Holding the RED led on, pulse out the firmware version on the GREEN led
   delay100(10); // Delay 1 second
   led_set(OVMS_LED_RED,OVMS_LED_ON);
+  led_set(OVMS_LED_GRN,OVMS_LED_OFF);
+  led_start();
+  delay100(10); // Delay 1.0 seconds
   led_set(OVMS_LED_GRN, ovms_firmware[0]);
   led_start();
   delay100(35); // Delay 3.5 seconds
@@ -159,6 +162,10 @@ void main(void)
   led_start();
   delay100(10); // Delay 1 second
   ClrWdt();		// Clear Watchdog Timer
+
+  // Setup ready for the main loop
+  led_set(OVMS_LED_GRN,NET_LED_WAKEUP);
+  led_start();
 
   // Proceed to main loop
   y = 0; // Last TMR0H

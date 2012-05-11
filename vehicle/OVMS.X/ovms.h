@@ -87,7 +87,7 @@ extern unsigned long car_time; // UTC Time
 extern unsigned long car_parktime; // UTC time car was parked (or 0 if not)
 extern signed char car_ambient_temp; // Ambient Temperature (celcius)
 extern unsigned char car_vin[18]; // VIN
-extern unsigned char car_type[3]; // Car Type
+extern unsigned char car_type[5]; // Car Type
 extern signed char car_tpem; // Tpem
 extern signed char car_tmotor; // Tmotor
 extern signed char car_tbattery; // Tbattery

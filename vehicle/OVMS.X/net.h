@@ -47,10 +47,34 @@
 #define NET_STATE_HARDSTOP   0x04  // Hard stop the modem, then reset modem, then processor
 #define NET_STATE_HARDSTOP2  0x05  // Reset modem, then processor
 #define NET_STATE_STOP       0x06  // Stop and reset the processor
-#define NET_STATE_DOINIT     0x10  // Initialise the GSM network
+#define NET_STATE_DOINIT     0x10  // Initialise the GSM network - SIM card check
+#define NET_STATE_DOINIT2    0x11  // Initialise the GSM network - SIM PIN check
+#define NET_STATE_DOINIT3    0x12  // Initialise the GSM network - Full Init
 #define NET_STATE_READY      0x20  // READY and handling calls
 #define NET_STATE_COPS       0x21  // GSM COPS carrier selection
 #define NET_STATE_DONETINIT  0x40  // Initalise the GPRS network
+#define NET_STATE_NETINITP   0x41  // Short pause during GPRS initialisation
+
+// LED MODES
+#define NET_LED_WAKEUP       10    // Attempting to wake up the modem
+#define NET_LED_INITSIM1     9     // Checking SIM card insertion status
+#define NET_LED_INITSIM2     8     // Checking SIM card PIN status
+#define NET_LED_INITSIM3     7     // Initialising modem
+#define NET_LED_COPS         6     // COPS initialisation
+#define NET_LED_NETINIT      5     // GPRS NET initialisation
+#define NET_LED_NETAPNOK     4     // GPRS APN is OK, final init
+#define NET_LED_NETCALL      3     // GPRS Network call
+#define NET_LED_READY        2     // READY state
+#define NET_LED_READYGPRS    1     // READY GPRS state
+
+// LED ERRORS
+#define NET_LED_ERRLOSTSIG   1     // Lost signal
+#define NET_LED_ERRMODEM     2     // Problem communicating with modem
+#define NET_LED_ERRSIM1      3     // SIM is not inserted/detected
+#define NET_LED_ERRSIM2      4     // PIN lock on the SIM
+#define NET_LED_ERRCOPS      6     // COPS GSM lock could not be obtained
+#define NET_LED_ERRGPRSRETRY 7     // Error (maybe temp) during GPRS init
+#define NET_LED_ERRGPRSFAIL  8     // GPRS NET INIT failed
 
 extern char net_scratchpad[NET_BUF_MAX];
 
