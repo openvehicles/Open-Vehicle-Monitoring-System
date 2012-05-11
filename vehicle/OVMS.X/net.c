@@ -775,6 +775,8 @@ void net_state_ticker1(void)
             net_msg_alert();
           else if (net_msg_notify==2)
             net_msg_alert();
+          else if (net_msg_notify==3)
+            net_msg_valettrunk();
           net_msg_notify = 0;
           return;
           }
@@ -786,6 +788,8 @@ void net_state_ticker1(void)
             net_sms_stat(p);
           else if (net_sms_notify==2)
             net_sms_stat(p);
+          else if (net_sms_notify==3)
+            net_sms_valettrunk(p);
           net_sms_notify = 0;
           return;
           }

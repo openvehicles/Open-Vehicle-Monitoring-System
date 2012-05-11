@@ -898,6 +898,17 @@ void net_msg_alert(void)
   net_msg_send();
   }
 
+void net_msg_valettrunk(void)
+  {
+  char *p;
+
+  delay100(2);
+  net_msg_start();
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PATrunk has been opened (valet mode).");
+  net_msg_encode_puts();
+  net_msg_send();
+  }
+
 void net_msg_socalert(void)
   {
   char *p;

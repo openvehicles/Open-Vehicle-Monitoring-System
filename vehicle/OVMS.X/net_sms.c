@@ -44,6 +44,7 @@ rom char NET_MSG_DENIED[] = "Permission denied";
 rom char NET_MSG_REGISTERED[] = "Your phone has been registered as the owner.";
 rom char NET_MSG_PASSWORD[] = "Your password has been changed.";
 rom char NET_MSG_PARAMS[] = "System parameters have been set.";
+rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
 rom char NET_MSG_GOOGLEMAPS[] = "Car location:\rhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
 
 void net_send_sms_start(char* number)
@@ -158,6 +159,18 @@ void net_sms_stat(char* number)
   net_puts_rom(" \rSOC: ");
   sprintf(net_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
   net_puts_ram(net_scratchpad);
+  net_puts_rom("\x1a");
+  }
+
+void net_sms_valettrunk(char* number)
+  {
+  char *p;
+
+  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
+
+  delay100(2);
+  net_send_sms_start(number);
+  net_puts_rom(NET_MSG_VALETTRUNK);
   net_puts_rom("\x1a");
   }
 

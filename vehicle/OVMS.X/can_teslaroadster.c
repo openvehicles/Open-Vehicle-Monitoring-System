@@ -260,6 +260,8 @@ void can_poll0(void)                // CAN ID 100 and 102
           (car_doors2 != can_databuffer[2])||
           (car_doors3 != can_databuffer[3]))
         net_notify_environment();
+      if (((car_doors2&0x40)==0)&&(can_databuffer[2]&0x40)&&(can_databuffer[2]&0x10))
+        net_notify_status(3); // Valet mode is active, and trunk was opened
       car_doors1 = can_databuffer[1]; // Doors #1
       car_doors2 = can_databuffer[2]; // Doors #2
       car_doors3 = can_databuffer[3]; // Doors #3
