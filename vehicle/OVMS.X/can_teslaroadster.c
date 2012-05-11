@@ -623,7 +623,10 @@ void can_tx_lockunlockcar(unsigned char mode, char *pin)
   // Mode is 0=valet, 1=novalet, 2=lock, 3=unlock
   long lpin;
   lpin = atol(pin);
-  
+
+  if ((mode == 0x02)&&(car_doors1 & 0x80))
+    return; // Refuse to lock a car that is turned on
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
