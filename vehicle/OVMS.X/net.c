@@ -311,6 +311,7 @@ void net_state_enter(unsigned char newstate)
     case NET_STATE_HARDRESET:
       led_set(OVMS_LED_GRN,OVMS_LED_ON);
       led_set(OVMS_LED_RED,OVMS_LED_ON);
+      led_start();
       modem_reboot();
       net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 2;
