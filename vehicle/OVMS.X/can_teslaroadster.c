@@ -90,6 +90,8 @@ void can_initialise(void)
   car_type[0] = 'T'; // Car is type TR - Tesla Roadster
   car_type[1] = 'R';
   car_type[2] = 0;
+  car_type[3] = 0;
+  car_type[4] = 0;
 
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
@@ -288,6 +290,16 @@ void can_poll0(void)                // CAN ID 100 and 102
     case 0xA5: // 7 VIN bytes i.e. "39A3000"
       for (k=0;k<7;k++)
         car_vin[k+7] = can_databuffer[k+1];
+      if ((can_databuffer[2] == 'A')||(can_databuffer[2] == 'B'))
+        car_type[2] = '2';
+      else
+        car_type[2] = '1';
+      if (can_databuffer[2] == '8')
+        sys_features[FEATURE_CARBITS] |= FEATURE_CB_2008; // Auto-enable 1.5 support
+      if (can_databuffer[0] == '3')
+        car_type[3] = 'S';
+      else
+        car_type[3] = 'N';
       break;
     case 0xA6: // 3 VIN bytes i.e. "359"
       car_vin[14] = can_databuffer[1];
