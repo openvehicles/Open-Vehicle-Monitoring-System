@@ -1027,6 +1027,10 @@
             [JHNotificationManager notificationWithMessage:@"Valet Mode Deactivated"];
             [self didStopNetworking];
             break;
+          case 41:
+            [JHNotificationManager notificationWithMessage:@"MMI/USSD Code Sent"];
+            [self didStopNetworking];
+            break;
           default:
             [self didStopNetworking];
           }
@@ -1175,6 +1179,12 @@
   {
   [self commandIssue:[NSString stringWithFormat:@"23,%@",pin]];
   [TestFlight passCheckpoint:@"COMMAND_DEACTIVEVALET"];
+  }
+
+- (void)commandDoUSSD:(NSString*)ussd
+  {
+  [self commandIssue:[NSString stringWithFormat:@"41,%@",ussd]];
+  [TestFlight passCheckpoint:@"COMMAND_MMIUSSD"];
   }
 
 - (void)commandDoRequestGPRSData

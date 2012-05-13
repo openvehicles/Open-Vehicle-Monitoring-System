@@ -175,6 +175,7 @@
 		4DDF384714E4246000B4ACC0 /* carlights.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DDF384614E4246000B4ACC0 /* carlights.png */; };
 		4DE26E60147E7E3000E3161D /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DE26E5F147E7E3000E3161D /* CoreData.framework */; };
 		4DE26E63147E83AE00E3161D /* Cars.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DE26E62147E83AE00E3161D /* Cars.m */; };
+		4DEF9F80155FE20E00623906 /* ovmsControlUSSDEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DEF9F7F155FE20E00623906 /* ovmsControlUSSDEntry.m */; };
 		4DF2FF2014981FB900E488F2 /* ol_car_roadster_arcticwhite.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DF2FF1214981FB900E488F2 /* ol_car_roadster_arcticwhite.png */; };
 		4DF2FF2114981FB900E488F2 /* ol_car_roadster_brilliantyellow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DF2FF1314981FB900E488F2 /* ol_car_roadster_brilliantyellow.png */; };
 		4DF2FF2214981FB900E488F2 /* ol_car_roadster_electricblue.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DF2FF1414981FB900E488F2 /* ol_car_roadster_electricblue.png */; };
@@ -422,6 +423,8 @@
 		4DE26E5F147E7E3000E3161D /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		4DE26E61147E83AE00E3161D /* Cars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Cars.h; path = ../Cars.h; sourceTree = "<group>"; };
 		4DE26E62147E83AE00E3161D /* Cars.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Cars.m; path = ../Cars.m; sourceTree = "<group>"; };
+		4DEF9F7E155FE20E00623906 /* ovmsControlUSSDEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsControlUSSDEntry.h; sourceTree = "<group>"; };
+		4DEF9F7F155FE20E00623906 /* ovmsControlUSSDEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsControlUSSDEntry.m; sourceTree = "<group>"; };
 		4DF2FF1214981FB900E488F2 /* ol_car_roadster_arcticwhite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ol_car_roadster_arcticwhite.png; sourceTree = "<group>"; };
 		4DF2FF1314981FB900E488F2 /* ol_car_roadster_brilliantyellow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ol_car_roadster_brilliantyellow.png; sourceTree = "<group>"; };
 		4DF2FF1414981FB900E488F2 /* ol_car_roadster_electricblue.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ol_car_roadster_electricblue.png; sourceTree = "<group>"; };
@@ -869,6 +872,8 @@
 				4D69A82814DACAF500CF0F74 /* ovmsControlFeaturesViewController.m */,
 				4D69A82A14DACB0900CF0F74 /* ovmsControlParametersViewController.h */,
 				4D69A82B14DACB0900CF0F74 /* ovmsControlParametersViewController.m */,
+				4DEF9F7E155FE20E00623906 /* ovmsControlUSSDEntry.h */,
+				4DEF9F7F155FE20E00623906 /* ovmsControlUSSDEntry.m */,
 				4D69A84E14DBB11F00CF0F74 /* ovmsControlPINEntry.h */,
 				4D69A84F14DBB11F00CF0F74 /* ovmsControlPINEntry.m */,
 				4D6557A81516183B00369AAC /* ovmsVehicleInfo.h */,
@@ -1175,6 +1180,7 @@
 				4D6557AA1516183B00369AAC /* ovmsVehicleInfo.m in Sources */,
 				4D731E57153C3F0C0010921B /* ovmsGroupsTableViewController.m in Sources */,
 				4D5849DD15417E5D000AA256 /* ovmsVehicleAnnotation.m in Sources */,
+				4DEF9F80155FE20E00623906 /* ovmsControlUSSDEntry.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

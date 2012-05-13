@@ -233,6 +233,7 @@
 - (void)commandDoActivateValet:(NSString*)pin;
 - (void)commandDoUnlockCar:(NSString*)pin;
 - (void)commandDoDeactivateValet:(NSString*)pin;
+- (void)commandDoUSSD:(NSString*)ussd;
 - (void)commandDoRequestGPRSData;
 
 @end

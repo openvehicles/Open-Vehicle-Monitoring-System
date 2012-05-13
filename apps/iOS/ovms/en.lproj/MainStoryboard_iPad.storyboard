@@ -779,7 +779,7 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="3Fh-Z5-aaW">
-                                <rect key="frame" x="20" y="361" width="728" height="68"/>
+                                <rect key="frame" x="20" y="456" width="728" height="68"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="Reset OVMS Module">
@@ -794,7 +794,7 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="gw9-5f-UTK">
-                                <rect key="frame" x="20" y="273" width="728" height="68"/>
+                                <rect key="frame" x="20" y="368" width="728" height="68"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                 <state key="normal" title="Cellular Usage">
@@ -807,6 +807,22 @@
                                 <connections>
                                     <action selector="parametersButton:" destination="H0G-Tq-aOT" eventType="touchUpInside" id="aaQ-JO-j3v"/>
                                     <segue destination="Guc-Xx-TjD" kind="push" id="IyR-wi-TEP"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="wordWrap" id="NbC-Nt-Sqg">
+                                <rect key="frame" x="20" y="208" width="728" height="68"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="MMI/USSD Code">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="parametersButton:" destination="H0G-Tq-aOT" eventType="touchUpInside" id="90p-EQ-Bo6"/>
+                                    <segue destination="Cch-yP-qiH" kind="push" id="85I-0k-Q8m"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -960,7 +976,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="6689" y="3267"/>
+            <point key="canvasLocation" x="6682" y="4387"/>
         </scene>
         <!--Ovms Charger Settings View Controller - Charger Settings-->
         <scene sceneID="Yzm-Sm-p8d">
@@ -1289,6 +1305,55 @@
             </objects>
             <point key="canvasLocation" x="4611" y="-154"/>
         </scene>
+        <!--Ovms ControlUSSD Entry - MMI/USSD Code-->
+        <scene sceneID="lOf-Fz-DQT">
+            <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="KfX-dU-TQ7" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <viewController title="MMI/USSD Code" id="Cch-yP-qiH" customClass="ovmsControlUSSDEntry" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="hKK-NP-b9t">
+                        <rect key="frame" x="0.0" y="64" width="768" height="960"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" id="rmq-EG-iYt">
+                                <rect key="frame" x="27" y="231" width="714" height="79"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" textAlignment="center" clearsOnBeginEditing="YES" minimumFontSize="36" id="l9C-l9-v6Z">
+                                        <rect key="frame" x="27" y="24" width="667" height="31"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="36"/>
+                                        <textInputTraits key="textInputTraits" autocorrectionType="no" keyboardType="phonePad" enablesReturnKeyAutomatically="YES"/>
+                                    </textField>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <textView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" bounces="NO" scrollEnabled="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" editable="NO" text="Enter the MMI/USSD Code, then tap SEND to transmit the code to your vehicle's cellular provider" textAlignment="center" id="f4v-rk-zIm">
+                                <rect key="frame" x="241" y="72" width="286" height="82"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="18"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                            </textView>
+                        </subviews>
+                        <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="MMI/USSD Code" id="dpf-Qs-9gg">
+                        <barButtonItem key="rightBarButtonItem" title="Send" id="hRQ-GU-FZK">
+                            <connections>
+                                <action selector="Send:" destination="Cch-yP-qiH" id="rvp-PP-0KW"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <connections>
+                        <outlet property="m_ussd" destination="l9C-l9-v6Z" id="Up4-lt-y1G"/>
+                    </connections>
+                </viewController>
+            </objects>
+            <point key="canvasLocation" x="6682" y="3271"/>
+        </scene>
     </scenes>
     <resources>
         <image name="193-location-arrow-white.png" width="20" height="20"/>
@@ -1370,6 +1435,13 @@
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsControlParametersViewController.h"/>
             <relationships>
                 <relationship kind="outlet" name="m_table" candidateClass="UITableView"/>
+            </relationships>
+        </class>
+        <class className="ovmsControlUSSDEntry" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsControlUSSDEntry.h"/>
+            <relationships>
+                <relationship kind="action" name="Send:"/>
+                <relationship kind="outlet" name="m_ussd" candidateClass="UITextField"/>
             </relationships>
         </class>
         <class className="ovmsControlViewController" superclassName="UIViewController">
