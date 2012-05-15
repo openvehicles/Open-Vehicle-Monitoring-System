@@ -228,7 +228,7 @@
       [cellLabel setText:[NSString stringWithFormat:@"#%d: Registered Telephone",indexPath.row]];
       break;
     case PARAM_REGPASS:
-      [cellLabel setText:[NSString stringWithFormat:@"#%d: User Password",indexPath.row]];
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Module Password",indexPath.row]];
       break;
     case PARAM_MILESKM:
       [cellLabel setText:[NSString stringWithFormat:@"#%d: Miles/Km",indexPath.row]];
@@ -237,22 +237,22 @@
       [cellLabel setText:[NSString stringWithFormat:@"#%d: Notifications",indexPath.row]];
       break;
     case PARAM_SERVERIP:
-      [cellLabel setText:[NSString stringWithFormat:@"#%d: Server IP",indexPath.row]];
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: OVMS Server IP",indexPath.row]];
       break;
     case PARAM_GPRSAPN:
-      [cellLabel setText:[NSString stringWithFormat:@"#%d: GPRS APN",indexPath.row]];
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Cellular Network APN",indexPath.row]];
       break;
     case PARAM_GPRSUSER:
-      [cellLabel setText:[NSString stringWithFormat:@"#%d: GPRS User",indexPath.row]];
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Cellular Network User",indexPath.row]];
       break;
     case PARAM_GPRSPASS:
-      [cellLabel setText:[NSString stringWithFormat:@"#%d: GPRS Password",indexPath.row]];
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Cellular Network Password",indexPath.row]];
       break;
     case PARAM_MYID:
       [cellLabel setText:[NSString stringWithFormat:@"#%d: Vehicle ID",indexPath.row]];
       break;
     case PARAM_NETPASS1:
-      [cellLabel setText:[NSString stringWithFormat:@"#%d: Network Password",indexPath.row]];
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Server Password",indexPath.row]];
       break;
     case PARAM_PARANOID:
       [cellLabel setText:[NSString stringWithFormat:@"#%d: Paranoid Mode",indexPath.row]];
