@@ -35,6 +35,7 @@
 {
   GCDAsyncSocket *asyncSocket;
   NSTimer *tim;
+  NSTimer *timreconnect;
   NSInteger networkingCount;
   
   unsigned char token[TOKEN_SIZE+1];
@@ -210,6 +211,7 @@
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error;
 
 - (void)onTick:(NSTimer *)timer;
+- (void)onTickReconnect:(NSTimer *)timer;
 
 - (BOOL)commandIsFree;
 - (void)commandRegister:(NSString*)command callback:(id)cb;

@@ -115,6 +115,9 @@
                                                             @"car_models_signaturered.png", @"selImagePath",
                                                             @"", @"apnsDeviceid",
                                                             @"", @"locationGroups",
+                                                            @"", @"cacheWeatherCar",
+                                                            @"", @"cacheWeatherTemp",
+                                                            @"", @"cacheWeatherTimeout",
                                                             nil];
   [defaults registerDefaults:appDefaults];
   [defaults synchronize];
@@ -618,16 +621,33 @@
         }
       if (car_ambient_weather < 0)
         {
-        // We need to launch an async request to get the weather at the car's location
-        car_ambient_weather = 0; // "0" means request pending...
-        NSString *reqString = [NSString stringWithFormat:
-                               @"http://free.worldweatheronline.com/feed/weather.ashx?q=%0.3f,%0.3f&format=csv&num_of_days=2&key=49cd7ebb0d125043122103",
-                               car_location.latitude, car_location.longitude];
-        NSURL *theURL =  [[NSURL alloc]initWithString:reqString];
-        NSURLRequest *theRequest=[NSURLRequest requestWithURL:theURL
-                                                  cachePolicy:NSURLRequestUseProtocolCachePolicy
-                                              timeoutInterval:60.0];
-        [NSURLConnection connectionWithRequest:theRequest delegate:self];
+        // We may need to launch an async request to get the weather at the car's location
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        NSString *defaultsWC = [defaults stringForKey:@"cacheWeatherCar"];
+        NSString *defaultsWP = [defaults stringForKey:@"cacheWeatherTemp"];
+        NSString *defaultsWT = [defaults stringForKey:@"cacheWeatherTimeout"];
+        time_t timeout = 0;
+        if ([defaultsWT length]>0)
+          timeout = [defaultsWT intValue];
+        if (([defaultsWC length]==0)||
+            (![defaultsWC isEqualToString:sel_car])||
+            (time(0)>timeout))
+          {
+          // There is no valid cached value, so we need to get it
+          car_ambient_weather = 0; // "0" means request pending...
+          NSString *reqString = [NSString stringWithFormat:
+                                 @"http://free.worldweatheronline.com/feed/weather.ashx?q=%0.3f,%0.3f&format=csv&num_of_days=2&key=49cd7ebb0d125043122103",
+                                 car_location.latitude, car_location.longitude];
+          NSURL *theURL =  [[NSURL alloc]initWithString:reqString];
+          NSURLRequest *theRequest=[NSURLRequest requestWithURL:theURL
+                                                    cachePolicy:NSURLRequestUseProtocolCachePolicy
+                                                timeoutInterval:60.0];
+          [NSURLConnection connectionWithRequest:theRequest delegate:self];
+          }
+        else
+          {
+          car_ambient_weather = [defaultsWP intValue];
+          }
         }
       }
       break;
@@ -780,6 +800,11 @@
       // We can assume this is the first line of the good response
       NSArray *rt = [wl componentsSeparatedByString:@","];
       car_ambient_weather = [[rt objectAtIndex:2] intValue];
+      NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+      [defaults setObject:sel_car forKey:@"cacheWeatherCar"];
+      [defaults setObject:[rt objectAtIndex:2] forKey:@"cacheWeatherTemp"];
+      [defaults setObject:[NSString stringWithFormat:@"%d",time(0)+(15*60)] forKey:@"cacheWeatherTimeout"];
+      [defaults synchronize];
       }
     }
   [self notifyUpdates];
@@ -821,6 +846,12 @@
     if ([rparts count]<4)
       {
       [self serverDisconnect];
+      NSLog(@"Whoops, server welcome message too short: %@", response);
+      timreconnect = [NSTimer scheduledTimerWithTimeInterval: 10.0
+                                             target: self
+                                           selector: @selector(onTickReconnect:)
+                                           userInfo: nil
+                                            repeats: NO];
       return; // Invalid server response
       }
     NSString *stoken = [rparts objectAtIndex:2];
@@ -829,12 +860,24 @@
       if ((stoken==NULL)||(etoken==NULL))
       {
       [self serverDisconnect];
+      NSLog(@"Whoops, server had wrong token: %@", response);
+      timreconnect = [NSTimer scheduledTimerWithTimeInterval: 10.0
+                                                      target: self
+                                                    selector: @selector(onTickReconnect:)
+                                                    userInfo: nil
+                                                     repeats: NO];
       return;
       }
     // Check for token-replay attack
     if (strcmp((char*)token,cstoken)==0)
       {
       [self serverDisconnect];
+      NSLog(@"Whoops, token replay attack: %@", response);
+      timreconnect = [NSTimer scheduledTimerWithTimeInterval: 10.0
+                                                      target: self
+                                                    selector: @selector(onTickReconnect:)
+                                                    userInfo: nil
+                                                     repeats: NO];
       return; // Server is using our token!
       }
       
@@ -844,6 +887,12 @@
     if (strncmp([etoken UTF8String],(const char*)edigest,strlen((const char*)edigest))!=0)
       {
       [self serverDisconnect];
+      NSLog(@"Whoops, server token is invalid: %@", response);
+      timreconnect = [NSTimer scheduledTimerWithTimeInterval: 10.0
+                                                      target: self
+                                                    selector: @selector(onTickReconnect:)
+                                                    userInfo: nil
+                                                     repeats: NO];
       return; // Invalid server digest
       }
       
@@ -926,6 +975,13 @@
   NSString *pushStr = [NSString stringWithFormat:@"%s\r\n",output];
   NSData *pushData = [pushStr dataUsingEncoding:NSUTF8StringEncoding];
   [asyncSocket writeData:pushData withTimeout:-1 tag:0];
+  }
+
+- (void)onTickReconnect:(NSTimer *)timer
+  {
+  if (asyncSocket != nil) return; // Return if already connected
+
+  [self serverConnect];
   }
 
 - (BOOL)commandIsFree
