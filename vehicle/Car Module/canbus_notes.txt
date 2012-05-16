@@ -402,6 +402,14 @@ messages from the VDS are sent on CAN ID # 0x102.
 		N.B. example PIN 1234 unlock is 0x0B, 0x03, 0x00, 0x00, 0xD2, 0X04, 0x00, 0x40
 		N.B. unlock/lock does not affect the immobilizer+alarm (when fitted)
 
+	Home Link
+		B1=0x09
+		B2=0x00
+		B3=Homelink device (0x00, 0x01 or 0x02)
+
+		N.B. mstegen is also seeing another message on the CAN bus just before this message, 0x09 0x02 0x00, not sure if it's important.
+		     markwj suspects perhaps some sort of wakeup message.
+
 	Lock/Unlock result
 		B1=0x0E
 		B2=result (0x04=locked, 0x05=unlocked)
