@@ -178,180 +178,6 @@ void net_sms_valettrunk(char* number)
   net_puts_rom("\x1a");
   }
 
-void net_sms_in(char *caller, char *buf, unsigned char pos)
-  {
-  // The buf contains an SMS command
-  // and caller contains the caller telephone number
-  char *p;
-
-  // Convert SMS command (first word) to upper-case
-  for (p=buf; ((*p!=0)&&(*p!=' ')); p++)
-  	if ((*p > 0x60) && (*p < 0x7b)) *p=*p-0x20;
-
-  // Command parsing...
-  if (memcmppgm2ram(buf, (char const rom far*)"REGISTER ", 9) == 0)
-    { // Register phone
-    p = par_get(PARAM_REGPASS);
-    if (strncmp(p,buf+9,strlen(p))==0)
-      {
-      par_set(PARAM_REGPHONE, caller);
-      net_send_sms_rom(caller,NET_MSG_REGISTERED);
-      }
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else if (memcmppgm2ram(buf, (char const rom far*)"PASS ", 5) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,caller,strlen(p)) == 0)
-      {
-      par_set(PARAM_REGPASS, buf+5);
-      net_send_sms_rom(caller,NET_MSG_PASSWORD);
-      }
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else if (memcmppgm2ram(buf, (char const rom far*)"GPS ", 4) == 0)
-    {
-    p = par_get(PARAM_REGPASS);
-    if (strncmp(p,buf+4,strlen(p))==0)
-      net_sms_gps(caller);
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else if (memcmppgm2ram(buf, (char const rom far*)"GPS", 3) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,caller,strlen(p)) == 0)
-      net_sms_gps(caller);
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else if (memcmppgm2ram(buf, (char const rom far*)"STAT ", 5) == 0)
-    {
-    p = par_get(PARAM_REGPASS);
-    if (strncmp(p,buf+5,strlen(p))==0)
-      net_sms_stat(caller);
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else if (memcmppgm2ram(buf, (char const rom far*)"STAT", 4) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,caller,strlen(p)) == 0)
-      net_sms_stat(caller);
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else if (memcmppgm2ram(buf, (char const rom far*)"PARAMS?", 7) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,caller,strlen(p)) == 0)
-      net_sms_params(caller);
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else if (memcmppgm2ram(buf, (char const rom far*)"PARAMS ", 7) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,caller,strlen(p)) == 0)
-      {
-      unsigned char d = PARAM_MILESKM;
-      unsigned char x = 7;
-      unsigned char y = x;
-      while ((y<=(pos+1))&&(d < PARAM_MAX))
-        {
-        if ((buf[y] == ' ')||(buf[y] == '\0'))
-          {
-          buf[y] = '\0';
-          if ((buf[x]=='-')&&(buf[x+1]=='\0'))
-            buf[x] = '\0'; // Special case '-' is empty value
-          par_set(d++, buf+x);
-          x=++y;
-          }
-        else
-          y++;
-        }
-      net_send_sms_rom(caller,NET_MSG_PARAMS);
-      net_state_enter(NET_STATE_SOFTRESET);
-      }
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else if (memcmppgm2ram(buf, (char const rom far*)"FEATURE ", 8) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,caller,strlen(p)) == 0)
-      {
-      unsigned char y = 8;
-      unsigned int f;
-      while (y<=(pos+1))
-        {
-        if ((buf[y] == ' ')||(buf[y] == '\0'))
-          {
-          buf[y] = '\0';
-          f = atoi(buf+8);
-          if ((f>=0)&&(f<FEATURES_MAX))
-            {
-            sys_features[f] = atoi(buf+y+1);
-            if (f>=FEATURES_MAP_PARAM) // Top N features are persistent
-              par_set(PARAM_FEATURE_S+(f-FEATURES_MAP_PARAM), buf+y+1);
-            }
-          break; // Exit the while loop, as we are done
-          }
-        else
-          y++;
-        }
-      }
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else if (memcmppgm2ram(buf, (char const rom far*)"RESET", 5) == 0)
-    {
-    p = par_get(PARAM_REGPHONE);
-    if (strncmp(p,caller,strlen(p)) == 0)
-      {
-      net_state_enter(NET_STATE_HARDRESET);
-      }
-    else
-      {
-      if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
-        net_send_sms_rom(caller,NET_MSG_DENIED);
-      }
-    }
-  else // SMS didn't match any command pattern, forward to user via net msg
-    {
-    net_msg_forward_sms(caller, buf);
-    }
-  }
-
 void net_sms_socalert(char* number)
   {
   char *p;
@@ -363,4 +189,209 @@ void net_sms_socalert(char* number)
   net_puts_ram(net_scratchpad);
   net_puts_rom("\x1a");
   delay100(5);
+  }
+
+// SMS Command Handlers
+//
+// All the net_sms_handle_* functions are command handlers for SMS commands
+
+// We start with two helper functions
+unsigned char net_sms_checkcaller(char *caller)
+  {
+  char *p = par_get(PARAM_REGPHONE);
+  if (strncmp(p,caller,strlen(p)) == 0)
+    return 1;
+  else
+    {
+    if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
+      net_send_sms_rom(caller,NET_MSG_DENIED);
+    return 0;
+    }
+  }
+
+unsigned char net_sms_checkpassarg(char *caller, char *arguments)
+  {
+  char *p = par_get(PARAM_REGPASS);
+
+  if (strncmp(p,arguments,strlen(p))==0)
+    return 1;
+  else
+    {
+    if ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SAD_SMS) == 0)
+      net_send_sms_rom(caller,NET_MSG_DENIED);
+    return 0;
+    }
+  }
+
+// Now the SMS command handlers themselves...
+
+void net_sms_handle_register(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+  {
+  if (net_sms_checkpassarg(caller, arguments))
+    {
+    par_set(PARAM_REGPHONE, caller);
+    net_send_sms_rom(caller,NET_MSG_REGISTERED);
+    }
+  }
+
+void net_sms_handle_pass(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+  {
+  if (net_sms_checkcaller(caller))
+    {
+    par_set(PARAM_REGPASS, arguments);
+    net_send_sms_rom(caller,NET_MSG_PASSWORD);
+    }
+  }
+
+void net_sms_handle_gps(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+  {
+  if (*arguments != 0)
+    {
+    if (net_sms_checkpassarg(caller, arguments))
+      net_sms_gps(caller);
+    }
+  else if (net_sms_checkcaller(caller))
+    net_sms_gps(caller);
+  }
+
+void net_sms_handle_stat(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+  {
+  if (*arguments != 0)
+    {
+    if (net_sms_checkpassarg(caller, arguments))
+      net_sms_stat(caller);
+    }
+  else if (net_sms_checkcaller(caller))
+    net_sms_stat(caller);
+  }
+
+void net_sms_handle_paramsq(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+  {
+  if (net_sms_checkcaller(caller))
+    net_sms_params(caller);
+  }
+
+void net_sms_handle_params(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+  {
+  char *p;
+
+  if (net_sms_checkcaller(caller))
+    {
+    unsigned char d = PARAM_MILESKM;
+    unsigned char x = 7;
+    unsigned char y = x;
+    while ((y<=(pos+1))&&(d < PARAM_MAX))
+      {
+      if ((buf[y] == ' ')||(buf[y] == '\0'))
+        {
+        buf[y] = '\0';
+        if ((buf[x]=='-')&&(buf[x+1]=='\0'))
+          buf[x] = '\0'; // Special case '-' is empty value
+        par_set(d++, buf+x);
+        x=++y;
+        }
+      else
+        y++;
+      }
+    net_send_sms_rom(caller,NET_MSG_PARAMS);
+    net_state_enter(NET_STATE_SOFTRESET);
+    }
+  }
+
+void net_sms_handle_feature(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+  {
+  char *p;
+  
+  if (net_sms_checkcaller(caller))
+    {
+    unsigned char y = 8;
+    unsigned int f;
+    while (y<=(pos+1))
+      {
+      if ((buf[y] == ' ')||(buf[y] == '\0'))
+        {
+        buf[y] = '\0';
+        f = atoi(buf+8);
+        if ((f>=0)&&(f<FEATURES_MAX))
+          {
+          sys_features[f] = atoi(buf+y+1);
+          if (f>=FEATURES_MAP_PARAM) // Top N features are persistent
+            par_set(PARAM_FEATURE_S+(f-FEATURES_MAP_PARAM), buf+y+1);
+          }
+        break; // Exit the while loop, as we are done
+        }
+      else
+        y++;
+      }
+    }
+  }
+
+void net_sms_handle_reset(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+  {
+  char *p;
+
+  if (net_sms_checkcaller(caller))
+    net_state_enter(NET_STATE_HARDRESET);
+  }
+
+// This is the SMS command table
+//
+// We're a bit limited by PIC C syntax (in particular no function pointers
+// as members of structures), so keep it simple and use two tables. The first
+// is a list of command strings (left match, all upper case). The second are
+// the command handler function pointers. The command string table array is
+// terminated by an empty "" command.
+
+rom char sms_cmdtable[][10] =
+  { "REGISTER ",
+    "PASS ",
+    "GPS",
+    "STAT",
+    "PARAMS?",
+    "PARAMS ",
+    "FEATURE ",
+    "RESET",
+    "" };
+
+rom void (*sms_hfntable[])(char *caller, char *buf, unsigned char pos, char *command, char *arguments) =
+  {
+  &net_sms_handle_register,
+  &net_sms_handle_pass,
+  &net_sms_handle_gps,
+  &net_sms_handle_stat,
+  &net_sms_handle_paramsq,
+  &net_sms_handle_params,
+  &net_sms_handle_feature,
+  &net_sms_handle_reset
+  };
+
+// net_sms_in handles reception of an SMS message
+//
+// It tries to find a matching command handler based on the
+// command tables.
+
+void net_sms_in(char *caller, char *buf, unsigned char pos)
+  {
+  // The buf contains an SMS command
+  // and caller contains the caller telephone number
+  char *p;
+  int k;
+
+  // Convert SMS command (first word) to upper-case
+  for (p=buf; ((*p!=0)&&(*p!=' ')); p++)
+  	if ((*p > 0x60) && (*p < 0x7b)) *p=*p-0x20;
+  if (*p==' ') p++;
+
+  // Command parsing...
+  for (k=0; sms_cmdtable[k][0] != 0; k++)
+    {
+    if (memcmppgm2ram(buf, (rom char*)sms_cmdtable[k], strlenpgm((rom char*)sms_cmdtable[k])) == 0)
+      {
+      (*sms_hfntable[k])(caller, buf, pos, buf, p);
+      return;
+      }
+    }
+
+  // SMS didn't match any command pattern, forward to user via net msg
+  net_msg_forward_sms(caller, buf);
   }
