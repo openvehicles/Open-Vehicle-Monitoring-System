@@ -75,9 +75,13 @@ void net_sms_params(char* number)
   net_puts_rom("Params:");
   for (k=0;k<PARAM_MAX;k++)
     {
-    sprintf(net_scratchpad, (rom far char*)" %u:", k);
-    net_puts_ram(net_scratchpad);
-    net_puts_ram(par_get(k));
+    p = par_get(k);
+    if (*p != 0)
+      {
+      sprintf(net_scratchpad, (rom far char*)" %u:", k);
+      net_puts_ram(net_scratchpad);
+      net_puts_ram(p);
+      }
     }
   net_puts_rom("\x1a");
   }
