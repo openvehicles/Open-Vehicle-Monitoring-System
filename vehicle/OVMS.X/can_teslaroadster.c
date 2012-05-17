@@ -165,6 +165,18 @@ void can_poll0(void)                // CAN ID 100 and 102
 
   switch (can_databuffer[0])
     {
+    case 0x06: // Charge timer mode
+      if (can_databuffer[1] == 0x1b)
+        {
+        car_timermode = can_databuffer[4];
+        car_stale_timer = 1; // Reset stale indicator
+        }
+      else if (can_databuffer[1] == 0x1a)
+        {
+        car_timerstart = (can_databuffer[4]<<8)+can_databuffer[5];
+        car_stale_timer = 1; // Reset stale indicator
+        }
+      break;
     case 0x0E: // Lock/Unlock state on ID#102
       if (car_lockstate != can_databuffer[1])
         net_notify_environment();
@@ -533,7 +545,7 @@ void can_tx_wakeup(void)
   TXB0SIDL = 0b01000000; // Setup 0x102
   TXB0SIDH = 0b00100000; // Setup 0x102
   TXB0D0 = 0x0a;
-  TXB0DLC = 0b00000001; // data length (8)
+  TXB0DLC = 0b00000001; // data length (1)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   }
@@ -644,4 +656,58 @@ void can_tx_lockunlockcar(unsigned char mode, char *pin)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
+void can_tx_timermode(unsigned char mode, unsigned int starttime)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x05;
+  TXB0D1 = 0x1B;
+  TXB0D2 = 0x00;
+  TXB0D3 = 0x00;
+  TXB0D4 = mode;
+  TXB0D5 = 0x00;
+  TXB0D6 = 0x00;
+  TXB0D7 = 0x00;
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  if (mode == 1)
+    {
+    TXB0CON = 0;
+    TXB0SIDL = 0b01000000; // Setup 0x102
+    TXB0SIDH = 0b00100000; // Setup 0x102
+    TXB0D0 = 0x05;
+    TXB0D1 = 0x1A;
+    TXB0D2 = 0x00;
+    TXB0D3 = 0x00;
+    TXB0D4 = (starttime >>8)&0xff;
+    TXB0D5 = (starttime & 0xff);
+    TXB0D6 = 0x00;
+    TXB0D7 = 0x00;
+    TXB0DLC = 0b00001000; // data length (8)
+    TXB0CON = 0b00001000; // mark for transmission
+    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+    }
+
+  can_tx_wakeup(); // Also, wakeup the car if necessary
+  }
+
+void can_tx_homelink(unsigned char button)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x09;
+  TXB0D1 = 0x00;
+  TXB0D2 = button;
+  TXB0DLC = 0b00000011; // data length (3)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+
+  can_tx_wakeup(); // Also, wakeup the car if necessary
   }

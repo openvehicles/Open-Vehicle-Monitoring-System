@@ -237,10 +237,11 @@ void net_msg_stat(void)
   else
     sprintf(net_msg_scratchpad, (rom far char*)"%u,", (((car_estrange << 4)+5)/10));
   strcat(net_scratchpad,net_msg_scratchpad);
-  sprintf(net_msg_scratchpad,(rom far char*)"%d,%u,%d,%d,%d,%d,%d",
+  sprintf(net_msg_scratchpad,(rom far char*)"%d,%u,%d,%d,%d,%d,%d,%d,%d,%d",
           car_chargelimit,car_chargeduration,
           car_charge_b4, car_chargekwh, car_chargesubstate,
-          car_chargestate,car_chargemode);
+          car_chargestate,car_chargemode,
+          car_timermode,car_timerstart,car_stale_timer);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
   }
@@ -690,6 +691,29 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       break;
+    case 17: // Set charge timer mode and start time
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
+        // check if a value exists and is separated by a comma
+        if (*p == ',')
+          {
+          *p++ = 0;
+          // At this point, <net_msg_cmd_msg> points to the mode, and p to the time
+          can_tx_timermode(atoi(net_msg_cmd_msg),atoi(p));
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+          }
+        else
+          {
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
+          }
+        }
+      net_msg_encode_puts();
+      break;
     case 18: // Wakeup car
       if (sys_features[FEATURE_CANWRITE]==0)
         {
@@ -769,6 +793,18 @@ void net_msg_cmd_do(void)
       net_msg_encode_puts();
       delay100(2);
       net_msg_environment();
+      break;
+    case 24: // Home Link
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
+        }
+      else
+        {
+        can_tx_homelink(atoi(net_msg_cmd_msg));
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        }
+      net_msg_encode_puts();
       break;
     case 40: // Send SMS (params: phone number, SMS message)
       for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;

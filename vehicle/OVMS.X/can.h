@@ -40,6 +40,8 @@ void can_tx_setchargemode(unsigned char mode);
 void can_tx_setchargecurrent(unsigned char current);
 void can_tx_startstopcharge(unsigned char start);
 void can_tx_lockunlockcar(unsigned char mode, char *pin);
+void can_tx_timermode(unsigned char mode, unsigned int starttime);
+void can_tx_homelink(unsigned char button);
 
 void can_initialise(void);
 void can_poll0(void);

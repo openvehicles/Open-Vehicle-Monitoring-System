@@ -283,3 +283,11 @@ void can_tx_startstopcharge(unsigned char start)
 void can_tx_lockunlockcar(unsigned char mode, char *pin)
   {
   }
+
+void can_tx_timermode(unsigned char mode, unsigned int starttime)
+  {
+  }
+
+void can_tx_homelink(unsigned char button)
+  {
+  }
