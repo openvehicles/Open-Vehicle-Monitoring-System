@@ -292,13 +292,13 @@ void can_poll0(void)                // CAN ID 100 and 102
     case 0xA5: // 7 VIN bytes i.e. "39A3000"
       for (k=0;k<7;k++)
         car_vin[k+7] = can_databuffer[k+1];
-      if ((can_databuffer[2] == 'A')||(can_databuffer[2] == 'B'))
+      if ((can_databuffer[3] == 'A')||(can_databuffer[3] == 'B'))
         car_type[2] = '2';
       else
         car_type[2] = '1';
-      if (can_databuffer[2] == '8')
+      if (can_databuffer[3] == '8')
         sys_features[FEATURE_CARBITS] |= FEATURE_CB_2008; // Auto-enable 1.5 support
-      if (can_databuffer[0] == '3')
+      if (can_databuffer[1] == '3')
         car_type[3] = 'S';
       else
         car_type[3] = 'N';
