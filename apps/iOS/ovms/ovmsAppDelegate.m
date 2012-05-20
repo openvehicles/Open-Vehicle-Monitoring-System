@@ -106,13 +106,13 @@
   // Set the application defaults
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
   NSDictionary *appDefaults = [NSDictionary
-                               dictionaryWithObjectsAndKeys:@"www.openvehicles.com", @"ovmsServer",
+                               dictionaryWithObjectsAndKeys:@"tmc.openvehicles.com", @"ovmsServer",
                                                             @"6867", @"ovmsPort",
                                                             @"DEMO", @"selCar",
                                                             @"Demonstration Car", @"selLabel",
                                                             @"DEMO", @"selNetPass",
                                                             @"DEMO", @"selUserPass",
-                                                            @"car_models_signaturered.png", @"selImagePath",
+                                                            @"car_roadster_lightninggreen.png", @"selImagePath",
                                                             @"", @"apnsDeviceid",
                                                             @"", @"locationGroups",
                                                             @"", @"cacheWeatherCar",
@@ -161,7 +161,7 @@
     car.label = @"Demonstration Car";
     car.netpass = @"DEMO";
     car.userpass = @"DEMO";
-    car.imagepath = @"car_models_signaturered.png";
+    car.imagepath = @"car_roadster_lightninggreen.png";
     if (![context save:&error])
       {
       NSLog(@"Whoops, couldn't save: %@", [error localizedDescription]);
