@@ -41,9 +41,11 @@
 #define OVMS_LED_RED 0             // Red LED
 #define OVMS_LED_GRN 1             // Green LED
 
+extern unsigned char led_code[OVMS_LED_N];
+
 void led_set(unsigned char, signed char); // Set LED
 void led_start(void);              // Restart LED sequence immediately
-void led_inititalise(void);        // LED Initialisation
+void led_initialise(void);        // LED Initialisation
 void led_isr(void);                // LED ISR
 
 #endif // #ifndef __OVMS_LED_H

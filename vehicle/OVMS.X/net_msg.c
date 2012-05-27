@@ -169,7 +169,7 @@ void net_msg_register(void)
     }
   token[TOKEN_SIZE] = 0;
 
-  p = par_get(PARAM_NETPASS1);
+  p = par_get(PARAM_SERVERPASS);
   hmac_md5(token, TOKEN_SIZE, p, strlen(p), digest);
 
   net_puts_rom("MP-C 0 ");
@@ -177,7 +177,7 @@ void net_msg_register(void)
   net_puts_rom(" ");
   base64encodesend(digest, MD5_SIZE);
   net_puts_rom(" ");
-  p = par_get(PARAM_MYID);
+  p = par_get(PARAM_VEHICLEID);
   net_puts_ram(p);
   net_puts_rom("\r\n");
   }
@@ -358,7 +358,7 @@ void net_msg_server_welcome(char *msg)
     return; // Server is using our token!
 
   // Validate server token
-  p = par_get(PARAM_NETPASS1);
+  p = par_get(PARAM_SERVERPASS);
   hmac_md5(msg, strlen(msg), p, strlen(p), digest);
   base64encode(digest, MD5_SIZE, net_scratchpad);
   if (strcmp(d,net_scratchpad)!=0)
@@ -409,7 +409,7 @@ void net_msg_server_welcome(char *msg)
     ptokenmade=1; // And enable paranoid mode from now on...
 
     // And calculate the pdigest for future use
-    p = par_get(PARAM_REGPASS);
+    p = par_get(PARAM_MODULEPASS);
     hmac_md5(ptoken, strlen(ptoken), p, strlen(p), pdigest);
     }
   else
@@ -553,6 +553,7 @@ void net_msg_cmd_do(void)
           sys_features[k] = atoi(p);
           if (k>=FEATURES_MAP_PARAM) // Top N features are persistent
             par_set(PARAM_FEATURE_S+(k-FEATURES_MAP_PARAM), p);
+          if (k == FEATURE_CANWRITE) can_initialise();
           sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
           }
         else
@@ -570,7 +571,7 @@ void net_msg_cmd_do(void)
       for (k=0;k<PARAM_MAX;k++)
         {
         p = par_get(k);
-        if (k==PARAM_NETPASS1) *p=0; // Don't show netpass1
+        if (k==PARAM_SERVERPASS) *p=0; // Don't show netpass1
         sprintf(net_scratchpad, (rom far char*)"MP-0 c3,0,%d,%d,%s",
                 k,PARAM_MAX,p);
         net_msg_encode_puts();
@@ -588,6 +589,7 @@ void net_msg_cmd_do(void)
           {
           par_set(k, p);
           sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+          if (k == PARAM_MILESKM) can_initialise();
           }
         else
           {

@@ -868,8 +868,10 @@ void net_state_ticker60(void)
         }
       if ((net_link==1)&&(net_apps_connected>0))
         {
-        p = par_get(PARAM_S_GROUP);
         net_msg_start();
+        p = par_get(PARAM_S_GROUP1);
+        if (*p != 0) net_msg_group(p);
+        p = par_get(PARAM_S_GROUP2);
         if (*p != 0) net_msg_group(p);
         net_msg_stat();
         net_msg_gps();
@@ -946,8 +948,10 @@ void net_state_ticker600(void)
           }
         else
           {
-          p = par_get(PARAM_S_GROUP);
           net_msg_start();
+          p = par_get(PARAM_S_GROUP1);
+          if (*p != 0) net_msg_group(p);
+          p = par_get(PARAM_S_GROUP2);
           if (*p != 0) net_msg_group(p);
           net_msg_stat();
           net_msg_gps();
