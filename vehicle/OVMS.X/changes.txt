@@ -28,6 +28,51 @@
 ; THE SOFTWARE.
 */
 
+2012-05-27 1.2.7       Preliminary firmware 1.2.7
+                       Bug fix for off-by-one-can-byte bug in roadster id from VIN
+                       Add homelink and charge timer support, plus misc fixes
+                       Only send non-empty params to PARAMS? sms command
+                       Remove need to RESET after can write change
+                       Only NETINIT (not SOFTRESET) after a parameter change
+                       Re-label parameters internally to match new user-friendly names
+                       Re-work of sms command handlers to be table driven - saving 6% of flash
+                       Use the 6% of flash we saved to implement a bunch of SMS commands
+                         REGISTER?                                  Report on registered phone
+                         REGISTER <modulepass>                      Register caller phone
+                         PASS?                                      Report on module password
+                         PASS     <modulepass>                      Set new module password
+                         GPS?/GPS [<modulepass>]                    Report GPS location
+                         STAT?/STAT [<modulepass>]                  Report status
+                         PARAMS? [<modulepass>]                     Report on parameters
+                         PARAMS <param2> <param3> .. <paramN>       Set parameters
+                         MODULE? [<modulepass>]                     Report on module parameters
+                         MODULE <vehicleid> <units> <notifies>      Set module parameters
+                         GPRS? [<modulepass>]                       Report on GPRS parameters and status
+                         GPRS <gprsapn> <gprsuser> <gprspass>       Set GPRS parameters
+                         SERVER? [<modulepass>]                     Report on server parameters
+                         SERVER <serverip> <serverpass> <paranoid>  Set server parameters
+                         DIAG?/DIAG [<modulepass>]                  Technical diagnostics
+                         FEATURES? [<modulepass>]                   Report on features configured
+                         FEATURE <feature> <value>                  Set specified feature value
+                         HOMELINK <button>                          Activate homelink 0, 1 or 2
+                         LOCK <pin>                                 Lock car (with specified pin)
+                         UNLOCK <pin>                               Unlock car (with specified pin)
+                         VALET <pin>                                Activate valet mode (with specified pin)
+                         UNVALET <pin>                              Deactivate valet mode (with specified pin)
+                         CHARGEMODE <mode> <current>                Set charge mode (sta, sto, ran, per) and current limit (in Amps)
+                         CHARGESTART [<modulepass>]                 Start charge immediately
+                         CHARGESTOP [<modulepass>]                  Stop charge immediately
+                         VERSION [<modulepass>]                     Report module firmware version
+                         RESET [<modulepass>]                       Reset module
+
+2012-05-11 1.2.5       Preliminary firmware 1.2.5
+                       LED re-work
+                       Support multiple vehicle configurations - TeslaRoadster and VoltAmpera
+                       NET driver tidy-ups
+                       Auto-support Tesla Roadster v1.5 cars
+                       Issue #38 - Prevent user from locking car if car is ON
+                       Issue #39 - Alert (SMS/PUSH) if trunk is opened while in valet mode
+
 2012-03-30 1.2.2       End-User firmware 1.2.2
                        Issue #31 Performance mode bug fix and kludgy workaround
                        Issue #32 - Bug in net_sms handling CARBITS feature #14

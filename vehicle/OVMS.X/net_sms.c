@@ -677,9 +677,13 @@ void net_sms_handle_chargestop(char *caller, char *buf, unsigned char pos, char 
 
 void net_sms_handle_version(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
   {
-  sprintf(net_scratchpad, (rom far char*)"OVMS Firmware version: %d.%d.%d",
-          ovms_firmware[0],ovms_firmware[1],ovms_firmware[2]);
-  net_send_sms_ram(caller,net_scratchpad);
+  if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
+      (net_sms_checkcaller(caller)))
+    {
+    sprintf(net_scratchpad, (rom far char*)"OVMS Firmware version: %d.%d.%d",
+            ovms_firmware[0],ovms_firmware[1],ovms_firmware[2]);
+    net_send_sms_ram(caller,net_scratchpad);
+    }
   }
 
 void net_sms_handle_reset(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
