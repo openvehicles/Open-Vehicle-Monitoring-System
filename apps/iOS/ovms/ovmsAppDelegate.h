@@ -237,5 +237,6 @@
 - (void)commandDoDeactivateValet:(NSString*)pin;
 - (void)commandDoUSSD:(NSString*)ussd;
 - (void)commandDoRequestGPRSData;
+- (void)commandDoHomelink:(int)button;
 
 @end

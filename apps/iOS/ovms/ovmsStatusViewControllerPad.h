@@ -73,10 +73,12 @@
 @property (strong, nonatomic) IBOutlet UIButton *m_wakeup_button;
 @property (strong, nonatomic) IBOutlet UIButton *m_lock_button;
 @property (strong, nonatomic) IBOutlet UIButton *m_valet_button;
+@property (strong, nonatomic) IBOutlet UIButton *m_homelink_button;
 
 - (IBAction)ChargeSliderTouch:(id)sender;
 - (IBAction)ChargeSliderValue:(id)sender;
 - (IBAction)WakeupButton:(id)sender;
+- (IBAction)HomelinkButton:(id)sender;
 - (IBAction)locationSnapped:(id)sender;
 
 -(void) update;

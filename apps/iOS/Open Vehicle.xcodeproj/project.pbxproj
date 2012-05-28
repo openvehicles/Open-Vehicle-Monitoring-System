@@ -110,6 +110,7 @@
 		4DAB2C741492109C00E1098C /* ovmsBodyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAB2C731492109C00E1098C /* ovmsBodyViewController.m */; };
 		4DAB2C77149216C000E1098C /* carlock.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C75149216C000E1098C /* carlock.png */; };
 		4DAB2C78149216C000E1098C /* carunlock.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB2C76149216C000E1098C /* carunlock.png */; };
+		4DAB4FE415739D8100D782E5 /* homelink-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DAB4FE315739D8100D782E5 /* homelink-logo.png */; };
 		4DAD5325147D301C00949EE8 /* ovmsCarsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */; };
 		4DAD532C147D317300949EE8 /* ovmsCarsFormViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DAD532B147D317300949EE8 /* ovmsCarsFormViewController.m */; };
 		4DBB7930148270A50055769F /* connection_good.png in Resources */ = {isa = PBXBuildFile; fileRef = 4DBB792D148270A50055769F /* connection_good.png */; };
@@ -354,6 +355,7 @@
 		4DAB2C731492109C00E1098C /* ovmsBodyViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsBodyViewController.m; sourceTree = "<group>"; };
 		4DAB2C75149216C000E1098C /* carlock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carlock.png; sourceTree = "<group>"; };
 		4DAB2C76149216C000E1098C /* carunlock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = carunlock.png; sourceTree = "<group>"; };
+		4DAB4FE315739D8100D782E5 /* homelink-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "homelink-logo.png"; sourceTree = "<group>"; };
 		4DAD5323147D301C00949EE8 /* ovmsCarsTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsTableViewController.h; sourceTree = "<group>"; };
 		4DAD5324147D301C00949EE8 /* ovmsCarsTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ovmsCarsTableViewController.m; sourceTree = "<group>"; };
 		4DAD532A147D317300949EE8 /* ovmsCarsFormViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ovmsCarsFormViewController.h; sourceTree = SOURCE_ROOT; };
@@ -628,6 +630,7 @@
 		4D91CEF81473ECE500CBA435 /* Other Images */ = {
 			isa = PBXGroup;
 			children = (
+				4DAB4FE315739D8100D782E5 /* homelink-logo.png */,
 				4D2D3DD815175ABD0014A0AD /* signalbars-0.png */,
 				4D2D3DD915175ABD0014A0AD /* signalbars-1.png */,
 				4D2D3DDA15175ABD0014A0AD /* signalbars-2.png */,
@@ -1119,6 +1122,7 @@
 				4D5480511555781A00DE575A /* car_default.png in Resources */,
 				4D5480531555783A00DE575A /* ol_car_default.png in Resources */,
 				4D5480551555785A00DE575A /* map_car_default.png in Resources */,
+				4DAB4FE415739D8100D782E5 /* homelink-logo.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

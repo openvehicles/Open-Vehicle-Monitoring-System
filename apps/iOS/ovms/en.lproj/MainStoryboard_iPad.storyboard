@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.1" toolsVersion="2182" systemVersion="11E53" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" initialViewController="yen-VS-8ek">
     <dependencies>
+        <deployment defaultVersion="1296" identifier="iOS"/>
         <development defaultVersion="4200" identifier="xcode"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="1179"/>
     </dependencies>
@@ -379,6 +380,33 @@
                                 <rect key="frame" x="425" y="89" width="267" height="305"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                             </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="HOMELINK" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="9" id="xDE-kV-B51">
+                                <rect key="frame" x="637" y="204" width="57" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="9"/>
+                                <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <button opaque="NO" alpha="0.019999999552965164" tag="201" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="WJf-q2-VXi" userLabel="Homelink Button">
+                                <rect key="frame" x="637" y="184" width="56" height="36"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="boldSystem" size="button"/>
+                                <state key="normal">
+                                    <color key="titleColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="HomelinkButton:" destination="KQf-3p-4Zw" eventType="touchUpInside" id="LAe-EZ-Yv4"/>
+                                </connections>
+                            </button>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="homelink-logo.png" id="WLd-yi-1bi">
+                                <rect key="frame" x="655" y="184" width="24" height="24"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
                     </view>
@@ -440,6 +468,7 @@
                         <outlet property="m_car_wheel_rr_temp" destination="rFG-Ei-We6" id="Mec-On-G8m"/>
                         <outlet property="m_charger_plug" destination="mDO-4f-x0R" id="vR0-by-wfZ"/>
                         <outlet property="m_charger_slider" destination="aiv-UH-I7F" id="QE8-i4-fEl"/>
+                        <outlet property="m_homelink_button" destination="WJf-q2-VXi" id="sbY-Lz-SxL"/>
                         <outlet property="m_locationsnap" destination="73Q-Ll-2FM" id="OmQ-iB-DhY"/>
                         <outlet property="m_lock_button" destination="Zqf-bg-cI2" id="Pnf-EO-fSC"/>
                         <outlet property="m_valet_button" destination="NLZ-1v-Ycb" id="ULE-H3-1rI"/>
@@ -1368,6 +1397,7 @@
         <image name="carvaletoff.png" width="304" height="606"/>
         <image name="charger_plug.png" width="268" height="70"/>
         <image name="connection_good.png" width="64" height="64"/>
+        <image name="homelink-logo.png" width="128" height="128"/>
         <image name="motortemp_letterbox.png" width="534" height="610"/>
         <image name="ol_car_roadster_thundergray.png" width="304" height="606"/>
         <image name="parking.png" width="300" height="300"/>

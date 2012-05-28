@@ -1083,6 +1083,10 @@
             [JHNotificationManager notificationWithMessage:@"Valet Mode Deactivated"];
             [self didStopNetworking];
             break;
+          case 24:
+            [JHNotificationManager notificationWithMessage:@"Homelink Command Issued"];
+            [self didStopNetworking];
+            break;
           case 41:
             [JHNotificationManager notificationWithMessage:@"MMI/USSD Code Sent"];
             [self didStopNetworking];
@@ -1247,6 +1251,13 @@
   {
   [self commandIssue:@"30"];
   [TestFlight passCheckpoint:@"COMMAND_GPRSDATA"];
+  }
+
+- (void)commandDoHomelink:(int)button
+  {
+  [JHNotificationManager notificationWithMessage:@"Issuing Homelink Command..."];
+  [self commandIssue:[NSString stringWithFormat:@"24,%d",button]];
+  [TestFlight passCheckpoint:@"COMMAND_HOMELINK"];
   }
 
 /**

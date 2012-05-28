@@ -45,7 +45,9 @@
 @property (strong, nonatomic) IBOutlet UIButton *m_lock_button;
 @property (strong, nonatomic) IBOutlet UIButton *m_valet_button;
 @property (strong, nonatomic) IBOutlet UIButton *m_wakeup_button;
+@property (strong, nonatomic) IBOutlet UIButton *m_homelink_button;
 
 - (IBAction)WakeupButton:(id)sender;
+- (IBAction)HomelinkButon:(id)sender;
 
 @end

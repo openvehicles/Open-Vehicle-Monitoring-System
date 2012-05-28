@@ -40,6 +40,7 @@
 @synthesize m_lock_button;
 @synthesize m_valet_button;
 @synthesize m_wakeup_button;
+@synthesize m_homelink_button;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -143,6 +144,7 @@
   [self setM_wakeup_button:nil];
     [self setM_car_weather:nil];
     [self setM_car_tpmsboxes:nil];
+  [self setM_homelink_button:nil];
   [super viewDidUnload];
   // Release any retained subviews of the main view.
   // e.g. self.myOutlet = nil;
@@ -195,12 +197,14 @@
     m_lock_button.enabled=YES;
     m_valet_button.enabled=YES;
     m_wakeup_button.enabled=YES;
+    m_homelink_button.enabled=YES;
     }
   else
     {
     m_lock_button.enabled=NO;
     m_valet_button.enabled=NO;
     m_wakeup_button.enabled=NO;    
+    m_homelink_button.enabled=NO;
     }
   
   int car_ambient_weather = [ovmsAppDelegate myRef].car_ambient_weather;
@@ -583,11 +587,33 @@
   [actionSheet showInView:self.view];
   }
 
+- (IBAction)HomelinkButon:(id)sender
+  {
+  // The homelink button has been pressed - let's ask which one he wants
+  UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Homelink"
+                                                           delegate:self
+                                                  cancelButtonTitle:@"Cancel"
+                                             destructiveButtonTitle:nil
+                                                  otherButtonTitles:@"1",@"2",@"3",nil];
+  [actionSheet showInView:self.view];
+  }
+
 - (void)actionSheet:(UIActionSheet *)sender clickedButtonAtIndex:(int)index
   {
-  if (index == [sender firstOtherButtonIndex])
+  if ([sender.title isEqualToString:@"Wakeup Car"])
     {
-    [[ovmsAppDelegate myRef] commandDoWakeupCar];
+    if (index == [sender firstOtherButtonIndex])
+      {
+      [[ovmsAppDelegate myRef] commandDoWakeupCar];
+      }
+    }
+  else if ([sender.title isEqualToString:@"Homelink"])
+    {
+    int button = index - [sender firstOtherButtonIndex];
+    if ((button>=0)&&(button<3))
+      {
+      [[ovmsAppDelegate myRef] commandDoHomelink:button];
+      }
     }
   }
 

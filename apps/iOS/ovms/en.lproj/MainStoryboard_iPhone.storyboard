@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="1.1" toolsVersion="2182" systemVersion="11E53" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="4">
     <dependencies>
+        <deployment defaultVersion="1296" identifier="iOS"/>
         <development defaultVersion="4200" identifier="xcode"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="1179"/>
     </dependencies>
@@ -696,6 +697,33 @@
                                 <rect key="frame" x="46" y="146" width="16" height="17"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="homelink-logo.png" id="HBh-mc-tup">
+                                <rect key="frame" x="255" y="146" width="24" height="24"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="HOMELINK" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="9" id="7jl-Gg-kK5">
+                                <rect key="frame" x="237" y="166" width="57" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="9"/>
+                                <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <button opaque="NO" alpha="0.02" tag="201" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="evp-Bg-OZv" userLabel="Homelink Button">
+                                <rect key="frame" x="237" y="146" width="56" height="36"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="boldSystem" size="button"/>
+                                <state key="normal">
+                                    <color key="titleColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="HomelinkButon:" destination="QVp-45-P9a" eventType="touchUpInside" id="08f-zF-dPj"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="0.086274512110000007" green="0.14509804549999999" blue="0.25098040700000002" alpha="1" colorSpace="deviceRGB"/>
                         <gestureRecognizers/>
@@ -730,6 +758,7 @@
                         <outlet property="m_car_wheel_rl_temp" destination="E6h-hK-fCp" id="6Ys-zX-CnL"/>
                         <outlet property="m_car_wheel_rr_pressure" destination="yOm-eK-EiO" id="zAi-bT-R8A"/>
                         <outlet property="m_car_wheel_rr_temp" destination="8Qv-w9-QFk" id="iOR-wb-W1L"/>
+                        <outlet property="m_homelink_button" destination="evp-Bg-OZv" id="PcU-Ek-ciI"/>
                         <outlet property="m_lock_button" destination="ZSe-co-Q5V" id="R0C-gD-OVm"/>
                         <outlet property="m_valet_button" destination="fn1-Q1-0eF" id="wWB-ti-3IX"/>
                         <outlet property="m_wakeup_button" destination="ME6-jf-qXo" id="8zO-wC-hfS"/>
@@ -1427,6 +1456,7 @@
         <image name="carvaletoff.png" width="304" height="606"/>
         <image name="charger_plug.png" width="268" height="70"/>
         <image name="connection_good.png" width="64" height="64"/>
+        <image name="homelink-logo.png" width="128" height="128"/>
         <image name="motortemp_letterbox.png" width="534" height="610"/>
         <image name="ol_car_roadster_thundergray.png" width="304" height="606"/>
         <image name="parking.png" width="300" height="300"/>
@@ -1443,6 +1473,7 @@
         <class className="ovmsBodyViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ovmsBodyViewController.h"/>
             <relationships>
+                <relationship kind="action" name="HomelinkButon:"/>
                 <relationship kind="action" name="WakeupButton:"/>
                 <relationship kind="outlet" name="m_car_ambient_temp" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_door_cp" candidateClass="UIImageView"/>
@@ -1470,6 +1501,7 @@
                 <relationship kind="outlet" name="m_car_wheel_rl_temp" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_wheel_rr_pressure" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="m_car_wheel_rr_temp" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="m_homelink_button" candidateClass="UIButton"/>
                 <relationship kind="outlet" name="m_lock_button" candidateClass="UIButton"/>
                 <relationship kind="outlet" name="m_valet_button" candidateClass="UIButton"/>
                 <relationship kind="outlet" name="m_wakeup_button" candidateClass="UIButton"/>
