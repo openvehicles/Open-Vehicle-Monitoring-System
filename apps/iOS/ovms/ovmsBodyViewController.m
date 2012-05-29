@@ -584,7 +584,7 @@
                                                   cancelButtonTitle:@"Cancel"
                                                   destructiveButtonTitle:nil
                                                   otherButtonTitles:@"Wakeup",nil];
-  [actionSheet showInView:self.view];
+  [actionSheet showInView:[self.view window]];
   }
 
 - (IBAction)HomelinkButon:(id)sender
@@ -595,7 +595,7 @@
                                                   cancelButtonTitle:@"Cancel"
                                              destructiveButtonTitle:nil
                                                   otherButtonTitles:@"1",@"2",@"3",nil];
-  [actionSheet showInView:self.view];
+  [actionSheet showInView:[self.view window]];
   }
 
 - (void)actionSheet:(UIActionSheet *)sender clickedButtonAtIndex:(int)index
