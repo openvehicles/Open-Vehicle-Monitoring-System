@@ -188,6 +188,38 @@
     }
   }
 
+- (void)setEditing:(BOOL)editing animated:(BOOL)animated
+  {
+  if (editing)
+    {
+    // Disable disclosure
+    for (int k=0;k<[_cars count]; k++)
+      {
+      Cars *car = [_cars objectAtIndex:k];
+      NSIndexPath *indexPath = [NSIndexPath indexPathForRow: k inSection: 0];
+      UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+      UIButton *disclosure = (UIButton*)[cell viewWithTag:3];
+      UIButton *info = (UIButton*)[cell viewWithTag:5];
+      UIImageView *iview = (UIImageView*)[cell viewWithTag:8];
+      if ([car.vehicleid isEqualToString:[ovmsAppDelegate myRef].sel_car])
+        {
+        disclosure.enabled = NO;
+        disclosure.hidden = YES;
+        info.enabled = NO;
+        info.hidden = YES;
+        iview.hidden = YES;
+        }
+      }
+    [super setEditing:editing animated:animated];
+    }
+  else
+    {
+    // Re-select the row
+    [super setEditing:editing animated:animated];
+    [self update];
+    }
+  }
+
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
