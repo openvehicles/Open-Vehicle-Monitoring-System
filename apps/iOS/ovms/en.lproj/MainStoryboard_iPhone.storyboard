@@ -272,7 +272,7 @@
             </objects>
             <point key="canvasLocation" x="689" y="1275"/>
         </scene>
-        <!--Ovms Cars Table View Controller - Cars-->
+        <!--Ovms Cars Table View Controller - Settings-->
         <scene sceneID="9Oa-SP-kvN">
             <objects>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OVn-SP-h2j" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -347,7 +347,7 @@
                             <outlet property="delegate" destination="T4g-Sv-yXP" id="HKn-Lh-2uP"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Cars" id="k8k-XQ-p3Z">
+                    <navigationItem key="navigationItem" title="Settings" id="k8k-XQ-p3Z">
                         <barButtonItem key="leftBarButtonItem" title="New" id="TPP-F9-hgC">
                             <connections>
                                 <segue destination="BXs-pp-JHG" kind="push" identifier="newCar" id="mTX-H5-o9Y"/>
