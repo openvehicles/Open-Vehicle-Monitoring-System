@@ -47,6 +47,16 @@
 			<string>PSTextFieldSpecifier</string>
 		</dict>
 		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Share Vehicle Colour</string>
+			<key>Key</key>
+			<string>ovmsShareColour</string>
+			<key>DefaultValue</key>
+			<true/>
+		</dict>
+		<dict>
 			<key>Title</key>
 			<string>www.openvehicles.com</string>
 			<key>Type</key>
@@ -87,6 +97,56 @@
 			<string>Password</string>
 			<key>Type</key>
 			<string>PSTextFieldSpecifier</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+			<key>Title</key>
+			<string>Metrics</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Temperatures</string>
+			<key>Key</key>
+			<string>ovmsTemperatures</string>
+			<key>DefaultValue</key>
+			<string>-</string>
+			<key>Titles</key>
+			<array>
+				<string>Car Chooses</string>
+				<string>Celcius</string>
+				<string>Fahrenheit</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<string>-</string>
+				<string>K</string>
+				<string>M</string>
+			</array>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Distances</string>
+			<key>Key</key>
+			<string>ovmsDistances</string>
+			<key>DefaultValue</key>
+			<string>-</string>
+			<key>Titles</key>
+			<array>
+				<string>Car Chooses</string>
+				<string>Kilometers</string>
+				<string>Miles</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<string>-</string>
+				<string>K</string>
+				<string>M</string>
+			</array>
 		</dict>
 	</array>
 	<key>Title</key>

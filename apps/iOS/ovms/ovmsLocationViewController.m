@@ -131,7 +131,7 @@
       [UIView setAnimationDuration:5.0];
       [UIView setAnimationCurve:UIViewAnimationCurveLinear];
       [self.m_car_location setDirection:[ovmsAppDelegate myRef].car_direction%360];
-      [self.m_car_location setSpeed:[ovmsAppDelegate myRef].car_speed];
+      [self.m_car_location setSpeed:[ovmsAppDelegate myRef].car_speed_s];
       [self.m_car_location setCoordinate: location];
       if (self.m_autotrack)
         {
@@ -155,10 +155,10 @@
       // Create the vehicle annotation
       ovmsVehicleAnnotation *pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
       [pa setTitle:[ovmsAppDelegate myRef].sel_car];
-      [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
+      [pa setSubtitle:[ovmsAppDelegate myRef].car_speed_s];
       [pa setImagefile:[ovmsAppDelegate myRef].sel_imagepath];
       [pa setDirection:([ovmsAppDelegate myRef].car_direction)%360];
-      [pa setSpeed:[ovmsAppDelegate myRef].car_speed];
+      [pa setSpeed:[ovmsAppDelegate myRef].car_speed_s];
       [myMapView addAnnotation:pa];
       self.m_car_location = pa;
       
@@ -202,10 +202,10 @@
       // Update an existing car
       [pa setCoordinate:location];
       [pa setTitle:vehicleid];
-      [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
+      [pa setSubtitle:[ovmsAppDelegate myRef].car_speed_s];
       [pa setImagefile:@"connection_good.png"];
       [pa setDirection:direction];
-      [pa setSpeed:speed];
+      [pa setSpeed:[[ovmsAppDelegate myRef] convertSpeedUnits:speed]];
       }
     else
       {
@@ -213,10 +213,10 @@
       pa = [[ovmsVehicleAnnotation alloc] initWithCoordinate:location];
       [pa setGroupCar:YES];
       [pa setTitle:vehicleid];
-      [pa setSubtitle:[NSString stringWithFormat:@"%f, %f", pa.coordinate.latitude, pa.coordinate.longitude]];
+      [pa setSubtitle:[ovmsAppDelegate myRef].car_speed_s];
       [pa setImagefile:@"car_default.png"];
       [pa setDirection:direction%360];
-      [pa setSpeed:speed];
+      [pa setSpeed:[[ovmsAppDelegate myRef] convertSpeedUnits:speed]];
       [m_groupcar_locations setObject:pa forKey:vehicleid];
       [myMapView addAnnotation:pa];
       NSLog(@"groupCarCreated %@ count=%d", vehicleid,[[myMapView annotations] count]);

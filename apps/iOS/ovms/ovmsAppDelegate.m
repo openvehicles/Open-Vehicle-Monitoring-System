@@ -87,6 +87,20 @@
 
 @synthesize car_ambient_weather;
 
+@synthesize car_idealrange_s;
+@synthesize car_estimatedrange_s;
+@synthesize car_tpem_s;
+@synthesize car_tmotor_s;
+@synthesize car_tbattery_s;
+@synthesize car_trip_s;
+@synthesize car_odometer_s;
+@synthesize car_speed_s;
+@synthesize car_ambient_temp_s;
+@synthesize car_tpms_fr_temp_s;
+@synthesize car_tpms_rr_temp_s;
+@synthesize car_tpms_fl_temp_s;
+@synthesize car_tpms_rl_temp_s;
+
 + (ovmsAppDelegate *) myRef
 {
   //return self;
@@ -108,6 +122,9 @@
   NSDictionary *appDefaults = [NSDictionary
                                dictionaryWithObjectsAndKeys:@"tmc.openvehicles.com", @"ovmsServer",
                                                             @"6867", @"ovmsPort",
+                                                            @"1", @"ovmsShareColour",
+                                                            @"-", @"ovmsTemperatures",
+                                                            @"-", @"ovmsDistances",
                                                             @"DEMO", @"selCar",
                                                             @"Demonstration Car", @"selLabel",
                                                             @"DEMO", @"selNetPass",
@@ -402,6 +419,8 @@
     
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString* ovmsServer = [defaults stringForKey:@"ovmsServer"];
+    BOOL ovmsShareColour = [defaults integerForKey:@"ovmsShareColour"];
+    NSString* ovmsSelImagePath = [defaults stringForKey:@"selImagePath"];
     int ovmsPort = [defaults integerForKey:@"ovmsPort"];
     const char *password = [sel_netpass UTF8String];
     const char *vehicleid = [sel_car UTF8String];
@@ -427,7 +446,11 @@
     
     hmac_md5(token, TOKEN_SIZE, (const uint8_t*)password, strlen(password), digest);
     base64encode(digest, MD5_SIZE, edigest);
-    NSString *welcomeStr = [NSString stringWithFormat:@"MP-A 0 %s %s %s\r\n",token,edigest,vehicleid];
+    NSString *welcomeStr;
+    if (ovmsShareColour)
+      welcomeStr = [NSString stringWithFormat:@"MP-A 0 %s %s %s %@\r\n",token,edigest,vehicleid,ovmsSelImagePath];
+    else
+      welcomeStr = [NSString stringWithFormat:@"MP-A 0 %s %s %s\r\n",token,edigest,vehicleid];
     NSData *welcomeData = [welcomeStr dataUsingEncoding:NSUTF8StringEncoding];
     [asyncSocket writeData:welcomeData withTimeout:-1 tag:0];    
     [self didStartNetworking];
@@ -507,6 +530,20 @@
   
   car_ambient_weather = -1;
 
+  car_idealrange_s = @"";
+  car_estimatedrange_s = @"";
+  car_tpem_s = @"";
+  car_tmotor_s = @"";
+  car_tbattery_s = @"";
+  car_trip_s = @"";
+  car_odometer_s = @"";
+  car_speed_s = @"";
+  car_ambient_temp_s = @"";
+  car_tpms_fr_temp_s = @"";
+  car_tpms_rr_temp_s = @"";
+  car_tpms_fl_temp_s = @"";
+  car_tpms_rl_temp_s = @"";
+
   [self notifyUpdates];
 
   if (tim)
@@ -517,7 +554,7 @@
 }
 
 - (void)handleCommand:(char)code command:(NSString*)cmd
-  {
+  {  
   if (code == 'E')
     {
     // We have a paranoid mode message
@@ -584,6 +621,8 @@
         car_chargemode = [lparts objectAtIndex:5];
         car_idealrange = [[lparts objectAtIndex:6] intValue];
         car_estimatedrange = [[lparts objectAtIndex:7] intValue];
+        car_idealrange_s = [self convertDistanceUnits:car_idealrange];
+        car_estimatedrange_s = [self convertDistanceUnits:car_estimatedrange];
         }
       if ([lparts count]>=15)
         {
@@ -696,6 +735,13 @@
         car_trip = [[lparts objectAtIndex:6] intValue];
         car_odometer = [[lparts objectAtIndex:7] intValue];
         car_speed = [[lparts objectAtIndex:8] intValue];
+        car_tpem_s = [self convertTemperatureUnits:car_tpem];
+        car_tmotor_s = [self convertTemperatureUnits:car_tmotor];
+        car_tbattery_s = [self convertTemperatureUnits:car_tbattery];
+        car_trip_s = [self convertDistanceUnits:car_trip];
+        car_odometer_s = [self convertDistanceUnits:car_odometer];
+        car_speed_s = [self convertSpeedUnits:car_speed];
+
         if ([lparts count] >= 10)
           car_parktime = [[lparts objectAtIndex:9] intValue];
         else
@@ -704,6 +750,8 @@
           car_ambient_temp = [[lparts objectAtIndex:10] intValue];
         else
           car_ambient_temp = -127;
+        car_ambient_temp_s = [self convertTemperatureUnits:car_ambient_temp];
+
         if ([lparts count] >= 14)
           {
           car_doors3 = [[lparts objectAtIndex:11] intValue];
@@ -725,12 +773,16 @@
         {
         car_tpms_fr_pressure = [[lparts objectAtIndex:0] floatValue];
         car_tpms_fr_temp = [[lparts objectAtIndex:1] intValue];
+        car_tpms_fr_temp_s = [self convertTemperatureUnits:car_tpms_fr_temp];
         car_tpms_rr_pressure = [[lparts objectAtIndex:2] floatValue];
         car_tpms_rr_temp = [[lparts objectAtIndex:3] intValue];
+        car_tpms_rr_temp_s = [self convertTemperatureUnits:car_tpms_rr_temp];
         car_tpms_fl_pressure = [[lparts objectAtIndex:4] floatValue];
         car_tpms_fl_temp = [[lparts objectAtIndex:5] intValue];
+        car_tpms_fl_temp_s = [self convertTemperatureUnits:car_tpms_fl_temp];
         car_tpms_rl_pressure = [[lparts objectAtIndex:6] floatValue];
         car_tpms_rl_temp = [[lparts objectAtIndex:7] intValue];
+        car_tpms_rl_temp_s = [self convertTemperatureUnits:car_tpms_rl_temp];
         }
       if ([lparts count]>=9)
         {
@@ -743,6 +795,92 @@
     }
 
   [self notifyUpdates];
+  }
+
+- (NSString*)convertDistanceUnits:(int)distance
+  {
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  NSString *defaultsD = [defaults stringForKey:@"ovmsDistances"];
+
+  if ([self.car_units isEqualToString:@"-"]) return @"";
+
+  if (([defaultsD isEqualToString:@"-"])||([defaultsD isEqualToString:self.car_units]))
+    {
+    // Go with the car preference
+    NSString *fu;
+    if ([self.car_units isEqualToString:@"K"])
+      fu = @"km";
+    else
+      fu = @"m";
+    return [NSString stringWithFormat:@"%d%@",distance,fu];
+    }
+  else if ([defaultsD isEqualToString:@"K"])
+    {
+    // Car is in miles, but we want kilometers
+    return [NSString stringWithFormat:@"%d%s",(distance*8)/5,"km"];
+    }
+  else
+    {
+    // Car is in kilometers, but we want miles
+    return [NSString stringWithFormat:@"%d%s",(distance*5)/8,"m"];
+    }
+  }
+
+- (NSString*)convertSpeedUnits:(int)speed
+  {
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  NSString *defaultsD = [defaults stringForKey:@"ovmsDistances"];
+  
+  if ([self.car_units isEqualToString:@"-"]) return @"";
+
+  if (([defaultsD isEqualToString:@"-"])||([defaultsD isEqualToString:self.car_units]))
+    {
+    // Go with the car preference
+    NSString *fu;
+    if ([self.car_units isEqualToString:@"K"])
+      fu = @"kph";
+    else
+      fu = @"mph";
+    return [NSString stringWithFormat:@"%d%@",speed,fu];
+    }
+  else if ([defaultsD isEqualToString:@"K"])
+    {
+    // Car is in miles, but we want kilometers
+    return [NSString stringWithFormat:@"%d%s",(speed*8)/5,"kph"];
+    }
+  else
+    {
+    // Car is in kilometers, but we want miles
+    return [NSString stringWithFormat:@"%d%s",(speed*5)/8,"mph"];
+    }
+  }
+
+- (NSString*)convertTemperatureUnits:(int)temp
+  {
+  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+  NSString *defaultsT = [defaults stringForKey:@"ovmsTemperatures"];
+  
+  if ([self.car_units isEqualToString:@"-"]) return @"";
+  
+  if (([defaultsT isEqualToString:@"-"])||([defaultsT isEqualToString:self.car_units]))
+    {
+    // Go with the car preference
+    if ([self.car_units isEqualToString:@"K"])
+      return [NSString stringWithFormat:@"%d°C",temp];
+    else
+      return [NSString stringWithFormat:@"%d°F",9*temp/5+32];
+    }
+  else if ([defaultsT isEqualToString:@"K"])
+    {
+    // Car is in fahrenheit, but we want celcius
+    // N.B. Already in celcius, so no conversion necessary
+    return [NSString stringWithFormat:@"%d°C",temp];
+    }
+  else
+    {
+    // Car is in celcius, but we want fahrenheit
+    return [NSString stringWithFormat:@"%d°F",9*temp/5+32];
+    }
   }
 
 - (void)registerForUpdate:(id)target

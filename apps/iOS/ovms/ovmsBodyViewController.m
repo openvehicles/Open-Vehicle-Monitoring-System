@@ -333,24 +333,9 @@
     m_car_temp_motor_l.textColor = [UIColor grayColor];
     m_car_temp_battery.textColor = [UIColor grayColor];
     m_car_temp_battery_l.textColor = [UIColor grayColor];
-    if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
-      {
-      m_car_temp_pem.text = [NSString stringWithFormat:@"%dºC",
-                             [ovmsAppDelegate myRef].car_tpem];
-      m_car_temp_motor.text = [NSString stringWithFormat:@"%dºC",
-                               [ovmsAppDelegate myRef].car_tmotor];
-      m_car_temp_battery.text = [NSString stringWithFormat:@"%dºC",
-                                 [ovmsAppDelegate myRef].car_tbattery];
-      }
-    else
-      {
-      m_car_temp_pem.text = [NSString stringWithFormat:@"%dºF",
-                             (9*[ovmsAppDelegate myRef].car_tpem)/5+32];
-      m_car_temp_motor.text = [NSString stringWithFormat:@"%dºF",
-                               (9*[ovmsAppDelegate myRef].car_tmotor)/5+32];
-      m_car_temp_battery.text = [NSString stringWithFormat:@"%dºF",
-                                 (9*[ovmsAppDelegate myRef].car_tbattery)/5+32];
-      }
+    m_car_temp_pem.text = [ovmsAppDelegate myRef].car_tpem_s;
+    m_car_temp_motor.text = [ovmsAppDelegate myRef].car_tmotor_s;
+    m_car_temp_battery.text = [ovmsAppDelegate myRef].car_tbattery_s;
     }
   else
     {
@@ -364,24 +349,9 @@
     m_car_temp_motor_l.textColor = [UIColor whiteColor];
     m_car_temp_battery.textColor = [UIColor whiteColor];
     m_car_temp_battery_l.textColor = [UIColor whiteColor];
-    if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
-      {
-      m_car_temp_pem.text = [NSString stringWithFormat:@"%dºC",
-                             [ovmsAppDelegate myRef].car_tpem];
-      m_car_temp_motor.text = [NSString stringWithFormat:@"%dºC",
-                               [ovmsAppDelegate myRef].car_tmotor];
-      m_car_temp_battery.text = [NSString stringWithFormat:@"%dºC",
-                                 [ovmsAppDelegate myRef].car_tbattery];
-      }
-    else
-      {
-      m_car_temp_pem.text = [NSString stringWithFormat:@"%dºF",
-                             (9*[ovmsAppDelegate myRef].car_tpem)/5+32];
-      m_car_temp_motor.text = [NSString stringWithFormat:@"%dºF",
-                               (9*[ovmsAppDelegate myRef].car_tmotor)/5+32];
-      m_car_temp_battery.text = [NSString stringWithFormat:@"%dºF",
-                                 (9*[ovmsAppDelegate myRef].car_tbattery)/5+32];
-      }
+    m_car_temp_pem.text = [ovmsAppDelegate myRef].car_tpem_s;
+    m_car_temp_motor.text = [ovmsAppDelegate myRef].car_tmotor_s;
+    m_car_temp_battery.text = [ovmsAppDelegate myRef].car_tbattery_s;
     }
 
   int car_stale_ambienttemps = [ovmsAppDelegate myRef].car_stale_ambienttemps;
@@ -393,23 +363,13 @@
     {
     // Stale Ambient temperature
     m_car_ambient_temp.textColor = [UIColor grayColor];
-    if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
-      m_car_ambient_temp.text = [NSString stringWithFormat:@"%dºC",
-                                 [ovmsAppDelegate myRef].car_ambient_temp];
-    else
-      m_car_ambient_temp.text = [NSString stringWithFormat:@"%dºF",
-                                 (9*[ovmsAppDelegate myRef].car_ambient_temp)/5+32];
+    m_car_ambient_temp.text = [ovmsAppDelegate myRef].car_ambient_temp_s;
     }
   else
     {
     // OK Ambient temperature
     m_car_ambient_temp.textColor = [UIColor whiteColor];
-    if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
-      m_car_ambient_temp.text = [NSString stringWithFormat:@"%dºC",
-                                 [ovmsAppDelegate myRef].car_ambient_temp];
-    else
-      m_car_ambient_temp.text = [NSString stringWithFormat:@"%dºF",
-                                 (9*[ovmsAppDelegate myRef].car_ambient_temp)/5+32];
+    m_car_ambient_temp.text = [ovmsAppDelegate myRef].car_ambient_temp_s;
     }
     
   int car_stale_tpms = [ovmsAppDelegate myRef].car_stale_tpms;
@@ -449,12 +409,7 @@
     {
     m_car_wheel_fr_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_fr_pressure];
-    if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
-      m_car_wheel_fr_temp.text = [NSString stringWithFormat:@"%dºC",
-                                  [ovmsAppDelegate myRef].car_tpms_fr_temp];
-    else
-      m_car_wheel_fr_temp.text = [NSString stringWithFormat:@"%dºF",
-                                  (9*[ovmsAppDelegate myRef].car_tpms_fr_temp)/5+32];
+    m_car_wheel_fr_temp.text = [ovmsAppDelegate myRef].car_tpms_fr_temp_s;
     }
   else
     {
@@ -466,12 +421,7 @@
     {
     m_car_wheel_rr_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_rr_pressure];
-    if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
-      m_car_wheel_rr_temp.text = [NSString stringWithFormat:@"%dºC",
-                                  [ovmsAppDelegate myRef].car_tpms_rr_temp];
-    else
-      m_car_wheel_rr_temp.text = [NSString stringWithFormat:@"%dºF",
-                                  (9*[ovmsAppDelegate myRef].car_tpms_rr_temp)/5+32];
+    m_car_wheel_rr_temp.text = [ovmsAppDelegate myRef].car_tpms_rr_temp_s;
     }
   else
     {
@@ -483,12 +433,7 @@
     {
     m_car_wheel_fl_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_fl_pressure];
-    if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
-      m_car_wheel_fl_temp.text = [NSString stringWithFormat:@"%dºC",
-                                  [ovmsAppDelegate myRef].car_tpms_fl_temp];
-    else
-      m_car_wheel_fl_temp.text = [NSString stringWithFormat:@"%dºF",
-                                  (9*[ovmsAppDelegate myRef].car_tpms_fl_temp)/5+32];
+    m_car_wheel_fl_temp.text = [ovmsAppDelegate myRef].car_tpms_fl_temp_s;
     }
   else
     {
@@ -500,12 +445,7 @@
     {
     m_car_wheel_rl_pressure.text = [NSString stringWithFormat:@"%0.1f PSI",
                                     [ovmsAppDelegate myRef].car_tpms_rl_pressure];
-    if ([[ovmsAppDelegate myRef].car_units isEqualToString:@"K"])
-      m_car_wheel_rl_temp.text = [NSString stringWithFormat:@"%dºC",
-                                  [ovmsAppDelegate myRef].car_tpms_rl_temp];
-    else
-      m_car_wheel_rl_temp.text = [NSString stringWithFormat:@"%dºF",
-                                  (9*[ovmsAppDelegate myRef].car_tpms_rl_temp)/5+32];
+    m_car_wheel_rl_temp.text = [ovmsAppDelegate myRef].car_tpms_rl_temp_s;
     }
   else
     {

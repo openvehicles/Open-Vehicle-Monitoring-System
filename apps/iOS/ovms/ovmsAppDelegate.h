@@ -116,6 +116,20 @@
   int car_stale_tpms;
 
   int car_ambient_weather;
+  
+  NSString* car_idealrange_s;
+  NSString* car_estimatedrange_s;
+  NSString* car_tpem_s;
+  NSString* car_tmotor_s;
+  NSString* car_tbattery_s;
+  NSString* car_trip_s;
+  NSString* car_odometer_s;
+  NSString* car_speed_s;
+  NSString* car_ambient_temp_s;
+  NSString* car_tpms_fr_temp_s;
+  NSString* car_tpms_rr_temp_s;
+  NSString* car_tpms_fl_temp_s;
+  NSString* car_tpms_rl_temp_s;
 }
 
 @property (strong, nonatomic) UIWindow *window;
@@ -192,6 +206,21 @@
 
 @property (assign) int car_ambient_weather;
 
+@property (strong, nonatomic) NSString* car_idealrange_s;
+@property (strong, nonatomic) NSString* car_estimatedrange_s;
+@property (strong, nonatomic) NSString* car_trip_s;
+@property (strong, nonatomic) NSString* car_odometer_s;
+@property (strong, nonatomic) NSString* car_speed_s;
+
+@property (strong, nonatomic) NSString* car_tpem_s;
+@property (strong, nonatomic) NSString* car_tmotor_s;
+@property (strong, nonatomic) NSString* car_tbattery_s;
+@property (strong, nonatomic) NSString* car_ambient_temp_s;
+@property (strong, nonatomic) NSString* car_tpms_fr_temp_s;
+@property (strong, nonatomic) NSString* car_tpms_rr_temp_s;
+@property (strong, nonatomic) NSString* car_tpms_fl_temp_s;
+@property (strong, nonatomic) NSString* car_tpms_rl_temp_s;
+
 + (ovmsAppDelegate *) myRef;
 - (void)saveContext;
 - (NSURL *)applicationDocumentsDirectory;
@@ -203,6 +232,10 @@
 - (void)handleCommand:(char)code command:(NSString*)cmd;
 - (void)switchCar:(NSString*)car;
 - (void)subscribeGroups;
+
+- (NSString*)convertDistanceUnits:(int)distance;
+- (NSString*)convertSpeedUnits:(int)speed;
+- (NSString*)convertTemperatureUnits:(int)temp;
 
 - (void)registerForUpdate:(id)target;
 - (void)deregisterFromUpdate:(id)target;

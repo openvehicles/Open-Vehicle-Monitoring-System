@@ -20,7 +20,7 @@
 @property (nonatomic, readonly, copy) NSString *subtitle;
 @property (nonatomic, readonly, copy) NSString *imagefile;
 @property (nonatomic, readonly) int direction;
-@property (nonatomic, readonly) int speed;
+@property (nonatomic, readonly, retain) NSString* speed;
 @property (nonatomic, readonly) BOOL groupcar;
 
 -(id) initWithCoordinate:(CLLocationCoordinate2D)newCoordinate;
@@ -29,7 +29,7 @@
 -(void)setSubtitle:(NSString *)newSubtitle;
 -(void)setImagefile:(NSString *)newImagefile;
 -(void)setDirection:(int)newDirection;
--(void)setSpeed:(int)newSpeed;
+-(void)setSpeed:(NSString*)newSpeed;
 -(void)setGroupCar:(BOOL)newGroupCar;
 
 -(void)setupView:(MKAnnotationView*)annotationView mapView:(MKMapView*)mapView;

@@ -254,12 +254,8 @@
 
   m_car_image.image=[UIImage imageNamed:[ovmsAppDelegate myRef].sel_imagepath];
   m_car_soc.text = [NSString stringWithFormat:@"%d%%",[ovmsAppDelegate myRef].car_soc];
-  m_car_range_ideal.text = [NSString stringWithFormat:@"%d%s",
-                           [ovmsAppDelegate myRef].car_idealrange,
-                           [units UTF8String]];
-  m_car_range_estimated.text = [NSString stringWithFormat:@"%d%s",
-                               [ovmsAppDelegate myRef].car_estimatedrange,
-                               [units UTF8String]];
+  m_car_range_ideal.text = [ovmsAppDelegate myRef].car_idealrange_s;
+  m_car_range_estimated.text = [ovmsAppDelegate myRef].car_estimatedrange_s;
   
   CGRect bounds = m_battery_front.bounds;
   CGPoint center = m_battery_front.center;

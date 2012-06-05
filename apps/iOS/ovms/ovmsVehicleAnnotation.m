@@ -33,7 +33,7 @@
     subtitle = @"";
     imagefile = @"";
     direction = -1;
-    speed = 0;
+    speed = @"";
     groupcar = NO;
     }
   
@@ -78,11 +78,12 @@
     }
   }
 
--(void)setSpeed:(int)newSpeed
+-(void)setSpeed:(NSString*)newSpeed
   {
-  if (speed != newSpeed)
+  if (![speed isEqualToString:newSpeed])
     {
     speed = newSpeed;
+    [self setSubtitle:newSpeed];
     [self updateAnnotationView];
     }
   }
@@ -106,6 +107,7 @@
     NSString *carimage;
     carimage = [NSString stringWithFormat:@"map_%@",imagefile];
     annotationView.image=[UIImage imageNamed:carimage];
+    annotationView.canShowCallout = YES;
     annotationView.contentMode = UIViewContentModeScaleAspectFill;
     if (groupcar)
       {
