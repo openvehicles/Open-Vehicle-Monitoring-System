@@ -148,7 +148,7 @@
     {
     NSArray *gp = [[locationGroups objectAtIndex:indexPath.row] componentsSeparatedByString:@","];
     [cellLabel setText:[gp objectAtIndex:0]];
-    [cellSwitch setOn:[[gp objectAtIndex:1] intValue]];
+    if ([gp count]>=2) [cellSwitch setOn:[[gp objectAtIndex:1] intValue]];
     }
   else
     {

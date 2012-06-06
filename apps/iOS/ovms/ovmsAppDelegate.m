@@ -362,7 +362,8 @@
       {
       NSArray *gp = [target componentsSeparatedByString:@","];
       NSString *groupname = [gp objectAtIndex:0];
-      BOOL groupenabled = [[gp objectAtIndex:1] intValue];
+      BOOL groupenabled = FALSE;
+      if ([gp count]>=2) groupenabled = [[gp objectAtIndex:1] intValue];
       if (groupenabled)
         {
         char buf[1024];
