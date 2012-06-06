@@ -88,14 +88,20 @@
 
 - (void)startSpinner:(NSString *)label
   {
-  MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.navigationController.view animated:YES];
-  hud.labelText = label; 
+  if (self.navigationController.view != nil)
+    {
+    MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.navigationController.view animated:YES];
+    hud.labelText = label; 
+    }
   m_table.userInteractionEnabled = NO;
   }
 
 - (void)stopSpinner
   {
-  [MBProgressHUD hideHUDForView:self.navigationController.view animated:YES];
+  if (self.navigationController.view != nil)
+    {
+    [MBProgressHUD hideHUDForView:self.navigationController.view animated:YES];
+    }
   m_table.userInteractionEnabled = YES;
   }
 
@@ -257,8 +263,11 @@
     case PARAM_PARANOID:
       [cellLabel setText:[NSString stringWithFormat:@"#%d: Paranoid Mode",indexPath.row]];
       break;
-    case PARAM_S_GROUP:
-      [cellLabel setText:[NSString stringWithFormat:@"#%d: Social Group",indexPath.row]];
+    case PARAM_S_GROUP1:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Social Group #1",indexPath.row]];
+      break;
+    case PARAM_S_GROUP2:
+      [cellLabel setText:[NSString stringWithFormat:@"#%d: Social Group #2",indexPath.row]];
       break;
     default:
       [cellLabel setText:[NSString stringWithFormat:@"#%d:",indexPath.row]];

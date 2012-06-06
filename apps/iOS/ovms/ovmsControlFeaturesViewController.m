@@ -87,14 +87,20 @@
 
 - (void)startSpinner:(NSString *)label
   {
-  MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.navigationController.view animated:YES];
-  hud.labelText = label; 
+  if (self.navigationController.view != nil)
+    {
+    MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.navigationController.view animated:YES];
+    hud.labelText = label;
+    }
   m_table.userInteractionEnabled = NO;
   }
 
 - (void)stopSpinner
   {
-  [MBProgressHUD hideHUDForView:self.navigationController.view animated:YES];
+  if (self.navigationController.view != nil)
+    {
+    [MBProgressHUD hideHUDForView:self.navigationController.view animated:YES];
+    }
   m_table.userInteractionEnabled = YES;
   }
 
