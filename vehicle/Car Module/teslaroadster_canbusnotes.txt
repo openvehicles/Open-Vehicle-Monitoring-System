@@ -198,13 +198,16 @@ Tesla Roadster CAN Bus analysis:
 
 	Charger V1.5
 		B1=0x95
-		B2=State 		(0x01=charging, 0x02=top off, 0x04=done, 0x0d=preparing to charge, 0x0e=wait-schedule, 0x0f=heating 0x15-0x19=stopped charging)
-		B3=Sub State 		(2=scheduled start, 3=by request, 5=timerwait?, 7=connect power cable, 9=xxMinutes-yyKWHrs,)
+		B2=State 		(0x01=charging, 0x02=top off, 0x04=done, 0x0c=interrupted, 0x0d=preparing to charge, 0x0e=wait-schedule, 0x0f=heating 0x15-0x19=stopped charging)
+		B3=Sub State 		(2=scheduled start, 3=by request, 5=timerwait?, 7=connect power cable, 9=xxMinutes-yyKWHrs, 0x0d=interrupted)
 		B4=0x64			(percentage pre-heating complete)
 		B5=Mode 2008 		(0=standard, 1=storage,3=range,4=performance)
 		B6=Mode 2010 roadster	(0x= standard, 1x=storage,3x=range,4x=performance)
 		B7=0x16	??
 		B8=Total KWhrs Charged
+
+		N.B. state=0x0c, sub-state=0x0d has been seen as a 'external charger problem ID:1084' situation
+		with ground protection fault on an HPC.
 
 	Doors
 		B1=0x96
