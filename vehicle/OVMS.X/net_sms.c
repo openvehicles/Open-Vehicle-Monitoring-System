@@ -353,8 +353,8 @@ void net_sms_handle_moduleq(char *caller, char *buf, unsigned char pos, char *co
   {
   char *p;
 
-  if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
-      (net_sms_checkcaller(caller)))
+  if ((net_sms_checkcaller(caller))||
+      ((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments))))
     {
     if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
@@ -395,7 +395,7 @@ void net_sms_handle_module(char *caller, char *buf, unsigned char pos, char *com
       par_set(PARAM_NOTIFIES, arguments);
       }
     }
-  net_send_sms_rom(caller,NET_MSG_PARAMS);
+  net_sms_handle_moduleq(caller, buf, pos, command, arguments);
   can_initialise();
   net_state_enter(NET_STATE_DONETINIT);
   }
@@ -404,8 +404,8 @@ void net_sms_handle_gprsq(char *caller, char *buf, unsigned char pos, char *comm
   {
   char *p;
 
-  if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
-      (net_sms_checkcaller(caller)))
+  if ((net_sms_checkcaller(caller))||
+      ((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments))))
     {
     if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
@@ -462,7 +462,7 @@ void net_sms_handle_gprs(char *caller, char *buf, unsigned char pos, char *comma
         par_set(PARAM_GPRSPASS, arguments);
       }
     }
-  net_send_sms_rom(caller,NET_MSG_PARAMS);
+  net_sms_handle_gprsq(caller, buf, pos, command, arguments);
   net_state_enter(NET_STATE_DONETINIT);
   }
 
@@ -470,8 +470,8 @@ void net_sms_handle_serverq(char *caller, char *buf, unsigned char pos, char *co
   {
   char *p;
 
-  if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
-      (net_sms_checkcaller(caller)))
+  if ((net_sms_checkcaller(caller))||
+      ((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments))))
     {
     if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
@@ -512,7 +512,7 @@ void net_sms_handle_server(char *caller, char *buf, unsigned char pos, char *com
       par_set(PARAM_PARANOID, arguments);
       }
     }
-  net_send_sms_rom(caller,NET_MSG_PARAMS);
+  net_sms_handle_serverq(caller, buf, pos, command, arguments);
   net_state_enter(NET_STATE_DONETINIT);
   }
 
