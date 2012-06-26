@@ -43,6 +43,7 @@
 unsigned char net_state = 0;                // The current state
 unsigned char net_state_vchar = 0;          //   A per-state CHAR variable
 unsigned int  net_state_vint = 0;           //   A per-state INT variable
+unsigned char net_cops_tries = 0;           // A counter for COPS attempts
 unsigned char net_timeout_goto = 0;         // State to auto-transition to, after timeout
 unsigned int  net_timeout_ticks = 0;        // Number of seconds before timeout auto-transition
 unsigned int  net_granular_tick = 0;        // An internal ticker used to generate 1min, 5min, etc, calls
@@ -318,6 +319,7 @@ void net_state_enter(unsigned char newstate)
       net_state_vchar = 0;
       net_apps_connected = 0;
       net_msg_disconnected();
+      net_cops_tries = 0; // Reset the COPS counter
       break;
     case NET_STATE_HARDSTOP:
       net_timeout_goto = NET_STATE_HARDSTOP2;
@@ -510,11 +512,19 @@ void net_state_activity()
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         {
         net_state_vint = 10; // Count-down for DONETINIT attempts
+        net_cops_tries = 0; // Successfully out of COPS
         net_state_enter(NET_STATE_DONETINIT); // COPS reconnect was OK
         }
       else if ( ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R')) ||
               (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0) )
-        net_state_enter(NET_STATE_SOFTRESET); // Reset the entire async
+        if (net_cops_tries++ < 20)
+          {
+          net_state_enter(NET_STATE_SOFTRESET); // Reset the entire async
+          }
+        else
+          {
+          net_state_enter(NET_STATE_HARDRESET); // Reset the entire async
+          }
       break;
     case NET_STATE_DONETINIT:
       if ((net_buf_pos >= 2)&&
