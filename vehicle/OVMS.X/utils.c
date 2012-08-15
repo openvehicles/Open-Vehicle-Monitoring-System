@@ -87,7 +87,7 @@ void modem_reboot(void)
 
   // send the reset signal by pulling down PWRKEY >1s
   PORTBbits.RB0 = 0;
-  delay100(12);
+  delay100(20);
   PORTBbits.RB0 = 1;
   }
 
