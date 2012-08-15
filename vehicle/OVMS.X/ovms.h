@@ -43,7 +43,7 @@
 #include "can.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 1,2,7
+#define OVMS_FIRMWARE_VERSION 1,2,8
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
