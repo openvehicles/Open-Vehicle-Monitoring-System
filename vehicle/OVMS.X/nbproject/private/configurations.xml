@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurationDescriptor version="62">
   <projectmakefile>Makefile</projectmakefile>
-  <defaultConf>2</defaultConf>
+  <defaultConf>5</defaultConf>
   <confs>
-    <conf name="TR_Production" type="2">
-      <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=BUR110372223:=x:=en</platformToolSN>
+    <conf name="TR_V1_Production" type="2">
+      <platformToolSN></platformToolSN>
       <languageToolchainDir></languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
@@ -21,8 +21,8 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="TR_Quality_Control" type="2">
-      <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=BUR110372223:=x:=en</platformToolSN>
+    <conf name="TR_V1_Quality_Control" type="2">
+      <platformToolSN></platformToolSN>
       <languageToolchainDir></languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
@@ -39,8 +39,8 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="TR_Experimental" type="2">
-      <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=BUR110372223:=x:=en</platformToolSN>
+    <conf name="TR_V1_Experimental" type="2">
+      <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
@@ -57,8 +57,62 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="VA_Experimental" type="2">
-      <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=BUR110372223:=x:=en</platformToolSN>
+    <conf name="TR_V2_Production" type="2">
+      <platformToolSN></platformToolSN>
+      <languageToolchainDir></languageToolchainDir>
+      <mdbdebugger version="1">
+        <placeholder1>place holder 1</placeholder1>
+        <placeholder2>place holder 2</placeholder2>
+      </mdbdebugger>
+      <runprofile version="6">
+        <args></args>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <console-type>0</console-type>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+    <conf name="TR_V2_Quality_Control" type="2">
+      <platformToolSN></platformToolSN>
+      <languageToolchainDir></languageToolchainDir>
+      <mdbdebugger version="1">
+        <placeholder1>place holder 1</placeholder1>
+        <placeholder2>place holder 2</placeholder2>
+      </mdbdebugger>
+      <runprofile version="6">
+        <args></args>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <console-type>0</console-type>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+    <conf name="TR_V2_Experimental" type="2">
+      <platformToolSN></platformToolSN>
+      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
+      <mdbdebugger version="1">
+        <placeholder1>place holder 1</placeholder1>
+        <placeholder2>place holder 2</placeholder2>
+      </mdbdebugger>
+      <runprofile version="6">
+        <args></args>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <console-type>0</console-type>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+    <conf name="VA_V2_Experimental" type="2">
+      <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>

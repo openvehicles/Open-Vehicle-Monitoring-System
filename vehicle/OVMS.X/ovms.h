@@ -32,7 +32,11 @@
 #define __OVMS_MAIN
 
 #include "ovms.def"
+#ifdef OVMS_HW_V1
 #include "p18f2680.h"
+#elif OVMS_HW_V2
+#include "p18f2685.h"
+#endif // #ifdef
 #include "UARTIntC.h"
 #include "utils.h"
 #include "params.h"
