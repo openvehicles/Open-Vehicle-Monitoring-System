@@ -36,6 +36,7 @@ extern unsigned char net_state;                // The current state
 
 #define NET_BUF_MAX 200
 #define NET_TEL_MAX 20
+#define NET_GPRS_RETRIES 10
 
 // NET_BUF_MODES
 #define NET_BUF_IPD          0xfd  // net_buf is waiting on IPD data
