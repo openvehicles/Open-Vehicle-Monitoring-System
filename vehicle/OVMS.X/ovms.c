@@ -38,6 +38,7 @@
 #include "ovms.h"
 #include "utils.h"
 #include "led.h"
+#include "inputs.h"
 
 // Configuration settings
 #pragma	config FCMEN = OFF,      IESO = OFF
@@ -126,9 +127,8 @@ void main(void)
     sys_features[x] = atoi(par_get(PARAM_FEATURE_S+(x-FEATURES_MAP_PARAM)));
     }
 
-  PORTA = 0x00; // Initialise port A
-  ADCON1 = 0x0F; // Switch off A/D converter
-  TRISA = 0xFF;
+  // Port configuration
+  inputs_initialise();
   TRISB = 0xFE;
 
   // Timer 0 enabled, Fosc/4, 16 bit mode, prescaler 1:256

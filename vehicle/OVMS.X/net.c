@@ -37,6 +37,7 @@
 #include "net_msg.h"
 #include "utils.h"
 #include "led.h"
+#include "inputs.h"
 
 // NET data
 #pragma udata
@@ -385,7 +386,7 @@ void net_state_enter(unsigned char newstate)
       net_watchdog=0; // Disable watchdog, as we have connectivity
       net_reg = 0x05; // Assume connectivity (as COPS worked)
       p = par_get(PARAM_GPRSAPN);
-      if ((p[0] != '\0')&&(PORTAbits.RA0==0)) // APN defined AND switch is set to GPRS mode
+      if ((p[0] != '\0') && inputs_gsmgprs()) // APN defined AND switch is set to GPRS mode
         {
         net_timeout_goto = NET_STATE_SOFTRESET;
         net_timeout_ticks = 60;
