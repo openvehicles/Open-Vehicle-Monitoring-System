@@ -56,6 +56,8 @@ extern unsigned char net_state;                // The current state
 #define NET_STATE_DOINIT3    0x12  // Initialise the GSM network - Full Init
 #define NET_STATE_READY      0x20  // READY and handling calls
 #define NET_STATE_COPS       0x21  // GSM COPS carrier selection
+#define NET_STATE_COPSWAIT   0x22  // GSM COPS wait for stable
+#define NET_STATE_COPSWDONE  0x23  // GSM COPS wait complete
 #define NET_STATE_DONETINIT  0x40  // Initalise the GPRS network
 #define NET_STATE_NETINITP   0x41  // Short pause during GPRS initialisation
 

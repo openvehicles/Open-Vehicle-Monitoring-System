@@ -420,6 +420,22 @@ void net_state_enter(unsigned char newstate)
       net_msg_disconnected();
       net_puts_rom(NET_COPS);
       break;
+    case NET_STATE_COPSWAIT:
+      led_set(OVMS_LED_GRN,NET_LED_COPS);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
+      net_timeout_goto = NET_STATE_COPSWDONE;
+      net_timeout_ticks = 30;
+      break;
+    case NET_STATE_COPSWDONE:
+      if (net_cops_tries++ < 20)
+        {
+        net_state_enter(NET_STATE_SOFTRESET); // Reset the entire async
+        }
+      else
+        {
+        net_state_enter(NET_STATE_HARDRESET); // Reset the entire async
+        }
+      break;
     }
   }
 
@@ -520,14 +536,24 @@ void net_state_activity()
         }
       else if ( ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R')) ||
               (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0) )
-        if (net_cops_tries++ < 20)
-          {
-          net_state_enter(NET_STATE_SOFTRESET); // Reset the entire async
-          }
+        {
+        net_state_enter(NET_STATE_COPSWAIT); // Try to wait a bit to see if we get a CREG
+        }
+      break;
+    case NET_STATE_COPSWAIT:
+      if (memcmppgm2ram(net_buf, (char const rom far*)"+CREG", 5) == 0)
+        { // "+CREG" Network registration
+        if (net_buf[8]==',')
+          net_reg = net_buf[9]&0x07; // +CREG: 1,x
         else
+          net_reg = net_buf[7]&0x07; // +CREG: x
+        if ((net_reg == 0x01)||(net_reg == 0x05)) // Registered to network?
           {
-          net_state_enter(NET_STATE_HARDRESET); // Reset the entire async
+          net_state_vint = NET_GPRS_RETRIES; // Count-down for DONETINIT attempts
+          net_cops_tries = 0; // Successfully out of COPS
+          net_state_enter(NET_STATE_DONETINIT); // COPS reconnect was OK
           }
+        }
       break;
     case NET_STATE_DONETINIT:
       if ((net_buf_pos >= 2)&&
