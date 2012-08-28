@@ -195,7 +195,7 @@ void can_state_ticker60(void)
   minSOC = sys_features[FEATURE_MINSOC];
   if ((can_minSOCnotified == 0) && (car_SOC < minSOC))
     {
-    net_notify_status(2);
+    net_req_notification(NET_NOTIFY_STAT);
     can_minSOCnotified = 1;
     }
   else if ((can_minSOCnotified == 1) && (car_SOC > minSOC + 2))

@@ -82,6 +82,36 @@ extern unsigned char net_state;                // The current state
 #define NET_LED_ERRGPRSRETRY 7     // Error (maybe temp) during GPRS init
 #define NET_LED_ERRGPRSFAIL  8     // GPRS NET INIT failed
 
+// The NET/SMS notification system
+// We have a bitmap net_notify with bits set to request a particular notification
+// type, and cleared when the notification is issued.
+// We also have a countdown timer net_notify_suppresscount which, if >0, signifies
+// that the charge event notification should not be sent. This is used because
+// we want to suppress notification of charge events in some circumstances
+// (such as if the user explicitely requests a charge to be stopped).
+// The idea is that requesters set these bits, and notifiers clear them.
+extern unsigned int  net_notify;               // Bitmap of notifications outstanding
+extern unsigned char net_notify_suppresscount; // To suppress STAT notifications (seconds)
+
+#define NET_NOTIFY_NETPART    0x00ff   // Mask for the NET part
+#define NET_NOTIFY_SMSPART    0xff00   // Mask for the SMS part
+
+#define NET_NOTIFY_NET_ENV    0x0001   // Set to 1 to NET notify environment
+#define NET_NOTIFY_NET_STAT   0x0002   // Set to 1 to NET notify status
+#define NET_NOTIFY_NET_CHARGE 0x0004   // Set to 1 to NET notify charge event
+#define NET_NOTIFY_NET_TRUNK  0x0010   // Set to 1 to NET notify trunk open
+
+#define NET_NOTIFY_SMS_ENV    0x0100   // NOT IMPLEMENTED / REQUIRED
+#define NET_NOTIFY_SMS_STAT   0x0200   // NOT IMPLEMENTED / REQUIRED
+#define NET_NOTIFY_SMS_CHARGE 0x0400   // Set to 1 to SMS notify charge event
+#define NET_NOTIFY_SMS_TRUNK  0x1000   // Set to 1 to SMS notify trunk open
+
+// Convenience constants for net_notify() call
+#define NET_NOTIFY_ENV        NET_NOTIFY_NET_ENV
+#define NET_NOTIFY_STAT       NET_NOTIFY_NET_STAT
+#define NET_NOTIFY_CHARGE     NET_NOTIFY_NET_CHARGE
+#define NET_NOTIFY_TRUNK      NET_NOTIFY_NET_TRUNK
+
 extern char net_scratchpad[NET_BUF_MAX];
 
 void net_puts_rom(static const rom char *data);
@@ -98,7 +128,6 @@ void net_state_enter(unsigned char);
 void net_state_activity(void);
 void net_state_ticker(void);
 
-void net_notify_status(unsigned char notify);
-void net_notify_environment(void);
+void net_req_notification(unsigned int notify);
 
 #endif // #ifndef __OVMS_NET_H

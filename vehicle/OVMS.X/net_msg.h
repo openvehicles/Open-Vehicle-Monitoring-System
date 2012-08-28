@@ -33,8 +33,6 @@
 
 #include "net.h"
 
-extern char net_msg_notify;
-extern char net_msg_notifyenvironment;
 extern char net_msg_serverok;
 extern char net_msg_sendpending;
 extern int  net_msg_cmd_code;

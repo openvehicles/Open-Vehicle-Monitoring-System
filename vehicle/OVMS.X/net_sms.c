@@ -39,7 +39,6 @@
 #include "net_msg.h"
 
 #pragma udata
-char net_sms_notify = 0;
 char *net_sms_argend;
 
 rom char NET_MSG_DENIED[] = "Permission denied";
@@ -661,6 +660,7 @@ void net_sms_handle_chargestart(char *caller, char *buf, unsigned char pos, char
       (net_sms_checkcaller(caller)))
     {
     can_tx_startstopcharge(1);
+    net_notify_suppresscount = 0; // Enable notifications
     net_send_sms_rom(caller,NET_MSG_CHARGESTART);
     }
   }
@@ -671,6 +671,7 @@ void net_sms_handle_chargestop(char *caller, char *buf, unsigned char pos, char 
       (net_sms_checkcaller(caller)))
     {
     can_tx_startstopcharge(0);
+    net_notify_suppresscount = 30; // Suppress notifications for 30 seconds
     net_send_sms_rom(caller,NET_MSG_CHARGESTOP);
     }
   }

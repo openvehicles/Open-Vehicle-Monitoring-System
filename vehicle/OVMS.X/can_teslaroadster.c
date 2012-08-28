@@ -179,7 +179,7 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0x0E: // Lock/Unlock state on ID#102
       if (car_lockstate != can_databuffer[1])
-        net_notify_environment();
+        net_req_notification(NET_NOTIFY_ENV);
       car_lockstate = can_databuffer[1];
       break;
     case 0x80: // Range / State of Charge
@@ -227,6 +227,10 @@ void can_poll0(void)                // CAN ID 100 and 102
         }
       break;
     case 0x88: // Charging Current / Duration
+      if (car_chargecurrent != can_databuffer[1])
+        { // Notify a change in charge current
+        net_req_notification(NET_NOTIFY_ENV);
+        }
       car_chargecurrent = can_databuffer[1];
       car_chargelimit = can_databuffer[6];
       car_chargeduration = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
@@ -240,22 +244,19 @@ void can_poll0(void)                // CAN ID 100 and 102
                         + ((unsigned int) can_databuffer[3] << 8);
       break;
     case 0x95: // Charging mode
-      if ((car_chargestate<0x15)&&
-          (can_databuffer[1]>=0x15)&&
-          (can_databuffer[2]!=0x03))
-        { // We've moved from charging to stopped charging, not by-request
-        net_notify_status(1);
-        }
-      if ((car_chargestate == 0x0f)&&
-          (can_databuffer[1] == 0x0d)&&
-          (can_databuffer[2] != 0x03))
-        { // We've moved from heating to preparing, not by-request
-        net_notify_status(1);
+      if ((can_databuffer[1] != car_chargestate)&&            // Charge state has changed AND
+          ((car_chargestate<=2)||(car_chargestate==0x0f))&&   // was (Charging or Heating) AND
+          (can_databuffer[1]!=0x04))                          // new state is not done
+        {
+        // We've moved from charging/heating to something other than DONE
+        // Let's treat this as a notifiable alert
+        net_req_notification(NET_NOTIFY_CHARGE);
         }
       if ((can_databuffer[1] != car_chargestate)||
-          (can_databuffer[2] != car_chargesubstate))
-        { // If the state/sub-state has changed, notify it
-        net_notify_environment();
+          (can_databuffer[2] != car_chargesubstate)||
+          (can_databuffer[3] != car_charge_b4))
+        { // If the state, sub-state or b4 has changed, notify it
+        net_req_notification(NET_NOTIFY_ENV);
         }
       car_chargestate = can_databuffer[1];
       car_chargesubstate = can_databuffer[2];
@@ -271,9 +272,9 @@ void can_poll0(void)                // CAN ID 100 and 102
       if ((car_doors1 != can_databuffer[1])||
           (car_doors2 != can_databuffer[2])||
           (car_doors3 != can_databuffer[3]))
-        net_notify_environment();
+        net_req_notification(NET_NOTIFY_ENV);
       if (((car_doors2&0x40)==0)&&(can_databuffer[2]&0x40)&&(can_databuffer[2]&0x10))
-        net_notify_status(3); // Valet mode is active, and trunk was opened
+        net_req_notification(3); // Valet mode is active, and trunk was opened
       car_doors1 = can_databuffer[1]; // Doors #1
       car_doors2 = can_databuffer[2]; // Doors #2
       car_doors3 = can_databuffer[3]; // Doors #3
@@ -282,13 +283,13 @@ void can_poll0(void)                // CAN ID 100 and 102
           (car_time != 0))            // We know the car time
         {
         car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
-        net_notify_environment();
+        net_req_notification(NET_NOTIFY_ENV);
         }
       else if ((car_doors1 & 0x80)&&  // Car is ON
                (car_parktime != 0))   // Parktime was previously set
         {
         car_parktime = 0;
-        net_notify_environment();
+        net_req_notification(NET_NOTIFY_ENV);
         }
       break;
     case 0xA3: // Temperatures
@@ -443,7 +444,7 @@ void can_state_ticker60(void)
   minSOC = sys_features[FEATURE_MINSOC];
   if ((can_minSOCnotified == 0) && (car_SOC < minSOC))
     {
-    net_notify_status(2);
+    net_req_notification(NET_NOTIFY_STAT);
     can_minSOCnotified = 1;
     }
   else if ((can_minSOCnotified == 1) && (car_SOC > minSOC + 2))

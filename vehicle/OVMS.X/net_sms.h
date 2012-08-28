@@ -33,8 +33,6 @@
 
 #include "net.h"
 
-extern char net_sms_notify;
-
 void net_send_sms_start(char* number);
 void net_send_sms_rom(char* number, static const rom char* message);
 void net_sms_params(char* number);

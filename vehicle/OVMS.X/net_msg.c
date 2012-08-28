@@ -45,8 +45,6 @@
 // NET_MSG data
 #define TOKEN_SIZE 22
 #pragma udata
-char net_msg_notify = 0;
-char net_msg_notifyenvironment = 0;
 char net_msg_serverok = 0;
 char net_msg_sendpending = 0;
 char token[23] = {0};
@@ -629,6 +627,7 @@ void net_msg_cmd_do(void)
         if ((car_doors1 & 0x04)&&(car_chargesubstate != 0x07))
           {
           can_tx_startstopcharge(1);
+          net_notify_suppresscount = 0; // Enable notifications
           sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
           }
         else
@@ -648,6 +647,7 @@ void net_msg_cmd_do(void)
         if ((car_doors1 & 0x10))
           {
           can_tx_startstopcharge(0);
+          net_notify_suppresscount = 30; // Suppress notifications for 30 seconds
           sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
           }
         else

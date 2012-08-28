@@ -61,6 +61,9 @@ unsigned char net_socalert_sms = 0;         // SOC Alert (msg) 10min ticks remai
 unsigned char net_socalert_msg = 0;         // SOC Alert (sms) 10min ticks remaining
 #endif //#ifdef OVMS_SOCALERT
 
+unsigned int  net_notify = 0;               // Bitmap of notifications outstanding
+unsigned char net_notify_suppresscount = 0; // To suppress STAT notifications (seconds)
+
 #pragma udata NETBUF_SP
 char net_scratchpad[NET_BUF_MAX];           // A general-purpose scratchpad
 #pragma udata
@@ -258,32 +261,22 @@ void net_putc_ram(const char data)
   }
 
 ////////////////////////////////////////////////////////////////////////
-// net_notify_status()
-// Emits a status notification error to the user (by SMS)
-// upon request (e.g. by an incoming call or sms STAT command).
+// net_req_notification()
+// Request notification of one or more of the types specified
+// in net.h NET_NOTIFY_*
 //
-void net_notify_status(unsigned char notify)
+void net_req_notification(unsigned int notify)
   {
-  // Emit an unsolicited notification showing current status
   char *p,*q;
   p = par_get(PARAM_NOTIFIES);
   if (strstrrampgm(p,(char const rom far*)"SMS") != NULL)
     {
-    net_sms_notify = notify;
+    net_notify |= (notify<<8); // SMS notification flags are top 8 bits
     }
   if (strstrrampgm(p,(char const rom far*)"IP") != NULL)
     {
-    net_msg_notify = notify;
+    net_notify |= notify;      // NET notification flags are bottom 8 bits
     }
-  }
-
-////////////////////////////////////////////////////////////////////////
-// net_notify_environment()
-// Emits an environment notification
-//
-void net_notify_environment(void)
-  {
-  net_msg_notifyenvironment = 1;
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -660,7 +653,6 @@ void net_state_activity()
           }
         delay100(1);
         net_puts_rom(NET_HANGUP);
-        //net_notify_status(2); // Disable this feature, as not really used and can lead to SMS charges
         }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT OK", 10) == 0)
         {
@@ -809,43 +801,67 @@ void net_state_ticker1(void)
           net_msg_cmd_do();
           return;
           }
-        if ((net_msg_notify>0)&&(net_msg_serverok==1))
+        if (((net_notify & NET_NOTIFY_NETPART)>0)&&(net_msg_serverok==1))
           {
           delay100(10);
-          if ((net_msg_notify==1)&&(car_chargestate!=0x04)&&(car_chargesubstate!=0x03))
+          if ((net_notify & NET_NOTIFY_NET_CHARGE)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_NET_CHARGE); // Clear notification flag
             net_msg_alert();
-          else if (net_msg_notify==2)
-            net_msg_alert();
-          else if (net_msg_notify==3)
+            return;
+            }
+          else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_NET_TRUNK); // Clear notification flag
             net_msg_valettrunk();
-          net_msg_notify = 0;
-          return;
-          }
-        if (net_sms_notify>0)
+            return;
+            }
+          else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_NET_STAT); // Clear notification flag
+            net_msg_stat();
+            return;
+            }
+          else if ((net_notify & NET_NOTIFY_NET_ENV)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_NET_ENV); // Clear notification flag
+            if ((net_apps_connected>0)&&
+                (net_msg_sendpending==0))
+              {
+              delay100(10);
+              net_msg_start();
+              net_msg_environment();
+              net_msg_stat();
+              net_msg_send();
+              return;
+              }
+            }
+              }
+        if ((net_notify & NET_NOTIFY_SMSPART)>0)
           {
           delay100(10);
           p = par_get(PARAM_REGPHONE);
-          if ((net_sms_notify==1)&&(car_chargestate!=0x04)&&(car_chargesubstate!=0x03))
+          if ((net_notify & NET_NOTIFY_SMS_CHARGE)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_SMS_CHARGE); // Clear notification flag
             net_sms_stat(p);
-          else if (net_sms_notify==2)
-            net_sms_stat(p);
-          else if (net_sms_notify==3)
+            return;
+            }
+          else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_SMS_TRUNK); // Clear notification flag
             net_sms_valettrunk(p);
-          net_sms_notify = 0;
-          return;
-          }
-        if ((net_msg_notifyenvironment==1)&&
-            (net_msg_serverok==1)&&
-            (net_apps_connected>0)&&
-            (net_msg_sendpending==0))
-          {
-          net_msg_notifyenvironment = 0;
-          delay100(10);
-          net_msg_start();
-          net_msg_environment();
-          net_msg_stat();
-          net_msg_send();
-          return;
+            return;
+            }
+          else if ((net_notify & NET_NOTIFY_SMS_STAT)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_SMS_STAT); // Clear notification flag
+            }
+          else if ((net_notify & NET_NOTIFY_SMS_ENV)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_SMS_ENV); // Clear notification flag
+            return;
+            }
           }
         if ((car_speed>0)&&
             (sys_features[FEATURE_STREAM]>0)&&
@@ -1014,6 +1030,7 @@ void net_state_ticker600(void)
 void net_ticker(void)
   {
   // This ticker is called once every second
+  if (net_notify_suppresscount>0) net_notify_suppresscount--;
   net_granular_tick++;
   if ((net_timeout_goto > 0)&&(net_timeout_ticks-- == 0))
     {
