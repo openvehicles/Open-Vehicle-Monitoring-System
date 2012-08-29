@@ -1,8 +1,17 @@
 Open Vehicle Monitoring System
 
-The CellPhone App
+The CellPhone Apps
 
 The API to the car and the server is open and will be published. Anyone can write to it, and we hope they will.
 
 Initially, we intend to release a standard iPhone and Android App, but anyone is welcome to follow the API
 and write their own.
+
+GIT Repositories
+
+The cellphone apps have been moved to their own repositories, in github. You can find them here:
+
+Android: https://github.com/markwj/Open-Vehicle-Android
+iOS:     https://github.com/markwj/Open-Vehicle-iOS
+
+All work on those apps will continue in those repositories.
