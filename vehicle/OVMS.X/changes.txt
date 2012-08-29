@@ -28,6 +28,30 @@
 ; THE SOFTWARE.
 */
 
+2012-08-28 1.2.9       Preliminary firmware 1.2.9
+                       1.2.9 - a (almost feature complete) release candidate for 1.3.1
+
+                       This version is an (almost feature complete) release candidate
+                       for 1.3.1. It addresses a few known bugs, but primarily works
+                       on (a) adding support for v2 hardware, (b) improving recovery
+                       from loss of GSM signal in poor cellular coverage areas, and
+                       (c) changes to the alert notification mechanisms to try to catch
+                       more 'charge stopped' type events.
+
+                       The following issues have NOT been addressed, but should be
+                       fixed in the final 1.3.1 firmware:
+                         #57 Car: Motor temperature overflow
+                         #58 Car: Strange range when low on power
+
+                       The following issues have been specifically addressed:
+                         #60 Car: Still getting some GSM unrecoverable issues
+                         #61 Car: Acknowledge settings with detailed parameters
+                         #64 Support for v2 base hardware
+                         #65 Increase timeout in NET_STATE_NETINITP
+                         #66 Increase modem reset timer to 2 secs
+                         #67 Car: Raise charge interrupted alerts based on charge state (stopped vs done
+                         #68 Give COPS a chance
+
 2012-05-27 1.2.7       Preliminary firmware 1.2.7
                        Bug fix for off-by-one-can-byte bug in roadster id from VIN
                        Add homelink and charge timer support, plus misc fixes
