@@ -289,7 +289,7 @@ void can_poll0(void)                // CAN ID 100 and 102
       break;
     case 0xA3: // Temperatures
       car_tpem = (signed char)can_databuffer[1]; // Tpem
-      car_tmotor = (signed char)can_databuffer[2]; // Tmotor
+      car_tmotor = (unsigned char)can_databuffer[2]; // Tmotor
       car_tbattery = (signed char)can_databuffer[6]; // Tbattery
       car_stale_temps = 120; // Reset stale indicator
       break;

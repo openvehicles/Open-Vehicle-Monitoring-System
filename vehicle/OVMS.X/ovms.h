@@ -93,7 +93,7 @@ extern signed char car_ambient_temp; // Ambient Temperature (celcius)
 extern unsigned char car_vin[18]; // VIN
 extern unsigned char car_type[5]; // Car Type
 extern signed char car_tpem; // Tpem
-extern signed char car_tmotor; // Tmotor
+extern unsigned char car_tmotor; // Tmotor
 extern signed char car_tbattery; // Tbattery
 extern signed char car_tpms_t[4]; // TPMS temperature
 extern unsigned char car_tpms_p[4]; // TPMS pressure
