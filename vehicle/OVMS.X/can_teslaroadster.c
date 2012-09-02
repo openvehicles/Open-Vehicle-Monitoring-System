@@ -186,6 +186,8 @@ void can_poll0(void)                // CAN ID 100 and 102
       car_SOC = can_databuffer[1];
       car_idealrange = can_databuffer[2]+((unsigned int) can_databuffer[3] << 8);
       car_estrange = can_databuffer[6]+((unsigned int) can_databuffer[7] << 8);
+      if (car_idealrange>6000) car_idealrange=0; // Sanity check (limit rng->std)
+      if (car_estrange>6000)   car_estrange=0; // Sanity check (limit rng->std)
       break;
     case 0x81: // Time/ Date UTC
       car_time = can_databuffer[4]
