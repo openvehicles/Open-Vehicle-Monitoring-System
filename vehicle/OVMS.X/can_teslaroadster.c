@@ -227,10 +227,6 @@ void can_poll0(void)                // CAN ID 100 and 102
         }
       break;
     case 0x88: // Charging Current / Duration
-      if (car_chargecurrent != can_databuffer[1])
-        { // Notify a change in charge current
-        net_req_notification(NET_NOTIFY_ENV);
-        }
       car_chargecurrent = can_databuffer[1];
       car_chargelimit = can_databuffer[6];
       car_chargeduration = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
@@ -253,9 +249,8 @@ void can_poll0(void)                // CAN ID 100 and 102
         net_req_notification(NET_NOTIFY_CHARGE);
         }
       if ((can_databuffer[1] != car_chargestate)||
-          (can_databuffer[2] != car_chargesubstate)||
-          (can_databuffer[3] != car_charge_b4))
-        { // If the state, sub-state or b4 has changed, notify it
+          (can_databuffer[2] != car_chargesubstate))
+        { // If the state or sub-state has changed, notify it
         net_req_notification(NET_NOTIFY_ENV);
         }
       car_chargestate = can_databuffer[1];

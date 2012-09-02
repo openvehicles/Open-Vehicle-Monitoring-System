@@ -807,7 +807,8 @@ void net_state_ticker1(void)
           if ((net_notify & NET_NOTIFY_NET_CHARGE)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_CHARGE); // Clear notification flag
-            net_msg_alert();
+            if (net_notify_suppresscount==0)
+              net_msg_alert();
             return;
             }
           else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)
@@ -844,7 +845,8 @@ void net_state_ticker1(void)
           if ((net_notify & NET_NOTIFY_SMS_CHARGE)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_CHARGE); // Clear notification flag
-            net_sms_stat(p);
+            if (net_notify_suppresscount==0)
+              net_sms_stat(p);
             return;
             }
           else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
