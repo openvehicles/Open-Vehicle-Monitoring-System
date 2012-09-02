@@ -724,6 +724,7 @@ void net_msg_cmd_do(void)
       else
         {
         can_tx_wakeup();
+        can_tx_wakeuptemps();
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
         }
       net_msg_encode_puts();
