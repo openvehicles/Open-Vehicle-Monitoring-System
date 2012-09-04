@@ -36,7 +36,7 @@
 #pragma romdata eedata=0xf00000
 #ifdef OVMS_QC
 rom char EEparam[PARAM_MAX][PARAM_MAX_LENGTH]
-  = {"NOPHONE","OVMS","K","IP","202.52.42.80","imobile.three.com.hk","","","QC","QCPASS"};
+  = {"NOPHONE","OVMS","K","IP","64.111.70.40","imobile.three.com.hk","","","QC","QCPASS"};
 #else
 rom char EEparam[PARAM_MAX][PARAM_MAX_LENGTH]
   = {"NOPHONE","OVMS","K","","","","","","",""};
