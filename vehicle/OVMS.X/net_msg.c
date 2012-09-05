@@ -294,9 +294,14 @@ void net_msg_tpms(void)
 void net_msg_firmware(void)
   {
   // Send firmware version and GSM signal level
+  unsigned char hwv = 1;
+  #ifdef OVMS_HW_V2
+  hwv = 2;
+  #endif
+
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"%d.%d.%d,%s,%d,%d,%s",
-    ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],
+  sprintf(net_msg_scratchpad, (rom far char*)"%d.%d.%d/%d,%s,%d,%d,%s",
+    ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],hwv,
     car_vin, net_sq, sys_features[FEATURE_CANWRITE],car_type);
   strcat(net_scratchpad,net_msg_scratchpad);
   net_msg_encode_puts();
