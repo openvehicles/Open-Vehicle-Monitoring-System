@@ -300,7 +300,7 @@ void net_msg_firmware(void)
   #endif
 
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"%d.%d.%d/%d,%s,%d,%d,%s",
+  sprintf(net_msg_scratchpad, (rom far char*)"%d.%d.%d/V%d,%s,%d,%d,%s",
     ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],hwv,
     car_vin, net_sq, sys_features[FEATURE_CANWRITE],car_type);
   strcat(net_scratchpad,net_msg_scratchpad);
