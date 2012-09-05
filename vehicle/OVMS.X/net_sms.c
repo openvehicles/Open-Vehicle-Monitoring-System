@@ -534,6 +534,12 @@ void net_sms_handle_diag(char *caller, char *buf, unsigned char pos, char *comma
     sprintf(net_scratchpad, (rom far char*)"\r NET State:0x%02x", net_state);
     net_puts_ram(net_scratchpad);
 
+    if (car_12vline>0)
+      {
+      sprintf(net_scratchpad, (rom far char*)"\r 12V Line:%d.%d", car_12vline/10,car_12vline%10);
+      net_puts_ram(net_scratchpad);
+      }
+
     net_puts_rom("\x1a");
     }
   }

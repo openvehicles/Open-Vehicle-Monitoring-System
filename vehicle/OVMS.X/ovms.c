@@ -112,6 +112,7 @@ unsigned char net_link = 0; // Network link status
 char net_apps_connected = 0; // Network apps connected
 char sys_features[FEATURES_MAX]; // System features
 unsigned char net_sq = 0; // GSM Network Signal Quality
+unsigned int car_12vline = 0; // 12V line level
 
 void main(void)
   {
@@ -169,6 +170,10 @@ void main(void)
   // Setup ready for the main loop
   led_set(OVMS_LED_GRN,NET_LED_WAKEUP);
   led_start();
+
+  #ifdef OVMS_HW_V2
+  car_12vline = inputs_voltage()*10;
+  #endif
 
   // Proceed to main loop
   y = 0; // Last TMR0H

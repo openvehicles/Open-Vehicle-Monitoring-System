@@ -43,7 +43,7 @@
 #include "can.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 1,3,1
+#define OVMS_FIRMWARE_VERSION 1,3,2
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -116,4 +116,5 @@ extern unsigned char net_link; // Network link status
 extern char net_apps_connected; // Network apps connected
 extern char sys_features[FEATURES_MAX]; // System features
 extern unsigned char net_sq; // GSM Network Signal Quality
+extern unsigned int car_12vline; // 12V line level
 #endif

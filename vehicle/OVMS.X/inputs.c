@@ -70,7 +70,7 @@ float inputs_voltage(void)
   while(ADCON0bits.GO); //wait for the conversion to finish
   ADCON0bits.ADON=0;  //switch off adc
 
-  return (0.0+ADRES)/46.0;
+  return (0.0+ADRES)/47.0;
   }
 
 #endif // #ifdef OVMS_HW_V2

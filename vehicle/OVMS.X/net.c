@@ -917,6 +917,10 @@ void net_state_ticker60(void)
   {
   char *p;
 
+  #ifdef OVMS_HW_V2
+  car_12vline = inputs_voltage()*10;
+  #endif
+
   switch (net_state)
     {
     case NET_STATE_READY:
