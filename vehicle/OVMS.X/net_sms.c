@@ -55,14 +55,33 @@ rom char NET_MSG_CHARGEMODE[] = "Charge mode change requested";
 rom char NET_MSG_CHARGESTART[] = "Charge start requested";
 rom char NET_MSG_CHARGESTOP[] = "Charge stop requested";
 rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
-rom char NET_MSG_GOOGLEMAPS[] = "Car location:\rhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
+rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
 
 void net_send_sms_start(char* number)
   {
-  net_puts_rom("AT+CMGS=\"");
-  net_puts_ram(number);
-  net_puts_rom("\"\r\n");
-  delay100(2);
+  if (net_state == NET_STATE_DIAGMODE)
+    {
+    net_puts_rom("# ");
+    }
+  else
+    {
+    net_puts_rom("AT+CMGS=\"");
+    net_puts_ram(number);
+    net_puts_rom("\"\r\n");
+    delay100(2);
+    }
+  }
+
+void net_send_sms_finish(void)
+  {
+  if (net_state == NET_STATE_DIAGMODE)
+    {
+    net_puts_rom("\r\n");
+    }
+  else
+    {
+    net_puts_rom("\x1a");
+    }
   }
 
 void net_send_sms_rom(char* number, static const rom char* message)
@@ -71,7 +90,7 @@ void net_send_sms_rom(char* number, static const rom char* message)
 
   net_send_sms_start(number);
   net_puts_rom(message);
-  net_puts_rom("\x1a");
+  net_send_sms_finish();
   }
 
 void net_send_sms_ram(char* number, static const char* message)
@@ -80,7 +99,7 @@ void net_send_sms_ram(char* number, static const char* message)
 
   net_send_sms_start(number);
   net_puts_ram(message);
-  net_puts_rom("\x1a");
+  net_send_sms_finish();
   }
 
 void net_sms_stat(char* number)
@@ -134,7 +153,7 @@ void net_sms_stat(char* number)
     net_puts_rom("Not charging");
     }
 
-  net_puts_rom(" \rIdeal Range: "); // Ideal Range
+  net_puts_rom(" \r\nIdeal Range: "); // Ideal Range
   p = par_get(PARAM_MILESKM);
   if (*p == 'M') // Kmh or Miles
     sprintf(net_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
@@ -142,10 +161,10 @@ void net_sms_stat(char* number)
     sprintf(net_scratchpad, (rom far char*)"%u Km", (((car_idealrange << 4)+5)/10)); // Kmh
   net_puts_ram(net_scratchpad);
 
-  net_puts_rom(" \rSOC: ");
+  net_puts_rom(" \r\nSOC: ");
   sprintf(net_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
   net_puts_ram(net_scratchpad);
-  net_puts_rom("\x1a");
+  net_send_sms_finish();
   }
 
 void net_sms_valettrunk(char* number)
@@ -157,7 +176,7 @@ void net_sms_valettrunk(char* number)
   delay100(2);
   net_send_sms_start(number);
   net_puts_rom(NET_MSG_VALETTRUNK);
-  net_puts_rom("\x1a");
+  net_send_sms_finish();
   }
 
 void net_sms_socalert(char* number)
@@ -169,7 +188,7 @@ void net_sms_socalert(char* number)
 
   sprintf(net_scratchpad, (rom far char*)"ALERT!!! CRITICAL SOC LEVEL APPROACHED (%u%% SOC)", car_SOC); // 95%
   net_puts_ram(net_scratchpad);
-  net_puts_rom("\x1a");
+  net_send_sms_finish();
   delay100(5);
   }
 
@@ -237,7 +256,7 @@ char* net_sms_nextarg(char *lastarg)
 
 // Now the SMS command handlers themselves...
 
-void net_sms_handle_registerq(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_registerq(char *caller, char *command, char *arguments)
   {
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
@@ -248,7 +267,7 @@ void net_sms_handle_registerq(char *caller, char *buf, unsigned char pos, char *
     }
   }
 
-void net_sms_handle_register(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_register(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkpassarg(caller, arguments))
     {
@@ -257,7 +276,7 @@ void net_sms_handle_register(char *caller, char *buf, unsigned char pos, char *c
     }
   }
 
-void net_sms_handle_passq(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_passq(char *caller, char *command, char *arguments)
   {
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
@@ -268,7 +287,7 @@ void net_sms_handle_passq(char *caller, char *buf, unsigned char pos, char *comm
     }
   }
 
-void net_sms_handle_pass(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_pass(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
@@ -277,7 +296,7 @@ void net_sms_handle_pass(char *caller, char *buf, unsigned char pos, char *comma
     }
   }
 
-void net_sms_handle_gps(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_gps(char *caller, char *command, char *arguments)
   {
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
@@ -292,18 +311,18 @@ void net_sms_handle_gps(char *caller, char *buf, unsigned char pos, char *comman
     net_puts_rom(",");
     format_latlon(car_longitude,net_scratchpad);
     net_puts_ram(net_scratchpad);
-    net_puts_rom("\x1a");
+    net_send_sms_finish();
     }
   }
 
-void net_sms_handle_stat(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_stat(char *caller, char *command, char *arguments)
   {
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
     net_sms_stat(caller);
   }
 
-void net_sms_handle_paramsq(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_paramsq(char *caller, char *command, char *arguments)
   {
   unsigned char k;
   char *p;
@@ -320,16 +339,16 @@ void net_sms_handle_paramsq(char *caller, char *buf, unsigned char pos, char *co
       p = par_get(k);
       if (*p != 0)
         {
-        sprintf(net_scratchpad, (rom far char*)"\r %u:", k);
+        sprintf(net_scratchpad, (rom far char*)"\r\n %u:", k);
         net_puts_ram(net_scratchpad);
         net_puts_ram(p);
         }
       }
-    net_puts_rom("\x1a");
+    net_send_sms_finish();
     }
   }
 
-void net_sms_handle_params(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_params(char *caller, char *command, char *arguments)
   {
   unsigned char d = PARAM_MILESKM;
 
@@ -348,7 +367,7 @@ void net_sms_handle_params(char *caller, char *buf, unsigned char pos, char *com
   net_state_enter(NET_STATE_DONETINIT);
   }
 
-void net_sms_handle_moduleq(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_moduleq(char *caller, char *command, char *arguments)
   {
   char *p;
 
@@ -361,23 +380,23 @@ void net_sms_handle_moduleq(char *caller, char *buf, unsigned char pos, char *co
     net_puts_rom("Module:");
 
     p = par_get(PARAM_VEHICLEID);
-    sprintf(net_scratchpad, (rom far char*)"\r VehicleID:%s", p);
+    sprintf(net_scratchpad, (rom far char*)"\r\n VehicleID:%s", p);
     net_puts_ram(net_scratchpad);
 
     p = par_get(PARAM_MILESKM);
-    sprintf(net_scratchpad, (rom far char*)"\r Units:%s", p);
+    sprintf(net_scratchpad, (rom far char*)"\r\n Units:%s", p);
     net_puts_ram(net_scratchpad);
 
     p = par_get(PARAM_NOTIFIES);
-    sprintf(net_scratchpad, (rom far char*)"\r Notifications:%s", p);
+    sprintf(net_scratchpad, (rom far char*)"\r\n Notifications:%s", p);
     net_puts_ram(net_scratchpad);
 
-    net_puts_rom("\x1a");
+    net_send_sms_finish();
     }
   }
 
 // MODULE <vehicleid> <units> <notifications>
-void net_sms_handle_module(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_module(char *caller, char *command, char *arguments)
   {
   if (!net_sms_checkcaller(caller)) return;
 
@@ -394,12 +413,12 @@ void net_sms_handle_module(char *caller, char *buf, unsigned char pos, char *com
       par_set(PARAM_NOTIFIES, arguments);
       }
     }
-  net_sms_handle_moduleq(caller, buf, pos, command, arguments);
+  net_sms_handle_moduleq(caller, command, arguments);
   can_initialise();
   net_state_enter(NET_STATE_DONETINIT);
   }
 
-void net_sms_handle_gprsq(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_gprsq(char *caller, char *command, char *arguments)
   {
   char *p;
 
@@ -412,33 +431,33 @@ void net_sms_handle_gprsq(char *caller, char *buf, unsigned char pos, char *comm
     net_puts_rom("GPRS:");
 
     p = par_get(PARAM_GPRSAPN);
-    sprintf(net_scratchpad, (rom far char*)"\r APN:%s", p);
+    sprintf(net_scratchpad, (rom far char*)"\r\n APN:%s", p);
     net_puts_ram(net_scratchpad);
 
     p = par_get(PARAM_GPRSUSER);
-    sprintf(net_scratchpad, (rom far char*)"\r User:%s", p);
+    sprintf(net_scratchpad, (rom far char*)"\r\n User:%s", p);
     net_puts_ram(net_scratchpad);
 
     p = par_get(PARAM_GPRSPASS);
-    sprintf(net_scratchpad, (rom far char*)"\r Password:%s", p);
+    sprintf(net_scratchpad, (rom far char*)"\r\n Password:%s", p);
     net_puts_ram(net_scratchpad);
 
     if (net_msg_serverok)
-      net_puts_rom("\r GPRS: OK\r Server: Connected OK");
+      net_puts_rom("\r\n GPRS: OK\r\n Server: Connected OK");
     else if (net_state == NET_STATE_READY)
-      net_puts_rom("\r GSM: OK\r Server: Not connected");
+      net_puts_rom("\r\n GSM: OK\r\n Server: Not connected");
     else
       {
-      sprintf(net_scratchpad, (rom far char*)"\r GSM/GPRS: Not connected (0x%02x)", net_state);
+      sprintf(net_scratchpad, (rom far char*)"\r\n GSM/GPRS: Not connected (0x%02x)", net_state);
       net_puts_ram(net_scratchpad);
       }
 
-    net_puts_rom("\x1a");
+    net_send_sms_finish();
     }
   }
 
 // GPRS <APN> <username> <password>
-void net_sms_handle_gprs(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_gprs(char *caller, char *command, char *arguments)
   {
   if (!net_sms_checkcaller(caller)) return;
 
@@ -461,11 +480,11 @@ void net_sms_handle_gprs(char *caller, char *buf, unsigned char pos, char *comma
         par_set(PARAM_GPRSPASS, arguments);
       }
     }
-  net_sms_handle_gprsq(caller, buf, pos, command, arguments);
+  net_sms_handle_gprsq(caller, command, arguments);
   net_state_enter(NET_STATE_DONETINIT);
   }
 
-void net_sms_handle_serverq(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_serverq(char *caller, char *command, char *arguments)
   {
   char *p;
 
@@ -478,23 +497,23 @@ void net_sms_handle_serverq(char *caller, char *buf, unsigned char pos, char *co
     net_puts_rom("Server:");
 
     p = par_get(PARAM_SERVERIP);
-    sprintf(net_scratchpad, (rom far char*)"\r IP:%s", p);
+    sprintf(net_scratchpad, (rom far char*)"\r\n IP:%s", p);
     net_puts_ram(net_scratchpad);
 
     p = par_get(PARAM_SERVERPASS);
-    sprintf(net_scratchpad, (rom far char*)"\r Password:%s", p);
+    sprintf(net_scratchpad, (rom far char*)"\r\n Password:%s", p);
     net_puts_ram(net_scratchpad);
 
     p = par_get(PARAM_PARANOID);
-    sprintf(net_scratchpad, (rom far char*)"\r Paranoid:%s", p);
+    sprintf(net_scratchpad, (rom far char*)"\r\n Paranoid:%s", p);
     net_puts_ram(net_scratchpad);
 
-    net_puts_rom("\x1a");
+    net_send_sms_finish();
     }
   }
 
 // SERVER <serverip> <serverpassword> <paranoidmode>
-void net_sms_handle_server(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_server(char *caller, char *command, char *arguments)
   {
   if (!net_sms_checkcaller(caller)) return;
 
@@ -511,11 +530,11 @@ void net_sms_handle_server(char *caller, char *buf, unsigned char pos, char *com
       par_set(PARAM_PARANOID, arguments);
       }
     }
-  net_sms_handle_serverq(caller, buf, pos, command, arguments);
+  net_sms_handle_serverq(caller, command, arguments);
   net_state_enter(NET_STATE_DONETINIT);
   }
 
-void net_sms_handle_diag(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_diag(char *caller, char *command, char *arguments)
   {
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
@@ -525,26 +544,26 @@ void net_sms_handle_diag(char *caller, char *buf, unsigned char pos, char *comma
     net_send_sms_start(caller);
     net_puts_rom("DIAG:");
 
-    sprintf(net_scratchpad, (rom far char*)"\r RED Led:%d", led_code[OVMS_LED_RED]);
+    sprintf(net_scratchpad, (rom far char*)"\r\n RED Led:%d", led_code[OVMS_LED_RED]);
     net_puts_ram(net_scratchpad);
 
-    sprintf(net_scratchpad, (rom far char*)"\r GRN Led:%d", led_code[OVMS_LED_GRN]);
+    sprintf(net_scratchpad, (rom far char*)"\r\n GRN Led:%d", led_code[OVMS_LED_GRN]);
     net_puts_ram(net_scratchpad);
 
-    sprintf(net_scratchpad, (rom far char*)"\r NET State:0x%02x", net_state);
+    sprintf(net_scratchpad, (rom far char*)"\r\n NET State:0x%02x", net_state);
     net_puts_ram(net_scratchpad);
 
     if (car_12vline>0)
       {
-      sprintf(net_scratchpad, (rom far char*)"\r 12V Line:%d.%d", car_12vline/10,car_12vline%10);
+      sprintf(net_scratchpad, (rom far char*)"\r\n 12V Line:%d.%d", car_12vline/10,car_12vline%10);
       net_puts_ram(net_scratchpad);
       }
 
-    net_puts_rom("\x1a");
+    net_send_sms_finish();
     }
   }
 
-void net_sms_handle_featuresq(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_featuresq(char *caller, char *command, char *arguments)
   {
   unsigned char k;
 
@@ -559,15 +578,15 @@ void net_sms_handle_featuresq(char *caller, char *buf, unsigned char pos, char *
       {
       if (sys_features[k] != 0)
         {
-        sprintf(net_scratchpad, (rom far char*)"\r %u:%d", k,sys_features[k]);
+        sprintf(net_scratchpad, (rom far char*)"\r\n %u:%d", k,sys_features[k]);
         net_puts_ram(net_scratchpad);
         }
       }
-    net_puts_rom("\x1a");
+    net_send_sms_finish();
     }
   }
 
-void net_sms_handle_feature(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_feature(char *caller, char *command, char *arguments)
   {
   unsigned char f;
 
@@ -587,7 +606,7 @@ void net_sms_handle_feature(char *caller, char *buf, unsigned char pos, char *co
     }
   }
 
-void net_sms_handle_homelink(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_homelink(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
@@ -596,7 +615,7 @@ void net_sms_handle_homelink(char *caller, char *buf, unsigned char pos, char *c
     }
   }
 
-void net_sms_handle_lock(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_lock(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
@@ -605,7 +624,7 @@ void net_sms_handle_lock(char *caller, char *buf, unsigned char pos, char *comma
     }
   }
 
-void net_sms_handle_unlock(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_unlock(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
@@ -614,7 +633,7 @@ void net_sms_handle_unlock(char *caller, char *buf, unsigned char pos, char *com
     }
   }
 
-void net_sms_handle_valet(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_valet(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
@@ -623,7 +642,7 @@ void net_sms_handle_valet(char *caller, char *buf, unsigned char pos, char *comm
     }
   }
 
-void net_sms_handle_unvalet(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_unvalet(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
@@ -633,7 +652,7 @@ void net_sms_handle_unvalet(char *caller, char *buf, unsigned char pos, char *co
   }
 
 // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance) and optional current limit
-void net_sms_handle_chargemode(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_chargemode(char *caller, char *command, char *arguments)
   {
   if (!net_sms_checkcaller(caller)) return;
 
@@ -660,7 +679,7 @@ void net_sms_handle_chargemode(char *caller, char *buf, unsigned char pos, char 
   net_send_sms_rom(caller,NET_MSG_CHARGEMODE);
   }
 
-void net_sms_handle_chargestart(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_chargestart(char *caller, char *command, char *arguments)
   {
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
@@ -671,7 +690,7 @@ void net_sms_handle_chargestart(char *caller, char *buf, unsigned char pos, char
     }
   }
 
-void net_sms_handle_chargestop(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_chargestop(char *caller, char *command, char *arguments)
   {
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
@@ -682,7 +701,7 @@ void net_sms_handle_chargestop(char *caller, char *buf, unsigned char pos, char 
     }
   }
 
-void net_sms_handle_version(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_version(char *caller, char *command, char *arguments)
   {
   unsigned char hwv = 1;
   #ifdef OVMS_HW_V2
@@ -698,7 +717,7 @@ void net_sms_handle_version(char *caller, char *buf, unsigned char pos, char *co
     }
   }
 
-void net_sms_handle_reset(char *caller, char *buf, unsigned char pos, char *command, char *arguments)
+void net_sms_handle_reset(char *caller, char *command, char *arguments)
   {
   char *p;
 
@@ -745,7 +764,7 @@ rom char sms_cmdtable[][27] =
     "RESET",
     "" };
 
-rom void (*sms_hfntable[])(char *caller, char *buf, unsigned char pos, char *command, char *arguments) =
+rom void (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   {
   &net_sms_handle_registerq,
   &net_sms_handle_register,
@@ -798,7 +817,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
     {
     if (memcmppgm2ram(buf, (char const rom far*)sms_cmdtable[k], strlenpgm((char const rom far*)sms_cmdtable[k])) == 0)
       {
-      (*sms_hfntable[k])(caller, buf, pos, buf, p);
+      (*sms_hfntable[k])(caller, buf, p);
       return;
       }
     }
