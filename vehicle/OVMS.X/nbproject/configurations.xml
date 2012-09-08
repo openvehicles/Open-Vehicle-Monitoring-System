@@ -19,6 +19,7 @@
       <itemPath>params.h</itemPath>
       <itemPath>utils.h</itemPath>
       <itemPath>inputs.h</itemPath>
+      <itemPath>diag.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -50,6 +51,7 @@
       <itemPath>params.c</itemPath>
       <itemPath>utils.c</itemPath>
       <itemPath>inputs.c</itemPath>
+      <itemPath>diag.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -173,6 +175,10 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
+      <item path="diag.c" ex="true" overriding="false">
+      </item>
+      <item path="diag.h" ex="true" overriding="false">
+      </item>
     </conf>
     <conf name="TR_V1_Quality_Control" type="2">
       <toolsSet>
@@ -285,6 +291,10 @@
         </C18-LD>
         <C18LanguageToolchain>
         </C18LanguageToolchain>
+      </item>
+      <item path="diag.c" ex="true" overriding="false">
+      </item>
+      <item path="diag.h" ex="true" overriding="false">
       </item>
     </conf>
     <conf name="TR_V1_Experimental" type="2">
@@ -404,6 +414,10 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
+      <item path="diag.c" ex="true" overriding="false">
+      </item>
+      <item path="diag.h" ex="true" overriding="false">
+      </item>
     </conf>
     <conf name="TR_V2_Production" type="2">
       <toolsSet>
@@ -515,6 +529,10 @@
         </C18-LD>
         <C18LanguageToolchain>
         </C18LanguageToolchain>
+      </item>
+      <item path="diag.c" ex="true" overriding="false">
+      </item>
+      <item path="diag.h" ex="true" overriding="false">
       </item>
     </conf>
     <conf name="TR_V2_Quality_Control" type="2">
@@ -629,6 +647,10 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
+      <item path="diag.c" ex="true" overriding="false">
+      </item>
+      <item path="diag.h" ex="true" overriding="false">
+      </item>
     </conf>
     <conf name="TR_V2_Experimental" type="2">
       <toolsSet>
@@ -680,7 +702,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_TESLAROADSTER;OVMS_HW_V2"/>
+                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_TESLAROADSTER;OVMS_HW_V2;OVMS_DIAGMODULE"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -853,6 +875,10 @@
         </C18-LD>
         <C18LanguageToolchain>
         </C18LanguageToolchain>
+      </item>
+      <item path="diag.c" ex="true" overriding="false">
+      </item>
+      <item path="diag.h" ex="true" overriding="false">
       </item>
     </conf>
   </confs>

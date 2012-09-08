@@ -61,3 +61,8 @@
 // We now have a switch to control the build for V1 or V2 hardware platform.
 //#define OVMS_HW_V1
 //#define OVMS_HW_V2
+
+// The DIAG code is a set of enhancement to support a DIAG mode on the
+// serial port. It is primarily used for QC purposes, but also useful
+// for advanced diagnostics.
+// #define OVMS_DIAGMODULE

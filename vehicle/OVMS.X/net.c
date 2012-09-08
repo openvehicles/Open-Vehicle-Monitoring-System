@@ -38,6 +38,9 @@
 #include "utils.h"
 #include "led.h"
 #include "inputs.h"
+#ifdef OVMS_DIAGMODULE
+#include "diag.h"
+#endif // #ifdef OVMS_DIAGMODULE
 
 // NET data
 #pragma udata
@@ -138,6 +141,12 @@ void net_poll(void)
     {
     if (net_buf_mode==NET_BUF_CRLF)
       { // CRLF (either normal or SMS second line) mode
+      if ((net_state==NET_STATE_FIRSTRUN)||(net_state==NET_STATE_DIAGMODE))
+        {
+        // Special handling in FIRSTRUN and DIAGMODE
+        if (x == 0x0a) continue; // Skip 0x0a (LF)
+        if (x == 0x0d) x=0x0a; // Treat CR as LF
+        }
       if (x == 0x0d) continue; // Skip 0x0d (CR)
       net_buf[net_buf_pos++] = x;
       if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
@@ -176,6 +185,7 @@ void net_poll(void)
           }
         net_state_activity();
         net_buf_pos = 0;
+        net_buf[0] = 0;
         net_buf_mode = NET_BUF_CRLF;
         }
       }
@@ -292,6 +302,18 @@ void net_state_enter(unsigned char newstate)
   net_state = newstate;
   switch(net_state)
     {
+    case NET_STATE_FIRSTRUN:
+      led_set(OVMS_LED_GRN,OVMS_LED_ON);
+      led_set(OVMS_LED_RED,OVMS_LED_ON);
+      led_start();
+      net_timeout_goto = NET_STATE_START;
+      net_timeout_ticks = 10; // Give everything time to start slowly
+      break;
+#ifdef OVMS_DIAGMODULE
+    case NET_STATE_DIAGMODE:
+      diag_initialise();
+      break;
+#endif // #ifdef OVMS_DIAGMODULE
     case NET_STATE_START:
       led_set(OVMS_LED_GRN,NET_LED_WAKEUP);
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
@@ -465,6 +487,15 @@ void net_state_activity()
 
   switch (net_state)
     {
+#ifdef OVMS_DIAGMODULE
+    case NET_STATE_FIRSTRUN:
+      if ((net_buf_pos >= 4)&&
+          (memcmppgm2ram(net_buf, (char const rom far*)"OVMS", 4) == 0))
+        {
+        net_state_enter(NET_STATE_DIAGMODE);
+        }
+      break;
+#endif // #ifdef OVMS_DIAGMODULE
     case NET_STATE_START:
       if ((net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
         {
@@ -717,6 +748,11 @@ void net_state_activity()
         net_state_enter(NET_STATE_NETINITP);
         }
       break;
+#ifdef OVMS_DIAGMODULE
+    case NET_STATE_DIAGMODE:
+      diag_activity(net_buf,net_buf_pos);
+      break;
+#endif // #ifdef OVMS_DIAGMODULE
     }
   }
 
@@ -760,7 +796,7 @@ void net_state_ticker1(void)
         }
       break;
     case NET_STATE_SOFTRESET:
-      net_state_enter(NET_STATE_START);
+      net_state_enter(NET_STATE_FIRSTRUN);
       break;
     case NET_STATE_READY:
       if (net_buf_mode != NET_BUF_CRLF)
@@ -877,6 +913,11 @@ void net_state_ticker1(void)
           }
         }
       break;
+#ifdef OVMS_DIAGMODULE
+    case NET_STATE_DIAGMODE:
+      diag_ticker();
+      break;
+#endif // #ifdef OVMS_DIAGMODULE
     }
   }
 
@@ -1081,5 +1122,5 @@ void net_initialise(void)
   UARTIntInit();
 
   net_reg = 0;
-  net_state_enter(NET_STATE_START);
+  net_state_enter(NET_STATE_FIRSTRUN);
   }

@@ -31,9 +31,6 @@
 #ifndef __OVMS_NET_H
 #define __OVMS_NET_H
 
-// NET data
-extern unsigned char net_state;                // The current state
-
 #define NET_BUF_MAX 200
 #define NET_TEL_MAX 20
 #define NET_GPRS_RETRIES 10
@@ -45,6 +42,7 @@ extern unsigned char net_state;                // The current state
 // otherwise the number of bytes outstanding for IP data
 
 // STATES
+#define NET_STATE_FIRSTRUN   0x00  // First time run
 #define NET_STATE_START      0x01  // Initialise and get ready to go
 #define NET_STATE_SOFTRESET  0x02  // Reset and re-initialise the network
 #define NET_STATE_HARDRESET  0x03  // Hard Reset the modem, then start again
@@ -60,6 +58,7 @@ extern unsigned char net_state;                // The current state
 #define NET_STATE_COPSWDONE  0x23  // GSM COPS wait complete
 #define NET_STATE_DONETINIT  0x40  // Initalise the GPRS network
 #define NET_STATE_NETINITP   0x41  // Short pause during GPRS initialisation
+#define NET_STATE_DIAGMODE   0x7F  // Diagnostic mode
 
 // LED MODES
 #define NET_LED_WAKEUP       10    // Attempting to wake up the modem
@@ -81,6 +80,23 @@ extern unsigned char net_state;                // The current state
 #define NET_LED_ERRCOPS      6     // COPS GSM lock could not be obtained
 #define NET_LED_ERRGPRSRETRY 7     // Error (maybe temp) during GPRS init
 #define NET_LED_ERRGPRSFAIL  8     // GPRS NET INIT failed
+#define NET_LED_ERRDIAGMODE  10    // DIAGNOSTIC mode
+
+// NET data
+extern unsigned char net_state;                // The current state
+extern unsigned char net_state_vchar;          //   A per-state CHAR variable
+extern unsigned int  net_state_vint;           //   A per-state INT variable
+extern unsigned char net_cops_tries;           // A counter for COPS attempts
+extern unsigned char net_timeout_goto;         // State to auto-transition to, after timeout
+extern unsigned int  net_timeout_ticks;        // Number of seconds before timeout auto-transition
+extern unsigned int  net_granular_tick;        // An internal ticker used to generate 1min, 5min, etc, calls
+extern unsigned int  net_watchdog;             // Second count-down for network connectivity
+extern char net_caller[NET_TEL_MAX];           // The telephone number of the caller
+
+extern unsigned char net_buf_pos;              // Current position (aka length) in the network buffer
+extern unsigned char net_buf_mode;             // Mode of the buffer (CRLF, SMS or MSG)
+extern unsigned char net_buf_todo;             // Bytes outstanding on a reception
+extern unsigned char net_buf_todotimeout;      // Timeout for bytes outstanding
 
 // The NET/SMS notification system
 // We have a bitmap net_notify with bits set to request a particular notification

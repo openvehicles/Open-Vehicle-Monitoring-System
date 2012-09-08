@@ -168,7 +168,7 @@ void main(void)
   ClrWdt();		// Clear Watchdog Timer
 
   // Setup ready for the main loop
-  led_set(OVMS_LED_GRN,NET_LED_WAKEUP);
+  led_set(OVMS_LED_GRN,OVMS_LED_OFF);
   led_start();
 
   #ifdef OVMS_HW_V2
