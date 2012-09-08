@@ -31,7 +31,7 @@ DEFAULTCONF=TR_V1_Production
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=TR_V1_Production TR_V1_Quality_Control TR_V1_Experimental TR_V2_Production TR_V2_Quality_Control TR_V2_Experimental VA_V2_Experimental 
+ALLCONFS=TR_V1_Production TR_V1_Quality_Control TR_V1_Experimental TR_V2_Production TR_V2_Quality_Control TR_V2_Experimental VA_V2_Experimental RT_V2_Experimental 
 
 
 # build
@@ -52,6 +52,7 @@ ALLCONFS=TR_V1_Production TR_V1_Quality_Control TR_V1_Experimental TR_V2_Product
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V2_Quality_Control clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V2_Experimental clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=VA_V2_Experimental clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=RT_V2_Experimental clean
 
 
 
@@ -64,6 +65,7 @@ ALLCONFS=TR_V1_Production TR_V1_Quality_Control TR_V1_Experimental TR_V2_Product
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V2_Quality_Control build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V2_Experimental build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=VA_V2_Experimental build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=RT_V2_Experimental build
 
 
 

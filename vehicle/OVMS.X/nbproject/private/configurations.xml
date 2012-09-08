@@ -129,5 +129,23 @@
         </environment>
       </runprofile>
     </conf>
+    <conf name="RT_V2_Experimental" type="2">
+      <platformToolSN></platformToolSN>
+      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
+      <mdbdebugger version="1">
+        <placeholder1>place holder 1</placeholder1>
+        <placeholder2>place holder 2</placeholder2>
+      </mdbdebugger>
+      <runprofile version="6">
+        <args></args>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <console-type>0</console-type>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
   </confs>
 </configurationDescriptor>

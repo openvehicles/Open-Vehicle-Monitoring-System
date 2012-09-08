@@ -53,3 +53,10 @@ CND_ARTIFACT_PATH_VA_V2_Experimental=dist/VA_V2_Experimental/production/OVMS.X.p
 CND_PACKAGE_DIR_VA_V2_Experimental=${CND_DISTDIR}/VA_V2_Experimental/package
 CND_PACKAGE_NAME_VA_V2_Experimental=ovms.x.tar
 CND_PACKAGE_PATH_VA_V2_Experimental=${CND_DISTDIR}/VA_V2_Experimental/package/ovms.x.tar
+# RT_V2_Experimental configuration
+CND_ARTIFACT_DIR_RT_V2_Experimental=dist/RT_V2_Experimental/production
+CND_ARTIFACT_NAME_RT_V2_Experimental=OVMS.X.production.hex
+CND_ARTIFACT_PATH_RT_V2_Experimental=dist/RT_V2_Experimental/production/OVMS.X.production.hex
+CND_PACKAGE_DIR_RT_V2_Experimental=${CND_DISTDIR}/RT_V2_Experimental/package
+CND_PACKAGE_NAME_RT_V2_Experimental=ovms.x.tar
+CND_PACKAGE_PATH_RT_V2_Experimental=${CND_DISTDIR}/RT_V2_Experimental/package/ovms.x.tar
