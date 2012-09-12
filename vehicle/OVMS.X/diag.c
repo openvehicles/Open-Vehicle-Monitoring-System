@@ -114,24 +114,6 @@ void diag_ticker(void)
 
 // These are the diagnostic command handlers
 
-void diag_handle_help(char *command, char *arguments)
-  {
-  net_puts_rom("\r\n");
-  delay100(1);
-  net_puts_rom("# COMMANDS: HELP ? SMS DIAG RESET\r\n");
-  }
-
-void diag_handle_reset(char *command, char *arguments)
-  {
-  led_set(OVMS_LED_GRN,OVMS_LED_OFF);
-  led_set(OVMS_LED_RED,OVMS_LED_OFF);
-  led_start();
-  net_puts_rom("\r\n");
-  delay100(1);
-  net_puts_rom("# Leaving Diagnostics Mode\r\n");
-  net_state_enter(NET_STATE_FIRSTRUN);
-  }
-
 void diag_handle_sms(char *command, char *arguments)
   {
   char *p = par_get(PARAM_REGPHONE);
@@ -146,6 +128,27 @@ void diag_handle_sms(char *command, char *arguments)
   net_puts_rom("\r\n");
   net_sms_in(net_caller,arguments,strlen(arguments));
   }
+
+void diag_handle_help(char *command, char *arguments)
+  {
+  net_puts_rom("\r\n");
+  delay100(1);
+  net_puts_rom("# COMMANDS: HELP ? DIAG RESET or S ...\r\n");
+  net_puts_rom("# 'S' COMMANDS:\r\n  ");
+  diag_handle_sms(command,command);
+  }
+
+void diag_handle_reset(char *command, char *arguments)
+  {
+  led_set(OVMS_LED_GRN,OVMS_LED_OFF);
+  led_set(OVMS_LED_RED,OVMS_LED_OFF);
+  led_start();
+  net_puts_rom("\r\n");
+  delay100(1);
+  net_puts_rom("# Leaving Diagnostics Mode\r\n");
+  delay100(10);
+  reset_cpu();
+}
 
 void diag_handle_diag(char *command, char *arguments)
   {
@@ -228,7 +231,7 @@ void diag_handle_cantxstop(char *command, char *arguments)
   delay100(2);
   }
 
-// This is the SMS command table
+// This is the DIAG command table
 //
 // We're a bit limited by PIC C syntax (in particular no function pointers
 // as members of structures), so keep it simple and use two tables. The first
@@ -236,11 +239,10 @@ void diag_handle_cantxstop(char *command, char *arguments)
 // the command handler function pointers. The command string table array is
 // terminated by an empty "" command.
 
-rom char diag_cmdtable[][12] =
+rom char diag_cmdtable[][27] =
   { "HELP",
     "?",
     "RESET",
-    "SMS",
     "DIAG",
     "+CSQ:",
     "CANTXSTART",
@@ -252,7 +254,6 @@ rom void (*diag_hfntable[])(char *command, char *arguments) =
   &diag_handle_help,
   &diag_handle_help,
   &diag_handle_reset,
-  &diag_handle_sms,
   &diag_handle_diag,
   &diag_handle_csq,
   &diag_handle_cantxstart,
@@ -286,5 +287,11 @@ void diag_activity(char *buf, unsigned char pos)
       return;
       }
     }
+  if ((buf[0]=='S')&&(buf[1]==' '))
+    {
+    // A 'S' command...
+    diag_handle_sms(buf,buf+2);
+    }
+
   // Just ignore any commands that don't match
   }

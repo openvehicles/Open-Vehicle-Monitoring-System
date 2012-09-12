@@ -489,8 +489,8 @@ void net_state_activity()
     {
 #ifdef OVMS_DIAGMODULE
     case NET_STATE_FIRSTRUN:
-      if ((net_buf_pos >= 4)&&
-          (memcmppgm2ram(net_buf, (char const rom far*)"OVMS", 4) == 0))
+      if ((net_buf_pos >= 5)&&
+          (memcmppgm2ram(net_buf, (char const rom far*)"SETUP", 5) == 0))
         {
         net_state_enter(NET_STATE_DIAGMODE);
         }
