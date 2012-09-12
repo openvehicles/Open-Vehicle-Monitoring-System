@@ -726,6 +726,8 @@ void net_sms_handle_reset(char *caller, char *command, char *arguments)
     net_state_enter(NET_STATE_HARDRESET);
   }
 
+void net_sms_handle_help(char *caller, char *command, char *arguments);
+
 // This is the SMS command table
 //
 // We're a bit limited by PIC C syntax (in particular no function pointers
@@ -762,6 +764,7 @@ rom char sms_cmdtable[][27] =
     "CHARGESTOP",
     "VERSION",
     "RESET",
+    "HELP",
     "" };
 
 rom void (*sms_hfntable[])(char *caller, char *command, char *arguments) =
@@ -792,7 +795,8 @@ rom void (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_chargestart,
   &net_sms_handle_chargestop,
   &net_sms_handle_version,
-  &net_sms_handle_reset
+  &net_sms_handle_reset,
+  &net_sms_handle_help
   };
 
 // net_sms_in handles reception of an SMS message
@@ -824,4 +828,24 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
 
   // SMS didn't match any command pattern, forward to user via net msg
   net_msg_forward_sms(caller, buf);
+  }
+
+void net_sms_handle_help(char *caller, char *command, char *arguments)
+  {
+  int k;
+
+  if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
+      (net_sms_checkcaller(caller)))
+    {
+    if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
+
+    net_send_sms_start(caller);
+    net_puts_rom("Commands:");
+    for (k=0; sms_cmdtable[k][0] != 0; k++)
+      {
+      net_puts_rom(" ");
+      net_puts_rom(sms_cmdtable[k]);
+      }
+    net_send_sms_finish();
+    }
   }
