@@ -49,6 +49,7 @@
 #define PARAM_PARANOID   0x0A
 #define PARAM_S_GROUP1   0x0B
 #define PARAM_S_GROUP2   0x0C
+#define PARAM_GSMLOCK    0x0D
 
 #define PARAM_FEATURE_S  0x18
 #define PARAM_FEATURE8   0x18

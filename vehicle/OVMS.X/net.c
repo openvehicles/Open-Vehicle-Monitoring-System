@@ -78,9 +78,8 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 rom char NET_INIT1[] = "AT+CSMINS?\r";
 rom char NET_INIT2[] = "AT+CPIN?\r";
 rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
-rom char NET_COPS[] = "AT+COPS=0\r";
 //rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
-//rom char NET_COPS[] = "AT+COPS=4,0,\"3(2G)\"\r";
+rom char NET_COPS[] = "AT+COPS=0\r";
 
 rom char NET_WAKEUP[] = "AT\r";
 rom char NET_HANGUP[] = "ATH\r";
@@ -433,7 +432,17 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_HARDRESET;
       net_timeout_ticks = 240;
       net_msg_disconnected();
-      net_puts_rom(NET_COPS);
+      p = par_get(PARAM_GSMLOCK);
+      if (*p==0)
+        {
+        net_puts_rom(NET_COPS);
+        }
+      else
+        {
+        net_puts_rom("AT+COPS=1,0,\"");
+        net_puts_ram(p);
+        net_puts_rom("\"\r");
+        }
       break;
     case NET_STATE_COPSWAIT:
       led_set(OVMS_LED_GRN,NET_LED_COPS);

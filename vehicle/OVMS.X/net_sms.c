@@ -364,7 +364,9 @@ void net_sms_handle_params(char *caller, char *command, char *arguments)
     arguments = net_sms_nextarg(arguments);
     }
   net_send_sms_rom(caller,NET_MSG_PARAMS);
-  net_state_enter(NET_STATE_DONETINIT);
+
+  if (net_state != NET_STATE_DIAGMODE)
+    net_state_enter(NET_STATE_DONETINIT);
   }
 
 void net_sms_handle_moduleq(char *caller, char *command, char *arguments)
@@ -415,7 +417,9 @@ void net_sms_handle_module(char *caller, char *command, char *arguments)
     }
   net_sms_handle_moduleq(caller, command, arguments);
   can_initialise();
-  net_state_enter(NET_STATE_DONETINIT);
+
+  if (net_state != NET_STATE_DIAGMODE)
+    net_state_enter(NET_STATE_DONETINIT);
   }
 
 void net_sms_handle_gprsq(char *caller, char *command, char *arguments)
@@ -481,7 +485,56 @@ void net_sms_handle_gprs(char *caller, char *command, char *arguments)
       }
     }
   net_sms_handle_gprsq(caller, command, arguments);
-  net_state_enter(NET_STATE_DONETINIT);
+
+  if (net_state != NET_STATE_DIAGMODE)
+    net_state_enter(NET_STATE_DONETINIT);
+  }
+
+void net_sms_handle_gsmlockq(char *caller, char *command, char *arguments)
+  {
+  char *p;
+
+  if ((net_sms_checkcaller(caller))||
+      ((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments))))
+    {
+    if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
+
+    net_send_sms_start(caller);
+    net_puts_rom("GSMLOCK: ");
+
+    p = par_get(PARAM_GSMLOCK);
+    if (*p == 0)
+      {
+      net_puts_rom("(none)\r\n");
+      }
+    else
+      {
+      net_puts_ram(p);
+      net_puts_rom("\r\n");
+      }
+    net_send_sms_finish();
+    }
+  }
+
+// GSMLOCK <provider>
+void net_sms_handle_gsmlock(char *caller, char *command, char *arguments)
+  {
+  if (!net_sms_checkcaller(caller)) return;
+
+  if (net_sms_initargs(arguments) == NULL)
+    {
+    char e[1] = "";
+    par_set(PARAM_GSMLOCK, e);
+    }
+  else
+    {
+    par_set(PARAM_GSMLOCK, arguments);
+    }
+
+  net_sms_handle_gsmlockq(caller, command, arguments);
+
+  if (net_state != NET_STATE_DIAGMODE)
+    net_state_enter(NET_STATE_DONETINIT);
   }
 
 void net_sms_handle_serverq(char *caller, char *command, char *arguments)
@@ -531,7 +584,9 @@ void net_sms_handle_server(char *caller, char *command, char *arguments)
       }
     }
   net_sms_handle_serverq(caller, command, arguments);
-  net_state_enter(NET_STATE_DONETINIT);
+
+  if (net_state != NET_STATE_DIAGMODE)
+    net_state_enter(NET_STATE_DONETINIT);
   }
 
 void net_sms_handle_diag(char *caller, char *command, char *arguments)
@@ -749,6 +804,8 @@ rom char sms_cmdtable[][27] =
     "MODULE ",
     "GPRS?",
     "GPRS ",
+    "GSMLOCK?",
+    "GSMLOCK",
     "SERVER?",
     "SERVER ",
     "DIAG",
@@ -781,6 +838,8 @@ rom void (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_module,
   &net_sms_handle_gprsq,
   &net_sms_handle_gprs,
+  &net_sms_handle_gsmlockq,
+  &net_sms_handle_gsmlock,
   &net_sms_handle_serverq,
   &net_sms_handle_server,
   &net_sms_handle_diag,
