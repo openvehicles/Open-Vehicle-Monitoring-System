@@ -439,7 +439,7 @@ void net_state_enter(unsigned char newstate)
         }
       else
         {
-        net_puts_rom("AT+COPS=1,0,\"");
+        net_puts_rom("AT+COPS=1,1,\"");
         net_puts_ram(p);
         net_puts_rom("\"\r");
         }
