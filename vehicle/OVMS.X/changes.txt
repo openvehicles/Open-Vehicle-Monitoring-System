@@ -28,6 +28,10 @@
 ; THE SOFTWARE.
 */
 
+2012-09-14 1.3.5       Firmware 1.3.5
+                       #79 SMS/PUSH notify if alarm is activated
+                       #78 can_poll0 100 vs 102 check
+
 2012-09-12 1.3.3       Firmware 1.3.3
                        #77 Option for GSM Network selection
                        #74 Car: SETUP (DIAG)  mode for firmware

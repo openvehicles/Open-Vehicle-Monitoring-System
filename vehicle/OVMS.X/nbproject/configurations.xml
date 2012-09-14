@@ -1021,6 +1021,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="can_voltampera.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="diag.c" ex="false" overriding="false">
         <C18>
