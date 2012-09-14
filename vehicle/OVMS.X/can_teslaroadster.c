@@ -99,25 +99,7 @@ void can_initialise(void)
   // We are now in Configuration Mode
   RXB0CON = 0b00000000; // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
 
-  RXM0SIDL = 0b10100000;
-  RXM0SIDH = 0b11111111;	// Set Mask0 to 0x7fd
 
-  RXF0SIDL = 0b00000000;	// Setup Filter0 and Mask so that only CAN ID 0x100 and 0x102 will be accepted
-  RXF0SIDH = 0b00100000;	// Set Filter0 to 0x100
-
-  RXB1CON = 0b00000000;	// RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
-
-  RXM1SIDL = 0b11100000;
-  RXM1SIDH = 0b11111111;	// Set Mask1 to 0x7ff
-
-  RXF2SIDL = 0b10000000;	// Setup Filter2 so that CAN ID 0x344 will be accepted
-  RXF2SIDH = 0b01101000;
-
-  RXF3SIDL = 0b01000000;	// Setup Filter3 so that CAN ID 0x402 will be accepted
-  RXF3SIDH = 0b10000000;
-
-  RXF4SIDL = 0b00000000;        // Setup Filter4 so that CAN ID 0x400 will be accepted
-  RXF4SIDH = 0b10000000;
 
   BRGCON1 = 0; // SET BAUDRATE to 1 Mbps
   BRGCON2 = 0xD2;
@@ -151,6 +133,8 @@ void can_initialise(void)
 //
 void can_poll0(void)                // CAN ID 100 and 102
   {
+  unsigned char CANsidl = RXB0SIDL & 0b11100000;
+
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
   can_databuffer[1] = RXB0D1;
@@ -163,168 +147,177 @@ void can_poll0(void)                // CAN ID 100 and 102
 
   RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
-  switch (can_databuffer[0])
-    {
-    case 0x06: // Charge timer mode
-      if (can_databuffer[1] == 0x1b)
-        {
-        car_timermode = can_databuffer[4];
-        car_stale_timer = 1; // Reset stale indicator
-        }
-      else if (can_databuffer[1] == 0x1a)
-        {
-        car_timerstart = (can_databuffer[4]<<8)+can_databuffer[5];
-        car_stale_timer = 1; // Reset stale indicator
-        }
-      break;
-    case 0x0E: // Lock/Unlock state on ID#102
-      if (car_lockstate != can_databuffer[1])
-        net_req_notification(NET_NOTIFY_ENV);
-      car_lockstate = can_databuffer[1];
-      break;
-    case 0x80: // Range / State of Charge
-      car_SOC = can_databuffer[1];
-      car_idealrange = can_databuffer[2]+((unsigned int) can_databuffer[3] << 8);
-      car_estrange = can_databuffer[6]+((unsigned int) can_databuffer[7] << 8);
-      if (car_idealrange>6000) car_idealrange=0; // Sanity check (limit rng->std)
-      if (car_estrange>6000)   car_estrange=0; // Sanity check (limit rng->std)
-      break;
-    case 0x81: // Time/ Date UTC
-      car_time = can_databuffer[4]
-                 + ((unsigned long) can_databuffer[5] << 8)
-                 + ((unsigned long) can_databuffer[6] << 16)
-                 + ((unsigned long) can_databuffer[7] << 24);
-      break;
-    case 0x82: // Ambient Temperature
-      car_ambient_temp = (signed char)can_databuffer[1];
-      car_stale_ambient = 120; // Reset stale indicator
-      break;
-    case 0x83: // GPS Latitude
-      car_latitude = can_databuffer[4]
-                     + ((unsigned long) can_databuffer[5] << 8)
-                     + ((unsigned long) can_databuffer[6] << 16)
-                     + ((unsigned long) can_databuffer[7] << 24);
-      break;
-    case 0x84: // GPS Longitude
-      car_longitude = can_databuffer[4]
-                      + ((unsigned long) can_databuffer[5] << 8)
-                      + ((unsigned long) can_databuffer[6] << 16)
-                      + ((unsigned long) can_databuffer[7] << 24);
-      break;
-    case 0x85: // GPS direction and altitude
-      car_gpslock = can_databuffer[1];
-      if (car_gpslock)
-        {
-        car_direction = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
-        if (car_direction==360) car_direction=0; // Bug-fix for Tesla VMS bug
-        if (can_databuffer[5]&0xf0)
-          car_altitude = 0;
+  if (CANsidl == 0)
+    { // CAN ID 0x100
+    switch (can_databuffer[0])
+      {
+      case 0x06: // Charge timer mode
+        if (can_databuffer[1] == 0x1b)
+          {
+          car_timermode = can_databuffer[4];
+          car_stale_timer = 1; // Reset stale indicator
+          }
+        else if (can_databuffer[1] == 0x1a)
+          {
+          car_timerstart = (can_databuffer[4]<<8)+can_databuffer[5];
+          car_stale_timer = 1; // Reset stale indicator
+          }
+        break;
+      case 0x80: // Range / State of Charge
+        car_SOC = can_databuffer[1];
+        car_idealrange = can_databuffer[2]+((unsigned int) can_databuffer[3] << 8);
+        car_estrange = can_databuffer[6]+((unsigned int) can_databuffer[7] << 8);
+        if (car_idealrange>6000) car_idealrange=0; // Sanity check (limit rng->std)
+        if (car_estrange>6000)   car_estrange=0; // Sanity check (limit rng->std)
+        break;
+      case 0x81: // Time/ Date UTC
+        car_time = can_databuffer[4]
+                   + ((unsigned long) can_databuffer[5] << 8)
+                   + ((unsigned long) can_databuffer[6] << 16)
+                   + ((unsigned long) can_databuffer[7] << 24);
+        break;
+      case 0x82: // Ambient Temperature
+        car_ambient_temp = (signed char)can_databuffer[1];
+        car_stale_ambient = 120; // Reset stale indicator
+        break;
+      case 0x83: // GPS Latitude
+        car_latitude = can_databuffer[4]
+                       + ((unsigned long) can_databuffer[5] << 8)
+                       + ((unsigned long) can_databuffer[6] << 16)
+                       + ((unsigned long) can_databuffer[7] << 24);
+        break;
+      case 0x84: // GPS Longitude
+        car_longitude = can_databuffer[4]
+                        + ((unsigned long) can_databuffer[5] << 8)
+                        + ((unsigned long) can_databuffer[6] << 16)
+                        + ((unsigned long) can_databuffer[7] << 24);
+        break;
+      case 0x85: // GPS direction and altitude
+        car_gpslock = can_databuffer[1];
+        if (car_gpslock)
+          {
+          car_direction = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
+          if (car_direction==360) car_direction=0; // Bug-fix for Tesla VMS bug
+          if (can_databuffer[5]&0xf0)
+            car_altitude = 0;
+          else
+            car_altitude = ((unsigned int)can_databuffer[5]<<8)+(can_databuffer[4]);
+          car_stale_gps = 120; // Reset stale indicator
+          }
         else
-          car_altitude = ((unsigned int)can_databuffer[5]<<8)+(can_databuffer[4]);
-        car_stale_gps = 120; // Reset stale indicator
-        }
-      else
-        {
-        car_stale_gps = 0; // Reset stale indicator
-        }
-      break;
-    case 0x88: // Charging Current / Duration
-      car_chargecurrent = can_databuffer[1];
-      car_chargelimit = can_databuffer[6];
-      car_chargeduration = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
-      break;
-    case 0x89: // Charging Voltage / Iavailable
-      if (can_mileskm=='M')
-        car_speed = can_databuffer[1];     // speed in miles/hour
-      else
-        car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1609)+500)/1000);     // speed in km/hour
-      car_linevoltage = can_databuffer[2]
-                        + ((unsigned int) can_databuffer[3] << 8);
-      break;
-    case 0x95: // Charging mode
-      if ((can_databuffer[1] != car_chargestate)&&            // Charge state has changed AND
-          ((car_chargestate<=2)||(car_chargestate==0x0f))&&   // was (Charging or Heating) AND
-          (can_databuffer[1]!=0x04))                          // new state is not done
-        {
-        // We've moved from charging/heating to something other than DONE
-        // Let's treat this as a notifiable alert
-        net_req_notification(NET_NOTIFY_CHARGE);
-        }
-      if ((can_databuffer[1] != car_chargestate)||
-          (can_databuffer[2] != car_chargesubstate))
-        { // If the state or sub-state has changed, notify it
-        net_req_notification(NET_NOTIFY_ENV);
-        }
-      car_chargestate = can_databuffer[1];
-      car_chargesubstate = can_databuffer[2];
-      if (sys_features[FEATURE_CARBITS]&FEATURE_CB_2008) // A 2010+ roadster?
-        car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
-      else
-        car_chargemode = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
-      car_charge_b4 = can_databuffer[3];
-      car_chargekwh = can_databuffer[7];
-      break;
-    case 0x96: // Doors / Charging yes/no
-      if (car_chargestate == 0x0f) can_databuffer[1] |= 0x10; // Fudge for heating state, to be charging=on
-      if ((car_doors1 != can_databuffer[1])||
-          (car_doors2 != can_databuffer[2])||
-          (car_doors3 != can_databuffer[3])||
-          (car_doors4 != can_databuffer[4]))
-        net_req_notification(NET_NOTIFY_ENV);
+          {
+          car_stale_gps = 0; // Reset stale indicator
+          }
+        break;
+      case 0x88: // Charging Current / Duration
+        car_chargecurrent = can_databuffer[1];
+        car_chargelimit = can_databuffer[6];
+        car_chargeduration = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
+        break;
+      case 0x89: // Charging Voltage / Iavailable
+        if (can_mileskm=='M')
+          car_speed = can_databuffer[1];     // speed in miles/hour
+        else
+          car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1609)+500)/1000);     // speed in km/hour
+        car_linevoltage = can_databuffer[2]
+                          + ((unsigned int) can_databuffer[3] << 8);
+        break;
+      case 0x95: // Charging mode
+        if ((can_databuffer[1] != car_chargestate)&&            // Charge state has changed AND
+            ((car_chargestate<=2)||(car_chargestate==0x0f))&&   // was (Charging or Heating) AND
+            (can_databuffer[1]!=0x04))                          // new state is not done
+          {
+          // We've moved from charging/heating to something other than DONE
+          // Let's treat this as a notifiable alert
+          net_req_notification(NET_NOTIFY_CHARGE);
+          }
+        if ((can_databuffer[1] != car_chargestate)||
+            (can_databuffer[2] != car_chargesubstate))
+          { // If the state or sub-state has changed, notify it
+          net_req_notification(NET_NOTIFY_ENV);
+          }
+        car_chargestate = can_databuffer[1];
+        car_chargesubstate = can_databuffer[2];
+        if (sys_features[FEATURE_CARBITS]&FEATURE_CB_2008) // A 2010+ roadster?
+          car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
+        else
+          car_chargemode = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
+        car_charge_b4 = can_databuffer[3];
+        car_chargekwh = can_databuffer[7];
+        break;
+      case 0x96: // Doors / Charging yes/no
+        if (car_chargestate == 0x0f) can_databuffer[1] |= 0x10; // Fudge for heating state, to be charging=on
+        if ((car_doors1 != can_databuffer[1])||
+            (car_doors2 != can_databuffer[2])||
+            (car_doors3 != can_databuffer[3])||
+            (car_doors4 != can_databuffer[4]))
+          net_req_notification(NET_NOTIFY_ENV);
 
-      if (((car_doors2&0x40)==0)&&(can_databuffer[2]&0x40)&&(can_databuffer[2]&0x10))
-        net_req_notification(NET_NOTIFY_TRUNK); // Valet mode is active, and trunk was opened
+        if (((car_doors2&0x40)==0)&&(can_databuffer[2]&0x40)&&(can_databuffer[2]&0x10))
+          net_req_notification(NET_NOTIFY_TRUNK); // Valet mode is active, and trunk was opened
 
-      if (((car_doors4&0x02)==0)&&((can_databuffer[4]&0x02)!=0))
-        net_req_notification(NET_NOTIFY_ALARM); // Alarm has been triggered
+        if (((car_doors4&0x02)==0)&&((can_databuffer[4]&0x02)!=0))
+          net_req_notification(NET_NOTIFY_ALARM); // Alarm has been triggered
 
-      car_doors1 = can_databuffer[1]; // Doors #1
-      car_doors2 = can_databuffer[2]; // Doors #2
-      car_doors3 = can_databuffer[3]; // Doors #3
-      car_doors4 = can_databuffer[4]; // Doors #4
-      if (((car_doors1 & 0x80)==0)&&  // Car is not ON
-          (car_parktime == 0)&&       // Parktime was not previously set
-          (car_time != 0))            // We know the car time
-        {
-        car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
-        net_req_notification(NET_NOTIFY_ENV);
-        }
-      else if ((car_doors1 & 0x80)&&  // Car is ON
-               (car_parktime != 0))   // Parktime was previously set
-        {
-        car_parktime = 0;
-        net_req_notification(NET_NOTIFY_ENV);
-        }
-      break;
-    case 0xA3: // Temperatures
-      car_tpem = (signed char)can_databuffer[1]; // Tpem
-      car_tmotor = (unsigned char)can_databuffer[2]; // Tmotor
-      car_tbattery = (signed char)can_databuffer[6]; // Tbattery
-      car_stale_temps = 120; // Reset stale indicator
-      break;
-    case 0xA4: // 7 VIN bytes i.e. "SFZRE2B"
-      for (k=0;k<7;k++)
-        car_vin[k] = can_databuffer[k+1];
-      break;
-    case 0xA5: // 7 VIN bytes i.e. "39A3000"
-      for (k=0;k<7;k++)
-        car_vin[k+7] = can_databuffer[k+1];
-      if ((can_databuffer[3] == 'A')||(can_databuffer[3] == 'B'))
-        car_type[2] = '2';
-      else
-        car_type[2] = '1';
-      if (can_databuffer[3] == '8')
-        sys_features[FEATURE_CARBITS] |= FEATURE_CB_2008; // Auto-enable 1.5 support
-      if (can_databuffer[1] == '3')
-        car_type[3] = 'S';
-      else
-        car_type[3] = 'N';
-      break;
-    case 0xA6: // 3 VIN bytes i.e. "359"
-      car_vin[14] = can_databuffer[1];
-      car_vin[15] = can_databuffer[2];
-      car_vin[16] = can_databuffer[3];
-      break;
+        car_doors1 = can_databuffer[1]; // Doors #1
+        car_doors2 = can_databuffer[2]; // Doors #2
+        car_doors3 = can_databuffer[3]; // Doors #3
+        car_doors4 = can_databuffer[4]; // Doors #4
+        if (((car_doors1 & 0x80)==0)&&  // Car is not ON
+            (car_parktime == 0)&&       // Parktime was not previously set
+            (car_time != 0))            // We know the car time
+          {
+          car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
+          net_req_notification(NET_NOTIFY_ENV);
+          }
+        else if ((car_doors1 & 0x80)&&  // Car is ON
+                 (car_parktime != 0))   // Parktime was previously set
+          {
+          car_parktime = 0;
+          net_req_notification(NET_NOTIFY_ENV);
+          }
+        break;
+      case 0xA3: // Temperatures
+        car_tpem = (signed char)can_databuffer[1]; // Tpem
+        car_tmotor = (unsigned char)can_databuffer[2]; // Tmotor
+        car_tbattery = (signed char)can_databuffer[6]; // Tbattery
+        car_stale_temps = 120; // Reset stale indicator
+        break;
+      case 0xA4: // 7 VIN bytes i.e. "SFZRE2B"
+        for (k=0;k<7;k++)
+          car_vin[k] = can_databuffer[k+1];
+        break;
+      case 0xA5: // 7 VIN bytes i.e. "39A3000"
+        for (k=0;k<7;k++)
+          car_vin[k+7] = can_databuffer[k+1];
+        if ((can_databuffer[3] == 'A')||(can_databuffer[3] == 'B'))
+          car_type[2] = '2';
+        else
+          car_type[2] = '1';
+        if (can_databuffer[3] == '8')
+          sys_features[FEATURE_CARBITS] |= FEATURE_CB_2008; // Auto-enable 1.5 support
+        if (can_databuffer[1] == '3')
+          car_type[3] = 'S';
+        else
+          car_type[3] = 'N';
+        break;
+      case 0xA6: // 3 VIN bytes i.e. "359"
+        car_vin[14] = can_databuffer[1];
+        car_vin[15] = can_databuffer[2];
+        car_vin[16] = can_databuffer[3];
+        break;
+      }
+    }
+  else
+    { // CAN id 0x102
+    switch (can_databuffer[0])
+      {
+      case 0x0E: // Lock/Unlock state on ID#102
+        if (car_lockstate != can_databuffer[1])
+          net_req_notification(NET_NOTIFY_ENV);
+        car_lockstate = can_databuffer[1];
+        break;
+      }
     }
   }
 
