@@ -38,6 +38,7 @@ void net_send_sms_rom(char* number, static const rom char* message);
 void net_sms_params(char* number);
 void net_sms_gps(char* number);
 void net_sms_stat(char* number);
+void net_sms_alarm(char* number);
 void net_sms_valettrunk(char* number);
 void net_sms_in(char *caller, char *buf, unsigned char pos);
 void net_sms_socalert(char* number);

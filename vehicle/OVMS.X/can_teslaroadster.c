@@ -268,13 +268,20 @@ void can_poll0(void)                // CAN ID 100 and 102
       if (car_chargestate == 0x0f) can_databuffer[1] |= 0x10; // Fudge for heating state, to be charging=on
       if ((car_doors1 != can_databuffer[1])||
           (car_doors2 != can_databuffer[2])||
-          (car_doors3 != can_databuffer[3]))
+          (car_doors3 != can_databuffer[3])||
+          (car_doors4 != can_databuffer[4]))
         net_req_notification(NET_NOTIFY_ENV);
+
       if (((car_doors2&0x40)==0)&&(can_databuffer[2]&0x40)&&(can_databuffer[2]&0x10))
-        net_req_notification(3); // Valet mode is active, and trunk was opened
+        net_req_notification(NET_NOTIFY_TRUNK); // Valet mode is active, and trunk was opened
+
+      if (((car_doors4&0x02)==0)&&((can_databuffer[4]&0x02)!=0))
+        net_req_notification(NET_NOTIFY_ALARM); // Alarm has been triggered
+
       car_doors1 = can_databuffer[1]; // Doors #1
       car_doors2 = can_databuffer[2]; // Doors #2
       car_doors3 = can_databuffer[3]; // Doors #3
+      car_doors4 = can_databuffer[4]; // Doors #4
       if (((car_doors1 & 0x80)==0)&&  // Car is not ON
           (car_parktime == 0)&&       // Parktime was not previously set
           (car_time != 0))            // We know the car time

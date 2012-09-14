@@ -116,17 +116,20 @@ extern unsigned char net_notify_suppresscount; // To suppress STAT notifications
 #define NET_NOTIFY_NET_STAT   0x0002   // Set to 1 to NET notify status
 #define NET_NOTIFY_NET_CHARGE 0x0004   // Set to 1 to NET notify charge event
 #define NET_NOTIFY_NET_TRUNK  0x0010   // Set to 1 to NET notify trunk open
+#define NET_NOTIFY_NET_ALARM  0x0020   // Set to 1 to NET notify alarm sounding
 
 #define NET_NOTIFY_SMS_ENV    0x0100   // NOT IMPLEMENTED / REQUIRED
 #define NET_NOTIFY_SMS_STAT   0x0200   // NOT IMPLEMENTED / REQUIRED
 #define NET_NOTIFY_SMS_CHARGE 0x0400   // Set to 1 to SMS notify charge event
 #define NET_NOTIFY_SMS_TRUNK  0x1000   // Set to 1 to SMS notify trunk open
+#define NET_NOTIFY_SMS_ALARM  0x2000   // Set to 1 to SMS notify alarm sounding
 
 // Convenience constants for net_notify() call
 #define NET_NOTIFY_ENV        NET_NOTIFY_NET_ENV
 #define NET_NOTIFY_STAT       NET_NOTIFY_NET_STAT
 #define NET_NOTIFY_CHARGE     NET_NOTIFY_NET_CHARGE
 #define NET_NOTIFY_TRUNK      NET_NOTIFY_NET_TRUNK
+#define NET_NOTIFY_ALARM      NET_NOTIFY_NET_ALARM
 
 extern char net_scratchpad[NET_BUF_MAX];
 

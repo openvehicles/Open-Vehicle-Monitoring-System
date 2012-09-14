@@ -234,7 +234,9 @@ Tesla Roadster CAN Bus analysis:
 		B4=
 			bit1 = cooling pump (on=1/off=0)
 			
-		B5=0x21 0xA1
+		B5=
+			bit2 = alarm is sounding (on=1/off=0)
+
 		B6=0x18 pump starting 0x38 pump running
 
 	Odometer

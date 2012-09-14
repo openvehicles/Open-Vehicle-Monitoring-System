@@ -43,7 +43,7 @@
 #include "can.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 1,3,3
+#define OVMS_FIRMWARE_VERSION 1,3,5
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -82,6 +82,7 @@ extern unsigned char car_chargekwh; // KWh of charge
 extern unsigned char car_doors1; //
 extern unsigned char car_doors2; //
 extern unsigned char car_doors3; //
+extern unsigned char car_doors4; //
 extern unsigned char car_lockstate; // Lock State
 extern unsigned char car_speed; // speed in defined units (mph or kph)
 extern unsigned char car_SOC; // State of Charge in %

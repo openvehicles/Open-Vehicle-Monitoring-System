@@ -849,7 +849,13 @@ void net_state_ticker1(void)
         if (((net_notify & NET_NOTIFY_NETPART)>0)&&(net_msg_serverok==1))
           {
           delay100(10);
-          if ((net_notify & NET_NOTIFY_NET_CHARGE)>0)
+          if ((net_notify & NET_NOTIFY_NET_ALARM)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_NET_ALARM); // Clear notification flag
+            net_msg_alarm();
+            return;
+            }
+          else if ((net_notify & NET_NOTIFY_NET_CHARGE)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_CHARGE); // Clear notification flag
             if (net_notify_suppresscount==0)
@@ -887,7 +893,13 @@ void net_state_ticker1(void)
           {
           delay100(10);
           p = par_get(PARAM_REGPHONE);
-          if ((net_notify & NET_NOTIFY_SMS_CHARGE)>0)
+          if ((net_notify & NET_NOTIFY_SMS_ALARM)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_SMS_ALARM); // Clear notification flag
+            net_sms_alarm(p);
+            return;
+            }
+          else if ((net_notify & NET_NOTIFY_SMS_CHARGE)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_CHARGE); // Clear notification flag
             if (net_notify_suppresscount==0)
