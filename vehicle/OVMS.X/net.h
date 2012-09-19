@@ -34,6 +34,7 @@
 #define NET_BUF_MAX 200
 #define NET_TEL_MAX 20
 #define NET_GPRS_RETRIES 10
+#define NET_RXDATA_TIMEOUT 600
 
 // NET_BUF_MODES
 #define NET_BUF_IPD          0xfd  // net_buf is waiting on IPD data
@@ -91,6 +92,7 @@ extern unsigned char net_timeout_goto;         // State to auto-transition to, a
 extern unsigned int  net_timeout_ticks;        // Number of seconds before timeout auto-transition
 extern unsigned int  net_granular_tick;        // An internal ticker used to generate 1min, 5min, etc, calls
 extern unsigned int  net_watchdog;             // Second count-down for network connectivity
+extern unsigned int  net_timeout_rxdata;       // Second count-down for RX data timeout
 extern char net_caller[NET_TEL_MAX];           // The telephone number of the caller
 
 extern unsigned char net_buf_pos;              // Current position (aka length) in the network buffer

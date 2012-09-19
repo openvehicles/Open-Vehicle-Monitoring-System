@@ -52,6 +52,7 @@ unsigned char net_timeout_goto = 0;         // State to auto-transition to, afte
 unsigned int  net_timeout_ticks = 0;        // Number of seconds before timeout auto-transition
 unsigned int  net_granular_tick = 0;        // An internal ticker used to generate 1min, 5min, etc, calls
 unsigned int  net_watchdog = 0;             // Second count-down for network connectivity
+unsigned int  net_timeout_rxdata = NET_RXDATA_TIMEOUT; // Second count-down for RX data timeout
 char net_caller[NET_TEL_MAX] = {0};         // The telephone number of the caller
 
 unsigned char net_buf_pos = 0;              // Current position (aka length) in the network buffer
@@ -182,6 +183,7 @@ void net_poll(void)
           net_buf_mode = NET_BUF_SMS;
           continue;
           }
+        net_timeout_rxdata = NET_RXDATA_TIMEOUT;
         net_state_activity();
         net_buf_pos = 0;
         net_buf[0] = 0;
@@ -199,6 +201,7 @@ void net_poll(void)
       if (net_buf_todo==0)
         {
         net_buf[net_buf_pos] = 0; // Zero-terminate
+        net_timeout_rxdata = NET_RXDATA_TIMEOUT;
         net_state_activity();
         net_buf_pos = 0;
         net_buf_mode = NET_BUF_CRLF;
@@ -216,6 +219,7 @@ void net_poll(void)
         {
         net_buf_pos--;
         net_buf[net_buf_pos] = 0; // mark end of string for string search functions.
+        net_timeout_rxdata = NET_RXDATA_TIMEOUT;
         net_state_activity();
         net_buf_pos = 0;
         }
@@ -302,6 +306,7 @@ void net_state_enter(unsigned char newstate)
   switch(net_state)
     {
     case NET_STATE_FIRSTRUN:
+      net_timeout_rxdata = NET_RXDATA_TIMEOUT;
       led_set(OVMS_LED_GRN,OVMS_LED_ON);
       led_set(OVMS_LED_RED,OVMS_LED_ON);
       led_start();
@@ -1118,6 +1123,16 @@ void net_ticker(void)
     {
     net_state_ticker600();
     net_granular_tick -= 600;
+    }
+
+  if (--net_timeout_rxdata == 0)
+    {
+    // A major problem - we've lost connectivity to the modem
+    // Best solution is to reset everything
+    led_set(OVMS_LED_GRN,OVMS_LED_OFF);
+    led_set(OVMS_LED_RED,OVMS_LED_OFF);
+    net_timeout_rxdata = NET_RXDATA_TIMEOUT;
+    reset_cpu();
     }
   }
 
