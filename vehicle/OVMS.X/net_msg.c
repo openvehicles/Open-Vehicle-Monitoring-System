@@ -433,6 +433,7 @@ void net_msg_in(char* msg)
     if (memcmppgm2ram(msg, (char const rom far*)"MP-S 0 ", 7) == 0)
       {
       net_msg_server_welcome(msg+7);
+      net_granular_tick = 3590; // Nasty hack to force a status transmission in 10 seconds
       }
     return; // otherwise ignore it
     }

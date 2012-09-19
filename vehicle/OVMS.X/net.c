@@ -1036,6 +1036,10 @@ void net_state_ticker300(void)
 void net_state_ticker600(void)
   {
   char *p;
+  BOOL carbusy = ((car_chargestate==1)||    // Charging
+                  (car_chargestate==2)||    // Topping off
+                  (car_chargestate==15)||   // Heating
+                  ((car_doors1&0x80)>0));   // Car On
 
   switch (net_state)
     {
@@ -1070,7 +1074,48 @@ void net_state_ticker600(void)
         net_socalert_msg = 6;         // Check in 1 hour
         }
 #endif //#ifdef OVMS_SOCALERT
-      if ((net_link==1)&&(net_apps_connected==0))
+      if ((net_link==1)&&(net_apps_connected==0)&&carbusy)
+        {
+        if (net_msg_sendpending>0)
+          {
+          net_granular_tick -= 5; // Try again in 5 seconds...
+          }
+        else
+          {
+          net_msg_start();
+          p = par_get(PARAM_S_GROUP1);
+          if (*p != 0) net_msg_group(p);
+          p = par_get(PARAM_S_GROUP2);
+          if (*p != 0) net_msg_group(p);
+          net_msg_stat();
+          net_msg_gps();
+          net_msg_tpms();
+          net_msg_environment();
+          net_msg_send();
+          }
+        }
+      break;
+    }
+  }
+
+////////////////////////////////////////////////////////////////////////
+// net_state_ticker3600()
+// State Model: Per-hour ticker
+// This function is called approximately once per hour (since
+// state was first entered), and gives the state a timeslice for activity.
+//
+void net_state_ticker3600(void)
+  {
+  char *p;
+  BOOL carbusy = ((car_chargestate==1)||    // Charging
+                  (car_chargestate==2)||    // Topping off
+                  (car_chargestate==15)||   // Heating
+                  ((car_doors1&0x80)>0));   // Car On
+
+  switch (net_state)
+    {
+    case NET_STATE_READY:
+      if ((net_link==1)&&(net_apps_connected==0)&&(!carbusy))
         {
         if (net_msg_sendpending>0)
           {
@@ -1113,16 +1158,14 @@ void net_ticker(void)
     {
     net_state_ticker1();
     }
-  if ((net_granular_tick % 30)==0)
-    net_state_ticker30();
-  if ((net_granular_tick % 60)==0)
-    net_state_ticker60();
-  if ((net_granular_tick % 300)==0)
-    net_state_ticker300();
-  if ((net_granular_tick % 600)==0)
+  if ((net_granular_tick % 30)==0)    net_state_ticker30();
+  if ((net_granular_tick % 60)==0)    net_state_ticker60();
+  if ((net_granular_tick % 300)==0)   net_state_ticker300();
+  if ((net_granular_tick % 600)==0)   net_state_ticker600();
+  if ((net_granular_tick % 3600)==0)
     {
-    net_state_ticker600();
-    net_granular_tick -= 600;
+    net_state_ticker3600();
+    net_granular_tick -= 3600;
     }
 
   if (--net_timeout_rxdata == 0)
