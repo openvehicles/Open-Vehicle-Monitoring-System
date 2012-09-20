@@ -110,6 +110,7 @@ signed char car_stale_tpms = -1; // 0 = tpms is stale
 signed char car_stale_timer = -1; // 0 = timer is stale
 unsigned char net_reg = 0; // Network registration
 unsigned char net_link = 0; // Network link status
+unsigned char net_iccid[MAX_ICCID]; // ICCID
 char net_apps_connected = 0; // Network apps connected
 char sys_features[FEATURES_MAX]; // System features
 unsigned char net_sq = 0; // GSM Network Signal Quality

@@ -43,7 +43,7 @@
 #include "can.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 1,3,5
+#define OVMS_FIRMWARE_VERSION 1,3,6
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -67,6 +67,8 @@
 // also give it the ability to transmit messages on the CAN bus.
 // Leaving FEATURE_CANWRITE=0 is obviously less likely to interfere with
 // the vehicle normal operations.
+
+#define MAX_ICCID 24
 
 #pragma udata
 extern unsigned char ovms_firmware[3]; // Firmware version
@@ -114,6 +116,7 @@ extern signed char car_stale_tpms; // 0 = tpms is stale
 extern signed char car_stale_timer; // 0 = timer is stale
 extern unsigned char net_reg; // Network registration
 extern unsigned char net_link; // Network link status
+extern unsigned char net_iccid[MAX_ICCID]; // ICCID
 extern char net_apps_connected; // Network apps connected
 extern char sys_features[FEATURES_MAX]; // System features
 extern unsigned char net_sq; // GSM Network Signal Quality

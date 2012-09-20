@@ -77,7 +77,7 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 // ROM Constants
 rom char NET_INIT1[] = "AT+CSMINS?\r";
-rom char NET_INIT2[] = "AT+CPIN?\r";
+rom char NET_INIT2[] = "AT+CCID;+CPIN?\r";
 rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 //rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
@@ -536,7 +536,13 @@ void net_state_activity()
         }
       break;
     case NET_STATE_DOINIT2:
-      if ((net_buf_pos >= 8)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='P')&&(net_buf[3]=='I'))
+      if ((net_buf_pos >= 16)&&(net_buf[0]=='8')&&(net_buf[1]=='9'))
+        {
+        // Looks like the ICCID
+        strncpy(net_iccid,net_buf,MAX_ICCID);
+        net_iccid[MAX_ICCID-1] = 0;
+        }
+      else if ((net_buf_pos >= 8)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='P')&&(net_buf[3]=='I'))
         {
         if (net_buf[7] != 'R')
           {
