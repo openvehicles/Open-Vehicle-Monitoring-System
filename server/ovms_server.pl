@@ -16,10 +16,16 @@ use MIME::Base64;
 use JSON::XS;
 use URI::Escape;
 use HTTP::Parser::XS qw(parse_http_request);
+use Socket qw(SOL_SOCKET SO_KEEPALIVE);
+
+use constant SOL_TCP => 6;
+use constant TCP_KEEPIDLE => 4;
+use constant TCP_KEEPINTVL => 5;
+use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "1.2.1-20120415";
+my $VERSION = "1.2.2-20120920";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my %conns;
 my $utilisations;
@@ -52,7 +58,7 @@ $config = Config::IniFiles->new(-file => 'ovms_server.conf');
 
 # Globals
 my $timeout_app      = $config->val('server','timeout_app',60*20);
-my $timeout_car      = $config->val('server','timeout_car',60*12);
+my $timeout_car      = $config->val('server','timeout_car',60*16);
 my $timeout_svr      = $config->val('server','timeout_svr',60*60);
 
 # A database ticker
@@ -303,7 +309,7 @@ sub io_login
       {
       &io_tx($fn, $hdl, 'E', 'T'.$vrec->{'v_ptoken'});
       }
-    my $sth = $db->prepare('SELECT * FROM ovms_carmessages WHERE vehicleid=? and m_valid=1');
+    my $sth = $db->prepare('SELECT * FROM ovms_carmessages WHERE vehicleid=? and m_valid=1 order by field(m_code,"S","F") DESC,m_code ASC');
     $sth->execute($vehicleid);
     while (my $row = $sth->fetchrow_hashref())
       {
@@ -446,9 +452,14 @@ tcp_server undef, 6867, sub
   my $key = "$host:$port";
   $fh->blocking(0);
   my $fn = $fh->fileno();
-  AE::log info => "#$fn - new connection from $host:$port";
+  AE::log info => "#$fn - new ovms connection from $host:$port";
   my $handle; $handle = new AnyEvent::Handle(fh => $fh, on_error => \&io_error, on_rtimeout => \&io_timeout, keepalive => 1, no_delay => 1, rtimeout => 30);
   $handle->push_read (line => \&io_line);
+
+  setsockopt($fh, SOL_SOCKET, SO_KEEPALIVE, 1);
+  setsockopt($fh, SOL_TCP, TCP_KEEPCNT, 9);
+  setsockopt($fh, SOL_TCP, TCP_KEEPIDLE, 240);
+  setsockopt($fh, SOL_TCP, TCP_KEEPINTVL, 240);
 
   $conns{$fn}{'fh'} = $fh;
   $conns{$fn}{'handle'} = $handle;
@@ -461,7 +472,7 @@ tcp_server undef, 6868, sub
   my $key = "$host:$port";
   $fh->blocking(0);
   my $fn = $fh->fileno();
-  AE::log info => "#$fn - new connection from $host:$port";
+  AE::log info => "#$fn - new http connection from $host:$port";
   my $handle; $handle = new AnyEvent::Handle(fh => $fh, on_error => \&http_io_error, on_rtimeout => \&http_io_timeout, on_read => \&http_io_read, keepalive => 1, no_delay => 1, rtimeout => 30);
 
   $conns{$fn}{'fh'} = $fh;
@@ -1138,6 +1149,10 @@ sub c2dm_tim
 sub http_io_error
   {
   my ($hdl, $fatal, $msg) = @_;
+
+  my $fn=$hdl->fh->fileno();
+  delete $conns{$fn};
+  AE::log info => "HTTP connection #$fn had error ($fatal, $msg)";
   }
 
 sub http_io_timeout
@@ -1219,7 +1234,7 @@ sub http_group
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document>
-  <name>Open Vehicles KML for HKCARS</name>
+  <name>Open Vehicles KML</name>
   <Style id="icon">
     <IconStyle>
       <Icon>
@@ -1237,7 +1252,7 @@ foreach (sort keys %{$group_msgs{$id}})
   push @result,<<"EOT";
   <Placemark>
     <name>$vehicleid</name>
-    <description>$speed Kph, $altitude Mtrs</description>
+    <description>$vehicleid</description>
     <styleUrl>#icon</styleUrl>
     <Point>
       <coordinates>$longitude,$latitude</coordinates>
