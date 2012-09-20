@@ -305,16 +305,18 @@ sub io_login
     &io_tx($fn, $hdl, 'Z', (defined $car_conns{$vehicleid})?"1":"0");
     # Update the app with current stored messages
     my $vrec = &db_get_vehicle($vehicleid);
-    if ($vrec->{'v_ptoken'} ne '')
-      {
-      &io_tx($fn, $hdl, 'E', 'T'.$vrec->{'v_ptoken'});
-      }
+    my $v_ptoken = $vrec->{'v_ptoken'};
     my $sth = $db->prepare('SELECT * FROM ovms_carmessages WHERE vehicleid=? and m_valid=1 order by field(m_code,"S","F") DESC,m_code ASC');
     $sth->execute($vehicleid);
     while (my $row = $sth->fetchrow_hashref())
       {
       if ($row->{'m_paranoid'})
         {
+        if ($v_ptoken ne '')
+          {
+          &io_tx($fn, $hdl, 'E', 'T'.$v_ptoken);
+          $v_ptoken = ''; # Make sure it only gets sent once
+          }
         &io_tx($fn, $hdl, 'E', 'M'.$row->{'m_code'}.$row->{'m_msg'});
         }
       else
