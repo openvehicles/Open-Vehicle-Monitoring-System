@@ -265,6 +265,43 @@ sub io_line
     # Login...
     &io_login($fn,$hdl,$vehicleid,$clienttype,$rest);
     }
+  elsif ($line =~ /^AP-C\s+(\S)\s+(\S+)/)
+    {
+    my ($protscheme,$apkey) = ($1,$2);
+    my $vehicleid = $conns{$fn}{'vehicleid'}; $vehicleid='-' if (!defined $vehicleid);
+    if ($protscheme ne '0')
+      {
+      &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Unsupported protection scheme - aborting connection");
+      return;
+      }
+    if (defined $conns{$fn}{'ap_already'})
+      {
+      AE::log info => "#$fn $vehicleid error - Already auto-provisioned on this connection";
+      AE::log info => "#$fn C $vehicleid tx AP-X";
+      my $towrite = "AP-X\r\n";
+      $conns{$fn}{'tx'} += length($towrite);
+      $hdl->push_write($towrite);
+      return;
+      }
+    $conns{$fn}{'ap_already'} = 1;
+    my $sth = $db->prepare('SELECT * FROM ovms_autoprovision WHERE ap_key=? and deleted=0');
+    $sth->execute($apkey);
+    my $row = $sth->fetchrow_hashref();
+    if (!defined $row)
+      {
+      AE::log info => "#$fn $vehicleid info - No auto-provision profile found for $apkey";
+      AE::log info => "#$fn C $vehicleid tx AP-X";
+      my $towrite = "AP-X\r\n";
+      $conns{$fn}{'tx'} += length($towrite);
+      $hdl->push_write($towrite);
+      return;
+      }
+    # All ok, let's send the data...
+    my $towrite = "AP-S 0 ".join(' ',$row->{'ap_stoken'},$row->{'ap_sdigest'},$row->{'ap_msg'})."\r\n";
+    AE::log info => "#$fn C $vehicleid tx AP-S 0 ".join(' ',$row->{'ap_stoken'},$row->{'ap_sdigest'},$row->{'ap_msg'});
+    $conns{$fn}{'tx'} += length($towrite);
+    $hdl->push_write($towrite);
+    }
   elsif (defined $conns{$fn}{'vehicleid'})
     {
     # Let's process this as an encrypted message line...
