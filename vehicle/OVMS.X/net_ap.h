@@ -28,52 +28,24 @@
 ; THE SOFTWARE.
 */
 
-#ifndef __OVMS_MSG_H
-#define __OVMS_MSG_H
+#ifndef __OVMS_AP_H
+#define __OVMS_AP_H
 
 #include "net.h"
-#include "crypt_base64.h"
-#include "crypt_md5.h"
-#include "crypt_hmac.h"
-#include "crypt_rc4.h"
+#include "net_msg.h"
 
-#define TOKEN_SIZE 22
+extern unsigned char ap_profile;
 
-extern char net_msg_serverok;
-extern char net_msg_sendpending;
-extern int  net_msg_cmd_code;
-extern char net_msg_cmd_msg[100];
-extern char token[23];
-extern char ptoken[23];
-extern char ptokenmade;
-extern char digest[MD5_SIZE];
-extern char pdigest[MD5_SIZE];
-extern char net_msg_scratchpad[NET_BUF_MAX];
-extern RC4_CTX2 tx_crypto2;
-extern RC4_CTX2 rx_crypto2;
-extern RC4_CTX2 pm_crypto2;
-extern RC4_CTX1 tx_crypto1;
-extern RC4_CTX1 rx_crypto1;
-extern RC4_CTX1 pm_crypto1;
+void net_ap_init(void);
 
-void net_msg_init(void);
-void net_msg_disconnected(void);
-void net_msg_start(void);
-void net_msg_send(void);
-void net_msg_register(void);
-void net_msg_stat(void);
-void net_msg_gps(void);
-void net_msg_tpms(void);
-void net_msg_firmware(void);
-void net_msg_environment(void);
-void net_msg_group(char *groupname);
-void net_msg_in(char* msg);
-void net_msg_cmd_in(char* msg);
-void net_msg_cmd_do(void);
-void net_msg_forward_sms(char* caller, char* SMS);
-void net_msg_alert(void);
-void net_msg_valettrunk(void);
-void net_msg_alarm(void);
-void net_msg_socalert(void);
+BOOL net_ap_running(void);
+BOOL net_ap_param(void);
+BOOL net_ap_par_get(char* target, int maxlen, unsigned char param);
 
-#endif // #ifndef __OVMS_MSG_H
+void net_ap_register(void);
+void net_ap_in(char* msg);
+
+void net_ap_iccid(char *iccid);
+void net_ap_phonebook(char *pb);
+
+#endif // #ifndef __OVMS_AP_H

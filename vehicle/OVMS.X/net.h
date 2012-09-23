@@ -55,8 +55,9 @@
 #define NET_STATE_DOINIT3    0x12  // Initialise the GSM network - Full Init
 #define NET_STATE_READY      0x20  // READY and handling calls
 #define NET_STATE_COPS       0x21  // GSM COPS carrier selection
-#define NET_STATE_COPSWAIT   0x22  // GSM COPS wait for stable
-#define NET_STATE_COPSWDONE  0x23  // GSM COPS wait complete
+#define NET_STATE_COPSSETTLE 0x22  // GSM COPS wait for settle after lock
+#define NET_STATE_COPSWAIT   0x23  // GSM COPS wait for stable after failed lock
+#define NET_STATE_COPSWDONE  0x24  // GSM COPS wait complete
 #define NET_STATE_DONETINIT  0x40  // Initalise the GPRS network
 #define NET_STATE_NETINITP   0x41  // Short pause during GPRS initialisation
 #define NET_STATE_DIAGMODE   0x7F  // Diagnostic mode
@@ -81,6 +82,7 @@
 #define NET_LED_ERRCOPS      6     // COPS GSM lock could not be obtained
 #define NET_LED_ERRGPRSRETRY 7     // Error (maybe temp) during GPRS init
 #define NET_LED_ERRGPRSFAIL  8     // GPRS NET INIT failed
+#define NET_LED_ERRAUTOPROV  9     // Auto-provisioning is in progress
 #define NET_LED_ERRDIAGMODE  10    // DIAGNOSTIC mode
 
 // NET data

@@ -110,3 +110,26 @@ void format_latlon(long latlon, char* dest)
   ulPart = (unsigned long) ((float) res * 1000000) - lWhole * 1000000;
   sprintf(dest, (rom far char*)"%li.%06li", lWhole, ulPart); // make sure we print leading zero's after the decimal point
   }
+
+// Calculate a 16bit CRC and return it
+WORD crc16(char *data, int length)
+  {
+  WORD crc = 0xffff;
+  int k;
+
+  while (length>0)
+    {
+    crc ^= (BYTE)*data++;
+    length--;
+
+    for (k = 0; k < 8; ++k)
+      {
+      if (crc & 1)
+        crc = (crc >> 1) ^ 0xA001;
+      else
+        crc = (crc >> 1);
+      }
+    }
+
+  return crc;
+  }

@@ -28,8 +28,10 @@
 ; THE SOFTWARE.
 */
 
+#include <stdio.h>
 #include <string.h>
 #include "ovms.h"
+#include "net_ap.h"
 
 // EEprom data
 // The following data can be changed by sending SMS commands, and will survive a reboot
@@ -54,7 +56,19 @@ char* par_get(unsigned char param)
   {
   int k;
   unsigned int eeaddress;
+  char *p;
 
+  if (param >= PARAM_MAX) return NULL;
+
+  if (net_ap_param())
+    {
+    // We are in auto-provision mode, so try to get it from the auto-provision system
+    if (net_ap_par_get(par_value,PARAM_MAX,param))
+      {
+      return par_value;
+      }
+    }
+  
   // Read parameter from EEprom
   EECON1 = 0; // select EEprom memory not Flash
   eeaddress = (int)param;
@@ -76,6 +90,8 @@ void par_set(unsigned char param, char* value)
   int k = 0;
   char savint;
   unsigned int eeaddress;
+
+  if (param >= PARAM_MAX) return;
 
   strncpy(par_value,value,PARAM_MAX_LENGTH);
   par_value[PARAM_MAX_LENGTH-1]='\0';

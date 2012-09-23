@@ -31,6 +31,8 @@
 #ifndef __OVMS_UTILS_H
 #define __OVMS_UTILS_H
 
+#include <GenericTypeDefs.h>
+
 void reset_cpu(void);              // Reset the cpu
 void delay100b(void);              // Delay 100ms
 void delay100(unsigned char n);    // Delay in 100ms increments
@@ -38,5 +40,6 @@ void led_net(unsigned char led);   // Change NET led
 void led_act(unsigned char led);   // Change ACT led
 void modem_reboot(void);           // Reboot modem
 void format_latlon(long latlon, char* dest);  // Format latitude/longitude string
+WORD crc16(char *data, int length);  // Calculate a 16bit CRC and return it
 
 #endif // #ifndef __OVMS_UTILS_H

@@ -35,6 +35,7 @@
 #include "ovms.h"
 #include "net_sms.h"
 #include "net_msg.h"
+#include "net_ap.h"
 #include "utils.h"
 #include "led.h"
 #include "inputs.h"
@@ -77,9 +78,9 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 // ROM Constants
 rom char NET_INIT1[] = "AT+CSMINS?\r";
-rom char NET_INIT2[] = "AT+CCID;+CPIN?\r";
-rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
-//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
+rom char NET_INIT2[] = "AT+CCID;+CPBF=\"OVMS\";+CPBF=\"O-\";+CPIN?\r";
+//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
+rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
 rom char NET_COPS[] = "AT+COPS=0\r";
 
 rom char NET_WAKEUP[] = "AT\r";
@@ -449,6 +450,10 @@ void net_state_enter(unsigned char newstate)
         net_puts_rom("\"\r");
         }
       break;
+    case NET_STATE_COPSSETTLE:
+      net_timeout_ticks = 10;
+      net_timeout_goto = NET_STATE_DONETINIT;
+      break;
     case NET_STATE_COPSWAIT:
       led_set(OVMS_LED_GRN,NET_LED_COPS);
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
@@ -493,7 +498,10 @@ void net_state_activity()
   else if (net_buf_mode != NET_BUF_CRLF)
     {
     // An IP data message has arrived
-    net_msg_in(net_buf);
+    if (net_ap_running())
+      net_ap_in(net_buf);
+    else
+      net_msg_in(net_buf);
     // Getting GPRS data from the server means our connection was good
     net_state_vint = NET_GPRS_RETRIES; // Count-down for DONETINIT attempts
     return;
@@ -541,6 +549,12 @@ void net_state_activity()
         // Looks like the ICCID
         strncpy(net_iccid,net_buf,MAX_ICCID);
         net_iccid[MAX_ICCID-1] = 0;
+        net_ap_iccid(net_iccid);
+        }
+      else if ((net_buf_pos >= 8)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='P')&&
+             (net_buf[3]=='B')&&(net_buf[4]=='F')&&(net_buf[5]==':'))
+        {
+        net_ap_phonebook(net_buf);
         }
       else if ((net_buf_pos >= 8)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='P')&&(net_buf[3]=='I'))
         {
@@ -576,7 +590,7 @@ void net_state_activity()
         {
         net_state_vint = NET_GPRS_RETRIES; // Count-down for DONETINIT attempts
         net_cops_tries = 0; // Successfully out of COPS
-        net_state_enter(NET_STATE_DONETINIT); // COPS reconnect was OK
+        net_state_enter(NET_STATE_COPSSETTLE); // COPS reconnect was OK
         }
       else if ( ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R')) ||
               (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0) )
@@ -711,7 +725,10 @@ void net_state_activity()
           {
           led_set(OVMS_LED_GRN,NET_LED_READYGPRS);
           net_msg_start();
-          net_msg_register();
+          if (net_ap_running())
+            net_ap_register();
+          else
+            net_msg_register();
           net_msg_send();
           }
         net_link = 1;
@@ -724,7 +741,10 @@ void net_state_activity()
             {
             led_set(OVMS_LED_GRN,NET_LED_READYGPRS);
             net_msg_start();
-            net_msg_register();
+            if (net_ap_running())
+              net_ap_register();
+            else
+              net_msg_register();
             net_msg_send();
             }
           net_link = 1;
@@ -1002,7 +1022,7 @@ void net_state_ticker60(void)
         net_granular_tick -= 5; // Try again in 5 seconds...
         return;
         }
-      if ((net_link==1)&&(net_apps_connected>0))
+      if ((net_link==1)&&(net_apps_connected>0)&&(!net_ap_running()))
         {
         net_msg_start();
         p = par_get(PARAM_S_GROUP1);
@@ -1080,7 +1100,7 @@ void net_state_ticker600(void)
         net_socalert_msg = 6;         // Check in 1 hour
         }
 #endif //#ifdef OVMS_SOCALERT
-      if ((net_link==1)&&(net_apps_connected==0)&&carbusy)
+      if ((net_link==1)&&(net_apps_connected==0)&&carbusy&&(!net_ap_running()))
         {
         if (net_msg_sendpending>0)
           {
@@ -1121,7 +1141,7 @@ void net_state_ticker3600(void)
   switch (net_state)
     {
     case NET_STATE_READY:
-      if ((net_link==1)&&(net_apps_connected==0)&&(!carbusy))
+      if ((net_link==1)&&(net_apps_connected==0)&&(!carbusy)&&(!net_ap_running()))
         {
         if (net_msg_sendpending>0)
           {
@@ -1207,5 +1227,6 @@ void net_initialise(void)
   UARTIntInit();
 
   net_reg = 0;
+  net_ap_init();
   net_state_enter(NET_STATE_FIRSTRUN);
   }

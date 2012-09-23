@@ -20,6 +20,7 @@
       <itemPath>utils.h</itemPath>
       <itemPath>inputs.h</itemPath>
       <itemPath>diag.h</itemPath>
+      <itemPath>net_ap.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -53,6 +54,7 @@
       <itemPath>inputs.c</itemPath>
       <itemPath>diag.c</itemPath>
       <itemPath>can_twizy.c</itemPath>
+      <itemPath>net_ap.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -95,7 +97,7 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C18>
-        <property key="code-model" value="mS"/>
+        <property key="code-model" value="mL"/>
         <property key="data-model" value="Oa-"/>
         <property key="default-char-unsigned" value="true"/>
         <property key="enable-all-optimizations" value="true"/>
@@ -238,7 +240,7 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C18>
-        <property key="code-model" value="mS"/>
+        <property key="code-model" value="mL"/>
         <property key="data-model" value="Oa-"/>
         <property key="default-char-unsigned" value="true"/>
         <property key="enable-all-optimizations" value="true"/>
@@ -381,7 +383,7 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C18>
-        <property key="code-model" value="mS"/>
+        <property key="code-model" value="mL"/>
         <property key="data-model" value="Oa-"/>
         <property key="default-char-unsigned" value="true"/>
         <property key="enable-all-optimizations" value="true"/>
@@ -529,7 +531,7 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C18>
-        <property key="code-model" value="mS"/>
+        <property key="code-model" value="mL"/>
         <property key="data-model" value="Oa-"/>
         <property key="default-char-unsigned" value="true"/>
         <property key="enable-all-optimizations" value="true"/>
@@ -672,7 +674,7 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C18>
-        <property key="code-model" value="mS"/>
+        <property key="code-model" value="mL"/>
         <property key="data-model" value="Oa-"/>
         <property key="default-char-unsigned" value="true"/>
         <property key="enable-all-optimizations" value="true"/>
@@ -795,7 +797,7 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C18>
-        <property key="code-model" value="mS"/>
+        <property key="code-model" value="mL"/>
         <property key="data-model" value="Oa-"/>
         <property key="default-char-unsigned" value="true"/>
         <property key="enable-all-optimizations" value="true"/>
@@ -938,7 +940,7 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C18>
-        <property key="code-model" value="mS"/>
+        <property key="code-model" value="mL"/>
         <property key="data-model" value="Oa-"/>
         <property key="default-char-unsigned" value="true"/>
         <property key="enable-all-optimizations" value="true"/>

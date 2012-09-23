@@ -20,6 +20,7 @@
 #ifndef __CRYPT_BASE64_H
 #define __CRYPT_BASE64_H
 
+#include <stdlib.h>
 #include <GenericTypeDefs.h>
 
 extern const rom unsigned char cb64[];
