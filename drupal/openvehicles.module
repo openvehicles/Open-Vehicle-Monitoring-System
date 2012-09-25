@@ -1,0 +1,523 @@
+<?php
+
+/**
+ * @file
+ * Handles all things concerning openvehicles.
+ */
+
+date_default_timezone_set('UTC');
+
+/*******************************************************************************
+ * Hook Functions (Drupal)
+ ******************************************************************************/
+
+/**
+ * Implements hook_menu().
+ */
+function openvehicles_menu()
+  {
+  global $user;
+  $items = array();
+
+  $items['user/%user/vehicles'] = array(
+    'title' => 'Vehicles',
+    'description' => 'View your open vehicles.',
+    'page callback' => 'openvehicles_user',
+    'page arguments' => array(1),
+    'access callback' => 'openvehicles_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    );
+
+  $items['user/%user/vehicles/register'] = array(
+    'title' => 'Register an Open Vehicle',
+    'description' => 'Register an Open Vehicle',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('openvehicles_register_form'),
+    'access callback' => 'openvehicles_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    //'type' => MENU_CALLBACK,
+    );
+
+  $items['user/%user/vehicles/password'] = array(
+    'title' => 'Change a Password',
+    'description' => 'Change the vehicle password',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('openvehicles_password_form', 1, 4),
+    'access callback' => 'openvehicles_access',
+    'access arguments' => array(1, 4),
+    //'type' => MENU_LOCAL_TASK,
+    'type' => MENU_CALLBACK,
+    );
+
+  $items['user/%user/vehicles/edit'] = array(
+    'title' => 'Change a Vehicle',
+    'description' => 'Change the vehicle data',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('openvehicles_edit_form', 1, 4),
+    'access callback' => 'openvehicles_access',
+    'access arguments' => array(1, 4),
+    //'type' => MENU_LOCAL_TASK,
+    'type' => MENU_CALLBACK,
+    );
+
+  $items['user/%user/vehicles/delete'] = array(
+    'title' => 'Remove a vehicle',
+    'description' => 'Remove the vehicle data',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('openvehicles_delete_form', 1, 4),
+    'access callback' => 'openvehicles_access',
+    'access arguments' => array(1, 4),
+    //'type' => MENU_LOCAL_TASK,
+    'type' => MENU_CALLBACK,
+    );
+
+  return $items;
+  }
+
+function openvehicles_register_form($form, &$form_state)
+  {
+  $options = array();
+
+  drupal_set_title(t('Register an Open Vehicle'));
+
+  $query = db_select('ovms_cars', 'o');
+  $o_vehicleid = $query->addField('o', 'vehicleid');
+  $o_vehiclename = $query->addField('o', 'vehiclename');
+  $o_type = $query->addField('o', 'v_type');
+  $o_deleted = $query->addField('o', 'deleted');
+  $query->condition($o_type, 'SERVER')
+        ->condition($o_deleted, 0);
+  $result = $query->execute();
+  $options['*'] = '* - All Servers';
+  foreach ($result as $vehicle)
+    {
+    $options[$vehicle->vehicleid] = $vehicle->vehicleid;
+    }
+
+  $form['vehicleid'] = array(
+    '#title' => t('OVMS Vehicle ID'),
+    '#description' => t('A unique identification for the Open Vehicle. Commonly some part of the vehicle VIN or registration number.'),
+    '#required' => TRUE,
+    '#input' => TRUE,
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#autocomplete_path' => FALSE,
+    '#process' => array('ajax_process_form'),
+    '#theme' => 'textfield',
+    '#theme_wrappers' => array('form_element'),
+    '#type' => 'textfield',
+    );
+
+  $form['vehiclename'] = array(
+    '#title' => t('OVMS Vehicle Nickname'),
+    '#description' => t('A nickname, identifying this vehicle.'),
+    '#required' => TRUE,
+    '#input' => TRUE,
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#autocomplete_path' => FALSE,
+    '#process' => array('ajax_process_form'),
+    '#theme' => 'textfield',
+    '#theme_wrappers' => array('form_element'),
+    '#type' => 'textfield',
+    );
+
+  $form['servers'] = array(
+    '#title' => t('OVMS Server'),
+    '#description' => t('The OVMS server this vehicle will use, or leave as "*" to permit access to all servers.'),
+    '#required' => TRUE,
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => $options['*'],
+    );
+
+  $form['password_confirm'] = array(
+    '#title' => t('OVMS Server Password'),
+    '#description' => t('A secret password shared between the vehicle, server and Apps, to authenticate and encrypt communications.'),
+    '#required' => TRUE,
+    '#input' => TRUE,
+    '#size' => 32,
+    '#type' => 'password_confirm',
+    );
+
+ $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Register vehicle'),
+    '#submit' => array('openvehicles_register_do')
+    );
+
+  return $form;
+  }
+
+function openvehicles_register_form_validate($form, &$form_state)
+  {
+  $query = db_select('ovms_cars', 'o');
+  $o_vehicleid = $query->addField('o', 'vehicleid');
+  $o_deleted = $query->addField('o', 'deleted');
+  $query->condition($o_vehicleid, $form_state['values']['vehicleid']);
+  $result = $query->execute();
+  foreach ($result as $vehicle)
+    {
+    form_set_error('vehicleid', t('Sorry, a vehicle with that ID has previously been registered'));
+    }
+  }
+
+function openvehicles_register_do($form, &$form_state)
+  {
+  global $user;
+
+  $vid    = $form_state['values']['vehicleid'];
+  $vname  = $form_state['values']['vehiclename'];
+  $server = $form_state['values']['servers'];
+  $pass   = $form_state['values']['password_confirm'];
+
+  $num_inserted = db_insert('ovms_cars')
+		->fields(array(
+		'owner' => $user->uid,
+  		'carpass' => $pass,
+  		'userpass' => '',
+                'vehicleid' => $vid,
+		'vehiclename' => $vname,
+		'v_server' => $server,
+		'changed' => date('Y-m-d H:i:s')
+		))
+		->execute();
+
+  drupal_set_message('Your Open Vehicle ' . $vid . ' has been registered');
+  $form_state['redirect'] = 'user/' . $user->uid . '/vehicles';
+  }
+
+function openvehicles_password_form($form, &$form_state, $user, $vehicleid)
+  {
+  $options = array();
+
+  global $user;
+
+  drupal_set_title(t('Change OVMS Server Password for '.$vehicleid));
+
+  $query = db_select('ovms_cars', 'o');
+  $o_vehicleid = $query->addField('o', 'vehicleid');
+  $o_vehiclename = $query->addField('o', 'vehiclename');
+  $o_carpass = $query->addField('o', 'carpass');
+  $o_owner = $query->addField('o', 'owner');
+  $o_server = $query->addField('o', 'v_server');
+  $o_type = $query->addField('o', 'v_type');
+  $o_deleted = $query->addField('o', 'deleted');
+
+  $query->condition($o_owner, $user->uid)
+        ->condition($o_type, 'CAR')
+        ->condition($o_deleted, 0)
+	->condition($o_vehicleid, $vehicleid);
+
+  $result = $query->execute();
+
+  foreach ($result as $vehicle)
+    {
+    $form['vehicleid'] = array(
+      '#type' => 'hidden',
+      '#value' => t($vehicle->vehicleid)
+      );
+
+    $form['vehicleid_disp'] = array(
+      '#title' => t('OVMS Vehicle ID'),
+      '#default_value' => $vehicle->vehicleid,
+      '#required' => TRUE,
+      '#input' => TRUE,
+      '#disabled' => TRUE,
+      '#size' => 32, 
+      '#maxlength' => 32,
+      '#type' => 'textfield',
+      );
+
+    $form['password_confirm'] = array(
+      '#title' => t('OVMS Server Password'),
+      '#description' => t('A secret password shared between the vehicle, server and Apps, to authenticate and encrypt communications.'),
+      '#required' => TRUE,
+      '#input' => TRUE,
+      '#size' => 32,
+      '#type' => 'password_confirm',
+      );
+
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Change Password'),
+      '#submit' => array('openvehicles_password_do')
+      );
+    }
+
+  return $form;
+  }
+
+function openvehicles_password_do($form, &$form_state)
+  {
+  global $user;
+
+  $vehicleid = $form_state['values']['vehicleid'];
+  $pass   = $form_state['values']['password_confirm'];  
+
+  $num_updated = db_update('ovms_cars');
+  $num_updated->fields(array(
+    'carpass' => $pass,
+    'changed' => date('Y-m-d H:i:s')
+    ));
+
+  $num_updated->condition('vehicleid', $vehicleid, '=')
+              ->condition('owner', $user->uid, '=')
+              ->execute();
+
+  drupal_set_message('Your Open Vehicle ' . $vehicleid . ' server password has been updated');
+  $form_state['redirect'] = 'user/' . $user->uid . '/vehicles';
+  }
+
+function openvehicles_edit_form($form, &$form_state, $user, $vehicleid)
+  {
+  $options = array();
+
+  global $user;
+
+  drupal_set_title(t('Change Open Vehicle '.$vehicleid));
+
+  $query = db_select('ovms_cars', 'o');
+  $o_vehicleid = $query->addField('o', 'vehicleid');
+  $o_type = $query->addField('o', 'v_type');
+  $o_deleted = $query->addField('o', 'deleted');
+  $query->condition($o_type, 'SERVER')
+        ->condition($o_deleted, 0);
+  $result = $query->execute();
+  $options['*'] = '* - All Servers';
+  foreach ($result as $vehicle)
+    {
+    $options[$vehicle->vehicleid] = $vehicle->vehicleid;
+    }
+
+  $query = db_select('ovms_cars', 'o');
+  $o_vehicleid = $query->addField('o', 'vehicleid');
+  $o_vehiclename = $query->addField('o', 'vehiclename');
+  $o_carpass = $query->addField('o', 'carpass');
+  $o_owner = $query->addField('o', 'owner');
+  $o_server = $query->addField('o', 'v_server');
+  $o_type = $query->addField('o', 'v_type');
+  $o_deleted = $query->addField('o', 'deleted');
+
+  $query->condition($o_owner, $user->uid)
+        ->condition($o_type, 'CAR')
+        ->condition($o_deleted, 0)
+	->condition($o_vehicleid, $vehicleid);
+
+  $result = $query->execute();
+
+  foreach ($result as $vehicle)
+    {
+    $form['vehicleid'] = array(
+      '#type' => 'hidden',
+      '#value' => t($vehicle->vehicleid)
+      );
+
+    $form['vehiclename'] = array(
+      '#title' => t('OVMS Vehicle Nickname'),
+      '#description' => t('A nickname, identifying this vehicle.'),
+      '#default_value' => t($vehicle->vehiclename),
+      '#required' => TRUE,
+      '#input' => TRUE,
+      '#size' => 32,
+      '#maxlength' => 32,
+      '#type' => 'textfield',
+      );
+
+    $form['servers'] = array(
+      '#title' => t('OVMS Server'),
+      '#description' => t('The OVMS server this vehicle will use, or leave as "*" to permit access to all servers.'),
+      '#type' => 'select',
+      '#required' => TRUE,
+      '#options' => $options,
+      '#default_value' => t($vehicle->v_server),
+      );
+
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save changes'),
+      '#submit' => array('openvehicles_update_do')
+      );
+    }
+
+  return $form;
+  }
+
+function openvehicles_update_do($form, &$form_state)
+  {
+  global $user;
+
+  $vehicleid = $form_state['values']['vehicleid'];
+  $vname = $form_state['values']['vehiclename'];
+  $server = $form_state['values']['servers'];
+
+  $num_updated = db_update('ovms_cars');
+  $num_updated->fields(array(
+    'v_server' => $server,
+    'vehiclename' => $vname,
+    'changed' => date('Y-m-d H:i:s')
+    ));
+
+  $num_updated->condition('vehicleid', $vehicleid, '=')
+              ->condition('owner', $user->uid, '=')
+              ->execute();
+
+  drupal_set_message('Your Open Vehicle ' . $vehicleid . ' has been updated');
+  $form_state['redirect'] = 'user/' . $user->uid . '/vehicles';
+  }
+
+function openvehicles_delete_form($form, &$form_state, $user, $vehicleid)
+  {
+  global $user;
+
+  drupal_set_title(t('Remove Open Vehicle'));
+
+  $form['vehicleid'] = array(
+    '#type' => 'hidden',
+    '#value' => $vehicleid
+    );
+  $form['vehicleid_disp'] = array(
+    '#title' => t('OVMS Vehicle ID'),
+    '#default_value' => $vehicleid,
+    '#required' => TRUE,
+    '#input' => TRUE,
+    '#disabled' => TRUE,
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#type' => 'textfield',
+    );
+  $form['question'] = array(
+    '#title' => t('Are you sure?'),
+    '#type' => 'item'
+    );
+  $form['remove'] = array(
+    '#type' => 'submit',
+    '#value' => t('Yes'),
+    '#submit' => array('openvehicles_remove_do')
+    );
+  $form['nothing'] = array(
+    '#type' => 'submit',
+    '#value' => t('No'),
+    '#submit' => array('openvehicles_remove_donot')
+    );
+
+  return $form;
+  }
+
+function openvehicles_remove_donot($form, &$form_state)
+  {
+  global $user;
+
+  $form_state['redirect'] = 'user/' . $user->uid . '/vehicles';
+  }
+
+function openvehicles_remove_do($form, &$form_state)
+  {
+  global $user;
+
+  $vehicleid = $form_state['values']['vehicleid'];
+
+  $num_updated = db_update('ovms_cars')
+    ->fields(array(
+      'deleted' => 1,
+      'changed' => date('Y-m-d H:i:s')
+      ))
+    ->condition('vehicleid', $vehicleid, '=')
+    ->condition('owner', $user->uid, '=')
+    ->execute();
+
+  drupal_set_message('Your Open Vehicle ' . $vehicleid . ' has been removed');
+  $form_state['redirect'] = 'user/' . $user->uid . '/vehicles';
+  }
+
+/**
+ * Access callback for user/%user/vehicles*.
+ */
+function openvehicles_access($vehicle_user, $vehicleid = NULL)
+  {
+  global $user;
+
+  $access = ($user->uid == $vehicle_user->uid);
+
+  if (!is_null($vehicleid)) {
+    $access = $access && $vehicle_user->uid == $user->uid;
+  }
+
+  return $access;
+  }
+
+function openvehicles_user($user)
+  {
+  drupal_set_title(t('My Open Vehicles'));
+
+  global $user;
+  $uid = $user->uid;
+
+  $header = array(
+    array('data' => t('Vehicle'), 'field' => 'o.vehicleid', 'width' => 150, 'sort' => 'asc'),
+    array('data' => t('Nickname'), 'field' => 'o.vehiclename', 'width' => 150),
+    array('data' => t('Server'), 'field' => 'o.v_server'),
+    array('data' => t('Action'), 'width' => 75)
+    );
+
+  $rows = array();
+
+  $query = db_select('ovms_cars', 'o');
+  $o_vehicleid = $query->addField('o', 'vehicleid');
+  $o_vehiclename = $query->addField('o', 'vehiclename');
+  $o_carpass = $query->addField('o', 'carpass');
+  $o_uid = $query->addField('o', 'owner');
+  $o_server = $query->addField('o', 'v_server');
+  $o_type = $query->addField('o', 'v_type');
+  $o_deleted = $query->addField('o', 'deleted');
+
+  $query->condition($o_uid, $user->uid)
+        ->condition($o_type, 'CAR')
+        ->condition($o_deleted, 0);
+
+  $count_query = $query->countQuery();
+
+  $query = $query->extend('PagerDefault')->extend('TableSort');
+  $query->setCountQuery($count_query);
+
+  $result = $query->execute();
+
+  // Build a table based on the user's vehicles
+  foreach ($result as $vehicle)
+    {
+    $vehicle_text = "<b>" . t($vehicle->vehicleid) . "</b>";
+
+    $src1 = "<img src='/sites/all/modules/openvehicles/images/edit.gif' title='Change Vehicle'>";
+    $src2 = "<img src='/sites/all/modules/openvehicles/images/key.gif' title='Change Password'>";
+    $src3 = "<img src='/sites/all/modules/openvehicles/images/delete.gif' title='Remove Vehicle'>";
+
+    $rows[] = array(
+      array('data' => $vehicle_text, 'nowrap' => 'nowrap'),
+      array('data' => $vehicle->vehiclename),
+      array('data' => check_plain($vehicle->v_server)),
+      array('data' => l($src1, 'user/' . $user->uid . '/vehicles/edit/' . $vehicle->vehicleid, array('html'=>TRUE)) . '&nbsp;|&nbsp;' .
+                      l($src2, 'user/' . $user->uid . '/vehicles/password/' . $vehicle->vehicleid, array('html'=>TRUE)) . '&nbsp;|&nbsp;' .
+                      l($src3, 'user/' . $user->uid . '/vehicles/delete/' . $vehicle->vehicleid, array('html'=>TRUE)))
+      );
+    }
+
+  $build['submit'] = array(
+    '#markup' => l('Register an Open Vehicle','user/' . $user->uid . '/vehicles/register'),
+    );
+  $build['vehicles'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#attributes' => array('class' => array('openvehicles-vehicles')),
+    '#empty' => l('Register an Open Vehicle','user/' . $user->uid . '/vehicles/register'),
+    );
+  $build['pager'] = array(
+    '#theme' => 'pager',
+    '#element' => 0,
+    '#weight' => 5,
+    );
+
+  return $build;
+  }

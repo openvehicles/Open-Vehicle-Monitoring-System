@@ -1,0 +1,5 @@
+name = Open Vehicles
+description = Provides an interface to allow users to view and maintain their open vehicles
+core = 7.x
+
+files[] = openvehicles.module
