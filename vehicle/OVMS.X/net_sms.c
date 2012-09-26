@@ -459,6 +459,9 @@ void net_sms_handle_gprsq(char *caller, char *command, char *arguments)
     sprintf(net_scratchpad, (rom far char*)"\r\n Password:%s", p);
     net_puts_ram(net_scratchpad);
 
+    sprintf(net_scratchpad, (rom far char*)"\r\n GSM:%s", car_gsmcops);
+    net_puts_ram(net_scratchpad);
+
     if (net_msg_serverok)
       net_puts_rom("\r\n GPRS: OK\r\n Server: Connected OK");
     else if (net_state == NET_STATE_READY)
@@ -525,6 +528,10 @@ void net_sms_handle_gsmlockq(char *caller, char *command, char *arguments)
       net_puts_ram(p);
       net_puts_rom("\r\n");
       }
+
+    sprintf(net_scratchpad, (rom far char*)"\r\n Current: %s", car_gsmcops);
+    net_puts_ram(net_scratchpad);
+
     net_send_sms_finish();
     }
   }

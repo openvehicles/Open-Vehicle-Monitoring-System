@@ -81,11 +81,11 @@ rom char NET_INIT1[] = "AT+CSMINS?\r";
 rom char NET_INIT2[] = "AT+CCID;+CPBF=\"OVMS\";+CPBF=\"O-\";+CPIN?\r";
 //rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
-rom char NET_COPS[] = "AT+COPS=0\r";
+rom char NET_COPS[] = "AT+COPS=0,1\r";
 
 rom char NET_WAKEUP[] = "AT\r";
 rom char NET_HANGUP[] = "ATH\r";
-rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
+rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ;+COPS?\r";
 rom char NET_IPR_SET[] = "AT+IPR=9600\r"; // sets fixed baud rate for the modem
 
 ////////////////////////////////////////////////////////////////////////
@@ -483,6 +483,8 @@ void net_state_enter(unsigned char newstate)
 //
 void net_state_activity()
   {
+  char *b;
+
   if (net_buf_mode == NET_BUF_SMS)
     {
     // An SMS has arrived, and net_caller has been primed
@@ -768,6 +770,20 @@ void net_state_activity()
           if (net_buf[8]==',')  // two digits
              net_sq = (net_buf[6]&0x07)*10 + (net_buf[7]&0x07);
           else net_sq = net_buf[6]&0x07;
+        }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"+COPS:", 6) == 0)
+        {
+        // COPS network registration
+        b = strtokpgmram(net_buf,"\"");
+        if (b != NULL)
+          {
+          b = strtokpgmram(NULL,"\"");
+          if (b != NULL)
+            {
+            strncpy(car_gsmcops,b,8);
+            car_gsmcops[8] = 0;
+            }
+          }
         }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"SEND OK", 7) == 0)
         {

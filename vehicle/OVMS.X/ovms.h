@@ -121,4 +121,5 @@ extern char net_apps_connected; // Network apps connected
 extern char sys_features[FEATURES_MAX]; // System features
 extern unsigned char net_sq; // GSM Network Signal Quality
 extern unsigned int car_12vline; // 12V line level
+extern unsigned char car_gsmcops[9]; // GSM provider
 #endif
