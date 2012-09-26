@@ -529,7 +529,7 @@ void net_sms_handle_gsmlockq(char *caller, char *command, char *arguments)
       net_puts_rom("\r\n");
       }
 
-    sprintf(net_scratchpad, (rom far char*)"\r\n Current: %s", car_gsmcops);
+    sprintf(net_scratchpad, (rom far char*)"Current: %s", car_gsmcops);
     net_puts_ram(net_scratchpad);
 
     net_send_sms_finish();

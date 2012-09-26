@@ -79,13 +79,13 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 // ROM Constants
 rom char NET_INIT1[] = "AT+CSMINS?\r";
 rom char NET_INIT2[] = "AT+CCID;+CPBF=\"OVMS\";+CPBF=\"O-\";+CPIN?\r";
-//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
-rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
-rom char NET_COPS[] = "AT+COPS=0,1\r";
+rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
+//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
+rom char NET_COPS[] = "AT+COPS=0,1;+COPS?\r";
 
 rom char NET_WAKEUP[] = "AT\r";
 rom char NET_HANGUP[] = "ATH\r";
-rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ;+COPS?\r";
+rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
 rom char NET_IPR_SET[] = "AT+IPR=9600\r"; // sets fixed baud rate for the modem
 
 ////////////////////////////////////////////////////////////////////////
@@ -447,7 +447,7 @@ void net_state_enter(unsigned char newstate)
         {
         net_puts_rom("AT+COPS=1,1,\"");
         net_puts_ram(p);
-        net_puts_rom("\"\r");
+        net_puts_rom("\";+COPS?\r");
         }
       break;
     case NET_STATE_COPSSETTLE:
@@ -599,11 +599,26 @@ void net_state_activity()
         {
         net_state_enter(NET_STATE_COPSWAIT); // Try to wait a bit to see if we get a CREG
         }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"+COPS:", 6) == 0)
+        {
+        // COPS network registration
+        b = strtokpgmram(net_buf,"\"");
+        if (b != NULL)
+          {
+          b = strtokpgmram(NULL,"\"");
+          if (b != NULL)
+            {
+            strncpy(car_gsmcops,b,8);
+            car_gsmcops[8] = 0;
+            }
+          }
+        }
       break;
     case NET_STATE_COPSWAIT:
       if (memcmppgm2ram(net_buf, (char const rom far*)"+CREG", 5) == 0)
         { // "+CREG" Network registration
-        if (net_buf[8]==',')
+
+          if (net_buf[8]==',')
           net_reg = net_buf[9]&0x07; // +CREG: 1,x
         else
           net_reg = net_buf[7]&0x07; // +CREG: x
@@ -770,20 +785,6 @@ void net_state_activity()
           if (net_buf[8]==',')  // two digits
              net_sq = (net_buf[6]&0x07)*10 + (net_buf[7]&0x07);
           else net_sq = net_buf[6]&0x07;
-        }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+COPS:", 6) == 0)
-        {
-        // COPS network registration
-        b = strtokpgmram(net_buf,"\"");
-        if (b != NULL)
-          {
-          b = strtokpgmram(NULL,"\"");
-          if (b != NULL)
-            {
-            strncpy(car_gsmcops,b,8);
-            car_gsmcops[8] = 0;
-            }
-          }
         }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"SEND OK", 7) == 0)
         {
