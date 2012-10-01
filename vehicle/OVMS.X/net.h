@@ -34,7 +34,7 @@
 #define NET_BUF_MAX 200
 #define NET_TEL_MAX 20
 #define NET_GPRS_RETRIES 10
-#define NET_RXDATA_TIMEOUT 600
+#define NET_RXDATA_TIMEOUT 1800
 
 // NET_BUF_MODES
 #define NET_BUF_IPD          0xfd  // net_buf is waiting on IPD data

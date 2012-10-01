@@ -382,6 +382,30 @@ void net_sms_handle_params(char *caller, char *command, char *arguments)
     net_state_enter(NET_STATE_DONETINIT);
   }
 
+void net_sms_handle_ap(char *caller, char *command, char *arguments)
+  {
+  unsigned char d = 0;
+  char *p = par_get(PARAM_MODULEPASS);
+
+  if (net_sms_initargs(arguments) == NULL) return;
+
+  // First parameter is module password (for authentication)
+  if (strncmp(p,arguments,strlen(p))!=0) return;
+  arguments = net_sms_nextarg(arguments);
+
+  while ((d < PARAM_MAX)&&(arguments != NULL))
+    {
+    if ((arguments[0]=='-')&&(arguments[1]==0))
+      par_set(d++, arguments+1);
+    else
+      par_set(d++, arguments);
+    arguments = net_sms_nextarg(arguments);
+    }
+
+  if (net_state != NET_STATE_DIAGMODE)
+    net_state_enter(NET_STATE_FIRSTRUN);
+  }
+
 void net_sms_handle_moduleq(char *caller, char *command, char *arguments)
   {
   char *p;
@@ -820,6 +844,7 @@ rom char sms_cmdtable[][27] =
     "STAT",
     "PARAMS?",
     "PARAMS ",
+    "AP ",
     "MODULE?",
     "MODULE ",
     "GPRS?",
@@ -854,6 +879,7 @@ rom void (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_stat,
   &net_sms_handle_paramsq,
   &net_sms_handle_params,
+  &net_sms_handle_ap,
   &net_sms_handle_moduleq,
   &net_sms_handle_module,
   &net_sms_handle_gprsq,
