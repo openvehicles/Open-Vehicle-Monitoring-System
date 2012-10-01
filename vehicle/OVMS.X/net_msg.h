@@ -32,29 +32,11 @@
 #define __OVMS_MSG_H
 
 #include "net.h"
-#include "crypt_base64.h"
-#include "crypt_md5.h"
-#include "crypt_hmac.h"
-#include "crypt_rc4.h"
-
-#define TOKEN_SIZE 22
 
 extern char net_msg_serverok;
 extern char net_msg_sendpending;
 extern int  net_msg_cmd_code;
 extern char net_msg_cmd_msg[100];
-extern char token[23];
-extern char ptoken[23];
-extern char ptokenmade;
-extern char digest[MD5_SIZE];
-extern char pdigest[MD5_SIZE];
-extern char net_msg_scratchpad[NET_BUF_MAX];
-extern RC4_CTX2 tx_crypto2;
-extern RC4_CTX2 rx_crypto2;
-extern RC4_CTX2 pm_crypto2;
-extern RC4_CTX1 tx_crypto1;
-extern RC4_CTX1 rx_crypto1;
-extern RC4_CTX1 pm_crypto1;
 
 void net_msg_init(void);
 void net_msg_disconnected(void);

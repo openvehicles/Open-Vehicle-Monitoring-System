@@ -35,7 +35,6 @@
 #include "ovms.h"
 #include "net_sms.h"
 #include "net_msg.h"
-#include "net_ap.h"
 #include "utils.h"
 #include "led.h"
 #include "inputs.h"
@@ -78,7 +77,7 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 // ROM Constants
 rom char NET_INIT1[] = "AT+CSMINS?\r";
-rom char NET_INIT2[] = "AT+CCID;+CPBF=\"OVMS\";+CPBF=\"O-\";+CPIN?\r";
+rom char NET_INIT2[] = "AT+CCID;+CPBF=\"O-\";+CPIN?\r";
 rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 //rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
 rom char NET_COPS[] = "AT+COPS=0,1;+COPS?\r";
@@ -294,6 +293,46 @@ void net_req_notification(unsigned int notify)
   }
 
 ////////////////////////////////////////////////////////////////////////
+// net_phonebook
+// A phonebook entry has arrived, and the parameters may need to be
+// updated...
+void net_phonebook(char *pb)
+  {
+  // We have a phonebook entry line from the SIM card / modem
+  // Looking like: +CPBF: 1,"0",129,"O-X-Y"
+  char *n,*p, *ep;
+
+  n = strtokpgmram(pb,"\"");
+  if (n==NULL) return;
+  n = strtokpgmram(NULL,"\"");
+  if (n==NULL) return;
+  p = strtokpgmram(NULL,"\"");
+  if (p==NULL) return;
+  p = strtokpgmram(NULL,"\"");
+  if (p==NULL) return;
+
+  // At this point, *n is the second token (the number), and *p is
+  // the fourth token (the parameter). Both are defined.
+  if ((p[0]=='O')&&(p[1]=='-'))
+    {
+    n = strtokpgmram(p+2,"-");
+    if (n==NULL) return;
+    p = strtokpgmram(NULL,"-");
+    ep = par_get(atoi(n));
+    if (p==NULL)
+      {
+      if (ep[0] != 0)
+        par_set((unsigned char)atoi(n), (char*)"");
+      }
+    else
+      {
+      if (strcmp(ep,p) != 0)
+        par_set((unsigned char)atoi(n), p);
+      }
+    }
+  }
+
+////////////////////////////////////////////////////////////////////////
 // net_state_enter(newstate)
 // State Model: A new state has been entered.
 // This should do any initialisation and other actions required on
@@ -500,10 +539,7 @@ void net_state_activity()
   else if (net_buf_mode != NET_BUF_CRLF)
     {
     // An IP data message has arrived
-    if (net_ap_running())
-      net_ap_in(net_buf);
-    else
-      net_msg_in(net_buf);
+    net_msg_in(net_buf);
     // Getting GPRS data from the server means our connection was good
     net_state_vint = NET_GPRS_RETRIES; // Count-down for DONETINIT attempts
     return;
@@ -551,12 +587,11 @@ void net_state_activity()
         // Looks like the ICCID
         strncpy(net_iccid,net_buf,MAX_ICCID);
         net_iccid[MAX_ICCID-1] = 0;
-        net_ap_iccid(net_iccid);
         }
       else if ((net_buf_pos >= 8)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='P')&&
-             (net_buf[3]=='B')&&(net_buf[4]=='F')&&(net_buf[5]==':'))
+               (net_buf[3]=='B')&&(net_buf[4]=='F')&&(net_buf[5]==':'))
         {
-        net_ap_phonebook(net_buf);
+        net_phonebook(net_buf);
         }
       else if ((net_buf_pos >= 8)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='P')&&(net_buf[3]=='I'))
         {
@@ -617,8 +652,7 @@ void net_state_activity()
     case NET_STATE_COPSWAIT:
       if (memcmppgm2ram(net_buf, (char const rom far*)"+CREG", 5) == 0)
         { // "+CREG" Network registration
-
-          if (net_buf[8]==',')
+        if (net_buf[8]==',')
           net_reg = net_buf[9]&0x07; // +CREG: 1,x
         else
           net_reg = net_buf[7]&0x07; // +CREG: x
@@ -742,10 +776,7 @@ void net_state_activity()
           {
           led_set(OVMS_LED_GRN,NET_LED_READYGPRS);
           net_msg_start();
-          if (net_ap_running())
-            net_ap_register();
-          else
-            net_msg_register();
+          net_msg_register();
           net_msg_send();
           }
         net_link = 1;
@@ -758,10 +789,7 @@ void net_state_activity()
             {
             led_set(OVMS_LED_GRN,NET_LED_READYGPRS);
             net_msg_start();
-            if (net_ap_running())
-              net_ap_register();
-            else
-              net_msg_register();
+            net_msg_register();
             net_msg_send();
             }
           net_link = 1;
@@ -1039,7 +1067,7 @@ void net_state_ticker60(void)
         net_granular_tick -= 5; // Try again in 5 seconds...
         return;
         }
-      if ((net_link==1)&&(net_apps_connected>0)&&(!net_ap_running()))
+      if ((net_link==1)&&(net_apps_connected>0))
         {
         net_msg_start();
         p = par_get(PARAM_S_GROUP1);
@@ -1117,7 +1145,7 @@ void net_state_ticker600(void)
         net_socalert_msg = 6;         // Check in 1 hour
         }
 #endif //#ifdef OVMS_SOCALERT
-      if ((net_link==1)&&(net_apps_connected==0)&&carbusy&&(!net_ap_running()))
+      if ((net_link==1)&&(net_apps_connected==0)&&carbusy)
         {
         if (net_msg_sendpending>0)
           {
@@ -1158,7 +1186,7 @@ void net_state_ticker3600(void)
   switch (net_state)
     {
     case NET_STATE_READY:
-      if ((net_link==1)&&(net_apps_connected==0)&&(!carbusy)&&(!net_ap_running()))
+      if ((net_link==1)&&(net_apps_connected==0)&&(!carbusy))
         {
         if (net_msg_sendpending>0)
           {
@@ -1244,6 +1272,5 @@ void net_initialise(void)
   UARTIntInit();
 
   net_reg = 0;
-  net_ap_init();
   net_state_enter(NET_STATE_FIRSTRUN);
   }

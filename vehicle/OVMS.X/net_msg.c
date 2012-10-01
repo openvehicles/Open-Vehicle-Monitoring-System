@@ -37,8 +37,13 @@
 #include "can.h"
 #include "net_msg.h"
 #include "net_sms.h"
+#include "crypt_base64.h"
+#include "crypt_md5.h"
+#include "crypt_hmac.h"
+#include "crypt_rc4.h"
 
 // NET_MSG data
+#define TOKEN_SIZE 22
 #pragma udata
 char net_msg_serverok = 0;
 char net_msg_sendpending = 0;
