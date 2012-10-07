@@ -849,6 +849,7 @@ void net_state_activity()
 //
 void net_state_ticker1(void)
   {
+  char stat;
   char *p;
 
   switch (net_state)
@@ -947,24 +948,23 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_STAT); // Clear notification flag
-            net_msg_stat();
+            delay100(10);
+            if (net_msgp_stat(2) != 2);
+              net_msg_send();
             return;
             }
           else if ((net_notify & NET_NOTIFY_NET_ENV)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_ENV); // Clear notification flag
-            if ((net_apps_connected>0)&&
-                (net_msg_sendpending==0))
-              {
-              delay100(10);
-              net_msg_start();
-              net_msg_environment();
-              net_msg_stat();
+            stat = 2;
+            delay100(10);
+            stat = net_msgp_environment(stat);
+            stat = net_msgp_stat(stat);
+            if (stat != 2)
               net_msg_send();
-              return;
-              }
+            return;
             }
-              }
+          }
         if ((net_notify & NET_NOTIFY_SMSPART)>0)
           {
           delay100(10);
@@ -1004,9 +1004,8 @@ void net_state_ticker1(void)
             (net_apps_connected>0))
           { // Car moving, and streaming on, apps connected, and not sending
           delay100(2);
-          net_msg_start();
-          net_msg_gps();
-          net_msg_send();
+          if (net_msgp_gps(2) != 2)
+            net_msg_send();
           }
         }
       break;
@@ -1053,6 +1052,7 @@ void net_state_ticker30(void)
 //
 void net_state_ticker60(void)
   {
+  char stat;
   char *p;
 
   #ifdef OVMS_HW_V2
@@ -1069,16 +1069,18 @@ void net_state_ticker60(void)
         }
       if ((net_link==1)&&(net_apps_connected>0))
         {
-        net_msg_start();
+        delay100(10);
+        stat = 2;
         p = par_get(PARAM_S_GROUP1);
-        if (*p != 0) net_msg_group(p);
+        if (*p != 0) stat = net_msgp_group(stat,1,p);
         p = par_get(PARAM_S_GROUP2);
-        if (*p != 0) net_msg_group(p);
-        net_msg_stat();
-        net_msg_gps();
-        net_msg_tpms();
-        net_msg_environment();
-        net_msg_send();
+        if (*p != 0) stat = net_msgp_group(stat,2,p);
+        stat = net_msgp_stat(stat);
+        stat = net_msgp_gps(stat);
+        stat = net_msgp_tpms(stat);
+        stat = net_msgp_environment(stat);
+        if (stat != 2)
+          net_msg_send();
         }
       net_state_vchar = net_state_vchar ^ 1;
       break;
@@ -1106,6 +1108,7 @@ void net_state_ticker300(void)
 //
 void net_state_ticker600(void)
   {
+  char stat;
   char *p;
   BOOL carbusy = ((car_chargestate==1)||    // Charging
                   (car_chargestate==2)||    // Topping off
@@ -1153,16 +1156,17 @@ void net_state_ticker600(void)
           }
         else
           {
-          net_msg_start();
+          stat = 2;
           p = par_get(PARAM_S_GROUP1);
-          if (*p != 0) net_msg_group(p);
+          if (*p != 0) stat = net_msgp_group(stat,1,p);
           p = par_get(PARAM_S_GROUP2);
-          if (*p != 0) net_msg_group(p);
-          net_msg_stat();
-          net_msg_gps();
-          net_msg_tpms();
-          net_msg_environment();
-          net_msg_send();
+          if (*p != 0) stat = net_msgp_group(stat,2,p);
+          stat = net_msgp_stat(stat);
+          stat = net_msgp_gps(stat);
+          stat = net_msgp_tpms(stat);
+          stat = net_msgp_environment(stat);
+          if (stat != 2)
+            net_msg_send();
           }
         }
       break;
@@ -1177,6 +1181,7 @@ void net_state_ticker600(void)
 //
 void net_state_ticker3600(void)
   {
+  char stat;
   char *p;
   BOOL carbusy = ((car_chargestate==1)||    // Charging
                   (car_chargestate==2)||    // Topping off
@@ -1194,16 +1199,17 @@ void net_state_ticker3600(void)
           }
         else
           {
-          net_msg_start();
+          stat = 2;
           p = par_get(PARAM_S_GROUP1);
-          if (*p != 0) net_msg_group(p);
+          if (*p != 0) stat = net_msgp_group(stat,1,p);
           p = par_get(PARAM_S_GROUP2);
-          if (*p != 0) net_msg_group(p);
-          net_msg_stat();
-          net_msg_gps();
-          net_msg_tpms();
-          net_msg_environment();
-          net_msg_send();
+          if (*p != 0) stat = net_msgp_group(stat,2,p);
+          stat = net_msgp_stat(stat);
+          stat = net_msgp_gps(stat);
+          stat = net_msgp_tpms(stat);
+          stat = net_msgp_environment(stat);
+          if (stat != 2)
+            net_msg_send();
           }
         }
       break;
@@ -1246,6 +1252,10 @@ void net_ticker(void)
     led_set(OVMS_LED_GRN,OVMS_LED_OFF);
     led_set(OVMS_LED_RED,OVMS_LED_OFF);
     net_timeout_rxdata = NET_RXDATA_TIMEOUT;
+    // Temporary kludge to record in feature #10 the number of times this happened
+    sys_features[10] += 1;
+    sprintf(net_scratchpad,"%d",sys_features[10]);
+    par_set(PARAM_FEATURE10,net_scratchpad);
     reset_cpu();
     }
   }

@@ -41,6 +41,7 @@
 #include "crypt_md5.h"
 #include "crypt_hmac.h"
 #include "crypt_rc4.h"
+#include "utils.h"
 
 // NET_MSG data
 #define TOKEN_SIZE 22
@@ -52,6 +53,13 @@ char ptoken[23] = {0};
 char ptokenmade = 0;
 char digest[MD5_SIZE];
 char pdigest[MD5_SIZE];
+WORD crc_stat = 0;
+WORD crc_gps = 0;
+WORD crc_tpms = 0;
+WORD crc_firmware = 0;
+WORD crc_environment = 0;
+WORD crc_group1 = 0;
+WORD crc_group2 = 0;
 
 #pragma udata NETMSG_SP
 char net_msg_scratchpad[NET_BUF_MAX];
@@ -180,7 +188,58 @@ void net_msg_register(void)
   net_puts_rom("\r\n");
   }
 
-void net_msg_stat(void)
+// net_msgp_*
+//
+// The net_msgp_* function output message parts.
+// They all operate in the same way and are controlled by a <stat> parameter.
+// stat:
+//   0= Always output the message, and assume net_msg_start() has already been done
+//      Return 0
+//   2= If message has changed, call net_msg_start(), output msg, return 1
+//      else return 2
+//   1= If message has changed, output msg
+//      Always return 1
+//
+// A caller that has done net_msg_start() and always wants output is to just use stat=0
+// A caller that wants only changed output does not call net_msg_start(), but instead
+// sets stat=2 and calls the functions one after the other, setting stat with the result of the call
+// At the end, if stat=1, call net_msg_send().
+
+// <stat> guarded encode the message in net_scratchpad and start the send process
+char net_msg_encode_statputs(char stat, WORD *oldcrc)
+  {
+  WORD newcrc = crc16(net_scratchpad, strlen(net_scratchpad));
+
+  switch (stat)
+    {
+    case 0:
+      // Always output
+      net_msg_encode_puts();
+      *oldcrc = newcrc;
+      break;
+    case 1:
+      // Guarded output, but net_msg_start() has already been sent
+      if (*oldcrc != newcrc)
+        {
+        net_msg_encode_puts();
+        *oldcrc = newcrc;
+        }
+      break;
+    case 2:
+      // Guarded output, but net_msg_start() has not yet been sent
+      if (*oldcrc != newcrc)
+        {
+        net_msg_start();
+        net_msg_encode_puts();
+        *oldcrc = newcrc;
+        stat = 1;
+        }
+      break;
+    }
+  return stat;
+  }
+
+char net_msgp_stat(char stat)
   {
   char *p;
 
@@ -241,10 +300,11 @@ void net_msg_stat(void)
           car_chargestate,car_chargemode,
           car_timermode,car_timerstart,car_stale_timer);
   strcat(net_scratchpad,net_msg_scratchpad);
-  net_msg_encode_puts();
+
+  return net_msg_encode_statputs(stat, &crc_stat);
   }
 
-void net_msg_gps(void)
+char net_msgp_gps(char stat)
   {
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 L");
   format_latlon(car_latitude,net_msg_scratchpad);
@@ -256,10 +316,10 @@ void net_msg_gps(void)
           car_direction, car_altitude, car_gpslock,car_stale_gps);
   strcat(net_scratchpad,net_msg_scratchpad);
 
-  net_msg_encode_puts();
+  return net_msg_encode_statputs(stat, &crc_gps);
   }
 
-void net_msg_tpms(void)
+char net_msgp_tpms(char stat)
   {
   char k;
   long p;
@@ -267,7 +327,7 @@ void net_msg_tpms(void)
 
   if ((car_tpms_t[0]==0)&&(car_tpms_t[1]==0)&&
       (car_tpms_t[2]==0)&&(car_tpms_t[3]==0))
-    return; // No TPMS, no report
+    return stat; // No TPMS, no report
 
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 W");
   for (k=0;k<4;k++)
@@ -288,10 +348,11 @@ void net_msg_tpms(void)
     }
   sprintf(net_msg_scratchpad, (rom far char*)"%d",car_stale_tpms);
   strcat(net_scratchpad,net_msg_scratchpad);
-  net_msg_encode_puts();
+
+  return net_msg_encode_statputs(stat, &crc_tpms);
   }
 
-void net_msg_firmware(void)
+char net_msgp_firmware(char stat)
   {
   // Send firmware version and GSM signal level
   unsigned char hwv = 1;
@@ -305,10 +366,11 @@ void net_msg_firmware(void)
     car_vin, net_sq, sys_features[FEATURE_CANWRITE],car_type,
     car_gsmcops);
   strcat(net_scratchpad,net_msg_scratchpad);
-  net_msg_encode_puts();
+
+  return net_msg_encode_statputs(stat, &crc_firmware);
   }
 
-void net_msg_environment(void)
+char net_msgp_environment(char stat)
   {
   unsigned long park;
 
@@ -327,10 +389,11 @@ void net_msg_environment(void)
           car_12vline/10,car_12vline%10,
           car_doors4);
   strcat(net_scratchpad,net_msg_scratchpad);
-  net_msg_encode_puts();
+
+  return net_msg_encode_statputs(stat, &crc_environment);
   }
 
-void net_msg_group(char *groupname)
+char net_msgp_group(char stat, char groupnumber, char *groupname)
   {
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 g");
   sprintf(net_msg_scratchpad, (rom far char*)"%s,%d,%d,%d,%d,%d,%d,",
@@ -343,7 +406,11 @@ void net_msg_group(char *groupname)
   strcatpgm2ram(net_scratchpad,(char const rom far*)",");
   format_latlon(car_longitude,net_msg_scratchpad);
   strcat(net_scratchpad,net_msg_scratchpad);
-  net_msg_encode_puts();
+
+  if (groupnumber==1)
+    return net_msg_encode_statputs(stat, &crc_group1);
+  else
+    return net_msg_encode_statputs(stat, &crc_group1);
   }
 
 void net_msg_server_welcome(char *msg)
@@ -428,6 +495,7 @@ void net_msg_server_welcome(char *msg)
 void net_msg_in(char* msg)
   {
   int k;
+  char s;
 
   if (net_msg_serverok == 0)
     {
@@ -492,11 +560,11 @@ void net_msg_in(char* msg)
         if (net_msg_sendpending==0)
           {
           net_msg_start();
-          net_msg_stat();
-          net_msg_gps();
-          net_msg_tpms();
-          net_msg_firmware();
-          net_msg_environment();
+          net_msgp_stat(0);
+          net_msgp_gps(0);
+          net_msgp_tpms(0);
+          net_msgp_firmware(0);
+          net_msgp_environment(0);
           net_msg_send();
           }
         }
@@ -762,7 +830,7 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       delay100(2);
-      net_msg_environment();
+      net_msgp_environment(0);
       break;
     case 21: // Activate valet mode (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -776,7 +844,7 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       delay100(2);
-      net_msg_environment();
+      net_msgp_environment(0);
       break;
     case 22: // Unlock car (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -790,7 +858,7 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       delay100(2);
-      net_msg_environment();
+      net_msgp_environment(0);
       break;
     case 23: // Deactivate valet mode (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
@@ -804,7 +872,7 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       delay100(2);
-      net_msg_environment();
+      net_msgp_environment(0);
       break;
     case 24: // Home Link
       if (sys_features[FEATURE_CANWRITE]==0)

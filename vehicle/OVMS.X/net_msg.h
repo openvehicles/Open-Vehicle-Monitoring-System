@@ -43,16 +43,20 @@ void net_msg_disconnected(void);
 void net_msg_start(void);
 void net_msg_send(void);
 void net_msg_register(void);
-void net_msg_stat(void);
-void net_msg_gps(void);
-void net_msg_tpms(void);
-void net_msg_firmware(void);
-void net_msg_environment(void);
-void net_msg_group(char *groupname);
+
+char net_msgp_stat(char stat);
+char net_msgp_gps(char stat);
+char net_msgp_tpms(char stat);
+char net_msgp_firmware(char stat);
+char net_msgp_environment(char stat);
+char net_msgp_group(char stat, char groupnumber, char *groupname);
+
 void net_msg_in(char* msg);
 void net_msg_cmd_in(char* msg);
 void net_msg_cmd_do(void);
+
 void net_msg_forward_sms(char* caller, char* SMS);
+
 void net_msg_alert(void);
 void net_msg_valettrunk(void);
 void net_msg_alarm(void);
