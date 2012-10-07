@@ -384,7 +384,7 @@ void net_state_enter(unsigned char newstate)
     case NET_STATE_HARDSTOP:
       net_timeout_goto = NET_STATE_HARDSTOP2;
       net_timeout_ticks = 10;
-      net_state_vchar = 0;
+      net_state_vchar = NETINIT_START;
       net_apps_connected = 0;
       net_msg_disconnected();
       delay100(10);
@@ -439,6 +439,34 @@ void net_state_enter(unsigned char newstate)
         }
       net_timeout_ticks = (NET_GPRS_RETRIES-net_state_vint)*15;
       break;
+    case NET_STATE_NETINITCP:
+      led_set(OVMS_LED_GRN,NET_LED_NETINIT);
+      net_puts_rom("AT+CIPCLOSE\r");
+      led_set(OVMS_LED_RED,NET_LED_ERRCONNFAIL);
+      if (--net_state_vint > 0)
+        {
+        net_timeout_goto = NET_STATE_DONETINITC;
+        }
+      else
+        {
+        net_timeout_goto = NET_STATE_SOFTRESET;
+        }
+      net_timeout_ticks = (NET_GPRS_RETRIES-net_state_vint)*15;
+      break;
+    case NET_STATE_DONETINITC:
+      led_set(OVMS_LED_GRN,NET_LED_NETINIT);
+      led_set(OVMS_LED_RED,OVMS_LED_OFF);
+      net_watchdog=0; // Disable watchdog, as we have connectivity
+      net_reg = 0x05; // Assume connectivity (as COPS worked)
+      net_timeout_goto = NET_STATE_SOFTRESET;
+      net_timeout_ticks = 60;
+      net_state_vchar = NETINIT_CLPORT;
+      net_apps_connected = 0;
+      net_msg_disconnected();
+      delay100(2);
+      net_puts_rom("AT+CLPORT=\"TCP\",\"6867\"\r");
+      net_state = NET_STATE_DONETINIT;
+      break;
     case NET_STATE_DONETINIT:
       led_set(OVMS_LED_GRN,NET_LED_NETINIT);
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
@@ -449,7 +477,7 @@ void net_state_enter(unsigned char newstate)
         {
         net_timeout_goto = NET_STATE_SOFTRESET;
         net_timeout_ticks = 60;
-        net_state_vchar = 0;
+        net_state_vchar = NETINIT_START;
         net_apps_connected = 0;
         net_msg_disconnected();
         delay100(2);
@@ -669,13 +697,13 @@ void net_state_activity()
                (net_buf[0] == 'E')&&
                (net_buf[1] == 'R'))
         {
-        if ((net_state_vchar == 2)||
-                (net_state_vchar == 3))// ERROR response to AT+CSTT OR AT+CIICR
+        if ((net_state_vchar == NETINIT_CSTT)||
+                (net_state_vchar == NETINIT_CIICR))// ERROR response to AT+CSTT OR AT+CIICR
           {
           // try setting up GPRS again, after short pause
           net_state_enter(NET_STATE_NETINITP);
           }
-        else if (net_state_vchar == 5) // ERROR response to AT+CIFSR
+        else if (net_state_vchar == NETINIT_CIFSR) // ERROR response to AT+CIFSR
           {
           // This is a nasty case. The GPRS has locked up.
           // The only solution I can find is a hard reset of the modem
@@ -685,7 +713,7 @@ void net_state_activity()
       else if ((net_buf_pos >= 2)&&
           (((net_buf[0] == 'O')&&(net_buf[1] == 'K')))|| // OK
           (((net_buf[0] == 'S')&&(net_buf[1] == 'H')))||  // SHUT OK
-          (net_state_vchar == 5)) // Local IP address
+          (net_state_vchar == NETINIT_CIFSR)) // Local IP address
         {
         net_buf_pos = 0;
         net_timeout_ticks = 30;
@@ -693,12 +721,12 @@ void net_state_activity()
         delay100(2);
         switch (++net_state_vchar)
           {
-          case 1:
+          case NETINIT_CGDCONT:
             net_puts_rom("AT+CGDCONT=1,\"IP\",\"");
             net_puts_ram(par_get(PARAM_GPRSAPN));
             net_puts_rom("\"\r");
             break;
-          case 2:
+          case NETINIT_CSTT:
             net_puts_rom("AT+CSTT=\"");
             net_puts_ram(par_get(PARAM_GPRSAPN));
             net_puts_rom("\",\"");
@@ -707,26 +735,26 @@ void net_state_activity()
             net_puts_ram(par_get(PARAM_GPRSPASS));
             net_puts_rom("\"\r");
             break;
-          case 3:
+          case NETINIT_CIICR:
             led_set(OVMS_LED_GRN,NET_LED_NETAPNOK);
             net_puts_rom("AT+CIICR\r");
             break;
-          case 4:
+          case NETINIT_CIPHEAD:
             net_puts_rom("AT+CIPHEAD=1\r");
             break;
-          case 5:
+          case NETINIT_CIFSR:
             net_puts_rom("AT+CIFSR\r");
             break;
-          case 6:
+          case NETINIT_CLPORT:
             net_puts_rom("AT+CLPORT=\"TCP\",\"6867\"\r");
             break;
-          case 7:
+          case NETINIT_CIPSTART:
             led_set(OVMS_LED_GRN,NET_LED_NETCALL);
             net_puts_rom("AT+CIPSTART=\"TCP\",\"");
             net_puts_ram(par_get(PARAM_SERVERIP));
             net_puts_rom("\",\"6867\"\r");
             break;
-          case 8:
+          case NETINIT_CONNECTING:
             net_state_enter(NET_STATE_READY);
             break;
           }
@@ -794,6 +822,16 @@ void net_state_activity()
             }
           net_link = 1;
           }
+        else if (memcmppgm2ram(net_buf, (char const rom far*)"STATE: TCP CONNECTING", 21) == 0)
+          {
+          // Connection in progress, ignore it...
+          }
+        else if (memcmppgm2ram(net_buf, (char const rom far*)"STATE: TCP CLOSED", 17) == 0)
+          {
+          // Re-initialize TCP socket, after short pause
+          net_msg_disconnected();
+          net_state_enter(NET_STATE_NETINITCP);
+          }
         else
           {
           net_link = 0;
@@ -822,14 +860,19 @@ void net_state_activity()
         {
         net_msg_sendpending = 0;
         }
+      else if ( (memcmppgm2ram(net_buf, (char const rom far*)"CLOSED", 6) == 0) ||
+              (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT FAIL", 12) == 0) )
+        {
+        // Re-initialize TCP socket, after short pause
+        net_msg_disconnected();
+        net_state_enter(NET_STATE_NETINITCP);
+        }
       else if ( (memcmppgm2ram(net_buf, (char const rom far*)"SEND FAIL", 9) == 0)||
-                (memcmppgm2ram(net_buf, (char const rom far*)"CLOSED", 6) == 0)||
                 (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0)||
                 (memcmppgm2ram(net_buf, (char const rom far*)"+PDP: DEACT", 11) == 0) )
         { // Various GPRS error results
-        // Re-initialize GPRS network and TCP socket
+        // Re-initialize GPRS network and TCP socket, after short pause
         net_msg_disconnected();
-        // try setting up GPRS again, after short pause
         net_state_enter(NET_STATE_NETINITP);
         }
       break;

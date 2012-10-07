@@ -60,6 +60,8 @@
 #define NET_STATE_COPSWDONE  0x24  // GSM COPS wait complete
 #define NET_STATE_DONETINIT  0x40  // Initalise the GPRS network
 #define NET_STATE_NETINITP   0x41  // Short pause during GPRS initialisation
+#define NET_STATE_NETINITCP  0x42  // Short pause during GPRS TCP reconnect
+#define NET_STATE_DONETINITC 0x43  // Initalise the GPRS TCP reconnect
 #define NET_STATE_DIAGMODE   0x7F  // Diagnostic mode
 
 // LED MODES
@@ -82,7 +84,19 @@
 #define NET_LED_ERRCOPS      6     // COPS GSM lock could not be obtained
 #define NET_LED_ERRGPRSRETRY 7     // Error (maybe temp) during GPRS init
 #define NET_LED_ERRGPRSFAIL  8     // GPRS NET INIT failed
+#define NET_LED_ERRCONNFAIL  9     // GPRS TCP CONNECT failed
 #define NET_LED_ERRDIAGMODE  10    // DIAGNOSTIC mode
+
+// NETINIT sub-states
+#define NETINIT_START        0
+#define NETINIT_CGDCONT      1
+#define NETINIT_CSTT         2
+#define NETINIT_CIICR        3
+#define NETINIT_CIPHEAD      4
+#define NETINIT_CIFSR        5
+#define NETINIT_CLPORT       6
+#define NETINIT_CIPSTART     7
+#define NETINIT_CONNECTING   8
 
 // NET data
 extern unsigned char net_state;                // The current state
