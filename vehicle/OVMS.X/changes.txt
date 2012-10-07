@@ -28,6 +28,18 @@
 ; THE SOFTWARE.
 */
 
+2012-10-07 1.3.8       Firmware 1.3.8 - getting close to the 1.5.1 release
+                       #92 Try TCP reconnect, rather than full GPRS re-init, if server connection fails
+                       #82 Car: Adaptive Reporting
+
+2012-10-01 1.3.6       Firmware 1.3.6
+                       #90 AP via SMS
+                       #89 Report GSM operator
+                       #86 Get ICCID from SIM during startup
+                       #82 Adaptive Reporting
+                       #84 Detect lack of comms between PIC and modem
+                       #80 Make GSMLOCK use short service name
+
 2012-09-14 1.3.5       Firmware 1.3.5
                        #79 SMS/PUSH notify if alarm is activated
                        #78 can_poll0 100 vs 102 check
