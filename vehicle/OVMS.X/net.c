@@ -999,13 +999,17 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_NET_ENV)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_ENV); // Clear notification flag
-            stat = 2;
-            delay100(10);
-            stat = net_msgp_environment(stat);
-            stat = net_msgp_stat(stat);
-            if (stat != 2)
-              net_msg_send();
-            return;
+            // A bit of a kludge, but only notify environment if an app connected
+            if ((net_apps_connected>0)&&(net_msg_sendpending==0))
+              {
+              stat = 2;
+              delay100(10);
+              stat = net_msgp_environment(stat);
+              stat = net_msgp_stat(stat);
+              if (stat != 2)
+                net_msg_send();
+              return;
+              }
             }
           }
         if ((net_notify & NET_NOTIFY_SMSPART)>0)
