@@ -252,7 +252,7 @@ void can_poll0(void)                // CAN ID 100 and 102
         if ((can_databuffer[1] != car_chargestate)||
             (can_databuffer[2] != car_chargesubstate))
           { // If the state or sub-state has changed, notify it
-          net_req_notification(NET_NOTIFY_ENV);
+          net_req_notification(NET_NOTIFY_STAT);
           }
         car_chargestate = can_databuffer[1];
         car_chargesubstate = can_databuffer[2];
