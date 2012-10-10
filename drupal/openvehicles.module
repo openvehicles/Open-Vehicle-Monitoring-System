@@ -73,6 +73,17 @@ function openvehicles_menu()
     'type' => MENU_CALLBACK,
     );
 
+  $items['user/%user/vehicles/provision'] = array(
+    'title' => 'SMS Provision a Vehicle',
+    'description' => 'Provision a vehicle using SMS messaging',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('openvehicles_provision_form', 1, 4),
+    'access callback' => 'openvehicles_access',
+    'access arguments' => array(1, 4),
+    //'type' => MENU_LOCAL_TASK,
+    'type' => MENU_CALLBACK,
+    );
+
   return $items;
   }
 
@@ -124,6 +135,17 @@ function openvehicles_register_form($form, &$form_state)
     '#type' => 'textfield',
     );
 
+  $form['telephone'] = array(
+    '#title' => t('OVMS Vehicle Telephone number'),
+    '#description' => t('The telephone number of the SIM in the module (optional and here just for convenience - you can choose to leave this blank for security reasons). If you do specify it, please use +xxxx format, with the country code.'),
+    '#default_value' => t($vehicle->telephone),
+    '#required' => FALSE,
+    '#input' => TRUE,
+    '#size' => 48,
+    '#maxlength' => 48,
+    '#type' => 'textfield',
+    );
+
   $form['servers'] = array(
     '#title' => t('OVMS Server'),
     '#description' => t('The OVMS server this vehicle will use, or leave as "*" to permit access to all servers.'),
@@ -171,11 +193,13 @@ function openvehicles_register_do($form, &$form_state)
   $vid    = $form_state['values']['vehicleid'];
   $vname  = $form_state['values']['vehiclename'];
   $server = $form_state['values']['servers'];
+  $telephone = $form_state['values']['telephone'];
   $pass   = $form_state['values']['password_confirm'];
 
   $num_inserted = db_insert('ovms_cars')
 		->fields(array(
 		'owner' => $user->uid,
+                'telephone' => $telephone,
   		'carpass' => $pass,
   		'userpass' => '',
                 'vehicleid' => $vid,
@@ -298,6 +322,7 @@ function openvehicles_edit_form($form, &$form_state, $user, $vehicleid)
   $o_carpass = $query->addField('o', 'carpass');
   $o_owner = $query->addField('o', 'owner');
   $o_server = $query->addField('o', 'v_server');
+  $o_telephone = $query->addField('o', 'telephone');
   $o_type = $query->addField('o', 'v_type');
   $o_deleted = $query->addField('o', 'deleted');
 
@@ -335,6 +360,17 @@ function openvehicles_edit_form($form, &$form_state, $user, $vehicleid)
       '#default_value' => t($vehicle->v_server),
       );
 
+    $form['telephone'] = array(
+      '#title' => t('OVMS Vehicle Telephone number'),
+      '#description' => t('The telephone number of the SIM in the module (optional and here just for convenience - you can choose to leave this blank for security reasons). If you do specify it, please use +xxxx format, with the country code.'),
+      '#default_value' => t($vehicle->telephone),
+      '#required' => FALSE,
+      '#input' => TRUE,
+      '#size' => 48,
+      '#maxlength' => 48,
+      '#type' => 'textfield',
+      );
+
     $form['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Save changes'),
@@ -351,12 +387,14 @@ function openvehicles_update_do($form, &$form_state)
 
   $vehicleid = $form_state['values']['vehicleid'];
   $vname = $form_state['values']['vehiclename'];
+  $telephone = $form_state['values']['telephone'];
   $server = $form_state['values']['servers'];
 
   $num_updated = db_update('ovms_cars');
   $num_updated->fields(array(
     'v_server' => $server,
     'vehiclename' => $vname,
+    'telephone' => $telephone,
     'changed' => date('Y-m-d H:i:s')
     ));
 
@@ -365,6 +403,308 @@ function openvehicles_update_do($form, &$form_state)
               ->execute();
 
   drupal_set_message('Your Open Vehicle ' . $vehicleid . ' has been updated');
+  $form_state['redirect'] = 'user/' . $user->uid . '/vehicles';
+  }
+
+function openvehicles_provision_form($form, &$form_state, $user, $vehicleid)
+  {
+  $options = array();
+
+  global $user;
+
+  drupal_set_title(t('SMS Provisioning: '.$vehicleid));
+
+  $query = db_select('ovms_cars', 'o');
+  $o_vehicleid = $query->addField('o', 'vehicleid');
+  $o_type = $query->addField('o', 'v_type');
+  $o_deleted = $query->addField('o', 'deleted');
+  $query->condition($o_type, 'SERVER')
+        ->condition($o_deleted, 0);
+  $result = $query->execute();
+  $options['*'] = '* - All Servers';
+  foreach ($result as $vehicle)
+    {
+    $options[$vehicle->vehicleid] = $vehicle->vehicleid;
+    }
+
+  $query = db_select('ovms_cars', 'o');
+  $o_vehicleid = $query->addField('o', 'vehicleid');
+  $o_vehiclename = $query->addField('o', 'vehiclename');
+  $o_carpass = $query->addField('o', 'carpass');
+  $o_owner = $query->addField('o', 'owner');
+  $o_server = $query->addField('o', 'v_server');
+  $o_telephone = $query->addField('o', 'telephone');
+  $o_type = $query->addField('o', 'v_type');
+  $o_deleted = $query->addField('o', 'deleted');
+
+  $query->condition($o_owner, $user->uid)
+        ->condition($o_type, 'CAR')
+        ->condition($o_deleted, 0)
+        ->condition($o_vehicleid, $vehicleid);
+
+  $result = $query->execute();
+
+  foreach ($result as $vehicle)
+    {
+    $form['vehicleid'] = array(
+      '#type' => 'hidden',
+      '#value' => t($vehicle->vehicleid)
+      );
+
+    $form['ap_accessgroup'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('SMS Provisioning Access'),
+        '#collapsible' => TRUE,
+      );
+
+    $form['ap_accessgroup']['vehicleid_disp'] = array(
+      '#title' => t('OVMS Vehicle ID'),
+      '#default_value' => $vehicleid,
+      '#required' => TRUE,
+      '#input' => TRUE,
+      '#disabled' => TRUE,
+      '#size' => 32,
+      '#maxlength' => 32,
+      '#type' => 'textfield',
+      );
+
+    $form['ap_accessgroup']['ap_telephonenumber'] = array(
+      '#title' => t('OVMS Vehicle Telephone Number'),
+      '#description' => t('The telephone number (in +xxxxx form, including country code) of the vehicle'),
+      '#default_value' => $vehicle->telephone,
+      '#required' => TRUE,
+      '#input' => TRUE,
+      '#size' => 48,
+      '#maxlength' => 48,
+      '#type' => 'textfield',
+      );
+
+    $form['ap_accessgroup']['ap_modulepass'] = array(
+      '#title' => t('OVMS Module Password (default: "OVMS")'),
+      '#required' => TRUE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#type' => 'password_confirm',
+      );
+
+    $form['ap_modulegroup'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('OVMS Module'),
+        '#collapsible' => TRUE,
+      );
+
+    $form['ap_modulegroup']['ap_regphone'] = array(
+      '#title' => t('Registered User Telephone Number'),
+      '#description' => t('The telephone number of the registered user (messages from this number will not require a password)'),
+      '#default_value' => '',
+      '#required' => FALSE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#maxlength' => 31,
+      '#type' => 'textfield',
+      );
+
+    $form['ap_modulegroup']['ap_firmwareversion'] = array(
+      '#title' => t('Firmware Version'),
+      '#description' => t('Firmware version 1.3.6 includes a low-cost SMS provisioning command, so you should select this if you are running that version (or later). If you do not know for certain, then choose 1.3.5 or earlier. Note that when the module is first plugged in, it will blink out its firmware version number using the green LED - you can use this to see your version.'),
+      '#required' => TRUE,
+      '#default_value' => 1,
+      '#options' => array ( 0=>t('1.3.5 or earlier'), 1=>t('1.3.6 or later') ),
+      '#type' => 'radios',
+    );
+
+    $form['ap_modulegroup']['ap_mileskm'] = array(
+      '#title' => t('Units: Miles or Kilometers'),
+      '#required' => TRUE,
+      '#default_value' => 1,
+      '#options' => array ( 0=>t('Miles'), 1=>t('Kilometers') ),
+      '#type' => 'radios',
+    );
+
+    $form['ap_modulegroup']['ap_notifies'] = array(
+      '#title' => t('Notification Preferences'),
+      '#required' => FALSE,
+      '#options' => drupal_map_assoc(array(t('SMS'), t('IP'))),
+      '#default_value' => array(t('IP')),
+      '#type' => 'checkboxes',
+    );
+
+    $form['ap_modulegroup']['ap_modulepass_new'] = array(
+      '#title' => t('Replacement OVMS Module Password'),
+      '#description' => t('The new value to set the module password to (leave blank if you do not want it changed)'),
+      '#required' => FALSE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#type' => 'password_confirm',
+      );
+
+    $form['ap_servergroup'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('OVMS Server'),
+        '#collapsible' => TRUE,
+      );
+
+    $form['ap_servergroup']['ap_serverip'] = array(
+      '#title' => t('OVMS Server'),
+      '#default_value' => '64.111.70.40',
+      '#required' => TRUE,
+      '#input' => TRUE,
+      '#size' => 15,
+      '#maxlength' => 15,
+      '#type' => 'textfield',
+      );
+
+    $form['ap_servergroup']['ap_serverpass'] = array(
+      '#title' => t('OVMS Server Password'),
+      '#required' => TRUE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#type' => 'password_confirm',
+      );
+
+    $form['ap_servergroup']['ap_paranoid'] = array(
+      '#title' => t('OVMS Paranoid Mode'),
+      '#description' => t('The module can be put into paranoid mode, where it double-encrypts data not readable by the server<BR>(we recommend that you leave this off initially)'),
+      '#required' => FALSE,
+      '#default_value' => 0,
+      '#type' => 'checkbox',
+    );
+
+    $form['ap_servergroup']['ap_sgroup1'] = array(
+      '#title' => t('OVMS Social Group #1'),
+      '#default_value' => '',
+      '#required' => FALSE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#maxlength' => 31,
+      '#type' => 'textfield',
+      );
+
+    $form['ap_servergroup']['ap_sgroup2'] = array(
+      '#title' => t('OVMS Social Group #2'),
+      '#default_value' => '',
+      '#required' => FALSE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#maxlength' => 31,
+      '#type' => 'textfield',
+      );
+
+    $form['ap_gprsgroup'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Cellular GPRS'),
+        '#collapsible' => TRUE,
+      );
+
+    $form['ap_gprsgroup']['ap_gprsapn'] = array(
+      '#title' => t('GPRS APN'),
+      '#description' => t('The GPRS APN that your cellular provider requires'),
+      '#default_value' => '',
+      '#required' => TRUE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#maxlength' => 31,
+      '#type' => 'textfield',
+      );
+
+    $form['ap_gprsgroup']['ap_gprsuser'] = array(
+      '#title' => t('GPRS User'),
+      '#description' => t('The GPRS username that your cellular provider requires'),
+      '#default_value' => '',
+      '#required' => FALSE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#maxlength' => 31,
+      '#type' => 'textfield',
+      );
+
+    $form['ap_gprsgroup']['ap_gprspass'] = array(
+      '#title' => t('GPRS Pass'),
+      '#description' => t('The GPRS password that your cellular provider requires'),
+      '#default_value' => '',
+      '#required' => FALSE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#maxlength' => 31,
+      '#type' => 'textfield',
+      );
+
+    $form['ap_gsmgroup'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Cellular GSM'),
+        '#collapsible' => TRUE,
+      );
+
+    $form['ap_gsmgroup']['ap_gsmlock'] = array(
+      '#title' => t('GSM Provider Lock'),
+      '#description' => t('You can specify the short-name for a GSM provider to lock to (take great care as this must be 100% correctly specified, or leave blank if not known)'),
+      '#default_value' => '',
+      '#required' => FALSE,
+      '#input' => TRUE,
+      '#size' => 31,
+      '#maxlength' => 31,
+      '#type' => 'textfield',
+      );
+
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('SMS Provision Vehicle'),
+      '#submit' => array('openvehicles_provision_do')
+      );
+    }
+
+  return $form;
+  }
+
+function openvehicles_provision_do($form, &$form_state)
+  {
+  global $user;
+
+  $vehicleid = $form_state['values']['vehicleid'];
+  $telephonenumber = $form_state['values']['ap_telephonenumber'];
+  $modulepass = $form_state['values']['ap_modulepass'];
+
+  $regphone = (!empty($form_state['values']['ap_regphone'])) ? $form_state['values']['ap_regphone'] : 'NOPHONE';
+  $firmware = $form_state['values']['ap_firmwareversion'];
+  $mileskm = ($form_state['values']['ap_mileskm'] == 0)?'M':'K';
+  $notifies = implode('',array_filter($form_state['values']['ap_notifies']));
+  $modulepass_new = (!empty($form_state['values']['ap_modulepass_new'])) ? $form_state['values']['ap_modulepass_new'] : $modulepass;
+  $serverip = $form_state['values']['ap_serverip'];
+  $serverpass = $form_state['values']['ap_serverpass'];
+  $paranoid = ($form_state['values']['ap_paranoid']==0) ? '-' : 'P';
+  $sgroup1 = (!empty($form_state['values']['ap_sgroup1'])) ? $form_state['values']['ap_sgroup1'] : '-';
+  $sgroup2 = (!empty($form_state['values']['ap_sgroup2'])) ? $form_state['values']['ap_sgroup2'] : '-';
+  $gprsapn = $form_state['values']['ap_gprsapn'];
+  $gprsuser = (!empty($form_state['values']['ap_gprsuser'])) ? $form_state['values']['ap_gprsuser'] : '-';
+  $gprspass = (!empty($form_state['values']['ap_gprspass'])) ? $form_state['values']['ap_gprspass'] : '-';
+  $gsmlock = (!empty($form_state['values']['ap_gsmlock'])) ? $form_state['values']['ap_gsmlock'] : '-';
+
+  if ($firmware == 0) {
+    // 1.3.5 or earlier
+    $message = implode(' ',array('REGISTER',$modulepass));
+    sms_send($telephonenumber, $message, array());
+    $message = implode(' ',array('PARAMS',$mileskm, $notifies,
+                                 $serverip, $gprsapn, $gprsuser, $gprspass,
+                                 $vehicleid, $serverpass, $paranoid,
+                                 $sgroup1, $sgroup2, $gsmlock));
+    sms_send($telephonenumber, $message, array());
+    if ($modulepass_new <> $modulepass)
+      {
+      $message = implode(' ',array('PASS',$modulepass_new));
+      sms_send($telephonenumber, $message, array());
+      }
+    }
+  else {
+    // 1.3.6 or later
+    $message = implode(' ',array('AP',$modulepass,
+                                 $regphone, $modulepass_new, $mileskm, $notifies,
+                                 $serverip, $gprsapn, $gprsuser, $gprspass,
+                                 $vehicleid, $serverpass, $paranoid,
+                                 $sgroup1, $sgroup2, $gsmlock));
+    sms_send($telephonenumber, $message, array());
+    }
+
+  drupal_set_message('Provisioning messages have been sent for your Open Vehicle ' . $vehicleid);
   $form_state['redirect'] = 'user/' . $user->uid . '/vehicles';
   }
 
@@ -459,7 +799,8 @@ function openvehicles_user($user)
     array('data' => t('Vehicle'), 'field' => 'o.vehicleid', 'width' => 150, 'sort' => 'asc'),
     array('data' => t('Nickname'), 'field' => 'o.vehiclename', 'width' => 150),
     array('data' => t('Server'), 'field' => 'o.v_server'),
-    array('data' => t('Action'), 'width' => 75)
+    array('data' => t('Telephone'), 'field' => 'o.telephone'),
+    array('data' => t('Action'), 'width' => 100)
     );
 
   $rows = array();
@@ -470,6 +811,7 @@ function openvehicles_user($user)
   $o_carpass = $query->addField('o', 'carpass');
   $o_uid = $query->addField('o', 'owner');
   $o_server = $query->addField('o', 'v_server');
+  $o_telephone = $query->addField('o', 'telephone');
   $o_type = $query->addField('o', 'v_type');
   $o_deleted = $query->addField('o', 'deleted');
 
@@ -492,14 +834,17 @@ function openvehicles_user($user)
     $src1 = "<img src='/sites/all/modules/openvehicles/images/edit.gif' title='Change Vehicle'>";
     $src2 = "<img src='/sites/all/modules/openvehicles/images/key.gif' title='Change Password'>";
     $src3 = "<img src='/sites/all/modules/openvehicles/images/delete.gif' title='Remove Vehicle'>";
+    $src4 = "<img src='/sites/all/modules/openvehicles/images/provision.png' title='SMS Provision Vehicle'>";
 
     $rows[] = array(
       array('data' => $vehicle_text, 'nowrap' => 'nowrap'),
       array('data' => $vehicle->vehiclename),
       array('data' => check_plain($vehicle->v_server)),
+      array('data' => check_plain($vehicle->telephone)),
       array('data' => l($src1, 'user/' . $user->uid . '/vehicles/edit/' . $vehicle->vehicleid, array('html'=>TRUE)) . '&nbsp;|&nbsp;' .
                       l($src2, 'user/' . $user->uid . '/vehicles/password/' . $vehicle->vehicleid, array('html'=>TRUE)) . '&nbsp;|&nbsp;' .
-                      l($src3, 'user/' . $user->uid . '/vehicles/delete/' . $vehicle->vehicleid, array('html'=>TRUE)))
+                      l($src3, 'user/' . $user->uid . '/vehicles/delete/' . $vehicle->vehicleid, array('html'=>TRUE)) . '&nbsp;|&nbsp;' .
+                      l($src4, 'user/' . $user->uid . '/vehicles/provision/' . $vehicle->vehicleid, array('html'=>TRUE)))
       );
     }
 
@@ -521,3 +866,75 @@ function openvehicles_user($user)
 
   return $build;
   }
+
+/*******************************************************************************
+ * SMS Integration
+ ******************************************************************************/
+
+/**   
+ * Implements hook_sms_incoming().
+ *  
+ * @param $op
+ *   SMS incoming operation string (pre process, process, post process)
+ * @param $number
+ *   MSISDN of sender
+ * @param $message
+ *   SMS message body string
+ * @param $options
+ *   Additional options array including receiver MSISDN
+ */  
+function openvehicles_sms_incoming($op, $number, $message, $options) {
+  if ($op == 'pre process') {
+    // Let's see if we can find corresponding numbers in the ovms_cars database, and route via eMail as appropriate
+ 
+   watchdog('openvehicles', 'Incoming SMS from '.$number, NULL, WATCHDOG_NOTICE, '');
+
+   $query = db_select('ovms_cars', 'c');
+   $query->join('users', 'u', 'c.owner = u.uid');                         // JOIN ovms_cars with users
+   $c_vehicleid = $query->addField('c', 'vehicleid');
+   $c_owner     = $query->addField('c', 'owner');
+   $c_telephone = $query->addField('c', 'telephone');
+   $c_deleted   = $query->addField('c', 'deleted');
+   $u_name      = $query->addField('u', 'name');
+   $u_mail      = $query->addField('u', 'mail');
+   $u_language  = $query->addField('u', 'language');
+   $query->condition($c_deleted, 0)
+         ->condition($c_telephone, '+'.$number);
+   $result = $query->execute();
+   foreach ($result as $owner)
+     {
+     $account = user_load(array('uid' => $owner->owner));
+
+     $params['vehicleid'] = $owner->vehicleid;
+     $params['telephone'] = $owner->telephone;
+     $params['account'] = $account;
+     $params['name'] = $owner->name;
+     $params['message'] = $message;
+     drupal_mail('openvehicles','sms',$owner->mail,user_preferred_language($account),$params);
+     }
+  }
+}
+
+/*******************************************************************************
+ * MAIL Integration
+ ******************************************************************************/
+
+function openvehicles_mail($key, &$message, $params) {
+  switch($key) {
+    case 'sms':
+      // If the recipient can receive such notices by instant-message, do
+      // not send by email.
+      $data['user'] = $params['account'];
+      $options['language'] = $message['language'];
+      user_mail_tokens($variables, $data, $options);
+      $variables['@vehicleid'] = $params['vehicleid'];
+      $variables['@telephone'] = $params['telephone'];
+      $variables['@message'] = $params['message'];
+      $variables['@name'] = $params['name'];
+      $langcode = $message['language']->language;
+      $message['subject'] = t('Incoming SMS Notification from Open Vehicles', $variables, array('langcode' => $langcode));
+      $message['body'][] = t("Dear @name\n\nAn SMS was received from your vehicle @vehicleid on @telephone\n\n   @message\n\nRegards\nOpen Vehicles", $variables, array('langcode' => $langcode));
+      break;
+  }
+}
+
