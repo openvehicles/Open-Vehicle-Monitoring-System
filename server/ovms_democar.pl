@@ -118,8 +118,11 @@ my ($substate,$stateN,$modeN) = (7,13,0);
 my $trip = 0;
 my $odometer = 0;
 my $chargetime = 0;
-
+my @features = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+my @parameters = ("","","","","","","","","","","","","","","","","","","","","","","","");
 my ($ambiant,$nextambiant)=(0,0);
+my $lockunlock = 4;
+my $valetmode = 0;
 &getambiant();
 
 srand();
@@ -208,14 +211,129 @@ sub io_line
     { # One or more apps connected...
     &statmsg();
     }
-  elsif ($line =~ /^MP-0 C(\d+)/)
+  elsif ($line =~ /^MP-0 C(\d+)(.+)/)
     { # A command...
-    my $encrypted = encode_base64($txcipher->RC4("MP-0 c$1,1,Comand refused"),'');
-    print STDERR "  Sending message $encrypted\n";
-    print $hdl->push_write("$encrypted\r\n");
-    &statmsg();
+    &command($hdl,$1,split(/,/,$2));
     }
   $hdl->push_read (line => \&io_line);
+  }
+
+sub command
+  {
+  my ($hdl,$cmd,@params) = @_;
+
+  if ($cmd == 1) # Request feature list
+    {
+    foreach (0 .. 15)
+      {
+      print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,".$_.",16,".$features[$_]),'')."\r\n");
+      }
+    }
+  elsif ($cmd == 2) # Set feature
+    {
+    $features[$params[0]] = $params[1];
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Feature Set"),'')."\r\n");
+    }
+  elsif ($cmd == 3) # Request parameter list
+    {
+    foreach (0 .. 23)
+      {
+      print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,".$_.",24,".$parameters[$_]),'')."\r\n");
+      }
+    }
+  elsif ($cmd == 4) # Set parameter
+    {
+    $parameters[$params[0]] = $params[1];
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Parameter Set"),'')."\r\n");
+    }
+  elsif ($cmd == 5) # Reboot module
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Module Rebooted"),'')."\r\n");
+    }
+  elsif ($cmd == 10) # Set charge mode
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Parameters Set"),'')."\r\n");
+    }
+  elsif ($cmd == 11) # Start charge
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Started"),'')."\r\n");
+    ($travelling,$volts,$amps,$state,$mode,$chargetime) = (0,220,13,"charging","standard",0);
+    ($substate,$stateN,$modeN) = (5,1,0);
+    &io_tim($hdl);
+    &statmsg();
+    }
+  elsif ($cmd == 12) # Stop charge
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Stopped"),'')."\r\n");
+    ($travelling,$volts,$amps,$state,$mode,$chargetime) = (1,0,0,"done","standard",0);
+    ($substate,$stateN,$modeN) = (7,13,0);
+    &io_tim($hdl);
+    &statmsg();
+    }
+  elsif ($cmd == 15) # Set charge current
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Parameters Set"),'')."\r\n");
+    }
+  elsif ($cmd ==  16) # Set charge mode and current
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Parameters Set"),'')."\r\n");
+    }
+  elsif ($cmd == 17) # Set charge timer and start charge time
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    }
+  elsif ($cmd == 18) # Wakeup car
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Awake"),'')."\r\n");
+    }
+  elsif ($cmd ==  19) # Wakeup temp subsystems
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Awake"),'')."\r\n");
+    }
+  elsif ($cmd == 20) # Lock car
+    {
+    $lockunlock = 4;
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Locked"),'')."\r\n");
+    &statmsg();
+    }
+  elsif ($cmd == 21) # Activate valet mode
+    {
+    $valetmode = 1;
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Valet Mode Activated"),'')."\r\n");
+    &statmsg();
+    }
+  elsif ($cmd == 22) # Unlock car
+    {
+    $lockunlock = 5;
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Unlocked"),'')."\r\n");
+    &statmsg();
+    }
+  elsif ($cmd == 23) # Deactivate valet mode
+    {
+    $valetmode = 0;
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Valet Mode Deactivated"),'')."\r\n");
+    &statmsg();
+    }
+  elsif ($cmd == 24) # Home link
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Home Link requested"),'')."\r\n");
+    }
+  elsif ($cmd == 40) # Send SMS
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    }
+  elsif ($cmd == 41) # Send USSD/MMI Codes
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    }
+  elsif ($cmd == 49) # Send raw AT command
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    }
+  else
+    {
+    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    }
   }
 
 sub statmsg
@@ -224,12 +342,14 @@ sub statmsg
   my ($pem,$motor,$battery) = ($ambiant+10,$ambiant+20,$ambiant+5);
   my $cb = ($travelling == 0)?124:160;
   my $speed = ($travelling == 0)?0:55;
+  my $doors2 = ($valetmode == 0)?0:16;
+  $doors2 += 8 if ($lockunlock==4);
 
   print STDERR "  Sending status...\n";
-  $handle->push_write(encode_base64($txcipher->RC4("MP-0 F1.2.0,VIN123456789012345,5,0,TR"),'')."\r\n");
-  $handle->push_write(encode_base64($txcipher->RC4("MP-0 S$soc,K,$volts,$amps,$state,$mode,$kmideal,$kmest,13,$chargetime,0,0,$substate,$stateN,$modeN"),'')."\r\n");
+  $handle->push_write(encode_base64($txcipher->RC4("MP-0 F1.5.0,VIN123456789012345,5,1,TRDM,"),'')."\r\n");
+  $handle->push_write(encode_base64($txcipher->RC4("MP-0 S$soc,K,$volts,$amps,$state,$mode,$kmideal,$kmest,13,$chargetime,0,0,$substate,$stateN,$modeN,0,0,1"),'')."\r\n");
   $handle->push_write(encode_base64($txcipher->RC4("MP-0 L$lat,$lon,90,0,1,1"),'')."\r\n");
-  $handle->push_write(encode_base64($txcipher->RC4("MP-0 D$cb,0,5,$pem,$motor,$battery,$trip,$odometer,50,0,$ambiant,0,1,1"),"")."\r\n");
+  $handle->push_write(encode_base64($txcipher->RC4("MP-0 D$cb,$doors2,$lockunlock,$pem,$motor,$battery,$trip,$odometer,50,0,$ambiant,0,1,1,12.0,0"),"")."\r\n");
   $handle->push_write(encode_base64($txcipher->RC4("MP-0 W29,$front,40,$back,29,$front,40,$back,1"),"")."\r\n");
   $handle->push_write(encode_base64($txcipher->RC4("MP-0 gDEMOCARS,$soc,$speed,90,0,1,120,$lat,$lon"),'')."\r\n");
   }
