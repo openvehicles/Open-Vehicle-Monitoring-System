@@ -205,7 +205,7 @@ sub io_line
     {
     my $encrypted = encode_base64($txcipher->RC4("MP-0 a"),'');
     print STDERR "  Sending message $encrypted\n";
-    print $hdl->push_write("$encrypted\r\n");
+    $hdl->push_write("$encrypted\r\n");
     }
   elsif (($line =~ /^MP-0 Z(\d+)/)&&($1>0))
     { # One or more apps connected...
@@ -213,126 +213,126 @@ sub io_line
     }
   elsif ($line =~ /^MP-0 C(\d+)(.+)/)
     { # A command...
-    &command($hdl,$1,split(/,/,$2));
+    &command($1,split(/,/,$2));
     }
   $hdl->push_read (line => \&io_line);
   }
 
 sub command
   {
-  my ($hdl,$cmd,@params) = @_;
+  my ($cmd,@params) = @_;
 
   if ($cmd == 1) # Request feature list
     {
     foreach (0 .. 15)
       {
-      print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,".$_.",16,".$features[$_]),'')."\r\n");
+      $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,".$_.",16,".$features[$_]),'')."\r\n");
       }
     }
   elsif ($cmd == 2) # Set feature
     {
     $features[$params[0]] = $params[1];
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Feature Set"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Feature Set"),'')."\r\n");
     }
   elsif ($cmd == 3) # Request parameter list
     {
     foreach (0 .. 23)
       {
-      print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,".$_.",24,".$parameters[$_]),'')."\r\n");
+      $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,".$_.",24,".$parameters[$_]),'')."\r\n");
       }
     }
   elsif ($cmd == 4) # Set parameter
     {
     $parameters[$params[0]] = $params[1];
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Parameter Set"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Parameter Set"),'')."\r\n");
     }
   elsif ($cmd == 5) # Reboot module
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Module Rebooted"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Module Rebooted"),'')."\r\n");
     }
   elsif ($cmd == 10) # Set charge mode
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Parameters Set"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Parameters Set"),'')."\r\n");
     }
   elsif ($cmd == 11) # Start charge
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Started"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Started"),'')."\r\n");
     ($travelling,$volts,$amps,$state,$mode,$chargetime) = (0,220,13,"charging","standard",0);
     ($substate,$stateN,$modeN) = (5,1,0);
-    &io_tim($hdl);
+    &io_tim($handle);
     &statmsg();
     }
   elsif ($cmd == 12) # Stop charge
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Stopped"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Stopped"),'')."\r\n");
     ($travelling,$volts,$amps,$state,$mode,$chargetime) = (1,0,0,"done","standard",0);
     ($substate,$stateN,$modeN) = (7,13,0);
-    &io_tim($hdl);
+    &io_tim($handle);
     &statmsg();
     }
   elsif ($cmd == 15) # Set charge current
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Parameters Set"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Parameters Set"),'')."\r\n");
     }
   elsif ($cmd ==  16) # Set charge mode and current
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Parameters Set"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Charge Parameters Set"),'')."\r\n");
     }
   elsif ($cmd == 17) # Set charge timer and start charge time
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
     }
   elsif ($cmd == 18) # Wakeup car
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Awake"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Awake"),'')."\r\n");
     }
   elsif ($cmd ==  19) # Wakeup temp subsystems
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Awake"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Awake"),'')."\r\n");
     }
   elsif ($cmd == 20) # Lock car
     {
     $lockunlock = 4;
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Locked"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Locked"),'')."\r\n");
     &statmsg();
     }
   elsif ($cmd == 21) # Activate valet mode
     {
     $valetmode = 1;
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Valet Mode Activated"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Valet Mode Activated"),'')."\r\n");
     &statmsg();
     }
   elsif ($cmd == 22) # Unlock car
     {
     $lockunlock = 5;
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Unlocked"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Vehicle Unlocked"),'')."\r\n");
     &statmsg();
     }
   elsif ($cmd == 23) # Deactivate valet mode
     {
     $valetmode = 0;
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Valet Mode Deactivated"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Valet Mode Deactivated"),'')."\r\n");
     &statmsg();
     }
   elsif ($cmd == 24) # Home link
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Home Link requested"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",0,Home Link requested"),'')."\r\n");
     }
   elsif ($cmd == 40) # Send SMS
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
     }
   elsif ($cmd == 41) # Send USSD/MMI Codes
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
     }
   elsif ($cmd == 49) # Send raw AT command
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
     }
   else
     {
-    print $hdl->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
+    $handle->push_write(encode_base64($txcipher->RC4("MP-0 c".$cmd.",3,Command unimplemented"),'')."\r\n");
     }
   }
 
