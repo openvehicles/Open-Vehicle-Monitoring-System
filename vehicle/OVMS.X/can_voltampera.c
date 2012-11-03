@@ -117,7 +117,7 @@ void can_initialise(void)
   RXF4SIDL = 0b10000000;        // Setup Filter4 so that CAN ID 0x514 will be accepted
   RXF4SIDH = 0b10100010;
 
-  BRGCON1 = 0; // SET BAUDRATE to 1 Mbps
+  BRGCON1 = 0x01; // SET BAUDRATE to 500 Kbps
   BRGCON2 = 0xD2;
   BRGCON3 = 0x02;
 
