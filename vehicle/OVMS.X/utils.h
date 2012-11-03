@@ -40,6 +40,8 @@ void led_net(unsigned char led);   // Change NET led
 void led_act(unsigned char led);   // Change ACT led
 void modem_reboot(void);           // Reboot modem
 void format_latlon(long latlon, char* dest);  // Format latitude/longitude string
+float myatof(char *s);             // builtin atof() does not work
+long gps2latlon(char *gpscoord);   // convert GPS coordinate to latlon value
 WORD crc16(char *data, int length);  // Calculate a 16bit CRC and return it
 
 #endif // #ifndef __OVMS_UTILS_H

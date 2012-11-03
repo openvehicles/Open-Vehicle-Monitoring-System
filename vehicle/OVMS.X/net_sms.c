@@ -56,7 +56,8 @@ rom char NET_MSG_CHARGESTART[] = "Charge start requested";
 rom char NET_MSG_CHARGESTOP[] = "Charge stop requested";
 rom char NET_MSG_ALARM[] = "Vehicle alarm is sounding!";
 rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
-rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
+//rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
+rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttps://maps.google.com/maps?q=";
 
 void net_send_sms_start(char* number)
   {
