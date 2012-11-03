@@ -32,6 +32,7 @@
 #include "ovms.h"
 #include "params.h"
 #include "led.h"
+#include "utils.h"
 
 #pragma udata
 unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
@@ -148,10 +149,15 @@ void can_initialise(void)
     //BRGCON2 = 0xD2;
     //BRGCON3 = 0x02;
 
+    // 500 kbps based on 1 Mbps + prescaling:
+    BRGCON1 = 0x01;
+    BRGCON2 = 0xD2;
+    BRGCON3 = 0x02;
+
     // 500 kbps -- tool recommendation + multisampling:
-    BRGCON1 = 0x00;
-    BRGCON2 = 0xFA;
-    BRGCON3 = 0x07;
+    //BRGCON1 = 0x00;
+    //BRGCON2 = 0xFA;
+    //BRGCON3 = 0x07;
 
 
     CIOCON = 0b00100000; // CANTX pin will drive VDD when recessive
@@ -242,6 +248,11 @@ void can_poll0(void)
         if( can_speed == 0xffff )
             can_speed = 0;
 
+        if( can_mileskm == 'M' )
+            car_speed = can_speed * 1000 / 1609;    // speed in miles/hour
+        else
+            car_speed = can_speed;                  // speed in km/hour
+        
     }
 
 
@@ -363,8 +374,12 @@ void can_state_ticker1(void)
     //      should not be enabled for production/live firmware images!
     net_puts_rom( "ATE1\r" );
     sprintf( net_scratchpad,
-            (rom far char*) "# ERR=%u SOC=%u RNG=%u SPD=%d PWR=%d CHG=%u\r",
+            (rom far char*) "# ERR=%u SOC=%u RNG=%u SPD=%d PWR=%d CHG=%u\r\n",
             RXERRCNT, can_soc, can_range, can_speed, can_power, car_chargestate );
+    net_puts_ram( net_scratchpad );
+    sprintf( net_scratchpad,
+            (rom far char*) "# FIX=%d LAT=%08lx LON=%08lx ALT=%d DIR=%d\r\n",
+            car_gpslock, car_latitude, car_longitude, car_altitude, car_direction );
     net_puts_ram( net_scratchpad );
 #endif
 
