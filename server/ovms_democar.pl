@@ -211,9 +211,9 @@ sub io_line
     { # One or more apps connected...
     &statmsg();
     }
-  elsif ($line =~ /^MP-0 C(\d+)(.+)/)
+  elsif ($line =~ /^MP-0 C(\d+)(,(.*))?/)
     { # A command...
-    &command($1,split(/,/,$2));
+    &command($1,split(/,/,$3));
     }
   $hdl->push_read (line => \&io_line);
   }
@@ -222,6 +222,7 @@ sub command
   {
   my ($cmd,@params) = @_;
 
+  print "  Command is $cmd, params are ",join(',',@params),"\n";
   if ($cmd == 1) # Request feature list
     {
     foreach (0 .. 15)
