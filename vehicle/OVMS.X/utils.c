@@ -29,6 +29,8 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "ovms.h"
 
 // Reset the cpu
@@ -110,6 +112,47 @@ void format_latlon(long latlon, char* dest)
   ulPart = (unsigned long) ((float) res * 1000000) - lWhole * 1000000;
   sprintf(dest, (rom far char*)"%li.%06li", lWhole, ulPart); // make sure we print leading zero's after the decimal point
   }
+
+
+// builtin atof() does not work... returns strange values
+float myatof( char *src )
+{
+    long whole, frac, pot;
+    char *s;
+    float res;
+
+    whole = atol( src );
+
+    if( s = strchr( src, '.' ) )
+    {
+        frac = 0;
+        pot = 1;
+
+        while( *++s )
+        {
+            frac = frac * 10 + (*s - 48);
+            pot = pot * 10;
+        }
+
+        return (float) whole + (float) frac / pot;
+    }
+    else
+    {
+        return (float) whole;
+    }
+}
+
+// Convert GPS coordinate form DDDMM.MMMMMM to internal latlon value
+long gps2latlon( char *gpscoord )
+{
+    float f;
+    long d;
+
+    f = myatof( gpscoord );
+    d = (long) ( f / 100 ); // extract degrees
+    f = (float) d + ( f - (d * 100) ) / 60; // convert to decimal format
+    return (long) ( f * 3600 * 2048 ); // convert to raw format
+}
 
 // Calculate a 16bit CRC and return it
 WORD crc16(char *data, int length)

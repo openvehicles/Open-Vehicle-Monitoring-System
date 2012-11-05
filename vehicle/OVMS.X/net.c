@@ -76,7 +76,16 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 #pragma udata
 
 // ROM Constants
+
+#ifdef OVMS_INTERNALGPS
+// Using internal SIM908 GPS:
+rom char NET_INIT1[] = "AT+CGPSPWR=1;+CGPSRST=1;+CSMINS?\r";
+rom char NET_REQGPS[] = "AT+CGPSINF=2;+CGPSINF=64\r";
+#else
+// Using external GPS from car:
 rom char NET_INIT1[] = "AT+CSMINS?\r";
+#endif
+
 rom char NET_INIT2[] = "AT+CCID;+CPBF=\"O-\";+CPIN?\r";
 rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 //rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
@@ -798,6 +807,79 @@ void net_state_activity()
         delay100(1);
         net_puts_rom(NET_HANGUP);
         }
+#ifdef OVMS_INTERNALGPS
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"2,", 2) == 0)
+        {
+          // Incoming GPS coordinates
+          // NMEA format $GPGGA: Global Positioning System Fixed Data
+          // 2,<Time>,<Lat>,<NS>,<Lon>,<EW>,<Fix>,<SatCnt>,<HDOP>,<Alt>,<Unit>,...
+
+          long lat, lon;
+          char ns, ew;
+          char fix;
+          int alt;
+
+          // Parse string:
+          if( b = strtokpgmram( net_buf+2, "," ) )
+              ;                                     // Time
+          if( b = strtokpgmram( NULL, "," ) )
+              lat = gps2latlon( b );                // Latitude
+          if( b = strtokpgmram( NULL, "," ) )
+              ns = *b;                              // North / South
+          if( b = strtokpgmram( NULL, "," ) )
+              lon = gps2latlon( b );                // Longitude
+          if( b = strtokpgmram( NULL, "," ) )
+              ew = *b;                              // East / West
+          if( b = strtokpgmram( NULL, "," ) )
+              fix = *b;                             // Fix (0/1)
+          if( b = strtokpgmram( NULL, "," ) )
+              ;                                     // Satellite count
+          if( b = strtokpgmram( NULL, "," ) )
+              ;                                     // HDOP
+          if( b = strtokpgmram( NULL, "," ) )
+              alt = atoi( b );                      // Altitude
+
+          if( b )
+          {
+              // data set complete, store:
+
+              car_gpslock = fix & 0x01;
+
+              if( car_gpslock )
+              {
+                  if( ns == 'S' ) lat = ~lat;
+                  if( ew == 'W' ) lon = ~lon;
+
+                  car_latitude = lat;
+                  car_longitude = lon;
+                  car_altitude = alt;
+              }
+          }
+
+        }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"64,", 3) == 0)
+        {
+          // Incoming GPS coordinates
+          // NMEA format $GPVTG: Course over ground
+          // 64,<Course>,<Ref>,...
+
+          int dir;
+
+          // Parse string:
+          if( b = strtokpgmram( net_buf+3, "," ) )
+              dir = atoi( b );                      // Course
+
+          if( b )
+          {
+              // data set complete, store:
+              if( car_gpslock )
+              {
+                  car_direction = dir;
+              }
+          }
+
+        }
+#endif
       else if (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT OK", 10) == 0)
         {
         if (net_link == 0)
@@ -927,7 +1009,10 @@ void net_state_ticker1(void)
     case NET_STATE_SOFTRESET:
       net_state_enter(NET_STATE_FIRSTRUN);
       break;
+
+
     case NET_STATE_READY:
+
       if (net_buf_mode != NET_BUF_CRLF)
         {
         if (net_buf_todotimeout == 1)
@@ -941,6 +1026,7 @@ void net_state_ticker1(void)
         else if (net_buf_todotimeout > 1)
           net_buf_todotimeout--;
         }
+
       if (net_watchdog > 0)
         {
         if (--net_watchdog == 0)
@@ -949,6 +1035,7 @@ void net_state_ticker1(void)
           return;
           }
         }
+
       if (net_msg_sendpending>0)
         {
         net_msg_sendpending++;
@@ -959,13 +1046,17 @@ void net_state_ticker1(void)
           return;
           }
         }
+
+    // ...case NET_STATE_READY + registered...
       if ((net_reg == 0x01)||(net_reg == 0x05))
         {
+
         if ((net_msg_cmd_code!=0)&&(net_msg_serverok==1)&&(net_msg_sendpending==0))
           {
           net_msg_cmd_do();
           return;
           }
+
         if (((net_notify & NET_NOTIFY_NETPART)>0)&&(net_msg_serverok==1))
           {
           delay100(10);
@@ -1012,6 +1103,7 @@ void net_state_ticker1(void)
               }
             }
           }
+
         if ((net_notify & NET_NOTIFY_SMSPART)>0)
           {
           delay100(10);
@@ -1045,6 +1137,7 @@ void net_state_ticker1(void)
             return;
             }
           }
+
         if ((car_speed>0)&&
             (sys_features[FEATURE_STREAM]>0)&&
             (net_msg_sendpending==0)&&
@@ -1054,6 +1147,17 @@ void net_state_ticker1(void)
           if (net_msgp_gps(2) != 2)
             net_msg_send();
           }
+
+#ifdef OVMS_INTERNALGPS
+        // Request internal SIM908 GPS coordinates
+        // once per second while driving,
+        // else once every 5 minutes (to trace theft / transportation)
+        if( (car_speed > 0) || ((net_granular_tick % 300) == 0) )
+        {
+            net_puts_rom( NET_REQGPS );
+        }
+#endif
+
         }
       break;
 #ifdef OVMS_DIAGMODULE
