@@ -223,8 +223,6 @@ void can_initialise(void)
 //
 
 // Poll buffer 0:
-//  Filter 0 = ID 155 = SOC
-//  Filter 1 = ID 599 = Range
 void can_poll0(void)
 {
     unsigned char CANfilter = RXB0CON & 0x01;
@@ -294,7 +292,7 @@ void can_poll0(void)
 
 
 
-// Poll buffer 1: unused
+// Poll buffer 1:
 void can_poll1(void)
 {
     unsigned char CANfilter = RXB1CON & 0x07;
@@ -388,7 +386,8 @@ void can_poll1(void)
                 // nearest approximation: mi = (km * 10 - 5) / 16
                 // also we need to check for charging, as the Twizy
                 // does not update range during charging
-                if( ((car_doors1 & 0x04) == 0) && (can_databuffer[5] != 0xff) )
+                if( ((car_doors1 & 0x04) == 0)
+                        && (can_databuffer[5] != 0xff) && (can_databuffer[5] > 0) )
                 {
                     can_range = can_databuffer[5];
                     // Twizy only tells us estrange, but STAT? uses idealrange anyway
@@ -455,12 +454,15 @@ void can_state_ticker1(void)
 
         // Calculate range during charging:
         // scale last known range from can_soc_min to can_soc
-        if( can_soc > 0 && can_soc_min > 0 )
+        if( can_range > 0 && can_soc > 0 && can_soc_min > 0 )
         {
-            car_estrange = ( (unsigned long)
-                    ( (((float) can_range) / can_soc_min) * can_soc )
-                    * 10 - 5 ) >> 4;
-            car_idealrange = car_estrange;
+            unsigned long chg_range =
+                (((float) can_range) / can_soc_min) * can_soc;
+            if( chg_range > 0 )
+            {
+                car_estrange = ( chg_range * 10 - 5 ) / 16;
+                car_idealrange = car_estrange;
+            }
         }
 
         // If charging has previously been interrupted...
