@@ -4,8 +4,10 @@
 ;
 ;    Changes:
 ;    1.0  Initial release
+;
 ;    1.1  2 Nov 2012 (Michael Balzer):
 ;           - Basic Twizy integration
+;
 ;    1.2  9 Nov 2012 (Michael Balzer):
 ;           - CAN lockups fixed
 ;           - CAN data validation
@@ -13,6 +15,17 @@
 ;           - Range updates while charging
 ;           - Odometer
 ;           - Suppress SOC alert until CAN status valid
+;
+;    1.3  11 Nov 2012 (Michael Balzer):
+;           - km to integer miles conversion with smaller error on re-conversion
+;           - providing car_linevoltage (fix 230 V) & car_chargecurrent (fix 10 A)
+;           - providing car VIN to be ready for auto provisioning
+;           - FEATURE 10 >0: sufficient SOC charge monitor (percent)
+;           - FEATURE 11 >0: sufficient range charge monitor (km/mi)
+;           - FEATURE 12 >0: individual maximum ideal range (km/mi)
+;           - chargestate=2 "topping off" when sufficiently charged or 97% SOC
+;           - min SOC warning now triggers charge alert
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -42,6 +55,19 @@
 #include "led.h"
 #include "utils.h"
 
+// Integer Miles <-> Kilometer conversions
+// 1 mile = 1.609344 kilometers
+// smalles error approximation: mi = (km * 10 - 5) / 16 + 1
+// -- ATT: NO NEGATIVE VALUES ALLOWED DUE TO BIT SHIFTING!
+#define KM2MI(KM)       ( ( ( (KM) * 10 - 5 ) >> 4 ) + 1 )
+#define MI2KM(MI)       ( ( ( (MI) << 4 ) + 5 ) / 10 )
+
+// Maybe not so Twizy specific feature extensions:
+#define FEATURE_SUFFSOC      0x0A // Sufficient SOC feature
+#define FEATURE_SUFFRANGE    0x0B // Sufficient range feature
+#define FEATURE_MAXRANGE     0x0C // Maximum ideal range feature
+
+
 #pragma udata
 
 unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
@@ -52,6 +78,9 @@ unsigned char can_databuffer[8];             // A buffer to store the current CA
 //unsigned char k = 0;
 
 unsigned char can_minSOCnotified = 0;        // minSOC notified flag
+unsigned char can_last_SOC = 0;              // sufficient charge SOC threshold helper
+unsigned int can_last_idealrange = 0;        // sufficient charge range threshold helper
+
 unsigned int  can_granular_tick = 0;         // An internal ticker used to generate 1min, 5min, etc, calls
 unsigned char can_mileskm = 'M';             // Miles of Kilometers
 
@@ -109,6 +138,9 @@ void can_initialise(void)
     car_type[1] = 'T';
     car_type[2] = 0;
 
+    car_linevoltage = 230; // fix
+    car_chargecurrent = 10; // fix
+
     CANCON = 0b10010000; // Initialize CAN
     while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
@@ -147,17 +179,17 @@ void can_initialise(void)
     RXF2SIDH = 0b10110010;
     RXF2SIDL = 0b00000000;
 
-    // Filter3 = unused
+    // Filter3 = GROUP 0x69_:
+    RXF3SIDH = 0b11010010;
     RXF3SIDL = 0b00000000;
-    RXF3SIDH = 0b00000000;
 
     // Filter4 = unused
-    RXF4SIDL = 0b00000000;
     RXF4SIDH = 0b00000000;
+    RXF4SIDL = 0b00000000;
 
     // Filter5 = unused
-    RXF5SIDL = 0b00000000;
     RXF5SIDH = 0b00000000;
+    RXF5SIDL = 0b00000000;
 
 
     // SET BAUDRATE (tool: Intrepid CAN Timing Calculator / 20 MHz)
@@ -377,23 +409,18 @@ void can_poll1(void)
                                + ((unsigned long) can_databuffer[1] << 16)
                                + ((unsigned long) can_databuffer[0] << 24);
                     // convert to miles/10:
-                    car_odometer = ( can_odometer * 100 - 50 ) >> 4;
+                    car_odometer = KM2MI( can_odometer * 10 );
                 }
 
                 // RANGE: ... bad: firmware needs value in miles
                 // = we loose precision ... change?
-                // 1 mile = 1.609344 kilometers
-                // nearest approximation: mi = (km * 10 - 5) / 16
                 // also we need to check for charging, as the Twizy
                 // does not update range during charging
                 if( ((car_doors1 & 0x04) == 0)
                         && (can_databuffer[5] != 0xff) && (can_databuffer[5] > 0) )
                 {
                     can_range = can_databuffer[5];
-                    // Twizy only tells us estrange, but STAT? uses idealrange anyway
-                    // and Twizy idealrange varies widely, needs parameter => todo
-                    car_estrange = ( (unsigned int) can_range * 10 - 5 ) >> 4;
-                    car_idealrange = car_estrange;
+                    // car values derived in ticker1()
                 }
 
                 // SPEED:
@@ -403,7 +430,7 @@ void can_poll1(void)
                     can_speed = new_speed;
 
                     if( can_mileskm == 'M' )
-                        car_speed = ( can_speed / 100 * 10 - 5 ) >> 4; // miles/hour
+                        car_speed = KM2MI( can_speed / 100 ); // miles/hour
                     else
                         car_speed = can_speed / 100; // km/hour
                 }
@@ -412,6 +439,36 @@ void can_poll1(void)
                 
         }
 
+    }
+    
+    else if( CANfilter == 3 )
+    {
+        // Filter 3 = CAN ID GROUP 0x69_:
+        CANsid = ((RXB1SIDH & 0x01) << 3) + ((RXB1SIDL & 0xe0) >> 5);
+
+        switch( CANsid )
+        {
+            /*****************************************************
+             * FILTER 3:
+             * CAN ID 0x69F:
+             */
+            case 0x0f:
+                // VIN: last 7 digits of real VIN, in nibbles, reverse:
+                // (assumption: no hex digits)
+                if( car_vin[7] ) // we only need to process this once
+                {
+                    car_vin[0] = '0' + (can_databuffer[3] & 0x0f);
+                    car_vin[1] = '0' + ((can_databuffer[3] >> 4) & 0x0f);
+                    car_vin[2] = '0' + (can_databuffer[2] & 0x0f);
+                    car_vin[3] = '0' + ((can_databuffer[2] >> 4) & 0x0f);
+                    car_vin[4] = '0' + (can_databuffer[1] & 0x0f);
+                    car_vin[5] = '0' + ((can_databuffer[1] >> 4) & 0x0f);
+                    car_vin[6] = '0' + (can_databuffer[0] & 0x0f);
+                    car_vin[7] = 0;
+                }
+
+                break;
+        }
     }
 
 }
@@ -426,10 +483,30 @@ void can_poll1(void)
 //
 void can_state_ticker1(void)
 {
+    int suffSOC, suffRange, maxRange;
+
     if (car_stale_ambient>0) car_stale_ambient--;
     if (car_stale_temps>0)   car_stale_temps--;
     if (car_stale_gps>0)     car_stale_gps--;
     if (car_stale_tpms>0)    car_stale_tpms--;
+
+
+    /*
+     * Feature configuration:
+     */
+
+    suffSOC = sys_features[FEATURE_SUFFSOC];
+    suffRange = sys_features[FEATURE_SUFFRANGE];
+    maxRange = sys_features[FEATURE_MAXRANGE];
+
+    if( can_mileskm == 'K' )
+    {
+        // convert user km to miles
+        if( suffRange > 0 )
+            suffRange = KM2MI( suffRange );
+        if( maxRange > 0 )
+            maxRange = KM2MI( maxRange );
+    }
 
 
     /*
@@ -450,20 +527,26 @@ void can_state_ticker1(void)
 
     if( car_doors1 & 0x10 )
     {
-        // *** CHARGING ***
+        /*******************************************************************
+         * CHARGING
+         */
 
         // Calculate range during charging:
         // scale last known range from can_soc_min to can_soc
-        if( can_range > 0 && can_soc > 0 && can_soc_min > 0 )
+        if( (can_range > 0) && (can_soc > 0) && (can_soc_min > 0) )
         {
             unsigned long chg_range =
                 (((float) can_range) / can_soc_min) * can_soc;
+
             if( chg_range > 0 )
-            {
-                car_estrange = ( chg_range * 10 - 5 ) / 16;
+                car_estrange = KM2MI( chg_range );
+
+            if( maxRange > 0 )
+                car_idealrange = (((float) maxRange) * can_soc) / 10000;
+            else
                 car_idealrange = car_estrange;
-            }
         }
+
 
         // If charging has previously been interrupted...
         if( car_chargestate == 21 )
@@ -472,8 +555,9 @@ void can_state_ticker1(void)
             net_req_notification( NET_NOTIFY_CHARGE );
         }
 
+
         // If we've not been charging before...
-        if( car_chargestate != 1 )
+        if( car_chargestate > 2 )
         {
             // ...enter state 1=charging:
             car_chargestate = 1;
@@ -484,14 +568,65 @@ void can_state_ticker1(void)
             // Send charge stat:
             net_req_notification( NET_NOTIFY_STAT );
         }
+        
+        else
+        {
+            // We've already been charging:
+
+            // check for crossing "sufficient SOC/Range" thresholds:
+            if(
+               ( (can_soc > 0) && (suffSOC > 0)
+                    && (car_SOC >= suffSOC) && (can_last_SOC < suffSOC) )
+                 ||
+               ( (can_range > 0) && (suffRange > 0)
+                    && (car_idealrange >= suffRange) && (can_last_idealrange < suffRange) )
+              )
+            {
+                // ...enter state 2=topping off:
+                car_chargestate = 2;
+
+                // ...send charge alert:
+                net_req_notification( NET_NOTIFY_CHARGE );
+                net_req_notification( NET_NOTIFY_STAT );
+            }
+            
+            // ...else set "topping off" from 97% SOC:
+            else if( (car_chargestate != 2) && (can_soc >= 9700) )
+            {
+                // ...enter state 2=topping off:
+                car_chargestate = 2;
+                net_req_notification( NET_NOTIFY_STAT );
+            }
+
+        }
+
+        // update "sufficient" threshold helpers:
+        can_last_SOC = car_SOC;
+        can_last_idealrange = car_idealrange;
 
     }
+
     else
     {
-        // *** NOT CHARGING ***
+        /*******************************************************************
+         * NOT CHARGING
+         */
+
+
+        // Calculate range:
+        if( can_range > 0 )
+        {
+            car_estrange = KM2MI( can_range );
+
+            if( maxRange > 0 )
+                car_idealrange = (((float) maxRange) * can_soc) / 10000;
+            else
+                car_idealrange = car_estrange;
+        }
+
 
         // Check if we've been charging before:
-        if( car_chargestate == 1 )
+        if( car_chargestate <= 2 )
         {
             // yes, check if we've reached 100.00% SOC:
             if( can_soc_max >= 10000 )
@@ -609,11 +744,17 @@ void can_state_ticker60(void)
     if( can_status == 0 )
         return; // no valid CAN data yet
 
-    // check minSOC
+
+    /*
+     * check minSOC:
+     */
+
     minSOC = sys_features[FEATURE_MINSOC];
+
     if( (can_minSOCnotified == 0) && (car_SOC < minSOC) )
     {
-        net_req_notification(NET_NOTIFY_STAT);
+        net_req_notification( NET_NOTIFY_CHARGE );
+        net_req_notification( NET_NOTIFY_STAT );
         can_minSOCnotified = 1;
     }
     else if( (can_minSOCnotified == 1) && (car_SOC > minSOC + 2) )
@@ -621,7 +762,10 @@ void can_state_ticker60(void)
         // reset the alert sent flag when SOC is 2% point higher than threshold
         can_minSOCnotified = 0;
     }
+
+
 }
+
 
 ////////////////////////////////////////////////////////////////////////
 // can_state_ticker300()
