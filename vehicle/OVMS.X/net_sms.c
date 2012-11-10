@@ -162,12 +162,16 @@ void net_sms_stat(char* number)
     net_puts_rom("Not charging");
     }
 
-  net_puts_rom(" \r\nIdeal Range: "); // Ideal Range
+  net_puts_rom(" \r\nRange: "); // Estimated + Ideal Range
   p = par_get(PARAM_MILESKM);
   if (*p == 'M') // Kmh or Miles
-    sprintf(net_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
+    sprintf(net_scratchpad, (rom far char*)"%u - %u mi"
+            , car_estrange
+            , car_idealrange ); // Miles
   else
-    sprintf(net_scratchpad, (rom far char*)"%u Km", (((car_idealrange << 4)+5)/10)); // Kmh
+    sprintf(net_scratchpad, (rom far char*)"%u - %u Km"
+            , (((car_estrange << 4)+5)/10)
+            , (((car_idealrange << 4)+5)/10) ); // Km
   net_puts_ram(net_scratchpad);
 
   net_puts_rom(" \r\nSOC: ");
