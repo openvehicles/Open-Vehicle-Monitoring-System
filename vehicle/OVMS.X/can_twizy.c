@@ -492,6 +492,24 @@ void can_state_ticker1(void)
 
 
     /*
+     * RESET workaround against "lost range" problem:
+     */
+
+    if( can_range == 0 )
+    {
+        // Read last known can_range from FEATURE13:
+        can_range = sys_features[13];
+    }
+    else if( can_range != sys_features[13] )
+    {
+        // Write last known can_range into FEATURE13:
+        sys_features[13] = can_range;
+        sprintf( net_scratchpad, "%d", sys_features[13] );
+        par_set( PARAM_FEATURE13, net_scratchpad );
+    }
+
+
+    /*
      * Feature configuration:
      */
 
