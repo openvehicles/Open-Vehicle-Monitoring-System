@@ -59,6 +59,13 @@ rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
 //rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
 rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttps://maps.google.com/maps?q=";
 
+
+#ifdef OVMS_CAR_RENAULTTWIZY
+extern unsigned int can_soc_min;            // min SOC reached during last discharge
+extern unsigned int can_soc_max;            // max SOC reached during last charge
+#endif
+
+
 void net_send_sms_start(char* number)
   {
   if (net_state == NET_STATE_DIAGMODE)
@@ -155,17 +162,33 @@ void net_sms_stat(char* number)
     net_puts_rom("Not charging");
     }
 
-  net_puts_rom(" \r\nIdeal Range: "); // Ideal Range
+  net_puts_rom(" \r\nRange: "); // Estimated + Ideal Range
   p = par_get(PARAM_MILESKM);
   if (*p == 'M') // Kmh or Miles
-    sprintf(net_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
+    sprintf(net_scratchpad, (rom far char*)"%u - %u mi"
+            , car_estrange
+            , car_idealrange ); // Miles
   else
-    sprintf(net_scratchpad, (rom far char*)"%u Km", (((car_idealrange << 4)+5)/10)); // Kmh
+    sprintf(net_scratchpad, (rom far char*)"%u - %u Km"
+            , (((car_estrange << 4)+5)/10)
+            , (((car_idealrange << 4)+5)/10) ); // Km
   net_puts_ram(net_scratchpad);
 
   net_puts_rom(" \r\nSOC: ");
+#ifdef OVMS_CAR_RENAULTTWIZY
+  sprintf(net_scratchpad, (rom far char*)"%u%% [%u-%u]", car_SOC, can_soc_min, can_soc_max); // 95%
+#else
   sprintf(net_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
+#endif
   net_puts_ram(net_scratchpad);
+
+  net_puts_rom(" \r\nODO: ");
+  if (*p == 'M') // Km or Miles
+    sprintf(net_scratchpad, (rom far char*)"%lu mi", car_odometer / 10); // Miles
+  else
+    sprintf(net_scratchpad, (rom far char*)"%lu Km", (((car_odometer << 4)+5)/100)); // Km
+  net_puts_ram(net_scratchpad);
+
   net_send_sms_finish();
   }
 
