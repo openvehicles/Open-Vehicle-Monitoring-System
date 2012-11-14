@@ -477,7 +477,7 @@ void net_sms_handle_module(char *caller, char *command, char *arguments)
       }
     }
   net_sms_handle_moduleq(caller, command, arguments);
-  can_initialise();
+  vehicle_initialise();
 
   if (net_state != NET_STATE_DIAGMODE)
     net_state_enter(NET_STATE_DONETINIT);
@@ -724,7 +724,7 @@ void net_sms_handle_feature(char *caller, char *command, char *arguments)
     sys_features[f] = atoi(arguments);
     if (f>=FEATURES_MAP_PARAM) // Top N features are persistent
       par_set(PARAM_FEATURE_S+(f-FEATURES_MAP_PARAM), arguments);
-    if (f == FEATURE_CANWRITE) can_initialise();
+    if (f == FEATURE_CANWRITE) vehicle_initialise();
     net_send_sms_rom(caller,NET_MSG_FEATURE);
     }
   }

@@ -40,118 +40,27 @@
 #include <stdlib.h>
 #include <delays.h>
 #include <string.h>
+#include <stdio.h>
 #include "ovms.h"
 #include "params.h"
+#include "net_msg.h"
 
-#pragma udata
-unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
-unsigned char can_databuffer[8];             // A buffer to store the current CAN message
+#pragma udata overlay vehicle_overlay_data
+
 unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
 unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
-unsigned char k;
-unsigned char can_minSOCnotified = 0;        // minSOC notified flag
-unsigned int  can_granular_tick = 0;         // An internal ticker used to generate 1min, 5min, etc, calls
-unsigned char can_mileskm = 'M';             // Miles of Kilometers
+
 #pragma udata
-
-////////////////////////////////////////////////////////////////////////
-// CAN Interrupt Service Routine (High Priority)
-//
-// Interupts here will interrupt Uart Interrupts
-//
-
-void high_isr(void);
-
-#pragma code can_int_service = 0x08
-void can_int_service(void)
-  {
-  _asm goto high_isr _endasm
-  }
-
-#pragma code
-#pragma	interrupt high_isr
-void high_isr(void)
-  {
-  // High priority CAN interrupt
-    if (RXB0CONbits.RXFUL) can_poll0();
-    if (RXB1CONbits.RXFUL) can_poll1();
-    PIR3=0;     // Clear Interrupt flags
-  }
-
-////////////////////////////////////////////////////////////////////////
-// can_initialise()
-// This function is an entry point from the main() program loop, and
-// gives the CAN framework an opportunity to initialise itself.
-//
-void can_initialise(void)
-  {
-  char *p;
-
-  car_type[0] = 'T'; // Car is type TR - Tesla Roadster
-  car_type[1] = 'R';
-  car_type[2] = 0;
-  car_type[3] = 0;
-  car_type[4] = 0;
-
-  CANCON = 0b10010000; // Initialize CAN
-  while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
-
-  // We are now in Configuration Mode
-  RXB0CON = 0b00000000; // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
-
-  RXM0SIDL = 0b10100000;
-  RXM0SIDH = 0b11111111;       // Set Mask0 to 0x7fd
-
-  RXF0SIDL = 0b00000000;       // Setup Filter0 and Mask so that only CAN ID 0x100 and 0x102 will be accepted
-  RXF0SIDH = 0b00100000;       // Set Filter0 to 0x100
-
-  RXB1CON = 0b00000000;        // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
-
-  RXM1SIDL = 0b11100000;
-  RXM1SIDH = 0b11111111;       // Set Mask1 to 0x7ff
-
-  RXF2SIDL = 0b10000000;       // Setup Filter2 so that CAN ID 0x344 will be accepted
-  RXF2SIDH = 0b01101000;
-
-  RXF3SIDL = 0b01000000;       // Setup Filter3 so that CAN ID 0x402 will be accepted
-  RXF3SIDH = 0b10000000;
-
-  RXF4SIDL = 0b00000000;        // Setup Filter4 so that CAN ID 0x400 will be accepted
-  RXF4SIDH = 0b10000000;
-
-  BRGCON1 = 0; // SET BAUDRATE to 1 Mbps
-  BRGCON2 = 0xD2;
-  BRGCON3 = 0x02;
-
-  CIOCON = 0b00100000; // CANTX pin will drive VDD when recessive
-  if (sys_features[FEATURE_CANWRITE]>0)
-    {
-    CANCON = 0b00000000;  // Normal mode
-    }
-  else
-    {
-    CANCON = 0b01100000; // Listen only mode, Receive bufer 0
-    }
-
-  RCONbits.IPEN = 1; // Enable Interrupt Priority
-  PIE3bits.RXB1IE = 1; // CAN Receive Buffer 1 Interrupt Enable bit
-  PIE3bits.RXB0IE = 1; // CAN Receive Buffer 0 Interrupt Enable bit
-  IPR3 = 0b00000011; // high priority interrupts for Buffers 0 and 1
-
-  p = par_get(PARAM_MILESKM);
-  can_mileskm = *p;
-  can_lastspeedmsg[0] = 0;
-  can_lastspeedrpt = 0;
-  }
 
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
 //
-void can_poll0(void)                // CAN ID 100 and 102
+BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
   {
   unsigned char CANsidl = RXB0SIDL & 0b11100000;
+  unsigned char k;
 
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
@@ -337,9 +246,11 @@ void can_poll0(void)                // CAN ID 100 and 102
         break;
       }
     }
+
+  return TRUE;
   }
 
-void can_poll1(void)                // CAN ID 344 and 402
+BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
 {
   unsigned char CANctrl;
 
@@ -428,104 +339,33 @@ void can_poll1(void)                // CAN ID 344 and 402
 	car_trip = can_databuffer[6] + ((unsigned int) can_databuffer[7] << 8);	// Miles /10
 	break;
       }
-  }
+    }
+
+  return TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
-// can_state_ticker1()
-// State Model: Per-second ticker
-// This function is called approximately once per second, and gives
-// the state a timeslice for activity.
-//
-void can_state_ticker1(void)
-  {
-  if (car_stale_ambient>0) car_stale_ambient--;
-  if (car_stale_temps>0)   car_stale_temps--;
-  if (car_stale_gps>0)     car_stale_gps--;
-  if (car_stale_tpms>0)    car_stale_tpms--;
-  }
-
-////////////////////////////////////////////////////////////////////////
-// can_state_ticker60()
-// State Model: Per-minute ticker
-// This function is called approximately once per minute (since state
-// was first entered), and gives the state a timeslice for activity.
-//
-void can_state_ticker60(void)
-  {
-  int minSOC;
-
-  // check minSOC
-  minSOC = sys_features[FEATURE_MINSOC];
-  if ((can_minSOCnotified == 0) && (car_SOC < minSOC))
-    {
-    net_req_notification(NET_NOTIFY_STAT);
-    can_minSOCnotified = 1;
-    }
-  else if ((can_minSOCnotified == 1) && (car_SOC > minSOC + 2))
-    {
-    // reset the alert sent flag when SOC is 2% point higher than threshold
-    can_minSOCnotified = 0;
-    }
-  }
-
-////////////////////////////////////////////////////////////////////////
-// can_state_ticker300()
-// State Model: Per-5-minute ticker
-// This function is called approximately once per five minutes (since
-// state was first entered), and gives the state a timeslice for activity.
-//
-void can_state_ticker300(void)
-  {
-  }
-
-////////////////////////////////////////////////////////////////////////
-// can_state_ticker600()
-// State Model: Per-10-minute ticker
-// This function is called approximately once per ten minutes (since
-// state was first entered), and gives the state a timeslice for activity.
-//
-void can_state_ticker600(void)
-  {
-  }
-
-////////////////////////////////////////////////////////////////////////
-// can_ticker()
-// This function is an entry point from the main() program loop, and
-// gives the CAN framework a ticker call approximately once per second.
-//
-void can_ticker(void)
-  {
-  // This ticker is called once every second
-  can_granular_tick++;
-  can_state_ticker1();
-  if ((can_granular_tick % 60)==0)
-    can_state_ticker60();
-  if ((can_granular_tick % 300)==0)
-    can_state_ticker300();
-  if ((can_granular_tick % 600)==0)
-    {
-    can_state_ticker600();
-    can_granular_tick -= 600;
-    }
-  }
-
-////////////////////////////////////////////////////////////////////////
-// can_ticker10th()
+// vehicle_teslaroadster_ticker10th()
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework a ticker call approximately ten times per
 // second.
 //
-void can_ticker10th(void)
+BOOL vehicle_teslaroadster_ticker10th(void)
   {
 #ifdef OVMS_SPEEDO_EXPERIMENT
   if (can_lastspeedrpt==0) can_lastspeedrpt=sys_features[FEATURE_SPEEDO];
 #endif // #ifdef OVMS_SPEEDO_EXPERIMENT
+  return FALSE;
   }
 
-void can_idlepoll(void)
+////////////////////////////////////////////////////////////////////////
+// vehicle_teslaroadster_ticker10th()
+// This function is an entry point from the main() program loop, and
+// gives the CAN framework a call whenever there is idle time
+//
+BOOL vehicle_teslaroadster_idlepoll(void)
   {
-  if (can_lastspeedrpt == 0) return;
+  if (can_lastspeedrpt == 0) return FALSE;
 
 #ifdef OVMS_SPEEDO_EXPERIMENT
   // Experimental speedometer feature - replace Range->Dash with speed
@@ -552,9 +392,11 @@ void can_idlepoll(void)
     }
 #endif //#ifdef OVMS_SPEEDO_EXPERIMENT
   can_lastspeedrpt--;
+
+  return FALSE;
   }
 
-void can_tx_wakeup(void)
+void vehicle_teslaroadster_wakeup(void)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
@@ -566,7 +408,7 @@ void can_tx_wakeup(void)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   }
 
-void can_tx_wakeuptemps(void)
+void vehicle_teslaroadster_wakeuptemps(void)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
@@ -585,7 +427,7 @@ void can_tx_wakeuptemps(void)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   }
 
-void can_tx_setchargemode(unsigned char mode)
+void vehicle_teslaroadster_tx_setchargemode(unsigned char mode)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
@@ -606,7 +448,7 @@ void can_tx_setchargemode(unsigned char mode)
   can_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
-void can_tx_setchargecurrent(unsigned char current)
+void vehicle_teslaroadster_tx_setchargecurrent(unsigned char current)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
@@ -627,7 +469,7 @@ void can_tx_setchargecurrent(unsigned char current)
   can_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
-void can_tx_startstopcharge(unsigned char start)
+void vehicle_teslaroadster_tx_startstopcharge(unsigned char start)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
@@ -648,7 +490,7 @@ void can_tx_startstopcharge(unsigned char start)
   can_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
-void can_tx_lockunlockcar(unsigned char mode, char *pin)
+void vehicle_teslaroadster_tx_lockunlockcar(unsigned char mode, char *pin)
   {
   // Mode is 0=valet, 1=novalet, 2=lock, 3=unlock
   long lpin;
@@ -674,7 +516,7 @@ void can_tx_lockunlockcar(unsigned char mode, char *pin)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   }
 
-void can_tx_timermode(unsigned char mode, unsigned int starttime)
+void vehicle_teslaroadster_tx_timermode(unsigned char mode, unsigned int starttime)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
@@ -712,7 +554,7 @@ void can_tx_timermode(unsigned char mode, unsigned int starttime)
   can_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
-void can_tx_homelink(unsigned char button)
+void vehicle_teslaroadster_tx_homelink(unsigned char button)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
@@ -726,4 +568,302 @@ void can_tx_homelink(unsigned char button)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
 
   can_tx_wakeup(); // Also, wakeup the car if necessary
+  }
+
+BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
+  {
+  char *p;
+
+  switch (code)
+    {
+    case 10: // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        vehicle_teslaroadster_tx_setchargemode(atoi(msg));
+        can_tx_wakeup(); // Also, wakeup the car if necessary
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        }
+      net_msg_encode_puts();
+      break;
+
+
+    case 11: // Start charge (params unused)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        if ((car_doors1 & 0x04)&&(car_chargesubstate != 0x07))
+          {
+          vehicle_teslaroadster_tx_startstopcharge(1);
+          net_notify_suppresscount = 0; // Enable notifications
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+          }
+        else
+          {
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANCHARGE,code);
+          }
+        }
+      net_msg_encode_puts();
+      break;
+
+    case 12: // Stop charge (params unused)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        if ((car_doors1 & 0x10))
+          {
+          vehicle_teslaroadster_tx_startstopcharge(0);
+          net_notify_suppresscount = 30; // Suppress notifications for 30 seconds
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+          }
+        else
+          {
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANSTOPCHARGE,code);
+          }
+        }
+      net_msg_encode_puts();
+      break;
+
+    case 15: // Set charge current (params: current in amps)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        vehicle_teslaroadster_tx_setchargecurrent(atoi(net_msg_cmd_msg));
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        }
+      net_msg_encode_puts();
+      break;
+
+    case 16: // Set charge mode and current (params: mode, current)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
+        // check if a value exists and is separated by a comma
+        if (*p == ',')
+          {
+          *p++ = 0;
+          // At this point, <net_msg_cmd_msg> points to the mode, and p to the current
+          vehicle_teslaroadster_tx_setchargemode(atoi(net_msg_cmd_msg));
+          vehicle_teslaroadster_tx_setchargecurrent(atoi(p));
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+          }
+        else
+          {
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,code);
+          }
+        }
+      net_msg_encode_puts();
+      break;
+
+    case 17: // Set charge timer mode and start time
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
+        // check if a value exists and is separated by a comma
+        if (*p == ',')
+          {
+          *p++ = 0;
+          // At this point, <net_msg_cmd_msg> points to the mode, and p to the time
+          vehicle_teslaroadster_tx_timermode(atoi(net_msg_cmd_msg),atoi(p));
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+          }
+        else
+          {
+          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,code);
+          }
+        }
+      net_msg_encode_puts();
+      break;
+
+    case 18: // Wakeup car
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        vehicle_teslaroadster_wakeup();
+        vehicle_teslaroadster_wakeuptemps();
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        }
+      net_msg_encode_puts();
+      break;
+
+    case 19: // Wakeup temperature subsystem
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        vehicle_teslaroadster_wakeuptemps();
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        }
+      net_msg_encode_puts();
+      break;
+
+    case 20: // Lock car (params pin)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        vehicle_teslaroadster_tx_lockunlockcar(2, net_msg_cmd_msg);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        }
+      net_msg_encode_puts();
+      delay100(2);
+      net_msgp_environment(0);
+      break;
+
+    case 21: // Activate valet mode (params pin)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        vehicle_teslaroadster_tx_lockunlockcar(0, net_msg_cmd_msg);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        }
+      net_msg_encode_puts();
+      delay100(2);
+      net_msgp_environment(0);
+      break;
+
+    case 22: // Unlock car (params pin)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        vehicle_teslaroadster_tx_lockunlockcar(3, net_msg_cmd_msg);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        }
+      net_msg_encode_puts();
+      delay100(2);
+      net_msgp_environment(0);
+      break;
+
+    case 23: // Deactivate valet mode (params pin)
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        vehicle_teslaroadster_tx_lockunlockcar(1, net_msg_cmd_msg);
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        }
+      net_msg_encode_puts();
+      delay100(2);
+      net_msgp_environment(0);
+      break;
+
+    case 24: // Home Link
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        }
+      else
+        {
+        vehicle_teslaroadster_tx_homelink(atoi(net_msg_cmd_msg));
+        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        }
+      net_msg_encode_puts();
+      break;
+
+    default:
+      return FALSE;
+    }
+
+  return TRUE;
+  }
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_teslaroadster_initialise()
+// This function is an entry point from the main() program loop, and
+// gives the CAN framework an opportunity to initialise itself.
+//
+void vehicle_teslaroadster_initialise(void)
+  {
+  char *p;
+
+  car_type[0] = 'T'; // Car is type TR - Tesla Roadster
+  car_type[1] = 'R';
+  car_type[2] = 0;
+  car_type[3] = 0;
+  car_type[4] = 0;
+
+  CANCON = 0b10010000; // Initialize CAN
+  while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
+
+  // We are now in Configuration Mode
+  RXB0CON = 0b00000000; // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
+
+  RXM0SIDL = 0b10100000;
+  RXM0SIDH = 0b11111111;       // Set Mask0 to 0x7fd
+
+  RXF0SIDL = 0b00000000;       // Setup Filter0 and Mask so that only CAN ID 0x100 and 0x102 will be accepted
+  RXF0SIDH = 0b00100000;       // Set Filter0 to 0x100
+
+  RXB1CON = 0b00000000;        // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
+
+  RXM1SIDL = 0b11100000;
+  RXM1SIDH = 0b11111111;       // Set Mask1 to 0x7ff
+
+  RXF2SIDL = 0b10000000;       // Setup Filter2 so that CAN ID 0x344 will be accepted
+  RXF2SIDH = 0b01101000;
+
+  RXF3SIDL = 0b01000000;       // Setup Filter3 so that CAN ID 0x402 will be accepted
+  RXF3SIDH = 0b10000000;
+
+  RXF4SIDL = 0b00000000;        // Setup Filter4 so that CAN ID 0x400 will be accepted
+  RXF4SIDH = 0b10000000;
+
+  BRGCON1 = 0; // SET BAUDRATE to 1 Mbps
+  BRGCON2 = 0xD2;
+  BRGCON3 = 0x02;
+
+  CIOCON = 0b00100000; // CANTX pin will drive VDD when recessive
+  if (sys_features[FEATURE_CANWRITE]>0)
+    {
+    CANCON = 0b00000000;  // Normal mode
+    }
+  else
+    {
+    CANCON = 0b01100000; // Listen only mode, Receive bufer 0
+    }
+
+  can_lastspeedmsg[0] = 0;
+  can_lastspeedrpt = 0;
+
+  // Hook in...
+  vehicle_fn_poll0 = &vehicle_teslaroadster_poll0;
+  vehicle_fn_poll1 = &vehicle_teslaroadster_poll1;
+  vehicle_fn_ticker10th = &vehicle_teslaroadster_ticker10th;
+  vehicle_fn_idlepoll = &vehicle_teslaroadster_idlepoll;
+  vehicle_fn_commandhandler = &vehicle_teslaroadster_commandhandler;
   }

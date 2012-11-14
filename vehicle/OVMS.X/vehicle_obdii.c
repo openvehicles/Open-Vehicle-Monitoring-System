@@ -1,13 +1,9 @@
 /*
 ;    Project:       Open Vehicle Monitor System
-;    Date:          16 October 2011
+;    Date:          6 May 2012
 ;
 ;    Changes:
 ;    1.0  Initial release
-;
-;    (C) 2011  Michael Stegen / Stegen Electronics
-;    (C) 2011  Mark Webb-Johnson
-;    (C) 2011  Sonny Chen @ EPRO/DX
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -28,26 +24,30 @@
 ; THE SOFTWARE.
 */
 
-#ifndef __OVMS_CAN_H
-#define __OVMS_CAN_H
+#include <stdlib.h>
+#include <delays.h>
+#include <string.h>
+#include "ovms.h"
+#include "params.h"
 
-extern unsigned char can_databuffer[8];
-extern unsigned char can_minSOCnotified; // minSOC notified flag
+#pragma udata
 
-void can_tx_wakeup(void);
-void can_tx_wakeuptemps(void);
-void can_tx_setchargemode(unsigned char mode);
-void can_tx_setchargecurrent(unsigned char current);
-void can_tx_startstopcharge(unsigned char start);
-void can_tx_lockunlockcar(unsigned char mode, char *pin);
-void can_tx_timermode(unsigned char mode, unsigned int starttime);
-void can_tx_homelink(unsigned char button);
+#pragma udata
 
-void can_initialise(void);
-void can_poll0(void);
-void can_poll1(void);
-void can_ticker(void);
-void can_ticker10th(void);
-void can_idlepoll(void);
+////////////////////////////////////////////////////////////////////////
+// vehicle_obdii_initialise()
+// This function is the initialisation entry point should we be the
+// selected vehicle.
+//
+BOOL vehicle_obdii_initialise(void)
+  {
+  char *p;
 
-#endif // #ifndef __OVMS_CAN_H
+  car_type[0] = 'O'; // Car is type OBDII
+  car_type[1] = '2';
+  car_type[2] = 0;
+  car_type[3] = 0;
+  car_type[4] = 0;
+
+  return TRUE;
+  }

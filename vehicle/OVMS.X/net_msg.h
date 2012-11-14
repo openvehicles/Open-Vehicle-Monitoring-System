@@ -33,15 +33,23 @@
 
 #include "net.h"
 
+extern rom char NET_MSG_OK[];
+extern rom char NET_MSG_INVALIDSYNTAX[];
+extern rom char NET_MSG_NOCANWRITE[];
+extern rom char NET_MSG_INVALIDRANGE[];
+extern rom char NET_MSG_NOCANCHARGE[];
+extern rom char NET_MSG_NOCANSTOPCHARGE[];
+
 extern char net_msg_serverok;
 extern char net_msg_sendpending;
 extern int  net_msg_cmd_code;
-extern char net_msg_cmd_msg[100];
+extern char* net_msg_cmd_msg;
 
 void net_msg_init(void);
 void net_msg_disconnected(void);
 void net_msg_start(void);
 void net_msg_send(void);
+void net_msg_encode_puts(void);
 void net_msg_register(void);
 
 char net_msgp_stat(char stat);

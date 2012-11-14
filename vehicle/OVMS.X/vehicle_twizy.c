@@ -67,22 +67,14 @@
 #define FEATURE_SUFFRANGE    0x0B // Sufficient range feature
 #define FEATURE_MAXRANGE     0x0C // Maximum ideal range feature
 
-
-#pragma udata
-
-unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
-unsigned char can_databuffer[8];             // A buffer to store the current CAN message
+#pragma udata overlay vehicle_overlay_data
 
 //unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
 //unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
 //unsigned char k = 0;
 
-unsigned char can_minSOCnotified = 0;        // minSOC notified flag
 unsigned char can_last_SOC = 0;              // sufficient charge SOC threshold helper
 unsigned int can_last_idealrange = 0;        // sufficient charge range threshold helper
-
-unsigned int  can_granular_tick = 0;         // An internal ticker used to generate 1min, 5min, etc, calls
-unsigned char can_mileskm = 'M';             // Miles of Kilometers
 
 // Additional Twizy state variables:
 unsigned int can_soc = 0;                    // detailed SOC (1/100 %)
@@ -100,154 +92,6 @@ unsigned char can_status = 0;               // Car + charge status from CAN:
 
 #pragma udata
 
-
-////////////////////////////////////////////////////////////////////////
-// CAN Interrupt Service Routine (High Priority)
-//
-// Interupts here will interrupt Uart Interrupts
-//
-
-void high_isr(void);
-
-#pragma code can_int_service = 0x08
-void can_int_service(void)
-  {
-  _asm goto high_isr _endasm
-  }
-
-#pragma code
-#pragma	interrupt high_isr
-void high_isr(void)
-  {
-  // High priority CAN interrupt
-    if (RXB0CONbits.RXFUL) can_poll0();
-    if (RXB1CONbits.RXFUL) can_poll1();
-    PIR3=0;     // Clear Interrupt flags
-  }
-
-////////////////////////////////////////////////////////////////////////
-// can_initialise()
-// This function is an entry point from the main() program loop, and
-// gives the CAN framework an opportunity to initialise itself.
-//
-void can_initialise(void)
-{
-    char *p;
-
-    car_type[0] = 'R'; // Car is type RT - Renault Twizy
-    car_type[1] = 'T';
-    car_type[2] = 0;
-
-    car_linevoltage = 230; // fix
-    car_chargecurrent = 10; // fix
-
-    CANCON = 0b10010000; // Initialize CAN
-    while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
-
-    // We are now in Configuration Mode.
-
-    // ID masks and filters are 11 bit as High-8 + Low-MSB-3
-    // (Filter bit n must match if mask bit n = 1)
-
-
-    // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
-    RXB0CON = 0b00000000;
-
-    // Setup Filter0 and Mask for CAN ID 0x155
-
-    // Mask0 = 0x7ff = exact ID filter match (high perf)
-    RXM0SIDH = 0b11111111;
-    RXM0SIDL = 0b11100000;
-
-    // Filter0 = ID 0x155:
-    RXF0SIDH = 0b00101010;
-    RXF0SIDL = 0b10100000;
-
-    // Filter1 = unused (reserved for another frequent ID)
-    RXF1SIDH = 0b00000000;
-    RXF1SIDL = 0b00000000;
-
-
-    // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
-    RXB1CON = 0b00000000;
-
-    // Mask1 = 0x7f0 = group filters for low volume IDs
-    RXM1SIDH = 0b11111110;
-    RXM1SIDL = 0b00000000;
-
-    // Filter2 = GROUP 0x59_:
-    RXF2SIDH = 0b10110010;
-    RXF2SIDL = 0b00000000;
-
-    // Filter3 = GROUP 0x69_:
-    RXF3SIDH = 0b11010010;
-    RXF3SIDL = 0b00000000;
-
-    // Filter4 = unused
-    RXF4SIDH = 0b00000000;
-    RXF4SIDL = 0b00000000;
-
-    // Filter5 = unused
-    RXF5SIDH = 0b00000000;
-    RXF5SIDL = 0b00000000;
-
-
-    // SET BAUDRATE (tool: Intrepid CAN Timing Calculator / 20 MHz)
-
-    // 1 Mbps setting: tool says that's 3/3/3 + multisampling
-    //BRGCON1 = 0x00;
-    //BRGCON2 = 0xD2;
-    //BRGCON3 = 0x02;
-
-    // 500 kbps based on 1 Mbps + prescaling:
-    //BRGCON1 = 0x01;
-    //BRGCON2 = 0xD2;
-    //BRGCON3 = 0x02;
-    // => FAILS (Lockups)
-
-    // 500 kbps -- tool recommendation + multisampling:
-    //BRGCON1 = 0x00;
-    //BRGCON2 = 0xFA;
-    //BRGCON3 = 0x07;
-    // => FAILS (Lockups)
-
-    // 500 kbps -- according to
-    // http://www.softing.com/home/en/industrial-automation/products/can-bus/more-can-open/timing/bit-timing-specification.php
-    // - CANopen uses single sampling
-    // - and 87,5% of the bit time for the sampling point
-    // - Synchronization jump window from 85-90%
-    // We can only approximate to this:
-    // - sampling point at 85%
-    // - SJW from 80-90%
-    // (Tq=20, Prop=8, Phase1=8, Phase2=3, SJW=1)
-    BRGCON1 = 0x00;
-    BRGCON2 = 0xBF;
-    BRGCON3 = 0x02;
-
-
-    CIOCON = 0b00100000; // CANTX pin will drive VDD when recessive
-
-    if (sys_features[FEATURE_CANWRITE]>0)
-    {
-        CANCON = 0b00000000;  // Normal mode
-    }
-    else
-    {
-        CANCON = 0b01100000; // Listen only mode, Receive bufer 0
-    }
-
-    RCONbits.IPEN = 1; // Enable Interrupt Priority
-    PIE3bits.RXB0IE = 1; // CAN Receive Buffer 0 Interrupt Enable bit
-    PIE3bits.RXB1IE = 1; // CAN Receive Buffer 1 Interrupt Enable bit
-    IPR3 = 0b00000011; // high priority interrupts for Buffers 0 and 1
-
-    p = par_get(PARAM_MILESKM);
-    can_mileskm = *p;
-    //can_lastspeedmsg[0] = 0;
-    //can_lastspeedrpt = 0;
-}
-
-
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
 // This function is an entry point from the main() program loop, and
@@ -255,7 +99,7 @@ void can_initialise(void)
 //
 
 // Poll buffer 0:
-void can_poll0(void)
+BOOL vehicle_twizy_poll0(void)
 {
     unsigned char CANfilter = RXB0CON & 0x01;
     //unsigned char CANsidh = RXB0SIDH;
@@ -319,13 +163,13 @@ void can_poll0(void)
     }
 
     // else CANfilter == 1 ...reserved...
-
+    return TRUE;
 }
 
 
 
 // Poll buffer 1:
-void can_poll1(void)
+BOOL vehicle_twizy_poll1(void)
 {
     unsigned char CANfilter = RXB1CON & 0x07;
     unsigned char CANsid;
@@ -471,6 +315,7 @@ void can_poll1(void)
         }
     }
 
+    return TRUE;
 }
 
 
@@ -481,15 +326,9 @@ void can_poll1(void)
 // This function is called approximately once per second, and gives
 // the state a timeslice for activity.
 //
-void can_state_ticker1(void)
+BOOL vehicle_twizy_state_ticker1(void)
 {
     int suffSOC, suffRange, maxRange;
-
-    if (car_stale_ambient>0) car_stale_ambient--;
-    if (car_stale_temps>0)   car_stale_temps--;
-    if (car_stale_gps>0)     car_stale_gps--;
-    if (car_stale_tpms>0)    car_stale_tpms--;
-
 
     /*
      * RESET workaround against "lost range" problem:
@@ -745,6 +584,7 @@ void can_state_ticker1(void)
         COMSTATbits.RXB1OVFL = 0; // clear buffer overflow bit
     }
 
+    return FALSE;
 }
 
 
@@ -754,120 +594,133 @@ void can_state_ticker1(void)
 // This function is called approximately once per minute (since state
 // was first entered), and gives the state a timeslice for activity.
 //
-void can_state_ticker60(void)
+BOOL vehicle_twizy_state_ticker60(void)
 {
-    int minSOC;
-
     // Check CAN status:
     if( can_status == 0 )
-        return; // no valid CAN data yet
+        return FALSE; // no valid CAN data yet
 
-
-    /*
-     * check minSOC:
-     */
-
-    minSOC = sys_features[FEATURE_MINSOC];
-
-    if( (can_minSOCnotified == 0) && (car_SOC < minSOC) )
-    {
-        net_req_notification( NET_NOTIFY_CHARGE );
-        net_req_notification( NET_NOTIFY_STAT );
-        can_minSOCnotified = 1;
-    }
-    else if( (can_minSOCnotified == 1) && (car_SOC > minSOC + 2) )
-    {
-        // reset the alert sent flag when SOC is 2% point higher than threshold
-        can_minSOCnotified = 0;
-    }
-
-
+    return FALSE;
 }
 
-
 ////////////////////////////////////////////////////////////////////////
-// can_state_ticker300()
-// State Model: Per-5-minute ticker
-// This function is called approximately once per five minutes (since
-// state was first entered), and gives the state a timeslice for activity.
-//
-void can_state_ticker300(void)
-  {
-  }
-
-////////////////////////////////////////////////////////////////////////
-// can_state_ticker600()
-// State Model: Per-10-minute ticker
-// This function is called approximately once per ten minutes (since
-// state was first entered), and gives the state a timeslice for activity.
-//
-void can_state_ticker600(void)
-  {
-  }
-
-////////////////////////////////////////////////////////////////////////
-// can_ticker()
+// vehicle_twizy_initialise()
 // This function is an entry point from the main() program loop, and
-// gives the CAN framework a ticker call approximately once per second.
+// gives the CAN framework an opportunity to initialise itself.
 //
-void can_ticker(void)
-  {
-  // This ticker is called once every second
-  can_granular_tick++;
-  can_state_ticker1();
-  if ((can_granular_tick % 60)==0)
-    can_state_ticker60();
-  if ((can_granular_tick % 300)==0)
-    can_state_ticker300();
-  if ((can_granular_tick % 600)==0)
+BOOL vehicle_twizy_initialise(void)
+{
+    char *p;
+
+    car_type[0] = 'R'; // Car is type RT - Renault Twizy
+    car_type[1] = 'T';
+    car_type[2] = 0;
+    car_type[3] = 0;
+    car_type[4] = 0;
+
+    car_linevoltage = 230; // fix
+    car_chargecurrent = 10; // fix
+
+    CANCON = 0b10010000; // Initialize CAN
+    while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
+
+    // We are now in Configuration Mode.
+
+    // ID masks and filters are 11 bit as High-8 + Low-MSB-3
+    // (Filter bit n must match if mask bit n = 1)
+
+
+    // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
+    RXB0CON = 0b00000000;
+
+    // Setup Filter0 and Mask for CAN ID 0x155
+
+    // Mask0 = 0x7ff = exact ID filter match (high perf)
+    RXM0SIDH = 0b11111111;
+    RXM0SIDL = 0b11100000;
+
+    // Filter0 = ID 0x155:
+    RXF0SIDH = 0b00101010;
+    RXF0SIDL = 0b10100000;
+
+    // Filter1 = unused (reserved for another frequent ID)
+    RXF1SIDH = 0b00000000;
+    RXF1SIDL = 0b00000000;
+
+
+    // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
+    RXB1CON = 0b00000000;
+
+    // Mask1 = 0x7f0 = group filters for low volume IDs
+    RXM1SIDH = 0b11111110;
+    RXM1SIDL = 0b00000000;
+
+    // Filter2 = GROUP 0x59_:
+    RXF2SIDH = 0b10110010;
+    RXF2SIDL = 0b00000000;
+
+    // Filter3 = GROUP 0x69_:
+    RXF3SIDH = 0b11010010;
+    RXF3SIDL = 0b00000000;
+
+    // Filter4 = unused
+    RXF4SIDH = 0b00000000;
+    RXF4SIDL = 0b00000000;
+
+    // Filter5 = unused
+    RXF5SIDH = 0b00000000;
+    RXF5SIDL = 0b00000000;
+
+
+    // SET BAUDRATE (tool: Intrepid CAN Timing Calculator / 20 MHz)
+
+    // 1 Mbps setting: tool says that's 3/3/3 + multisampling
+    //BRGCON1 = 0x00;
+    //BRGCON2 = 0xD2;
+    //BRGCON3 = 0x02;
+
+    // 500 kbps based on 1 Mbps + prescaling:
+    //BRGCON1 = 0x01;
+    //BRGCON2 = 0xD2;
+    //BRGCON3 = 0x02;
+    // => FAILS (Lockups)
+
+    // 500 kbps -- tool recommendation + multisampling:
+    //BRGCON1 = 0x00;
+    //BRGCON2 = 0xFA;
+    //BRGCON3 = 0x07;
+    // => FAILS (Lockups)
+
+    // 500 kbps -- according to
+    // http://www.softing.com/home/en/industrial-automation/products/can-bus/more-can-open/timing/bit-timing-specification.php
+    // - CANopen uses single sampling
+    // - and 87,5% of the bit time for the sampling point
+    // - Synchronization jump window from 85-90%
+    // We can only approximate to this:
+    // - sampling point at 85%
+    // - SJW from 80-90%
+    // (Tq=20, Prop=8, Phase1=8, Phase2=3, SJW=1)
+    BRGCON1 = 0x00;
+    BRGCON2 = 0xBF;
+    BRGCON3 = 0x02;
+
+
+    CIOCON = 0b00100000; // CANTX pin will drive VDD when recessive
+
+    if (sys_features[FEATURE_CANWRITE]>0)
     {
-    can_state_ticker600();
-    can_granular_tick -= 600;
+        CANCON = 0b00000000;  // Normal mode
     }
-  }
+    else
+    {
+        CANCON = 0b01100000; // Listen only mode, Receive bufer 0
+    }
 
-////////////////////////////////////////////////////////////////////////
-// can_ticker10th()
-// This function is an entry point from the main() program loop, and
-// gives the CAN framework a ticker call approximately ten times per
-// second.
-//
-void can_ticker10th(void)
-  {
-  }
+    // Hook in...
+    vehicle_fn_poll0 = &vehicle_twizy_poll0;
+    vehicle_fn_poll1 = &vehicle_twizy_poll1;
+    vehicle_fn_ticker1 = &vehicle_twizy_state_ticker1;
+    vehicle_fn_ticker60 = &vehicle_twizy_state_ticker60;
 
-void can_idlepoll(void)
-  {
-  }
-
-void can_tx_wakeup(void)
-  {
-  }
-
-void can_tx_wakeuptemps(void)
-  {
-  }
-
-void can_tx_setchargemode(unsigned char mode)
-  {
-  }
-
-void can_tx_setchargecurrent(unsigned char current)
-  {
-  }
-
-void can_tx_startstopcharge(unsigned char start)
-  {
-  }
-
-void can_tx_lockunlockcar(unsigned char mode, char *pin)
-  {
-  }
-
-void can_tx_timermode(unsigned char mode, unsigned int starttime)
-  {
-  }
-
-void can_tx_homelink(unsigned char button)
-  {
-  }
+    return TRUE;
+}

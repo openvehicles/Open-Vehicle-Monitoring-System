@@ -40,7 +40,7 @@
 #include "UARTIntC.h"
 #include "utils.h"
 #include "params.h"
-#include "can.h"
+#include "vehicle.h"
 #include "net.h"
 
 #define OVMS_FIRMWARE_VERSION 1,5,1

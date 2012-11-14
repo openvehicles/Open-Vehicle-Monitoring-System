@@ -142,7 +142,7 @@ void main(void)
   // Initialisation...
   led_initialise();
   par_initialise();
-  can_initialise();
+  vehicle_initialise();
   net_initialise();
 
   // Startup sequence...
@@ -188,7 +188,7 @@ void main(void)
     if (! vUARTIntStatus.UARTIntRxBufferEmpty)
       net_poll();
 
-    can_idlepoll();
+    vehicle_idlepoll();
 
     ClrWdt();		// Clear Watchdog Timer
 
@@ -197,14 +197,14 @@ void main(void)
       {
       TMR0H = 0; TMR0L = 0; // Reset timer
       net_ticker();
-      can_ticker();
+      vehicle_ticker();
       }
     else if (TMR0H != y)
       {
       if ((TMR0H % 0x04)==0)
         {
         net_ticker10th();
-        can_ticker10th();
+        vehicle_ticker10th();
         }
       y = TMR0H;
       }

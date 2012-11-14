@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include "ovms.h"
 #include "net.h"
-#include "can.h"
+#include "vehicle.h"
 #include "net_msg.h"
 #include "net_sms.h"
 #include "crypt_base64.h"
@@ -67,7 +67,7 @@ char net_msg_scratchpad[NET_BUF_MAX];
 
 #pragma udata Q_CMD
 int  net_msg_cmd_code = 0;
-char net_msg_cmd_msg[100];
+char* net_msg_cmd_msg = NULL;
 
 #pragma udata TX_CRYPTO
 RC4_CTX2 tx_crypto2;
@@ -591,19 +591,15 @@ void net_msg_cmd_in(char* msg)
     *d++ = 0;
   // At this point, <msg> points to the command, and <d> to the first param (if any)
   net_msg_cmd_code = atoi(msg);
-  strcpy(net_msg_cmd_msg,d);
+  net_msg_cmd_msg = d;
   }
 
-void net_msg_cmd_do(void)
+BOOL net_msg_cmd_exec(void)
   {
   int k;
   char *p;
 
   delay100(2);
-
-  // commands 40-49 are special AT commands, thus, disable net_msg here
-  if ((net_msg_cmd_code < 40) || (net_msg_cmd_code > 49)) 
-    net_msg_start();
 
   switch (net_msg_cmd_code)
     {
@@ -615,6 +611,7 @@ void net_msg_cmd_do(void)
         net_msg_encode_puts();
         }
       break;
+
     case 2: // Set feature (params: feature number, value)
       for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
       // check if a value exists and is separated by a comma
@@ -628,7 +625,7 @@ void net_msg_cmd_do(void)
           sys_features[k] = atoi(p);
           if (k>=FEATURES_MAP_PARAM) // Top N features are persistent
             par_set(PARAM_FEATURE_S+(k-FEATURES_MAP_PARAM), p);
-          if (k == FEATURE_CANWRITE) can_initialise();
+          if (k == FEATURE_CANWRITE) vehicle_initialise();
           sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
           }
         else
@@ -642,6 +639,7 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       break;
+
     case 3: // Request parameter list (params unused)
       for (k=0;k<PARAM_MAX;k++)
         {
@@ -652,6 +650,7 @@ void net_msg_cmd_do(void)
         net_msg_encode_puts();
         }
       break;
+
     case 4: // Set parameter (params: param number, value)
       for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
       // check if a value exists and is separated by a comma
@@ -664,7 +663,7 @@ void net_msg_cmd_do(void)
           {
           par_set(k, p);
           sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-          if (k == PARAM_MILESKM) can_initialise();
+          if (k == PARAM_MILESKM) vehicle_initialise();
           }
         else
           {
@@ -677,215 +676,13 @@ void net_msg_cmd_do(void)
         }
       net_msg_encode_puts();
       break;
+
     case 5: // Reboot (params unused)
       sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
       net_msg_encode_puts();
       net_state_enter(NET_STATE_HARDSTOP);
       break;
-    case 10: // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance)
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        can_tx_setchargemode(atoi(net_msg_cmd_msg));
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-        }
-      net_msg_encode_puts();
-      break;
-    case 11: // Start charge (params unused)
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        if ((car_doors1 & 0x04)&&(car_chargesubstate != 0x07))
-          {
-          can_tx_startstopcharge(1);
-          net_notify_suppresscount = 0; // Enable notifications
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-          }
-        else
-          {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANCHARGE,net_msg_cmd_code);
-          }
-        }
-      net_msg_encode_puts();
-      break;
-    case 12: // Stop charge (params unused)
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        if ((car_doors1 & 0x10))
-          {
-          can_tx_startstopcharge(0);
-          net_notify_suppresscount = 30; // Suppress notifications for 30 seconds
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-          }
-        else
-          {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANSTOPCHARGE,net_msg_cmd_code);
-          }
-        }
-      net_msg_encode_puts();
-      break;
-    case 15: // Set charge current (params: current in amps)
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        can_tx_setchargecurrent(atoi(net_msg_cmd_msg));
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-        }
-      net_msg_encode_puts();
-      break;
-    case 16: // Set charge mode and current (params: mode, current)
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
-        // check if a value exists and is separated by a comma
-        if (*p == ',')
-          {
-          *p++ = 0;
-          // At this point, <net_msg_cmd_msg> points to the mode, and p to the current
-          can_tx_setchargemode(atoi(net_msg_cmd_msg));
-          can_tx_setchargecurrent(atoi(p));
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-          }
-        else
-          {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
-          }
-        }
-      net_msg_encode_puts();
-      break;
-    case 17: // Set charge timer mode and start time
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
-        // check if a value exists and is separated by a comma
-        if (*p == ',')
-          {
-          *p++ = 0;
-          // At this point, <net_msg_cmd_msg> points to the mode, and p to the time
-          can_tx_timermode(atoi(net_msg_cmd_msg),atoi(p));
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-          }
-        else
-          {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
-          }
-        }
-      net_msg_encode_puts();
-      break;
-    case 18: // Wakeup car
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        can_tx_wakeup();
-        can_tx_wakeuptemps();
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-        }
-      net_msg_encode_puts();
-      break;
-    case 19: // Wakeup temperature subsystem
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        can_tx_wakeuptemps();
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-        }
-      net_msg_encode_puts();
-      break;
-    case 20: // Lock car (params pin)
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        can_tx_lockunlockcar(2, net_msg_cmd_msg);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-        }
-      net_msg_encode_puts();
-      delay100(2);
-      net_msgp_environment(0);
-      break;
-    case 21: // Activate valet mode (params pin)
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        can_tx_lockunlockcar(0, net_msg_cmd_msg);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-        }
-      net_msg_encode_puts();
-      delay100(2);
-      net_msgp_environment(0);
-      break;
-    case 22: // Unlock car (params pin)
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        can_tx_lockunlockcar(3, net_msg_cmd_msg);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-        }
-      net_msg_encode_puts();
-      delay100(2);
-      net_msgp_environment(0);
-      break;
-    case 23: // Deactivate valet mode (params pin)
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        can_tx_lockunlockcar(1, net_msg_cmd_msg);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-        }
-      net_msg_encode_puts();
-      delay100(2);
-      net_msgp_environment(0);
-      break;
-    case 24: // Home Link
-      if (sys_features[FEATURE_CANWRITE]==0)
-        {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,net_msg_cmd_code);
-        }
-      else
-        {
-        can_tx_homelink(atoi(net_msg_cmd_msg));
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
-        }
-      net_msg_encode_puts();
-      break;
+
     case 40: // Send SMS (params: phone number, SMS message)
       for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
       // check if a value exists and is separated by a comma
@@ -908,6 +705,7 @@ void net_msg_cmd_do(void)
       net_msg_encode_puts();
       delay100(2);
       break;
+
     case 41: // Send MMI/USSD Codes (param: USSD_CODE)
       net_puts_rom("AT+CUSD=1,\"");
       net_puts_ram(net_msg_cmd_msg);
@@ -918,6 +716,7 @@ void net_msg_cmd_do(void)
       net_msg_encode_puts();
       delay100(2);
       break;
+      
     case 49: // Send raw AT command (param: raw AT command)
       net_puts_ram(net_msg_cmd_msg);
       net_puts_rom("\r");
@@ -928,13 +727,39 @@ void net_msg_cmd_do(void)
       delay100(2);
       break;
     default:
-      sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,3",net_msg_cmd_code);
-      net_msg_encode_puts();
-      break;
+      return FALSE;
     }
-  net_msg_send();
-  net_msg_cmd_code = 0;
-  net_msg_cmd_msg[0] = 0;
+
+  return TRUE;
+  }
+
+void net_msg_cmd_do(void)
+  {
+  delay100(2);
+
+  // commands 40-49 are special AT commands, thus, disable net_msg here
+  if ((net_msg_cmd_code < 40) || (net_msg_cmd_code > 49))
+    net_msg_start();
+
+    // Execute cmd: ask car module to execute first:
+   if ((vehicle_fn_commandhandler == NULL)||
+       (! vehicle_fn_commandhandler(net_msg_cmd_code,net_msg_cmd_msg)))
+     {
+     // Car module does not feel responsible, fall back to standard:
+     if( !net_msg_cmd_exec() )
+       {
+       // No standard as well => return "unimplemented"
+       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,3",net_msg_cmd_code);
+       net_msg_encode_puts();
+       }
+     }
+
+   // terminate IPSEND by Ctrl-Z (should this be disabled for commands 40-49 as well?)
+   net_msg_send();
+
+   // clear command
+   net_msg_cmd_code = 0;
+   net_msg_cmd_msg[0] = 0;
   }
 
 void net_msg_forward_sms(char *caller, char *SMS)

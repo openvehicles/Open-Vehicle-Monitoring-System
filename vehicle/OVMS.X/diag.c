@@ -213,7 +213,7 @@ void diag_handle_cantxstart(char *command, char *arguments)
   // and transmit a repeating sequence of messages. A simulator...
   orig_canwrite = sys_features[FEATURE_CANWRITE];
   sys_features[FEATURE_CANWRITE] = 1;
-  can_initialise();
+  vehicle_initialise();
   canwrite_state = 0;
 
   net_puts_rom("# Starting CAN sim\r\n");
@@ -224,7 +224,7 @@ void diag_handle_cantxstop(char *command, char *arguments)
   {
   // Stop transmitting can bus messages
   sys_features[FEATURE_CANWRITE] = orig_canwrite;
-  can_initialise();
+  vehicle_initialise();
   canwrite_state = -1;
 
   net_puts_rom("# Stopped CAN sim\r\n");
