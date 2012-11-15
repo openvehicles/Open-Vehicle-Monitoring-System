@@ -53,21 +53,12 @@ extern rom BOOL (*vehicle_fn_ticker600)(void);
 extern rom BOOL (*vehicle_fn_ticker)(void);
 extern rom BOOL (*vehicle_fn_ticker10th)(void);
 extern rom BOOL (*vehicle_fn_idlepoll)(void);
-extern rom BOOL (*vehicle_fn_commandhandler)(int code, char* msg);
+extern rom BOOL (*vehicle_fn_commandhandler)(BOOL msgmode, int code, char* msg);
 
 void vehicle_initialise(void);
 
 void vehicle_ticker(void);
 void vehicle_ticker10th(void);
 void vehicle_idlepoll(void);
-
-void can_tx_wakeup(void);
-void can_tx_wakeuptemps(void);
-void can_tx_setchargemode(unsigned char mode);
-void can_tx_setchargecurrent(unsigned char current);
-void can_tx_startstopcharge(unsigned char start);
-void can_tx_lockunlockcar(unsigned char mode, char *pin);
-void can_tx_timermode(unsigned char mode, unsigned int starttime);
-void can_tx_homelink(unsigned char button);
 
 #endif // #ifndef __OVMS_VEHICLE_H

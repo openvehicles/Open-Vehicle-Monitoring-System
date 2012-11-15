@@ -47,7 +47,7 @@ rom BOOL (*vehicle_fn_ticker600)(void) = NULL;
 rom BOOL (*vehicle_fn_ticker)(void) = NULL;
 rom BOOL (*vehicle_fn_ticker10th)(void) = NULL;
 rom BOOL (*vehicle_fn_idlepoll)(void) = NULL;
-rom BOOL (*vehicle_fn_commandhandler)(int code, char* msg);
+rom BOOL (*vehicle_fn_commandhandler)(BOOL msgmode, int code, char* msg);
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_initialise()
@@ -209,36 +209,4 @@ void vehicle_ticker10th(void)
 void vehicle_idlepoll(void)
 {
   if (vehicle_fn_idlepoll != NULL) vehicle_fn_idlepoll();
-}
-
-void can_tx_wakeup(void)
-{
-}
-
-void can_tx_wakeuptemps(void)
-{
-}
-
-void can_tx_setchargemode(unsigned char mode)
-{
-}
-
-void can_tx_setchargecurrent(unsigned char current)
-{
-}
-
-void can_tx_startstopcharge(unsigned char start)
-{
-}
-
-void can_tx_lockunlockcar(unsigned char mode, char *pin)
-{
-}
-
-void can_tx_timermode(unsigned char mode, unsigned int starttime)
-{
-}
-
-void can_tx_homelink(unsigned char button)
-{
 }

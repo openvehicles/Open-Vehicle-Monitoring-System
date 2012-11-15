@@ -743,7 +743,7 @@ void net_msg_cmd_do(void)
 
     // Execute cmd: ask car module to execute first:
    if ((vehicle_fn_commandhandler == NULL)||
-       (! vehicle_fn_commandhandler(net_msg_cmd_code,net_msg_cmd_msg)))
+       (! vehicle_fn_commandhandler(TRUE, net_msg_cmd_code,net_msg_cmd_msg)))
      {
      // Car module does not feel responsible, fall back to standard:
      if( !net_msg_cmd_exec() )

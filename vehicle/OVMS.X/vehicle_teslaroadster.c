@@ -396,7 +396,7 @@ BOOL vehicle_teslaroadster_idlepoll(void)
   return FALSE;
   }
 
-void vehicle_teslaroadster_wakeup(void)
+void vehicle_teslaroadster_tx_wakeup(void)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
@@ -408,7 +408,7 @@ void vehicle_teslaroadster_wakeup(void)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   }
 
-void vehicle_teslaroadster_wakeuptemps(void)
+void vehicle_teslaroadster_tx_wakeuptemps(void)
   {
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
@@ -445,7 +445,7 @@ void vehicle_teslaroadster_tx_setchargemode(unsigned char mode)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
 
-  can_tx_wakeup(); // Also, wakeup the car if necessary
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_setchargecurrent(unsigned char current)
@@ -466,7 +466,7 @@ void vehicle_teslaroadster_tx_setchargecurrent(unsigned char current)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
 
-  can_tx_wakeup(); // Also, wakeup the car if necessary
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_startstopcharge(unsigned char start)
@@ -487,7 +487,7 @@ void vehicle_teslaroadster_tx_startstopcharge(unsigned char start)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
 
-  can_tx_wakeup(); // Also, wakeup the car if necessary
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_lockunlockcar(unsigned char mode, char *pin)
@@ -551,7 +551,7 @@ void vehicle_teslaroadster_tx_timermode(unsigned char mode, unsigned int startti
     while (TXB0CONbits.TXREQ) {} // Loop until TX is done
     }
 
-  can_tx_wakeup(); // Also, wakeup the car if necessary
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_homelink(unsigned char button)
@@ -567,12 +567,13 @@ void vehicle_teslaroadster_tx_homelink(unsigned char button)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
 
-  can_tx_wakeup(); // Also, wakeup the car if necessary
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
-BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
+BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
   {
   char *p;
+  BOOL sendenv = FALSE;
 
   switch (code)
     {
@@ -584,10 +585,9 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
       else
         {
         vehicle_teslaroadster_tx_setchargemode(atoi(msg));
-        can_tx_wakeup(); // Also, wakeup the car if necessary
+        vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
         }
-      net_msg_encode_puts();
       break;
 
 
@@ -609,7 +609,6 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
           sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANCHARGE,code);
           }
         }
-      net_msg_encode_puts();
       break;
 
     case 12: // Stop charge (params unused)
@@ -630,7 +629,6 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
           sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANSTOPCHARGE,code);
           }
         }
-      net_msg_encode_puts();
       break;
 
     case 15: // Set charge current (params: current in amps)
@@ -643,7 +641,6 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
         vehicle_teslaroadster_tx_setchargecurrent(atoi(net_msg_cmd_msg));
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
         }
-      net_msg_encode_puts();
       break;
 
     case 16: // Set charge mode and current (params: mode, current)
@@ -668,7 +665,6 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
           sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,code);
           }
         }
-      net_msg_encode_puts();
       break;
 
     case 17: // Set charge timer mode and start time
@@ -692,7 +688,6 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
           sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,code);
           }
         }
-      net_msg_encode_puts();
       break;
 
     case 18: // Wakeup car
@@ -702,11 +697,10 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
         }
       else
         {
-        vehicle_teslaroadster_wakeup();
-        vehicle_teslaroadster_wakeuptemps();
+        vehicle_teslaroadster_tx_wakeup();
+        vehicle_teslaroadster_tx_wakeuptemps();
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
         }
-      net_msg_encode_puts();
       break;
 
     case 19: // Wakeup temperature subsystem
@@ -716,10 +710,9 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
         }
       else
         {
-        vehicle_teslaroadster_wakeuptemps();
+        vehicle_teslaroadster_tx_wakeuptemps();
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
         }
-      net_msg_encode_puts();
       break;
 
     case 20: // Lock car (params pin)
@@ -732,9 +725,7 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
         vehicle_teslaroadster_tx_lockunlockcar(2, net_msg_cmd_msg);
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
         }
-      net_msg_encode_puts();
-      delay100(2);
-      net_msgp_environment(0);
+      sendenv=TRUE;
       break;
 
     case 21: // Activate valet mode (params pin)
@@ -747,9 +738,7 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
         vehicle_teslaroadster_tx_lockunlockcar(0, net_msg_cmd_msg);
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
         }
-      net_msg_encode_puts();
-      delay100(2);
-      net_msgp_environment(0);
+      sendenv=TRUE;
       break;
 
     case 22: // Unlock car (params pin)
@@ -762,9 +751,7 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
         vehicle_teslaroadster_tx_lockunlockcar(3, net_msg_cmd_msg);
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
         }
-      net_msg_encode_puts();
-      delay100(2);
-      net_msgp_environment(0);
+      sendenv=TRUE;
       break;
 
     case 23: // Deactivate valet mode (params pin)
@@ -777,9 +764,7 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
         vehicle_teslaroadster_tx_lockunlockcar(1, net_msg_cmd_msg);
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
         }
-      net_msg_encode_puts();
-      delay100(2);
-      net_msgp_environment(0);
+      sendenv=TRUE;
       break;
 
     case 24: // Home Link
@@ -792,11 +777,17 @@ BOOL vehicle_teslaroadster_commandhandler(int code, char* msg)
         vehicle_teslaroadster_tx_homelink(atoi(net_msg_cmd_msg));
         sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
         }
-      net_msg_encode_puts();
       break;
 
     default:
       return FALSE;
+    }
+
+  if (msgmode)
+    {
+    net_msg_encode_puts();
+    delay100(2);
+    net_msgp_environment(0);
     }
 
   return TRUE;

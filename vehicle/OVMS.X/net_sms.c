@@ -446,6 +446,10 @@ void net_sms_handle_moduleq(char *caller, char *command, char *arguments)
     sprintf(net_scratchpad, (rom far char*)"\r\n VehicleID:%s", p);
     net_puts_ram(net_scratchpad);
 
+    p = par_get(PARAM_VEHICLETYPE);
+    sprintf(net_scratchpad, (rom far char*)"\r\n VehicleType:%s", p);
+    net_puts_ram(net_scratchpad);
+
     p = par_get(PARAM_MILESKM);
     sprintf(net_scratchpad, (rom far char*)"\r\n Units:%s", p);
     net_puts_ram(net_scratchpad);
@@ -474,6 +478,11 @@ void net_sms_handle_module(char *caller, char *command, char *arguments)
     if (arguments != NULL)
       {
       par_set(PARAM_NOTIFIES, arguments);
+      arguments = net_sms_nextarg(arguments);
+      if (arguments != NULL)
+        {
+        par_set(PARAM_VEHICLETYPE, arguments);
+        }
       }
     }
   net_sms_handle_moduleq(caller, command, arguments);
@@ -733,7 +742,8 @@ void net_sms_handle_homelink(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    can_tx_homelink(atoi(arguments));
+    if (vehicle_fn_commandhandler == NULL)
+      vehicle_fn_commandhandler(FALSE, 24, arguments);
     net_send_sms_rom(caller,NET_MSG_HOMELINK);
     }
   }
@@ -742,7 +752,8 @@ void net_sms_handle_lock(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    can_tx_lockunlockcar(2, arguments);
+    if (vehicle_fn_commandhandler == NULL)
+      vehicle_fn_commandhandler(FALSE, 20, arguments);
     net_send_sms_rom(caller,NET_MSG_LOCK);
     }
   }
@@ -751,7 +762,8 @@ void net_sms_handle_unlock(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    can_tx_lockunlockcar(3, arguments);
+    if (vehicle_fn_commandhandler == NULL)
+      vehicle_fn_commandhandler(FALSE, 22, arguments);
     net_send_sms_rom(caller,NET_MSG_UNLOCK);
     }
   }
@@ -760,7 +772,8 @@ void net_sms_handle_valet(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    can_tx_lockunlockcar(0, arguments);
+    if (vehicle_fn_commandhandler == NULL)
+      vehicle_fn_commandhandler(FALSE, 21, arguments);
     net_send_sms_rom(caller,NET_MSG_VALET);
     }
   }
@@ -769,7 +782,8 @@ void net_sms_handle_unvalet(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    can_tx_lockunlockcar(1, arguments);
+    if (vehicle_fn_commandhandler == NULL)
+      vehicle_fn_commandhandler(FALSE, 23, arguments);
     net_send_sms_rom(caller,NET_MSG_UNVALET);
     }
   }
@@ -782,21 +796,22 @@ void net_sms_handle_chargemode(char *caller, char *command, char *arguments)
   if (net_sms_initargs(arguments) == NULL) return;
 
   strupr(arguments);
-  if (memcmppgm2ram(arguments, (char const rom far*)"STA", 3) == 0)
-    can_tx_setchargemode(0);
-  else if (memcmppgm2ram(arguments, (char const rom far*)"STO", 3) == 0)
-    can_tx_setchargemode(1);
-  else if (memcmppgm2ram(arguments, (char const rom far*)"RAN", 3) == 0)
-    can_tx_setchargemode(3);
-  else if (memcmppgm2ram(arguments, (char const rom far*)"PER", 3) == 0)
-    can_tx_setchargemode(4);
-  else
-    return;
-
-  arguments = net_sms_nextarg(arguments);
-  if (arguments != NULL)
+  if (vehicle_fn_commandhandler == NULL)
     {
-    can_tx_setchargecurrent(atoi(arguments));
+    if (memcmppgm2ram(arguments, (char const rom far*)"STA", 3) == 0)
+      vehicle_fn_commandhandler(FALSE, 10, (char*)"0");
+    else if (memcmppgm2ram(arguments, (char const rom far*)"STO", 3) == 0)
+      vehicle_fn_commandhandler(FALSE, 10, (char*)"1");
+    else if (memcmppgm2ram(arguments, (char const rom far*)"RAN", 3) == 0)
+      vehicle_fn_commandhandler(FALSE, 10, (char*)"3");
+    else if (memcmppgm2ram(arguments, (char const rom far*)"PER", 3) == 0)
+      vehicle_fn_commandhandler(FALSE, 10, (char*)"4");
+    else
+      return;
+
+    arguments = net_sms_nextarg(arguments);
+    if (arguments != NULL)
+      vehicle_fn_commandhandler(FALSE, 15, arguments);
     }
 
   net_send_sms_rom(caller,NET_MSG_CHARGEMODE);
@@ -807,7 +822,8 @@ void net_sms_handle_chargestart(char *caller, char *command, char *arguments)
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
     {
-    can_tx_startstopcharge(1);
+    if (vehicle_fn_commandhandler == NULL)
+      vehicle_fn_commandhandler(FALSE, 11, NULL);
     net_notify_suppresscount = 0; // Enable notifications
     net_send_sms_rom(caller,NET_MSG_CHARGESTART);
     }
@@ -818,7 +834,8 @@ void net_sms_handle_chargestop(char *caller, char *command, char *arguments)
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
     {
-    can_tx_startstopcharge(0);
+    if (vehicle_fn_commandhandler == NULL)
+      vehicle_fn_commandhandler(FALSE, 12, NULL);
     net_notify_suppresscount = 30; // Suppress notifications for 30 seconds
     net_send_sms_rom(caller,NET_MSG_CHARGESTOP);
     }
@@ -827,6 +844,7 @@ void net_sms_handle_chargestop(char *caller, char *command, char *arguments)
 void net_sms_handle_version(char *caller, char *command, char *arguments)
   {
   unsigned char hwv = 1;
+  char *p;
   #ifdef OVMS_HW_V2
   hwv = 2;
   #endif
@@ -834,8 +852,9 @@ void net_sms_handle_version(char *caller, char *command, char *arguments)
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
     {
-    sprintf(net_scratchpad, (rom far char*)"OVMS Firmware version: %d.%d.%d/V%d",
-            ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],hwv);
+    p = par_get(PARAM_VEHICLETYPE);
+    sprintf(net_scratchpad, (rom far char*)"OVMS Firmware version: %d.%d.%d/%s/V%d",
+            ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],p,hwv);
     net_send_sms_ram(caller,net_scratchpad);
     }
   }
