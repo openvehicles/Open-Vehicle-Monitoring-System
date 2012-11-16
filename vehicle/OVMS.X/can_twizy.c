@@ -26,6 +26,10 @@
 ;           - chargestate=2 "topping off" when sufficiently charged or 97% SOC
 ;           - min SOC warning now triggers charge alert
 ;
+;    1.4  16 Nov 2012 (Michael Balzer):
+;           - Crash reset hardening w/o eating up EEPROM space by using SRAM
+;           - Interrupt optimization
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -85,13 +89,14 @@ unsigned int  can_granular_tick = 0;         // An internal ticker used to gener
 unsigned char can_mileskm = 'M';             // Miles of Kilometers
 
 // Additional Twizy state variables:
-unsigned int can_soc = 0;                    // detailed SOC (1/100 %)
-unsigned int can_soc_min = 10000;            // min SOC reached during last discharge
-unsigned int can_soc_max = 0;                // max SOC reached during last charge
-unsigned int can_range = 0;                  // range in km
+unsigned int can_soc;                       // detailed SOC (1/100 %)
+unsigned int can_soc_min;                   // min SOC reached during last discharge
+unsigned int can_soc_min_range;             // can_range at min SOC
+unsigned int can_soc_max;                   // max SOC reached during last charge
+unsigned int can_range;                     // range in km
 unsigned int can_speed = 0;                  // current speed in 1/100 km/h
 signed int can_power = 0;                    // current power in W, negative=charging
-unsigned long can_odometer = 0;              // odometer in km
+unsigned long can_odometer;                 // odometer in km
 
 unsigned char can_status = 0;               // Car + charge status from CAN:
 #define CAN_STATUS_KEYON        0x10        //  bit 4 = 0x10: 1 = Car ON (key turned)
@@ -285,7 +290,7 @@ void can_poll0(void)
     {
         /*****************************************************
          * FILTER 0:
-         * CAN ID 0x155:
+         * CAN ID 0x155: sent every 10 ms (100 per second)
          */
 
         // Basic validation:
@@ -298,14 +303,18 @@ void can_poll0(void)
             if( new_soc > 0 && new_soc <= 40000 )
             {
                 can_soc = new_soc >> 2;
-                car_SOC = can_soc / 100;
+                // car value derived in ticker1()
 
                 // Remember maximum SOC for charging "done" distinction:
                 if( can_soc > can_soc_max )
                     can_soc_max = can_soc;
+
                 // ...and minimum SOC for range calculation during charging:
                 if( can_soc < can_soc_min )
+                {
                     can_soc_min = can_soc;
+                    can_soc_min_range = can_range;
+                }
             }
 
             // POWER:
@@ -359,37 +368,18 @@ void can_poll1(void)
         {
             /*****************************************************
              * FILTER 2:
-             * CAN ID 0x597:
+             * CAN ID 0x597: sent every 100 ms (10 per second)
              */
             case 0x07:
                 
                 // VEHICLE state:
-                //
-                // Door state #1
-                //	bit2 = 0x04 Charge port (open=1/closed=0)
-                //	bit4 = 0x10 Charging (true=1/false=0)
-                //	bit6 = 0x40 Hand brake applied (true=1/false=0)
-                //	bit7 = 0x80 Car ON (true=1/false=0)
-                //
-                // ATT: net module needs bit4 to know about charging states!
-                //
-                // Twizy message:
                 //  [0]: 0x00=not charging (?), 0x20=charging (?)
                 //  [1] bit 4 = 0x10 CAN_STATUS_KEYON: 1 = Car ON (key switch)
                 //  [1] bit 5 = 0x20 CAN_STATUS_CHARGING: 1 = Charging
                 //  [1] bit 6 = 0x40 CAN_STATUS_OFFLINE: 1 = Switch-ON/-OFF phase
 
                 can_status = can_databuffer[1];
-
-                if( (can_status & 0x60) == 0x20 )
-                    car_doors1 |= 0x14; // Charging ON, Port OPEN
-                else
-                    car_doors1 &= ~0x10; // Charging OFF
-
-                if( can_status & CAN_STATUS_KEYON )
-                    car_doors1 |= 0x80; // Car ON
-                else
-                    car_doors1 &= ~0x80; // Car OFF
+                // Translation to car_doors1 done in ticker1()
 
                 break;
                 
@@ -397,7 +387,7 @@ void can_poll1(void)
                 
             /*****************************************************
              * FILTER 2:
-             * CAN ID 0x599:
+             * CAN ID 0x599: sent every 100 ms (10 per second)
              */
             case 0x09:
                 
@@ -408,15 +398,13 @@ void can_poll1(void)
                                + ((unsigned long) can_databuffer[2] << 8)
                                + ((unsigned long) can_databuffer[1] << 16)
                                + ((unsigned long) can_databuffer[0] << 24);
-                    // convert to miles/10:
-                    car_odometer = KM2MI( can_odometer * 10 );
+                    // car value derived in ticker1()
                 }
 
-                // RANGE: ... bad: firmware needs value in miles
-                // = we loose precision ... change?
-                // also we need to check for charging, as the Twizy
+                // RANGE:
+                // we need to check for charging, as the Twizy
                 // does not update range during charging
-                if( ((car_doors1 & 0x04) == 0)
+                if( ((can_status & 0x60) == 0)
                         && (can_databuffer[5] != 0xff) && (can_databuffer[5] > 0) )
                 {
                     can_range = can_databuffer[5];
@@ -428,11 +416,7 @@ void can_poll1(void)
                 if( new_speed != 0xffff )
                 {
                     can_speed = new_speed;
-
-                    if( can_mileskm == 'M' )
-                        car_speed = KM2MI( can_speed / 100 ); // miles/hour
-                    else
-                        car_speed = can_speed / 100; // km/hour
+                    // car value derived in ticker1()
                 }
 
                 break;
@@ -450,7 +434,7 @@ void can_poll1(void)
         {
             /*****************************************************
              * FILTER 3:
-             * CAN ID 0x69F:
+             * CAN ID 0x69F: sent every 1000 ms (1 per second)
              */
             case 0x0f:
                 // VIN: last 7 digits of real VIN, in nibbles, reverse:
@@ -491,6 +475,7 @@ void can_state_ticker1(void)
     if (car_stale_tpms>0)    car_stale_tpms--;
 
 
+#if 0
     /*
      * RESET workaround against "lost range" problem:
      */
@@ -507,6 +492,23 @@ void can_state_ticker1(void)
         sprintf( net_scratchpad, "%d", sys_features[13] );
         par_set( PARAM_FEATURE13, net_scratchpad );
     }
+#endif
+
+    /*
+     * First boot data sanitizing:
+     */
+
+    if( can_soc == 0 || can_soc > 10000 )
+        can_soc = 5000; // fallback if ovms powered on with car powered off
+
+    // init min+max to current soc if available:
+    if( can_soc_min == 0 || can_soc_min > 10000 )
+    {
+        can_soc_min = can_status ? can_soc : 10000;
+        can_soc_min_range = can_status ? can_range : 0;
+    }
+    if( can_soc_max == 0 || can_soc_max > 10000 )
+        can_soc_max = can_status ? can_soc : 0;
 
 
     /*
@@ -528,18 +530,53 @@ void can_state_ticker1(void)
 
 
     /*
+     * Convert & take over CAN values into CAR values:
+     * (done here to keep interrupt fn small&fast)
+     */
+
+    // SOC: convert to percent:
+    car_SOC = can_soc / 100;
+
+    // ODOMETER: convert to miles/10:
+    car_odometer = KM2MI( can_odometer * 10 );
+    
+    // SPEED:
+    if( can_mileskm == 'M' )
+        car_speed = KM2MI( can_speed / 100 ); // miles/hour
+    else
+        car_speed = can_speed / 100; // km/hour
+
+    
+    // STATUS: convert Twizy flags to car_doors1:
+    // Door state #1
+    //	bit2 = 0x04 Charge port (open=1/closed=0)
+    //	bit4 = 0x10 Charging (true=1/false=0)
+    //	bit6 = 0x40 Hand brake applied (true=1/false=0)
+    //	bit7 = 0x80 Car ON (true=1/false=0)
+    //
+    // ATT: bit 2 = 0x04 = needs to be set for net_sms_stat()!
+    //
+    // Twizy message: can_status
+    //  bit 4 = 0x10 CAN_STATUS_KEYON: 1 = Car ON (key switch)
+    //  bit 5 = 0x20 CAN_STATUS_CHARGING: 1 = Charging
+    //  bit 6 = 0x40 CAN_STATUS_OFFLINE: 1 = Switch-ON/-OFF phase
+
+    if( (can_status & 0x60) == 0x20 )
+        car_doors1 |= 0x14; // Charging ON, Port OPEN
+    else
+        car_doors1 &= ~0x10; // Charging OFF
+
+    if( can_status & CAN_STATUS_KEYON )
+        car_doors1 |= 0x80; // Car ON
+    else
+        car_doors1 &= ~0x80; // Car OFF
+
+
+    /*
      * Charge notification + alerts:
      *
-     * car_chargestate: 1=charging, 2=top off, 4=done, 13=preparing to charge, 21-25=stopped charging
-     * car_chargesubstate: 0x07 = ? see net_msg.c
-     *
-     * Door state #1
-     *	bit2 = 0x04 Charge port (open=1/closed=0)
-     *	bit4 = 0x10 Charging (true=1/false=0)
-     *	bit6 = 0x40 Hand brake applied (true=1/false=0)
-     *	bit7 = 0x80 Car ON (true=1/false=0)
-     *
-     * ATT: bit 2 = 0x04 = needs to be set for net_sms_stat()!
+     * car_chargestate: 1=charging, 2=top off, 4=done, 21=stopped charging
+     * car_chargesubstate: unused
      *
      */
 
@@ -550,14 +587,15 @@ void can_state_ticker1(void)
          */
 
         // Calculate range during charging:
-        // scale last known range from can_soc_min to can_soc
-        if( (can_range > 0) && (can_soc > 0) && (can_soc_min > 0) )
+        // scale can_soc_min_range to can_soc
+        if( (can_soc_min_range > 0) && (can_soc > 0) && (can_soc_min > 0) )
         {
-            unsigned long chg_range =
-                (((float) can_range) / can_soc_min) * can_soc;
+            // Update can_range:
+            can_range =
+                (((float) can_soc_min_range) / can_soc_min) * can_soc;
 
-            if( chg_range > 0 )
-                car_estrange = KM2MI( chg_range );
+            if( can_range > 0 )
+                car_estrange = KM2MI( can_range );
 
             if( maxRange > 0 )
                 car_idealrange = (((float) maxRange) * can_soc) / 10000;
@@ -680,6 +718,7 @@ void can_state_ticker1(void)
 
             // reset SOC minimum:
             can_soc_min = can_soc;
+            can_soc_min_range = can_range;
         }
     }
 
