@@ -563,42 +563,6 @@ BOOL vehicle_twizy_state_ticker1(void)
     }
 
 
-#ifdef OVMS_DEBUG
-
-    // CAN debug log via DIAG port SIM908 command echo:
-    // ATT: could be a problem for running data transfers,
-    //      should not be enabled for production/live firmware images!
-    net_puts_rom( "ATE1\r" );
-
-    sprintf( net_scratchpad,
-            (rom far char*) "# STS=%x SOC=%u RNG=%u SPD=%d PWR=%d\r\n"
-            , can_status, can_soc, can_range, can_speed, can_power );
-    net_puts_ram( net_scratchpad );
-
-    sprintf( net_scratchpad,
-            (rom far char*) "# DS1=%x CHG=%u SND=%x SOCMIN=%u SOCMAX=%d ESTRNG=%u\r\n"
-            , car_doors1, car_chargestate, net_notify, can_soc_min, can_soc_max, car_estrange );
-    net_puts_ram( net_scratchpad );
-
-    /*sprintf( net_scratchpad,
-            (rom far char*) "# FIX=%d LAT=%08lx LON=%08lx ALT=%d DIR=%d\r\n"
-            , car_gpslock, car_latitude, car_longitude, car_altitude, car_direction );
-    net_puts_ram( net_scratchpad );*/
-
-    if( COMSTAT )
-    {
-        // CAN debug log via DIAG port SIM908 command echo:
-        // ATT: could be a problem for running data transfers,
-        //      should not be enabled for production/live firmware images!
-        sprintf( net_scratchpad,
-                (rom far char*) "# CAN COMSTAT=%x RXERRCNT=%u TXERRCNT=%u\r\n",
-                COMSTAT, RXERRCNT, TXERRCNT );
-        net_puts_ram( net_scratchpad );
-    }
-
-#endif
-
-
     /* Resolve CAN lockups:
      * PIC manual 23.15.6.1 Receiver Overflow:
         An overflow condition occurs when the MAB has
@@ -643,6 +607,40 @@ BOOL vehicle_twizy_state_ticker60(void)
     return FALSE;
 }
 
+
+
+////////////////////////////////////////////////////////////////////////
+// Twizy specific SMS command: DEBUG
+// - output internal state dump
+// - can be called via SMS or (net_state == NET_STATE_DIAGMODE)
+//   so suitable for gathering system state info from users
+//   AND during development
+//
+BOOL vehicle_twizy_sms_handle_debug(BOOL premsg, char *caller, char *command, char *arguments)
+{
+    // SMS PART:
+
+    sprintf( net_scratchpad,
+            (rom far char*) "# STS=%x SOC=%u RNG=%u SPD=%d PWR=%d\r\n"
+            , can_status, can_soc, can_range, can_speed, can_power );
+    net_puts_ram( net_scratchpad );
+
+    sprintf( net_scratchpad,
+            (rom far char*) "# DS1=%x CHG=%u SND=%x SOCMIN=%u SOCMAX=%d ESTRNG=%u\r\n"
+            , car_doors1, car_chargestate, net_notify, can_soc_min, can_soc_max, car_estrange );
+    net_puts_ram( net_scratchpad );
+
+    // ...MORE IN DIAG MODE:
+    if( net_state == NET_STATE_DIAGMODE )
+    {
+        sprintf( net_scratchpad,
+                (rom far char*) "# FIX=%d LAT=%08lx LON=%08lx ALT=%d DIR=%d\r\n"
+                , car_gpslock, car_latitude, car_longitude, car_altitude, car_direction );
+        net_puts_ram( net_scratchpad );
+    }
+
+    return TRUE;
+}
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -747,6 +745,7 @@ BOOL vehicle_twizy_sms_handle_ca(BOOL premsg, char *caller, char *command, char 
 
 rom char vehicle_twizy_sms_cmdtable[][27] =
 {
+    "DEBUG",    // Twizy: output internal state dump for debug
     "STAT",     // override standard STAT
     "RANGE",    // Twizy: set/query max ideal range
     "CA",       // Twizy: set/query charge alerts
@@ -755,6 +754,7 @@ rom char vehicle_twizy_sms_cmdtable[][27] =
 
 rom BOOL (*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *command, char *arguments) =
 {
+    &vehicle_twizy_sms_handle_debug,
     &vehicle_twizy_sms_handle_stat,
     &vehicle_twizy_sms_handle_range,
     &vehicle_twizy_sms_handle_ca
