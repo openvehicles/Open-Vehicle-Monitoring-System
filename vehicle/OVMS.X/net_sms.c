@@ -60,11 +60,6 @@ rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
 rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttps://maps.google.com/maps?q=";
 
 
-#ifdef OVMS_CAR_RENAULTTWIZY
-extern unsigned int can_soc_min;            // min SOC reached during last discharge
-extern unsigned int can_soc_max;            // max SOC reached during last charge
-#endif
-
 
 void net_send_sms_start(char* number)
   {
@@ -175,11 +170,7 @@ BOOL net_sms_stat(char* number)
   net_puts_ram(net_scratchpad);
 
   net_puts_rom(" \r\nSOC: ");
-#ifdef OVMS_CAR_RENAULTTWIZY
-  sprintf(net_scratchpad, (rom far char*)"%u%% [%u-%u]", car_SOC, can_soc_min, can_soc_max); // 95%
-#else
   sprintf(net_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
-#endif
   net_puts_ram(net_scratchpad);
 
   net_puts_rom(" \r\nODO: ");
