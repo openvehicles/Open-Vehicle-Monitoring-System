@@ -49,5 +49,7 @@ BOOL vehicle_obdii_initialise(void)
   car_type[3] = 0;
   car_type[4] = 0;
 
+  net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
+
   return TRUE;
   }
