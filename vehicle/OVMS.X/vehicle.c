@@ -76,6 +76,9 @@ void vehicle_initialise(void)
   car_type[3] = 0;
   car_type[4] = 0;
 
+  // Clear the internal GPS flag, unless specifically requested by the module
+  net_fnbits &= ~(NET_FN_INTERNALGPS);
+
   p = par_get(PARAM_VEHICLETYPE);
   if (p == NULL)
     {

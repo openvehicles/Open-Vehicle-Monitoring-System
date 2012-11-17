@@ -761,5 +761,7 @@ BOOL vehicle_twizy_initialise(void)
     vehicle_fn_ticker1 = &vehicle_twizy_state_ticker1;
     vehicle_fn_ticker60 = &vehicle_twizy_state_ticker60;
 
+    net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
+
     return TRUE;
 }

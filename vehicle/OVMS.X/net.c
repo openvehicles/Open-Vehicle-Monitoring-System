@@ -60,6 +60,8 @@ unsigned char net_buf_mode = NET_BUF_CRLF;  // Mode of the buffer (CRLF, SMS or 
 unsigned char net_buf_todo = 0;             // Bytes outstanding on a reception
 unsigned char net_buf_todotimeout = 0;      // Timeout for bytes outstanding
 
+unsigned char net_fnbits = 0;               // Net functionality bits
+
 #ifdef OVMS_SOCALERT
 unsigned char net_socalert_sms = 0;         // SOC Alert (msg) 10min ticks remaining
 unsigned char net_socalert_msg = 0;         // SOC Alert (sms) 10min ticks remaining
@@ -808,7 +810,8 @@ void net_state_activity()
         net_puts_rom(NET_HANGUP);
         }
 #ifdef OVMS_INTERNALGPS
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"2,", 2) == 0)
+      else if ((memcmppgm2ram(net_buf, (char const rom far*)"2,", 2) == 0)&&
+               ((net_fnbits & NET_FN_INTERNALGPS)>0))
         {
           // Incoming GPS coordinates
           // NMEA format $GPGGA: Global Positioning System Fixed Data
@@ -857,7 +860,8 @@ void net_state_activity()
           }
 
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"64,", 3) == 0)
+      else if ((memcmppgm2ram(net_buf, (char const rom far*)"64,", 3) == 0)&&
+               ((net_fnbits & NET_FN_INTERNALGPS)>0))
         {
           // Incoming GPS coordinates
           // NMEA format $GPVTG: Course over ground
@@ -1152,7 +1156,8 @@ void net_state_ticker1(void)
         // Request internal SIM908 GPS coordinates
         // once per second while driving,
         // else once every 5 minutes (to trace theft / transportation)
-        if( (car_speed > 0) || ((net_granular_tick % 300) == 0) )
+        if (((car_speed > 0) || ((net_granular_tick % 300) == 0))&&
+            ((net_fnbits & NET_FN_INTERNALGPS)>0))
         {
             net_puts_rom( NET_REQGPS );
         }

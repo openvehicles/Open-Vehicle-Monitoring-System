@@ -168,5 +168,7 @@ BOOL vehicle_voltampera_initialise(void)
   vehicle_fn_poll0 = &vehicle_voltampera_poll0;
   vehicle_fn_poll1 = &vehicle_voltampera_poll1;
 
+  net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
+
   return TRUE;
   }

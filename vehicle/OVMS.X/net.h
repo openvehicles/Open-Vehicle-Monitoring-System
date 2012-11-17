@@ -115,6 +115,11 @@ extern unsigned char net_buf_mode;             // Mode of the buffer (CRLF, SMS 
 extern unsigned char net_buf_todo;             // Bytes outstanding on a reception
 extern unsigned char net_buf_todotimeout;      // Timeout for bytes outstanding
 
+// Generic functionality bits
+extern unsigned char net_fnbits;               // Net functionality bits
+
+#define NET_FN_INTERNALGPS    0x01             // Internal GPS Required
+
 // The NET/SMS notification system
 // We have a bitmap net_notify with bits set to request a particular notification
 // type, and cleared when the notification is issued.
