@@ -742,7 +742,7 @@ void net_sms_handle_homelink(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    if (vehicle_fn_commandhandler == NULL)
+    if (vehicle_fn_commandhandler != NULL)
       vehicle_fn_commandhandler(FALSE, 24, arguments);
     net_send_sms_rom(caller,NET_MSG_HOMELINK);
     }
@@ -752,7 +752,7 @@ void net_sms_handle_lock(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    if (vehicle_fn_commandhandler == NULL)
+    if (vehicle_fn_commandhandler != NULL)
       vehicle_fn_commandhandler(FALSE, 20, arguments);
     net_send_sms_rom(caller,NET_MSG_LOCK);
     }
@@ -762,7 +762,7 @@ void net_sms_handle_unlock(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    if (vehicle_fn_commandhandler == NULL)
+    if (vehicle_fn_commandhandler != NULL)
       vehicle_fn_commandhandler(FALSE, 22, arguments);
     net_send_sms_rom(caller,NET_MSG_UNLOCK);
     }
@@ -772,7 +772,7 @@ void net_sms_handle_valet(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    if (vehicle_fn_commandhandler == NULL)
+    if (vehicle_fn_commandhandler != NULL)
       vehicle_fn_commandhandler(FALSE, 21, arguments);
     net_send_sms_rom(caller,NET_MSG_VALET);
     }
@@ -782,7 +782,7 @@ void net_sms_handle_unvalet(char *caller, char *command, char *arguments)
   {
   if (net_sms_checkcaller(caller))
     {
-    if (vehicle_fn_commandhandler == NULL)
+    if (vehicle_fn_commandhandler != NULL)
       vehicle_fn_commandhandler(FALSE, 23, arguments);
     net_send_sms_rom(caller,NET_MSG_UNVALET);
     }
@@ -796,7 +796,7 @@ void net_sms_handle_chargemode(char *caller, char *command, char *arguments)
   if (net_sms_initargs(arguments) == NULL) return;
 
   strupr(arguments);
-  if (vehicle_fn_commandhandler == NULL)
+  if (vehicle_fn_commandhandler != NULL)
     {
     if (memcmppgm2ram(arguments, (char const rom far*)"STA", 3) == 0)
       vehicle_fn_commandhandler(FALSE, 10, (char*)"0");
@@ -822,7 +822,7 @@ void net_sms_handle_chargestart(char *caller, char *command, char *arguments)
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
     {
-    if (vehicle_fn_commandhandler == NULL)
+    if (vehicle_fn_commandhandler != NULL)
       vehicle_fn_commandhandler(FALSE, 11, NULL);
     net_notify_suppresscount = 0; // Enable notifications
     net_send_sms_rom(caller,NET_MSG_CHARGESTART);
@@ -834,7 +834,7 @@ void net_sms_handle_chargestop(char *caller, char *command, char *arguments)
   if (((*arguments != 0)&&(net_sms_checkpassarg(caller, arguments)))||
       (net_sms_checkcaller(caller)))
     {
-    if (vehicle_fn_commandhandler == NULL)
+    if (vehicle_fn_commandhandler != NULL)
       vehicle_fn_commandhandler(FALSE, 12, NULL);
     net_notify_suppresscount = 30; // Suppress notifications for 30 seconds
     net_send_sms_rom(caller,NET_MSG_CHARGESTOP);
