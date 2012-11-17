@@ -27,11 +27,11 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 PROJECTNAME=OVMS.X
 
 # Active Configuration
-DEFAULTCONF=TR_V1_Production
+DEFAULTCONF=V1_Production
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=TR_V1_Production TR_V1_Quality_Control TR_V1_Experimental V2_Production V2_Experimental 
+ALLCONFS=V1_Production V1_Experimental V2_Production V2_Experimental 
 
 
 # build
@@ -45,9 +45,8 @@ ALLCONFS=TR_V1_Production TR_V1_Quality_Control TR_V1_Experimental V2_Production
 
 # clobber
 .clobber-impl: .clobber-pre .depcheck-impl
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V1_Production clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V1_Quality_Control clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V1_Experimental clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Production clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Experimental clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental clean
 
@@ -55,9 +54,8 @@ ALLCONFS=TR_V1_Production TR_V1_Quality_Control TR_V1_Experimental V2_Production
 
 # all
 .all-impl: .all-pre .depcheck-impl
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V1_Production build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V1_Quality_Control build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=TR_V1_Experimental build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Production build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Experimental build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental build
 

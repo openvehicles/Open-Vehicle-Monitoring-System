@@ -6,7 +6,7 @@
 
 # Macros
 TOP=`pwd`
-CND_CONF=TR_V1_Production
+CND_CONF=V1_Experimental
 CND_DISTDIR=dist
 TMPDIR=build/${CND_CONF}/${IMAGE_TYPE}/tmp-packaging
 TMPDIRNAME=tmp-packaging

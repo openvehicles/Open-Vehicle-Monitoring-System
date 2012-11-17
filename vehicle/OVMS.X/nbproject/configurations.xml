@@ -68,7 +68,7 @@
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
-    <conf name="TR_V1_Production" type="2">
+    <conf name="V1_Production" type="2">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <targetDevice>PIC18F2680</targetDevice>
@@ -118,7 +118,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE"/>
+                  value="OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE;OVMS_CAR_NONE"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -190,148 +190,7 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
-      <item path="vehicle_twizy.c" ex="true" overriding="false">
-        <C18>
-        </C18>
-        <C18-AS>
-        </C18-AS>
-        <C18-LD>
-        </C18-LD>
-        <C18LanguageToolchain>
-        </C18LanguageToolchain>
-      </item>
-      <item path="vehicle_voltampera.c" ex="true" overriding="false">
-        <C18>
-        </C18>
-        <C18-AS>
-        </C18-AS>
-        <C18-LD>
-        </C18-LD>
-        <C18LanguageToolchain>
-        </C18LanguageToolchain>
-      </item>
-    </conf>
-    <conf name="TR_V1_Quality_Control" type="2">
-      <toolsSet>
-        <developmentServer>localhost</developmentServer>
-        <targetDevice>PIC18F2680</targetDevice>
-        <targetHeader></targetHeader>
-        <platformTool>PICkit3PlatformTool</platformTool>
-        <languageToolchain>C18</languageToolchain>
-        <languageToolchainVersion></languageToolchainVersion>
-        <platform>4</platform>
-      </toolsSet>
-      <compileType>
-        <linkerTool>
-          <linkerLibItems>
-          </linkerLibItems>
-        </linkerTool>
-        <loading>
-          <useAlternateLoadableFile>false</useAlternateLoadableFile>
-          <alternateLoadableFile></alternateLoadableFile>
-        </loading>
-      </compileType>
-      <makeCustomizationType>
-        <makeCustomizationPreStepEnabled>false</makeCustomizationPreStepEnabled>
-        <makeCustomizationPreStep></makeCustomizationPreStep>
-        <makeCustomizationPostStepEnabled>false</makeCustomizationPostStepEnabled>
-        <makeCustomizationPostStep></makeCustomizationPostStep>
-        <makeCustomizationPutChecksumInUserID>false</makeCustomizationPutChecksumInUserID>
-        <makeCustomizationEnableLongLines>false</makeCustomizationEnableLongLines>
-        <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
-      </makeCustomizationType>
-      <C18>
-        <property key="code-model" value="mL"/>
-        <property key="data-model" value="Oa-"/>
-        <property key="default-char-unsigned" value="true"/>
-        <property key="enable-all-optimizations" value="true"/>
-        <property key="enable-int-promotion" value="false"/>
-        <property key="enable-multi-bank-stack-model" value="false"/>
-        <property key="enable-ob" value="true"/>
-        <property key="enable-od" value="true"/>
-        <property key="enable-om" value="true"/>
-        <property key="enable-on" value="true"/>
-        <property key="enable-op" value="true"/>
-        <property key="enable-opa" value="true"/>
-        <property key="enable-or" value="true"/>
-        <property key="enable-os" value="true"/>
-        <property key="enable-ot" value="true"/>
-        <property key="enable-ou" value="true"/>
-        <property key="enable-ow" value="true"/>
-        <property key="extra-include-directories" value=""/>
-        <property key="optimization-master" value="Enable all"/>
-        <property key="preprocessor-macros"
-                  value="OVMS_QC;OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE"/>
-        <property key="procedural-abstraction-passes" value="0"/>
-        <property key="storage-class" value="sca"/>
-        <property key="verbose" value="false"/>
-        <property key="warning-level" value="2"/>
-      </C18>
-      <C18-AS>
-        <property key="cross.reference.file" value=""/>
-        <property key="default.radix" value="HEX"/>
-        <property key="enable.case.sensitivity" value="false"/>
-        <property key="hex.output.format" value="INHX32"/>
-        <property key="preprocessor.macros" value=""/>
-        <property key="warning.level" value="0"/>
-      </C18-AS>
-      <C18-LD>
-        <property key="cod-file" value="false"/>
-        <property key="extra-lib-directories" value=""/>
-        <property key="hex-output-format" value="INHX32"/>
-        <property key="map-file" value=""/>
-      </C18-LD>
-      <C18LanguageToolchain>
-        <property key="extended-mode" value="false"/>
-        <property key="extended-mode-mcc18" value="false"/>
-        <property key="extended-mode-mpasm" value="false"/>
-        <property key="extended-mode-mplink" value="false"/>
-        <property key="stack-analysis" value="false"/>
-        <property key="stack-analysis-mcc18" value="false"/>
-        <property key="stack-analysis-mplink" value="false"/>
-      </C18LanguageToolchain>
-      <PICkit3PlatformTool>
-        <property key="AutoSelectMemRanges" value="auto"/>
-        <property key="Freeze Peripherals" value="true"/>
-        <property key="SecureSegment.SegmentProgramming" value="FullChipProgramming"/>
-        <property key="ToolFirmwareFilePath"
-                  value="Press to browse for a specific firmware version"/>
-        <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
-        <property key="hwtoolclock.frcindebug" value="false"/>
-        <property key="memories.eeprom" value="true"/>
-        <property key="memories.id" value="true"/>
-        <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.end" value="0xffff"/>
-        <property key="memories.programmemory.start" value="0x0"/>
-        <property key="poweroptions.powerenable" value="true"/>
-        <property key="programmertogo.imagename" value=""/>
-        <property key="programoptions.eraseb4program" value="true"/>
-        <property key="programoptions.preserveeeprom" value="false"/>
-        <property key="programoptions.preserveprogramrange" value="false"/>
-        <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
-        <property key="programoptions.preserveprogramrange.start" value="0x0"/>
-        <property key="programoptions.usehighvoltageonmclr" value="false"/>
-        <property key="voltagevalue" value="5.0"/>
-      </PICkit3PlatformTool>
-      <item path="diag.c" ex="false" overriding="false">
-        <C18>
-        </C18>
-        <C18-AS>
-        </C18-AS>
-        <C18-LD>
-        </C18-LD>
-        <C18LanguageToolchain>
-        </C18LanguageToolchain>
-      </item>
-      <item path="diag.h" ex="false" overriding="false">
-        <C18>
-        </C18>
-        <C18-AS>
-        </C18-AS>
-        <C18-LD>
-        </C18-LD>
-        <C18LanguageToolchain>
-        </C18LanguageToolchain>
+      <item path="vehicle_obdii.c" ex="true" overriding="false">
       </item>
       <item path="vehicle_twizy.c" ex="true" overriding="false">
         <C18>
@@ -354,7 +213,7 @@
         </C18LanguageToolchain>
       </item>
     </conf>
-    <conf name="TR_V1_Experimental" type="2">
+    <conf name="V1_Experimental" type="2">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <targetDevice>PIC18F2680</targetDevice>
@@ -404,7 +263,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE"/>
+                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE;OVMS_CAR_NONE"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -480,6 +339,8 @@
         </C18-LD>
         <C18LanguageToolchain>
         </C18LanguageToolchain>
+      </item>
+      <item path="vehicle_obdii.c" ex="true" overriding="false">
       </item>
       <item path="vehicle_twizy.c" ex="true" overriding="false">
         <C18>
