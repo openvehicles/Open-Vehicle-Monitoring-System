@@ -60,6 +60,7 @@ WORD crc_firmware = 0;
 WORD crc_environment = 0;
 WORD crc_group1 = 0;
 WORD crc_group2 = 0;
+WORD crc_capabilities = 0;
 
 #pragma udata NETMSG_SP
 char net_msg_scratchpad[NET_BUF_MAX];
@@ -391,6 +392,20 @@ char net_msgp_environment(char stat)
   strcat(net_scratchpad,net_msg_scratchpad);
 
   return net_msg_encode_statputs(stat, &crc_environment);
+  }
+
+char net_msgp_capabilities(char stat)
+  {
+
+  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 V");
+  if ((can_capabilities != NULL)&&(can_capabilities[0]!=0))
+    {
+    strcatpgm2ram(net_scratchpad,(rom char*)can_capabilities);
+    strcatpgm2ram(net_scratchpad,",");
+    }
+  strcatpgm2ram(net_scratchpad,"C1-5,C40-41,C49");
+
+  return net_msg_encode_statputs(stat, &crc_capabilities);
   }
 
 char net_msgp_group(char stat, char groupnumber, char *groupname)
