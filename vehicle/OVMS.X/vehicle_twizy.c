@@ -30,6 +30,14 @@
 ;           - Crash reset hardening w/o eating up EEPROM space by using SRAM
 ;           - Interrupt optimization
 ;
+;    1.5  18 Nov 2012 (Michael Balzer):
+;           - SMS cmd "STAT": moved specific output to vehicle module
+;           - SMS cmd "HELP": adds twizy commands to std help
+;           - SMS cmd "RANGE": set/query max ideal range
+;           - SMS cmd "CA": set/query charge alerts
+;           - SMS cmd "DEBUG": output internal state variables
+;
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -315,24 +323,6 @@ BOOL vehicle_twizy_state_ticker1(void)
 {
     int suffSOC, suffRange, maxRange;
 
-#if 0
-    /*
-     * RESET workaround against "lost range" problem:
-     */
-
-    if( can_range == 0 )
-    {
-        // Read last known can_range from FEATURE13:
-        can_range = sys_features[13];
-    }
-    else if( can_range != sys_features[13] )
-    {
-        // Write last known can_range into FEATURE13:
-        sys_features[13] = can_range;
-        sprintf( net_scratchpad, "%d", sys_features[13] );
-        par_set( PARAM_FEATURE13, net_scratchpad );
-    }
-#endif
 
     /*
      * First boot data sanitizing:
@@ -621,6 +611,9 @@ BOOL vehicle_twizy_sms_handle_debug(BOOL premsg, char *caller, char *command, ch
     if( premsg )
         net_send_sms_start(caller);
 
+    if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+        return FALSE;
+
     // SMS PART:
 
     sprintf( net_scratchpad,
@@ -653,8 +646,6 @@ BOOL vehicle_twizy_sms_handle_debug(BOOL premsg, char *caller, char *command, ch
 //
 BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, char *arguments)
 {
-    char *p;
-
     // check for replace mode:
     if( !premsg )
         return FALSE;
@@ -686,8 +677,7 @@ BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, cha
     }
 
     net_puts_rom(" \r\nRange: "); // Estimated + Ideal Range
-    p = par_get(PARAM_MILESKM);
-    if (*p == 'M') // Kmh or Miles
+    if (can_mileskm == 'M') // Kmh or Miles
         sprintf(net_scratchpad, (rom far char*) "%u - %u mi"
             , car_estrange
             , car_idealrange); // Miles
@@ -698,14 +688,14 @@ BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, cha
     net_puts_ram(net_scratchpad);
 
     net_puts_rom(" \r\nSOC: ");
-    sprintf(net_scratchpad, (rom far char*) "%u%% [%u-%u]"
+    sprintf(net_scratchpad, (rom far char*) "%u%% (%u - %u)"
             , car_SOC
             , can_soc_min
             , can_soc_max);
     net_puts_ram(net_scratchpad);
 
     net_puts_rom(" \r\nODO: ");
-    if (*p == 'M') // Km or Miles
+    if (can_mileskm == 'M') // Km or Miles
         sprintf(net_scratchpad, (rom far char*) "%lu mi"
                 , car_odometer / 10); // Miles
     else
@@ -721,11 +711,52 @@ BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, cha
 // Twizy specific SMS command: RANGE / RANGE?
 // - set/query max ideal range
 //
+// Syntax: RANGE [<range>]
+//      Set max ideal range / clear if argument is omitted.
+//      Pass <range> in user units (mi/km).
+//      New setting will be reported.
+//
+// Syntax: RANGE?
+//      Report current max ideal range.
+//
 BOOL vehicle_twizy_sms_handle_range(BOOL premsg, char *caller, char *command, char *arguments)
 {
-    // todo
-    // if( command[5] == '?' )...
-    return FALSE; // not yet implemented
+    if( !premsg )
+        return FALSE;
+
+    if( command[5] != '?' )
+    {
+        // SET MAXRANGE:
+
+        if( arguments && *arguments )
+            sys_features[FEATURE_MAXRANGE] = atoi( arguments );
+        else
+            sys_features[FEATURE_MAXRANGE] = 0;
+
+        par_set( PARAM_FEATURE_BASE + FEATURE_MAXRANGE,
+                arguments ? arguments : (char *)"" );
+    }
+
+    if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+        return FALSE; // handled, but no SMS has been started
+
+    // Reply current range:
+    net_send_sms_start( caller );
+
+    net_puts_rom("Max ideal range: ");
+    if( sys_features[FEATURE_MAXRANGE] == 0 )
+    {
+        net_puts_rom("UNSET");
+    }
+    else
+    {
+        sprintf( net_scratchpad, (rom far char*) "%u "
+                , sys_features[FEATURE_MAXRANGE] );
+        net_puts_ram( net_scratchpad );
+        net_puts_rom( (can_mileskm == 'M') ? "mi" : "km" );
+    }
+
+    return TRUE;
 }
 
 
@@ -733,11 +764,93 @@ BOOL vehicle_twizy_sms_handle_range(BOOL premsg, char *caller, char *command, ch
 // Twizy specific SMS command: CA / CA?
 // - set/query charge alerts for sufficient SOC / range
 //
+// Syntax: CA [<soc>%] [<range>]
+//      none, either or both alerts can be set in arbitrary order,
+//      SOC alert is recognized by unit '%'.
+//      Previous alert settings will be cleared, new settings reported.
+//
+// Syntax: CA?
+//      Do not change alerts, just report current settings.
+//
 BOOL vehicle_twizy_sms_handle_ca(BOOL premsg, char *caller, char *command, char *arguments)
 {
-    // todo
-    // if( command[2] == '?' )...
-    return FALSE; // not yet implemented
+    if( !premsg )
+        return FALSE;
+
+    if( command[2] != '?' )
+    {
+        // SET CHARGE ALERTS:
+
+        int value;
+        char unit;
+        unsigned char f;
+        char *arg_suffsoc=NULL, *arg_suffrange=NULL;
+
+        // clear current alerts:
+        sys_features[FEATURE_SUFFSOC] = 0;
+        sys_features[FEATURE_SUFFRANGE] = 0;
+
+        // read new alerts from arguments:
+        while( arguments && *arguments )
+        {
+            value = atoi( arguments );
+            unit = arguments[strlen(arguments)-1];
+
+            if( unit == '%' )
+            {
+                arg_suffsoc = arguments;
+                sys_features[FEATURE_SUFFSOC] = value;
+            }
+            else
+            {
+                arg_suffrange = arguments;
+                sys_features[FEATURE_SUFFRANGE] = value;
+            }
+
+            arguments = net_sms_nextarg( arguments );
+        }
+
+        // store new alerts into EEPROM:
+        par_set( PARAM_FEATURE_BASE + FEATURE_SUFFSOC,
+                arg_suffsoc ? arg_suffsoc : (char *)"" );
+        par_set( PARAM_FEATURE_BASE + FEATURE_SUFFRANGE,
+                arg_suffrange ? arg_suffrange : (char *)"" );
+    }
+
+
+    // REPLY current charge alerts:
+
+    if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+        return FALSE; // handled, but no SMS has been started
+
+    net_send_sms_start( caller );
+    net_puts_rom("Charge Alert: ");
+
+    if( (sys_features[FEATURE_SUFFSOC]==0) && (sys_features[FEATURE_SUFFRANGE]==0) )
+    {
+        net_puts_rom("OFF");
+    }
+    else
+    {
+        if( sys_features[FEATURE_SUFFSOC] > 0 )
+        {
+            sprintf( net_scratchpad, (rom far char*) "%u%%"
+                    , sys_features[FEATURE_SUFFSOC] );
+            net_puts_ram( net_scratchpad );
+        }
+
+        if( sys_features[FEATURE_SUFFRANGE] > 0 )
+        {
+            if( sys_features[FEATURE_SUFFSOC] > 0 )
+                net_puts_rom( " or " );
+            sprintf( net_scratchpad, (rom far char*) "%u "
+                    , sys_features[FEATURE_SUFFRANGE] );
+            net_puts_ram( net_scratchpad );
+            net_puts_rom( (can_mileskm == 'M') ? "mi" : "km" );
+        }
+    }
+
+    return TRUE;
 }
 
 
