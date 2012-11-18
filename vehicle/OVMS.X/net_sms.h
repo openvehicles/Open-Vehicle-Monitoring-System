@@ -38,11 +38,14 @@
 void net_send_sms_start(char* number);
 void net_send_sms_finish(void);
 void net_send_sms_rom(char* number, static const rom char* message);
+char* net_sms_initargs(char* arguments);
+char* net_sms_nextarg(char *lastarg);
 void net_sms_params(char* number);
 void net_sms_gps(char* number);
 BOOL net_sms_stat(char* number);
 void net_sms_alarm(char* number);
 void net_sms_valettrunk(char* number);
+BOOL net_sms_checkauth(char authmode, char *caller, char **arguments);
 void net_sms_in(char *caller, char *buf, unsigned char pos);
 void net_sms_socalert(char* number);
 

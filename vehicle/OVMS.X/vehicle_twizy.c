@@ -618,6 +618,9 @@ BOOL vehicle_twizy_state_ticker60(void)
 //
 BOOL vehicle_twizy_sms_handle_debug(BOOL premsg, char *caller, char *command, char *arguments)
 {
+    if( premsg )
+        net_send_sms_start(caller);
+
     // SMS PART:
 
     sprintf( net_scratchpad,
@@ -742,13 +745,20 @@ BOOL vehicle_twizy_sms_handle_ca(BOOL premsg, char *caller, char *command, char 
 // This is the Twizy SMS command table
 // (for implementation notes see net_sms::sms_cmdtable comment)
 //
+// First char = auth mode of command:
+//   1:     the first argument must be the module password
+//   2:     the caller must be the registered telephone
+//   3:     the caller must be the registered telephone, or first argument the module password
 
-rom char vehicle_twizy_sms_cmdtable[][27] =
+BOOL vehicle_twizy_sms_handle_help(BOOL premsg, char *caller, char *command, char *arguments);
+
+rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] =
 {
-    "DEBUG",    // Twizy: output internal state dump for debug
-    "STAT",     // override standard STAT
-    "RANGE",    // Twizy: set/query max ideal range
-    "CA",       // Twizy: set/query charge alerts
+    "3DEBUG",    // Twizy: output internal state dump for debug
+    "3STAT",     // override standard STAT
+    "3RANGE",    // Twizy: set/query max ideal range
+    "3CA",       // Twizy: set/query charge alerts
+    "3HELP",     // extend HELP output
     ""
 };
 
@@ -757,13 +767,14 @@ rom BOOL (*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *comman
     &vehicle_twizy_sms_handle_debug,
     &vehicle_twizy_sms_handle_stat,
     &vehicle_twizy_sms_handle_range,
-    &vehicle_twizy_sms_handle_ca
+    &vehicle_twizy_sms_handle_ca,
+    &vehicle_twizy_sms_handle_help
 };
 
 // SMS COMMAND DISPATCHER:
 // premsg: TRUE=may replace, FALSE=may extend standard handler
 // returns TRUE if handled
-BOOL vehicle_twizy_fn_smshandler(BOOL premsg, char *caller, char *command, char *arguments)
+BOOL vehicle_twizy_fn_sms(BOOL checkauth, BOOL premsg, char *caller, char *command, char *arguments)
 {
     int k;
 
@@ -771,10 +782,18 @@ BOOL vehicle_twizy_fn_smshandler(BOOL premsg, char *caller, char *command, char 
     for( k=0; vehicle_twizy_sms_cmdtable[k][0] != 0; k++ )
     {
         if( memcmppgm2ram( command,
-                (char const rom far*)vehicle_twizy_sms_cmdtable[k],
-                strlenpgm((char const rom far*)vehicle_twizy_sms_cmdtable[k])) == 0 )
+                (char const rom far*)vehicle_twizy_sms_cmdtable[k]+1,
+                strlenpgm((char const rom far*)vehicle_twizy_sms_cmdtable[k])-1) == 0 )
         {
             BOOL result;
+
+            if( checkauth )
+            {
+                // we need to check the caller authorization:
+                arguments = net_sms_initargs(arguments);
+                if (!net_sms_checkauth(vehicle_twizy_sms_cmdtable[k][0], caller, &arguments))
+                    return FALSE; // failed
+            }
 
             // Call sms handler:
             result = (*vehicle_twizy_sms_hfntable[k])(premsg, caller, command, arguments);
@@ -790,6 +809,45 @@ BOOL vehicle_twizy_fn_smshandler(BOOL premsg, char *caller, char *command, char 
     }
 
     return FALSE; // no vehicle command
+}
+
+
+BOOL vehicle_twizy_fn_smshandler(BOOL premsg, char *caller, char *command, char *arguments)
+{
+    // called to extend/replace standard command: framework did auth check for us
+    return vehicle_twizy_fn_sms(FALSE, premsg, caller, command, arguments);
+}
+
+BOOL vehicle_twizy_fn_smsextensions(char *caller, char *command, char *arguments)
+{
+    // called for specific command: we need to do the auth check
+    return vehicle_twizy_fn_sms(TRUE, TRUE, caller, command, arguments);
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// Twizy specific SMS command output extension: HELP
+// - add Twizy commands
+//
+BOOL vehicle_twizy_sms_handle_help(BOOL premsg, char *caller, char *command, char *arguments)
+{
+    int k;
+
+    if( premsg )
+        return FALSE; // run only in extend mode
+
+    if( sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS )
+        return FALSE;
+
+    net_puts_rom(" \r\nTwizy Commands:");
+
+    for( k=0; vehicle_twizy_sms_cmdtable[k][0] != 0; k++ )
+    {
+        net_puts_rom(" ");
+        net_puts_rom(vehicle_twizy_sms_cmdtable[k]+1);
+    }
+
+    return TRUE;
 }
 
 
@@ -912,6 +970,7 @@ BOOL vehicle_twizy_initialise(void)
     vehicle_fn_ticker1 = &vehicle_twizy_state_ticker1;
     vehicle_fn_ticker60 = &vehicle_twizy_state_ticker60;
     vehicle_fn_smshandler = &vehicle_twizy_fn_smshandler;
+    vehicle_fn_smsextensions = &vehicle_twizy_fn_smsextensions;
 
     net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
 

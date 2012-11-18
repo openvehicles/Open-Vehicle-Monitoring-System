@@ -906,6 +906,39 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_help
   };
 
+
+// net_sms_checkauth: check SMS caller & first argument
+//   according to auth mode
+BOOL net_sms_checkauth(char authmode, char *caller, char **arguments)
+{
+  switch (authmode)
+    {
+    case '1':
+      //   1:     the first argument must be the module password
+      if (net_sms_checkpassarg(caller, *arguments) == 0)
+        return FALSE;
+      *arguments = net_sms_nextarg(*arguments); // Skip over the password
+      break;
+    case '2':
+      //   2:     the caller must be the registered telephone
+      if (net_sms_checkcaller(caller) == 0)
+        return FALSE;
+      break;
+    case '3':
+      //   3:     the caller must be the registered telephone, or first argument the module password
+      if (net_sms_checkcaller(caller) == 0)
+        {
+        if (net_sms_checkpassarg(caller, *arguments)==0)
+          return FALSE;
+        *arguments = net_sms_nextarg(*arguments);
+        }
+      break;
+    }
+
+  return TRUE;
+}
+
+
 // net_sms_in handles reception of an SMS message
 //
 // It tries to find a matching command handler based on the
@@ -931,29 +964,8 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       BOOL result = FALSE;
       char *arguments = net_sms_initargs(p);
 
-      switch (sms_cmdtable[k][0])
-        {
-        case '1':
-          //   1:     the first argument must be the module password
-          if (net_sms_checkpassarg(caller, arguments) == 0)
-            return;
-          arguments = net_sms_nextarg(arguments); // Skip over the password
-          break;
-        case '2':
-          //   2:     the caller must be the registered telephone
-          if (net_sms_checkcaller(caller) == 0)
-            return;
-          break;
-        case '3':
-          //   3:     the caller must be the registered telephone, or first argument the module password
-          if (net_sms_checkcaller(caller) == 0)
-            {
-            if (net_sms_checkpassarg(caller, arguments)==0)
-              return;
-            arguments = net_sms_nextarg(arguments);
-            }
-          break;
-        }
+      if (!net_sms_checkauth(sms_cmdtable[k][0], caller, &arguments))
+          return;
 
       if (vehicle_fn_smshandler != NULL)
         {
