@@ -256,6 +256,8 @@ char* net_sms_initargs(char* arguments)
   {
   char *p;
 
+  if (arguments == NULL) return NULL;
+
   net_sms_argend = arguments + strlen(arguments);
   if (net_sms_argend == arguments) return NULL;
 
@@ -269,6 +271,8 @@ char* net_sms_initargs(char* arguments)
 char* net_sms_nextarg(char *lastarg)
   {
   char *p;
+
+  if (lastarg == NULL) return NULL;
 
   for (p=lastarg;(*p!=0);p++) {}
   if (p == net_sms_argend) return NULL;
