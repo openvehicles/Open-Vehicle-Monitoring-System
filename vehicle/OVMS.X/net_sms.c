@@ -837,7 +837,7 @@ BOOL net_sms_handle_help(char *caller, char *command, char *arguments);
 //   2:     the caller must be the registered telephone
 //   3:     the caller must be the registered telephone, or first argument the module password
 
-rom char sms_cmdtable[][27] =
+rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
   { "3REGISTER?",
     "1REGISTER",
     "3PASS?",
@@ -946,12 +946,12 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
           break;
         case '3':
           //   3:     the caller must be the registered telephone, or first argument the module password
-            if (net_sms_checkpassarg(caller, arguments))
-              {
-              arguments = net_sms_nextarg(arguments);
-              }
-            else if (net_sms_checkcaller(caller) == 0)
+          if (net_sms_checkcaller(caller) == 0)
+            {
+            if (net_sms_checkpassarg(caller, arguments)==0)
               return;
+            arguments = net_sms_nextarg(arguments);
+            }
           break;
         }
 
@@ -961,13 +961,21 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
           return;
         }
       result = (*sms_hfntable[k])(caller, buf, arguments);
-      if ((result)&&(vehicle_fn_smshandler != NULL))
+      if (result)
         {
-        vehicle_fn_smshandler(FALSE, caller, buf, arguments);
+        if (vehicle_fn_smshandler != NULL)
+          vehicle_fn_smshandler(FALSE, caller, buf, arguments);
         net_send_sms_finish();
         }
       return;
       }
+    }
+
+  if (vehicle_fn_smsextensions != NULL)
+    {
+    // Try passing the command to the vehicle module for handling...
+    if (vehicle_fn_smsextensions(caller, buf, p))
+      return;
     }
 
   // SMS didn't match any command pattern, forward to user via net msg
@@ -985,7 +993,7 @@ BOOL net_sms_handle_help(char *caller, char *command, char *arguments)
   for (k=0; sms_cmdtable[k][0] != 0; k++)
     {
     net_puts_rom(" ");
-    net_puts_rom(sms_cmdtable[k]);
+    net_puts_rom(sms_cmdtable[k]+1);
     }
   return TRUE;
   }

@@ -55,6 +55,7 @@ extern rom BOOL (*vehicle_fn_ticker10th)(void);
 extern rom BOOL (*vehicle_fn_idlepoll)(void);
 extern rom BOOL (*vehicle_fn_commandhandler)(BOOL msgmode, int code, char* msg);
 extern rom BOOL (*vehicle_fn_smshandler)(BOOL premsg, char *caller, char *command, char *arguments);
+extern rom BOOL (*vehicle_fn_smsextensions)(char *caller, char *command, char *arguments);
 
 void vehicle_initialise(void);
 
