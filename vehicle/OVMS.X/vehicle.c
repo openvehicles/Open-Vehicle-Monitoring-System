@@ -49,6 +49,7 @@ rom BOOL (*vehicle_fn_ticker10th)(void) = NULL;
 rom BOOL (*vehicle_fn_idlepoll)(void) = NULL;
 rom BOOL (*vehicle_fn_commandhandler)(BOOL msgmode, int code, char* msg);
 rom BOOL (*vehicle_fn_smshandler)(BOOL premsg, char *caller, char *command, char *arguments);
+rom BOOL (*vehicle_fn_smsextensions)(char *caller, char *command, char *arguments);
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_initialise()
@@ -71,6 +72,7 @@ void vehicle_initialise(void)
   vehicle_fn_idlepoll = NULL;
   vehicle_fn_commandhandler = NULL;
   vehicle_fn_smshandler = NULL;
+  vehicle_fn_smsextensions = NULL;
 
   car_type[0] = 0; // Car is undefined
   car_type[1] = 0;

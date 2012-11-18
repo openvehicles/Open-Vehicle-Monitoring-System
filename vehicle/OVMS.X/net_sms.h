@@ -33,6 +33,8 @@
 
 #include "net.h"
 
+#define NET_SMS_CMDWIDTH    16
+
 void net_send_sms_start(char* number);
 void net_send_sms_finish(void);
 void net_send_sms_rom(char* number, static const rom char* message);
