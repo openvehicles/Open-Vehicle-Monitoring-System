@@ -1237,6 +1237,7 @@ void net_state_ticker60(void)
         stat = net_msgp_gps(stat);
         stat = net_msgp_tpms(stat);
         stat = net_msgp_environment(stat);
+        stat = net_msgp_capabilities(stat);
         if (stat != 2)
           net_msg_send();
         }
@@ -1323,6 +1324,7 @@ void net_state_ticker600(void)
           stat = net_msgp_gps(stat);
           stat = net_msgp_tpms(stat);
           stat = net_msgp_environment(stat);
+          stat = net_msgp_capabilities(stat);
           if (stat != 2)
             net_msg_send();
           }
@@ -1366,6 +1368,7 @@ void net_state_ticker3600(void)
           stat = net_msgp_gps(stat);
           stat = net_msgp_tpms(stat);
           stat = net_msgp_environment(stat);
+          stat = net_msgp_capabilities(stat);
           if (stat != 2)
             net_msg_send();
           }

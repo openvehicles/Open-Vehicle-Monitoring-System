@@ -31,11 +31,12 @@
 #ifndef __OVMS_VEHICLE_H
 #define __OVMS_VEHICLE_H
 
-extern unsigned int  can_granular_tick;         // An internal ticker used to generate 1min, 5min, etc, calls
-extern unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
-extern unsigned char can_databuffer[8];
-extern unsigned char can_minSOCnotified; // minSOC notified flag
-extern unsigned char can_mileskm;             // Miles of Kilometers
+extern unsigned int   can_granular_tick;         // An internal ticker used to generate 1min, 5min, etc, calls
+extern unsigned char  can_datalength;            // The number of valid bytes in the can_databuffer
+extern unsigned char  can_databuffer[8];
+extern unsigned char  can_minSOCnotified;        // minSOC notified flag
+extern unsigned char  can_mileskm;               // Miles of Kilometers
+extern unsigned char* can_capabilities;          // Vehicle capabilities
 
 // These are the hook functions. The convention is that if a function is not
 // NULL then it is called at the appropriate time. If it returns TRUE then

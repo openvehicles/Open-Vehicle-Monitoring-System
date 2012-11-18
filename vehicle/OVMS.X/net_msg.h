@@ -58,6 +58,7 @@ char net_msgp_tpms(char stat);
 char net_msgp_firmware(char stat);
 char net_msgp_environment(char stat);
 char net_msgp_group(char stat, char groupnumber, char *groupname);
+char net_msgp_capabilities(char stat);
 
 void net_msg_in(char* msg);
 void net_msg_cmd_in(char* msg);

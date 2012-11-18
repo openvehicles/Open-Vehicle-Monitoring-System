@@ -45,6 +45,9 @@
 #include "params.h"
 #include "net_msg.h"
 
+// Capabilities for Tesla Roadster
+rom char teslaroadster_capabilities[] = "C10-12,C15-24";
+
 #pragma udata overlay vehicle_overlay_data
 
 unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
@@ -852,6 +855,7 @@ void vehicle_teslaroadster_initialise(void)
   can_lastspeedrpt = 0;
 
   // Hook in...
+  can_capabilities = (char*)&teslaroadster_capabilities;
   vehicle_fn_poll0 = &vehicle_teslaroadster_poll0;
   vehicle_fn_poll1 = &vehicle_teslaroadster_poll1;
   vehicle_fn_ticker10th = &vehicle_teslaroadster_ticker10th;
