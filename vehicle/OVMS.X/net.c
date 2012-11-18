@@ -1123,7 +1123,9 @@ void net_state_ticker1(void)
             net_notify &= ~(NET_NOTIFY_SMS_CHARGE); // Clear notification flag
             if (net_notify_suppresscount==0)
               {
-              net_sms_in(p, (char *)"STAT", 4);
+                char cmd[5];
+                strcpypgm2ram(cmd, "STAT");
+                net_sms_in(p, cmd, 4);
               }
             return;
             }
