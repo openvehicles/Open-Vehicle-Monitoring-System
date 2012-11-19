@@ -67,6 +67,10 @@
 #include "led.h"
 #include "utils.h"
 #include "net_sms.h"
+#include "net_msg.h"
+
+// Capabilities for Renault Twizy:
+rom char vehicle_twizy_capabilities[] = "C6,C201-203";
 
 // Integer Miles <-> Kilometer conversions
 // 1 mile = 1.609344 kilometers
@@ -640,9 +644,80 @@ BOOL vehicle_twizy_sms_handle_debug(BOOL premsg, char *caller, char *command, ch
 
 
 ////////////////////////////////////////////////////////////////////////
-// Twizy specific SMS command override: STAT
+// Generate STAT message (for SMS & MSG mode)
+// - no charge mode
+// - output estrange
 // - output can_soc_min + can_soc_max
 // - output odometer
+//
+// => cat to net_scratchpad (to be sent as SMS or MSG)
+//
+void vehicle_twizy_prep_stat_msg(void)
+{
+    // Charge State:
+
+    if (car_doors1 & 0x04)
+    {
+        // Charge port door is open, we are charging
+        switch (car_chargestate)
+        {
+            case 0x01:
+              strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging");
+              break;
+            case 0x02:
+              strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging, Topping off");
+              break;
+            case 0x04:
+              strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Done");
+              break;
+            default:
+              strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Stopped");
+        }
+    }
+    else
+    {
+        // Charge port door is closed, not charging
+        strcatpgm2ram(net_scratchpad,(char const rom far *)"Not charging");
+    }
+
+    // Estimated + Ideal Range
+
+    strcatpgm2ram(net_scratchpad,(char const rom far *)"\rRange: ");
+    if (can_mileskm == 'M')
+        sprintf(net_msg_scratchpad, (rom far char*) "%u - %u mi"
+            , car_estrange
+            , car_idealrange); // Miles
+    else
+        sprintf(net_msg_scratchpad, (rom far char*) "%u - %u km"
+            , MI2KM(car_estrange)
+            , MI2KM(car_idealrange)); // km
+    strcat((char*)net_scratchpad,net_msg_scratchpad);
+
+    // SOC + min/max:
+
+    strcatpgm2ram(net_scratchpad,(char const rom far *)" SOC: ");
+    sprintf(net_msg_scratchpad, (rom far char*) "%u%% (%u - %u)"
+            , car_SOC
+            , can_soc_min
+            , can_soc_max);
+    strcat(net_scratchpad,net_msg_scratchpad);
+
+    // ODOMETER:
+
+    strcatpgm2ram(net_scratchpad,(char const rom far *)" ODO: ");
+    if (can_mileskm == 'M') // Km or Miles
+        sprintf(net_msg_scratchpad, (rom far char*) "%lu mi"
+                , car_odometer / 10); // Miles
+    else
+        sprintf(net_msg_scratchpad, (rom far char*) "%lu Km"
+                , MI2KM(car_odometer / 10)); // km
+    strcat(net_scratchpad,net_msg_scratchpad);
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// Twizy specific SMS command override: STAT
+// (same text as MSG ALERT)
 //
 BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, char *arguments)
 {
@@ -654,56 +729,28 @@ BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, cha
     if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
         return FALSE;
 
+    // prepare message:
+    net_scratchpad[0] = 0;
+    vehicle_twizy_prep_stat_msg();
+
     // OK, start SMS:
     delay100(2);
     net_send_sms_start(caller);
-
-    if (car_doors1 & 0x04) { // Charge port door is open, we are charging
-        switch (car_chargestate) {
-            case 0x01:
-                net_puts_rom("Charging"); // Charge State Charging
-                break;
-            case 0x02:
-                net_puts_rom("Charging, Topping off"); // Topping off
-                break;
-            case 0x04:
-                net_puts_rom("Charging Done"); // Done
-                break;
-            default:
-                net_puts_rom("Charging Stopped"); // Stopped
-        }
-    } else { // Charge port door is closed, we are not charging
-        net_puts_rom("Not charging");
-    }
-
-    net_puts_rom(" \r\nRange: "); // Estimated + Ideal Range
-    if (can_mileskm == 'M') // Kmh or Miles
-        sprintf(net_scratchpad, (rom far char*) "%u - %u mi"
-            , car_estrange
-            , car_idealrange); // Miles
-    else
-        sprintf(net_scratchpad, (rom far char*) "%u - %u Km"
-            , (((car_estrange << 4) + 5) / 10)
-            , (((car_idealrange << 4) + 5) / 10)); // Km
-    net_puts_ram(net_scratchpad);
-
-    net_puts_rom(" \r\nSOC: ");
-    sprintf(net_scratchpad, (rom far char*) "%u%% (%u - %u)"
-            , car_SOC
-            , can_soc_min
-            , can_soc_max);
-    net_puts_ram(net_scratchpad);
-
-    net_puts_rom(" \r\nODO: ");
-    if (can_mileskm == 'M') // Km or Miles
-        sprintf(net_scratchpad, (rom far char*) "%lu mi"
-                , car_odometer / 10); // Miles
-    else
-        sprintf(net_scratchpad, (rom far char*) "%lu Km"
-                , (((car_odometer << 4) + 5) / 100)); // Km
     net_puts_ram(net_scratchpad);
 
     return TRUE; // handled
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// Twizy specific NET MSG override: CHARGE ALERT
+// (same text as SMS STAT)
+//
+void vehicle_twizy_msg_alert(void)
+{
+    // prepare message:
+    strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PA");
+    vehicle_twizy_prep_stat_msg();
 }
 
 
@@ -964,6 +1011,78 @@ BOOL vehicle_twizy_sms_handle_help(BOOL premsg, char *caller, char *command, cha
 }
 
 
+/****************************************************************
+ * HOOK: CAR SPECIFIC MSG command handler
+ *   May overlay and/or extend the standard command set
+ *   Called by: net_msg_cmd_do()
+ *
+ * PARAMS:
+ *   msgmode:   FALSE=only execute cmd / TRUE=send reply msg
+ *   code:      int command id
+ *   msg:       char * to first parameter
+ *
+ * RETURNS:
+ *   true : cmd has been handled completely
+ *   false: fallback to standard handler net_msg_cmd_exec()
+ *
+ * OUTPUT SCHEME:
+ *   sprintf(net_scratchpad, (rom far char*)"MP-...");
+ *   net_msg_encode_puts();
+ *
+ * CALL SPECIFIC STANDARD FUNCTION n: (rare case)
+ *   [save net_msg_cmd_* if needed later on]
+ *   net_msg_cmd_code = n;
+ *   strcpy( net_msg_cmd_msg, "arg1,arg2,..." );
+ *   if( net_msg_cmd_exec() ) {...success...}
+ *
+ */
+BOOL vehicle_twizy_fn_commandhandler( BOOL msgmode, int code, char *msg )
+{
+    /* Command dispatcher: */
+    switch( code )
+    {
+        /************************************************************
+         * STANDARD COMMAND OVERRIDES:
+         */
+
+        case 6: // = NET_NOTIFY_CHARGE ALERT (6 = suggestion)
+            vehicle_twizy_msg_alert();
+            break;
+
+
+        /************************************************************
+         * CAR SPECIFIC COMMANDS:
+         */
+
+        case 201: // = DEBUG
+            // todo
+            break;
+
+        case 202: // = RANGE
+            // todo
+            break;
+
+        case 203: // = CA
+            // todo
+            break;
+
+        default:
+            // not handled
+            return FALSE;
+    }
+
+    if( msgmode )
+    {
+        // SEND MSG from net_scratchpad:
+        net_msg_encode_puts();
+        delay100(2);
+        net_msgp_environment(0);
+    }
+
+    return TRUE;
+}
+
+
 ////////////////////////////////////////////////////////////////////////
 // vehicle_twizy_initialise()
 // This function is an entry point from the main() program loop, and
@@ -1084,6 +1203,8 @@ BOOL vehicle_twizy_initialise(void)
     vehicle_fn_ticker60 = &vehicle_twizy_state_ticker60;
     vehicle_fn_smshandler = &vehicle_twizy_fn_smshandler;
     vehicle_fn_smsextensions = &vehicle_twizy_fn_smsextensions;
+    can_capabilities = (char*)&vehicle_twizy_capabilities;
+    vehicle_fn_commandhandler = &vehicle_twizy_fn_commandhandler;
 
     net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
 

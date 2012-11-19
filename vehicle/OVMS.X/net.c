@@ -1074,7 +1074,12 @@ void net_state_ticker1(void)
             {
             net_notify &= ~(NET_NOTIFY_NET_CHARGE); // Clear notification flag
             if (net_notify_suppresscount==0)
-              net_msg_alert();
+              {
+              // execute CHARGE ALERT command:
+              net_msg_cmd_code = 6;
+              net_msg_cmd_msg[0] = 0;
+              net_msg_cmd_do();
+              }
             return;
             }
           else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)

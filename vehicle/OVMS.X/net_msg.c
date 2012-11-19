@@ -698,6 +698,11 @@ BOOL net_msg_cmd_exec(void)
       net_state_enter(NET_STATE_HARDSTOP);
       break;
 
+    case 6: // CHARGE ALERT (params unused)
+      net_msg_alert();
+      net_msg_encode_puts();
+      break;
+
     case 40: // Send SMS (params: phone number, SMS message)
       for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
       // check if a value exists and is separated by a comma
@@ -801,7 +806,6 @@ void net_msg_alert(void)
   char *p;
 
   delay100(2);
-  net_msg_start();
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PA");
 
   switch (car_chargemode)
@@ -850,8 +854,6 @@ void net_msg_alert(void)
   strcatpgm2ram(net_scratchpad,(char const rom far *)" SOC: ");
   sprintf(net_msg_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
   strcat(net_scratchpad,net_msg_scratchpad);
-  net_msg_encode_puts();
-  net_msg_send();
   }
 
 void net_msg_alarm(void)

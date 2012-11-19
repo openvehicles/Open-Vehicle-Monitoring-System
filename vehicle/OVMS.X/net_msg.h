@@ -44,6 +44,7 @@ extern char net_msg_serverok;
 extern char net_msg_sendpending;
 extern int  net_msg_cmd_code;
 extern char* net_msg_cmd_msg;
+extern char net_msg_scratchpad[NET_BUF_MAX];
 
 void net_msg_init(void);
 void net_msg_disconnected(void);
