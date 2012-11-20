@@ -69,9 +69,6 @@
 #include "net_sms.h"
 #include "net_msg.h"
 
-// Capabilities for Renault Twizy:
-rom char vehicle_twizy_capabilities[] = "C6,C201-203";
-
 // Integer Miles <-> Kilometer conversions
 // 1 mile = 1.609344 kilometers
 // smalles error approximation: mi = (km * 10 - 5) / 16 + 1
@@ -88,7 +85,6 @@ rom char vehicle_twizy_capabilities[] = "C6,C201-203";
 
 //unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
 //unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
-//unsigned char k = 0;
 
 unsigned char can_last_SOC = 0;              // sufficient charge SOC threshold helper
 unsigned int can_last_idealrange = 0;        // sufficient charge range threshold helper
@@ -682,7 +678,7 @@ void vehicle_twizy_prep_stat_msg(void)
 
     // Estimated + Ideal Range
 
-    strcatpgm2ram(net_scratchpad,(char const rom far *)"\rRange: ");
+    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r\n Range: ");
     if (can_mileskm == 'M')
         sprintf(net_msg_scratchpad, (rom far char*) "%u - %u mi"
             , car_estrange
@@ -695,7 +691,7 @@ void vehicle_twizy_prep_stat_msg(void)
 
     // SOC + min/max:
 
-    strcatpgm2ram(net_scratchpad,(char const rom far *)" SOC: ");
+    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r\n SOC: ");
     sprintf(net_msg_scratchpad, (rom far char*) "%u%% (%u - %u)"
             , car_SOC
             , can_soc_min
@@ -704,7 +700,7 @@ void vehicle_twizy_prep_stat_msg(void)
 
     // ODOMETER:
 
-    strcatpgm2ram(net_scratchpad,(char const rom far *)" ODO: ");
+    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r\n ODO: ");
     if (can_mileskm == 'M') // Km or Miles
         sprintf(net_msg_scratchpad, (rom far char*) "%lu mi"
                 , car_odometer / 10); // Miles
@@ -1036,6 +1032,10 @@ BOOL vehicle_twizy_sms_handle_help(BOOL premsg, char *caller, char *command, cha
  *   if( net_msg_cmd_exec() ) {...success...}
  *
  */
+
+// Capabilities for Renault Twizy:
+rom char vehicle_twizy_capabilities[] = "C6,C201-203";
+
 BOOL vehicle_twizy_fn_commandhandler( BOOL msgmode, int code, char *msg )
 {
     /* Command dispatcher: */
@@ -1075,8 +1075,9 @@ BOOL vehicle_twizy_fn_commandhandler( BOOL msgmode, int code, char *msg )
     {
         // SEND MSG from net_scratchpad:
         net_msg_encode_puts();
-        delay100(2);
-        net_msgp_environment(0);
+
+        //delay100(2);
+        //net_msgp_environment(0);
     }
 
     return TRUE;
@@ -1203,7 +1204,7 @@ BOOL vehicle_twizy_initialise(void)
     vehicle_fn_ticker60 = &vehicle_twizy_state_ticker60;
     vehicle_fn_smshandler = &vehicle_twizy_fn_smshandler;
     vehicle_fn_smsextensions = &vehicle_twizy_fn_smsextensions;
-    can_capabilities = (char*)&vehicle_twizy_capabilities;
+    can_capabilities = vehicle_twizy_capabilities;
     vehicle_fn_commandhandler = &vehicle_twizy_fn_commandhandler;
 
     net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS

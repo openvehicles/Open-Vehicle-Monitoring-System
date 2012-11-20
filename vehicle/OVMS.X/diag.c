@@ -36,6 +36,7 @@
 #include "diag.h"
 #include "net.h"
 #include "net_sms.h"
+#include "net_msg.h"
 #include "led.h"
 #include "inputs.h"
 
@@ -129,6 +130,14 @@ void diag_handle_sms(char *command, char *arguments)
   net_sms_in(net_caller,arguments,strlen(arguments));
   }
 
+void diag_handle_msg(char *command, char *arguments)
+{
+    net_puts_rom("\r\n");
+    net_msg_cmd_in(arguments);
+    if (net_msg_cmd_code)
+        net_msg_cmd_do();
+}
+
 void diag_handle_help(char *command, char *arguments)
   {
   net_puts_rom("\r\n");
@@ -136,6 +145,8 @@ void diag_handle_help(char *command, char *arguments)
   net_puts_rom("# COMMANDS: HELP ? DIAG RESET or S ...\r\n");
   net_puts_rom("# 'S' COMMANDS:\r\n  ");
   diag_handle_sms(command,command);
+  net_puts_rom("# 'M' COMMANDS:\r\n  ");
+  net_msgp_capabilities(0);
   }
 
 void diag_handle_reset(char *command, char *arguments)
@@ -291,6 +302,11 @@ void diag_activity(char *buf, unsigned char pos)
     {
     // A 'S' command...
     diag_handle_sms(buf,buf+2);
+    }
+  else if ((buf[0]=='M')&&(buf[1]==' '))
+    {
+    // A 'M' command...
+    diag_handle_msg(buf,buf+2);
     }
 
   // Just ignore any commands that don't match

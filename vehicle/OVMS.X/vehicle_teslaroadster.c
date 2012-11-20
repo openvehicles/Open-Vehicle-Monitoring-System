@@ -855,7 +855,7 @@ void vehicle_teslaroadster_initialise(void)
   can_lastspeedrpt = 0;
 
   // Hook in...
-  can_capabilities = (char*)&teslaroadster_capabilities;
+  can_capabilities = teslaroadster_capabilities;
   vehicle_fn_poll0 = &vehicle_teslaroadster_poll0;
   vehicle_fn_poll1 = &vehicle_teslaroadster_poll1;
   vehicle_fn_ticker10th = &vehicle_teslaroadster_ticker10th;
