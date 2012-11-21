@@ -356,19 +356,29 @@ BOOL net_sms_handle_stat(char *caller, char *command, char *arguments)
 
 BOOL net_sms_handle_paramsq(char *caller, char *command, char *arguments)
   {
-  unsigned char k;
+  unsigned char k, splen, msglen;
   char *p;
 
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
   net_send_sms_start(caller);
   net_puts_rom("Params:");
+  msglen=7;
   for (k=0;k<PARAM_MAX;k++)
     {
     p = par_get(k);
     if (*p != 0)
       {
-      sprintf(net_scratchpad, (rom far char*)"\r\n %u:", k);
+      msglen += sprintf(net_scratchpad, (rom far char*)"\n%u:", k);
+      if((msglen+splen) > 160)
+        {
+          // SMS becomes too long, finish & start next:
+          net_send_sms_finish();
+          delay100(20);
+          net_send_sms_start(caller);
+          net_puts_rom("Params:");
+          msglen=7+splen;
+        }
       net_puts_ram(net_scratchpad);
       net_puts_ram(p);
       }
