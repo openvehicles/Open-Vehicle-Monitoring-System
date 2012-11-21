@@ -43,5 +43,6 @@ void format_latlon(long latlon, char* dest);  // Format latitude/longitude strin
 float myatof(char *s);             // builtin atof() does not work
 long gps2latlon(char *gpscoord);   // convert GPS coordinate to latlon value
 WORD crc16(char *data, int length);  // Calculate a 16bit CRC and return it
+void cr2lf(char *s);                // replace \r by \n in s (to convert msg text to sms)
 
 #endif // #ifndef __OVMS_UTILS_H

@@ -647,6 +647,7 @@ BOOL vehicle_twizy_sms_handle_debug(BOOL premsg, char *caller, char *command, ch
 // - output odometer
 //
 // => cat to net_scratchpad (to be sent as SMS or MSG)
+//    line breaks: default \r for MSG mode >> cr2lf >> SMS
 //
 void vehicle_twizy_prep_stat_msg(void)
 {
@@ -678,7 +679,7 @@ void vehicle_twizy_prep_stat_msg(void)
 
     // Estimated + Ideal Range
 
-    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r\n Range: ");
+    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r Range: ");
     if (can_mileskm == 'M')
         sprintf(net_msg_scratchpad, (rom far char*) "%u - %u mi"
             , car_estrange
@@ -691,7 +692,7 @@ void vehicle_twizy_prep_stat_msg(void)
 
     // SOC + min/max:
 
-    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r\n SOC: ");
+    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r SOC: ");
     sprintf(net_msg_scratchpad, (rom far char*) "%u%% (%u - %u)"
             , car_SOC
             , can_soc_min
@@ -700,12 +701,12 @@ void vehicle_twizy_prep_stat_msg(void)
 
     // ODOMETER:
 
-    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r\n ODO: ");
+    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r ODO: ");
     if (can_mileskm == 'M') // Km or Miles
         sprintf(net_msg_scratchpad, (rom far char*) "%lu mi"
                 , car_odometer / 10); // Miles
     else
-        sprintf(net_msg_scratchpad, (rom far char*) "%lu Km"
+        sprintf(net_msg_scratchpad, (rom far char*) "%lu km"
                 , MI2KM(car_odometer / 10)); // km
     strcat(net_scratchpad,net_msg_scratchpad);
 }
@@ -728,6 +729,7 @@ BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, cha
     // prepare message:
     net_scratchpad[0] = 0;
     vehicle_twizy_prep_stat_msg();
+    cr2lf(net_scratchpad);
 
     // OK, start SMS:
     delay100(2);

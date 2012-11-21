@@ -425,7 +425,7 @@ char net_msgp_capabilities(char stat)
     strcatpgm2ram(net_scratchpad,(rom char*)can_capabilities);
     strcatpgm2ram(net_scratchpad,",");
     }
-  strcatpgm2ram(net_scratchpad,"C1-5,C40-41,C49");
+  strcatpgm2ram(net_scratchpad,"C1-6,C40-41,C49");
 
   return net_msg_encode_statputs(stat, &crc_capabilities);
   }
