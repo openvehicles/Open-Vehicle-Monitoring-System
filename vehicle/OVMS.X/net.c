@@ -1078,7 +1078,7 @@ void net_state_ticker1(void)
               // execute CHARGE ALERT command:
               net_msg_cmd_code = 6;
               net_msg_cmd_msg[0] = 0;
-              net_msg_cmd_do();
+              if (net_msg_sendpending==0) net_msg_cmd_do();
               }
             return;
             }

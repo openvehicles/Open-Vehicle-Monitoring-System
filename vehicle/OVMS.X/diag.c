@@ -134,7 +134,7 @@ void diag_handle_msg(char *command, char *arguments)
 {
     net_puts_rom("\r\n");
     net_msg_cmd_in(arguments);
-    if (net_msg_cmd_code)
+    if( net_msg_cmd_code && (net_msg_sendpending==0) )
         net_msg_cmd_do();
 }
 
