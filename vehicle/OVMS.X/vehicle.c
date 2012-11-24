@@ -36,6 +36,8 @@ unsigned char can_datalength;                // The number of valid bytes in the
 unsigned char can_databuffer[8];             // A buffer to store the current CAN message
 unsigned char can_minSOCnotified = 0;        // minSOC notified flag
 unsigned char can_mileskm = 'M';             // Miles of Kilometers
+
+rom unsigned char* vehicle_version = NULL;       // Vehicle module version
 rom unsigned char* can_capabilities = NULL;      // Vehicle capabilities
 
 rom BOOL (*vehicle_fn_init)(void) = NULL;

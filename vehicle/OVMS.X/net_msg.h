@@ -52,6 +52,7 @@ void net_msg_start(void);
 void net_msg_send(void);
 void net_msg_encode_puts(void);
 void net_msg_register(void);
+char net_msg_encode_statputs(char stat, WORD *oldcrc);
 
 char net_msgp_stat(char stat);
 char net_msgp_gps(char stat);
@@ -64,6 +65,19 @@ char net_msgp_capabilities(char stat);
 void net_msg_in(char* msg);
 void net_msg_cmd_in(char* msg);
 void net_msg_cmd_do(void);
+
+// Standard commands:
+#define CMD_QueryFeatures       1   // ()
+#define CMD_SetFeature          2   // (feature number, value)
+#define CMD_QueryParams         3   // ()
+#define CMD_SetParam            4   // (param number, value)
+#define CMD_Reboot              5   // ()
+#define CMD_Alert               6   // ()
+
+#define CMD_SendSMS             40  // (phone number, SMS message)
+#define CMD_SendUSSD            41  // (USSD_CODE)
+#define CMD_SendRawAT           42  // (raw AT command)
+
 
 void net_msg_forward_sms(char* caller, char* SMS);
 

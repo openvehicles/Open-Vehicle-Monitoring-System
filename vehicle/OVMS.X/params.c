@@ -79,8 +79,13 @@ void par_set(unsigned char param, char* value)
 
   if (param >= PARAM_MAX) return;
 
-  strncpy(par_value,value,PARAM_MAX_LENGTH);
-  par_value[PARAM_MAX_LENGTH-1]='\0';
+  if (value)
+    {
+    strncpy(par_value,value,PARAM_MAX_LENGTH);
+    par_value[PARAM_MAX_LENGTH-1]='\0';
+    }
+  else
+      par_value[0] = 0;
 
   // Write parameter to EEprom
   eeaddress = (int)param;

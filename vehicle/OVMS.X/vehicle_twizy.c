@@ -1,6 +1,6 @@
-/*
+/*******************************************************************************
 ;    Project:       Open Vehicle Monitor System
-;    Date:          2 Nov 2012
+;    Date:          24 Nov 2012
 ;
 ;    Changes:
 ;    1.0  Initial release
@@ -37,6 +37,10 @@
 ;           - SMS cmd "CA": set/query charge alerts
 ;           - SMS cmd "DEBUG": output internal state variables
 ;
+;    1.6  24 Nov 2012 (Michael Balzer):
+;           - unified charge alerts for MSG/SMS
+;           - MSG integration for all commands (see capabilities)
+;           - code cleanup & design pattern documentation
 ;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -76,10 +80,22 @@
 #define KM2MI(KM)       ( ( ( (KM) * 10 - 5 ) >> 4 ) + 1 )
 #define MI2KM(MI)       ( ( ( (MI) << 4 ) + 5 ) / 10 )
 
-// Maybe not so Twizy specific feature extensions:
-#define FEATURE_SUFFSOC      0x0A // Sufficient SOC feature
-#define FEATURE_SUFFRANGE    0x0B // Sufficient range feature
-#define FEATURE_MAXRANGE     0x0C // Maximum ideal range feature
+// Twizy specific features:
+#define FEATURE_SUFFSOC      0x0A // Sufficient SOC
+#define FEATURE_SUFFRANGE    0x0B // Sufficient range
+#define FEATURE_MAXRANGE     0x0C // Maximum ideal range
+
+// Twizy specific commands:
+#define CMD_Debug                   200 // ()
+#define CMD_QueryRange              201 // ()
+#define CMD_SetRange                202 // (maxrange)
+#define CMD_QueryChargeAlerts       203 // ()
+#define CMD_SetChargeAlerts         204 // (range, soc)
+
+// Twizy module version & capabilities:
+rom char vehicle_twizy_version[] = "1.6";
+rom char vehicle_twizy_capabilities[] = "C6,C200-204";
+
 
 #pragma udata overlay vehicle_overlay_data
 
@@ -106,10 +122,14 @@ unsigned char can_status = 0;               // Car + charge status from CAN:
 
 #pragma udata
 
+
+
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
+//
+// See vehicle initialise() for buffer 0/1 filter setup.
 //
 
 // Poll buffer 0:
@@ -555,14 +575,14 @@ BOOL vehicle_twizy_state_ticker1(void)
 
     /* Resolve CAN lockups:
      * PIC manual 23.15.6.1 Receiver Overflow:
-        An overflow condition occurs when the MAB has
-        assembled a valid received message (the message
-        meets the criteria of the acceptance filters) and the
-        receive buffer associated with the filter is not available
-        for loading of a new message. The associated
-        RXBnOVFL bit in the COMSTAT register will be set to
-        indicate the overflow condition.
-        >>> This bit must be cleared by the MCU. <<< !!!
+            An overflow condition occurs when the MAB has
+            assembled a valid received message (the message
+            meets the criteria of the acceptance filters) and the
+            receive buffer associated with the filter is not available
+            for loading of a new message. The associated
+            RXBnOVFL bit in the COMSTAT register will be set to
+            indicate the overflow condition.
+            >>> This bit must be cleared by the MCU. <<< !!!
      * ...to be sure we're clearing all relevant flags...
      */
     if( COMSTATbits.RXB0OVFL )
@@ -599,48 +619,140 @@ BOOL vehicle_twizy_state_ticker60(void)
 
 
 
-////////////////////////////////////////////////////////////////////////
-// Twizy specific SMS command: DEBUG
-// - output internal state dump
-// - can be called via SMS or (net_state == NET_STATE_DIAGMODE)
-//   so suitable for gathering system state info from users
-//   AND during development
-//
-BOOL vehicle_twizy_sms_handle_debug(BOOL premsg, char *caller, char *command, char *arguments)
-{
-    if( premsg )
-        net_send_sms_start(caller);
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************
+ * COMMAND PLUGIN CLASSES: CODE DESIGN PATTERN
+ *
+ * A command class handles a group of related commands (functions).
+ *
+ * STANDARD METHODS:
+ *
+ *  MSG status output:
+ *      char newstat = _msgp( int cmd, char stat )
+ *      stat: chaining status pushes with optional crc diff checking
+ *
+ *  MSG command handler:
+ *      BOOL handled = _cmd( BOOL msgmode, int cmd, char *arguments )
+ *      msgmode: FALSE=just execute / TRUE=also output reply
+ *      arguments: "," separated (see MSG protocol)
+ *
+ *  SMS command handler:
+ *      BOOL handled = _sms( BOOL premsg, char *caller, char *command, char *arguments )
+ *      premsg: TRUE=replace system handler / FALSE=append to system handler
+ *          (framework will first try TRUE, if not handled fall back to system
+ *          handler and afterwards try again with FALSE)
+ *      arguments: " " separated / free form
+ *
+ * STANDARD BEHAVIOUR:
+ *
+ *  cmd=0 / command=NULL shall map to the default action (push status).
+ *      (if a specific MSG protocol push ID has been assigned,
+ *       _msgp() shall use that for cmd=0)
+ *
+ * PLUGGING IN:
+ *
+ *  - add _cmd() to vehicle fn_commandhandler()
+ *  - add _sms() to vehicle sms_cmdtable[]/sms_hfntable[]
+ *
+ */
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+/***********************************************************************
+ * COMMAND CLASS: DEBUG
+ *
+ *  MSG: CMD_Debug ()
+ *  SMS: DEBUG
+ *      - output internal state dump for debugging
+ *
+ */
+
+char vehicle_twizy_debug_msgp( int cmd, char stat )
+{
+    static WORD crc;
+
+    sprintf( net_scratchpad,
+            "MP-0 c%d,0,%x,%x,%u,%d,%d,%ld,%u,%u,%d,%u,%u,%u,%u"
+            , cmd ? cmd : CMD_Debug
+            , can_status, car_doors1, car_chargestate
+            , can_speed, can_power, can_odometer
+            , can_soc, can_soc_min, can_soc_max
+            , can_range, can_soc_min_range
+            , car_estrange, car_idealrange );
+
+    return net_msg_encode_statputs( stat, &crc );
+}
+
+BOOL vehicle_twizy_debug_cmd( BOOL msgmode, int cmd, char *arguments )
+{
+    if( msgmode )
+        vehicle_twizy_debug_msgp(cmd, 0);
+
+    return TRUE;
+}
+
+BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arguments)
+{
     if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
         return FALSE;
 
+    if( premsg )
+        net_send_sms_start(caller);
+
     // SMS PART:
 
+    // ATT! net_scratchpad can in theory take up to 199 chars
+    //      BUT sprintf() fails with strange effects if called
+    //      with a too complex format template, i.e. >80 chars && >10 args!
+    //      => KISS / D&C!
+
     sprintf( net_scratchpad,
-            (rom far char*) "# STS=%x SOC=%u RNG=%u SPD=%d PWR=%d\r\n"
-            , can_status, can_soc, can_range, can_speed, can_power );
+            "STS=%x DS1=%x CHG=%u SPD=%d PWR=%d ODO=%ld SOC=%u SMIN=%u SMAX=%d"
+            , can_status, car_doors1, car_chargestate
+            , can_speed, can_power, can_odometer
+            , can_soc, can_soc_min, can_soc_max
+            );
     net_puts_ram( net_scratchpad );
 
     sprintf( net_scratchpad,
-            (rom far char*) "# DS1=%x CHG=%u SND=%x SOCMIN=%u SOCMAX=%d ESTRNG=%u\r\n"
-            , car_doors1, car_chargestate, net_notify, can_soc_min, can_soc_max, car_estrange );
+            " CRNG=%u MRNG=%u ERNG=%u IRNG=%u"
+            , can_range, can_soc_min_range
+            , car_estrange, car_idealrange
+            );
     net_puts_ram( net_scratchpad );
 
-    // ...MORE IN DIAG MODE:
+
+#ifdef OVMS_DIAGMODULE
+    // ...MORE IN DIAG MODE (serial port):
     if( net_state == NET_STATE_DIAGMODE )
     {
         sprintf( net_scratchpad,
-                (rom far char*) "# FIX=%d LAT=%08lx LON=%08lx ALT=%d DIR=%d\r\n"
+                " FIX=%d LAT=%08lx LON=%08lx ALT=%d DIR=%d"
                 , car_gpslock, car_latitude, car_longitude, car_altitude, car_direction );
         net_puts_ram( net_scratchpad );
     }
+#endif // OVMS_DIAGMODULE
+
 
     return TRUE;
 }
 
 
-////////////////////////////////////////////////////////////////////////
-// Generate STAT message (for SMS & MSG mode)
+
+/***********************************************************************
+ * COMMAND CLASS: CHARGE STATUS / ALERT
+ *
+ *  MSG: CMD_Alert()
+ *  SMS: STAT
+ *      - output charge status
+ *
+ */
+
+// prepmsg: Generate STAT message for SMS & MSG mode
 // - no charge mode
 // - output estrange
 // - output can_soc_min + can_soc_max
@@ -648,8 +760,8 @@ BOOL vehicle_twizy_sms_handle_debug(BOOL premsg, char *caller, char *command, ch
 //
 // => cat to net_scratchpad (to be sent as SMS or MSG)
 //    line breaks: default \r for MSG mode >> cr2lf >> SMS
-//
-void vehicle_twizy_prep_stat_msg(void)
+
+void vehicle_twizy_stat_prepmsg(void)
 {
     // Charge State:
 
@@ -711,12 +823,7 @@ void vehicle_twizy_prep_stat_msg(void)
     strcat(net_scratchpad,net_msg_scratchpad);
 }
 
-
-////////////////////////////////////////////////////////////////////////
-// Twizy specific SMS command override: STAT
-// (same text as MSG ALERT)
-//
-BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, char *arguments)
+BOOL vehicle_twizy_stat_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
     // check for replace mode:
     if( !premsg )
@@ -728,7 +835,7 @@ BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, cha
 
     // prepare message:
     net_scratchpad[0] = 0;
-    vehicle_twizy_prep_stat_msg();
+    vehicle_twizy_stat_prepmsg();
     cr2lf(net_scratchpad);
 
     // OK, start SMS:
@@ -739,49 +846,84 @@ BOOL vehicle_twizy_sms_handle_stat(BOOL premsg, char *caller, char *command, cha
     return TRUE; // handled
 }
 
-
-////////////////////////////////////////////////////////////////////////
-// Twizy specific NET MSG override: CHARGE ALERT
-// (same text as SMS STAT)
-//
-void vehicle_twizy_msg_alert(void)
+BOOL vehicle_twizy_alert_cmd( BOOL msgmode, int cmd, char *arguments )
 {
     // prepare message:
     strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PA");
-    vehicle_twizy_prep_stat_msg();
+    vehicle_twizy_stat_prepmsg();
+
+    if( msgmode )
+        net_msg_encode_puts();
+    
+    return TRUE;
 }
 
 
-////////////////////////////////////////////////////////////////////////
-// Twizy specific SMS command: RANGE / RANGE?
-// - set/query max ideal range
-//
-// Syntax: RANGE [<range>]
-//      Set max ideal range / clear if argument is omitted.
-//      Pass <range> in user units (mi/km).
-//      New setting will be reported.
-//
-// Syntax: RANGE?
-//      Report current max ideal range.
-//
-BOOL vehicle_twizy_sms_handle_range(BOOL premsg, char *caller, char *command, char *arguments)
+
+
+/***********************************************************************
+ * COMMAND CLASS: MAX RANGE CONFIG
+ *
+ *  MSG: CMD_QueryRange()
+ *  SMS: RANGE?
+ *      - output current max ideal range
+ *
+ *  MSG: CMD_SetRange(range)
+ *  SMS: RANGE [range]
+ *      - set/clear max ideal range
+ *      - range: in user units (mi/km)
+ *
+ */
+
+char vehicle_twizy_range_msgp( int cmd, char stat )
 {
-    if( !premsg )
-        return FALSE;
+    static WORD crc;
 
-    if( command[5] != '?' )
+    sprintf( net_scratchpad,
+            "MP-0 c%d,0,%u"
+            , cmd ? cmd : CMD_QueryRange
+            , sys_features[FEATURE_MAXRANGE]
+            );
+
+    return net_msg_encode_statputs( stat, &crc );
+}
+
+BOOL vehicle_twizy_range_cmd( BOOL msgmode, int cmd, char *arguments )
+{
+    if( cmd == CMD_SetRange )
     {
-        // SET MAXRANGE:
-
         if( arguments && *arguments )
             sys_features[FEATURE_MAXRANGE] = atoi( arguments );
         else
             sys_features[FEATURE_MAXRANGE] = 0;
 
-        par_set( PARAM_FEATURE_BASE + FEATURE_MAXRANGE,
-                arguments ? arguments : (char *)"" );
+        par_set( PARAM_FEATURE_BASE + FEATURE_MAXRANGE, arguments );
     }
 
+    // CMD_QueryRange
+    if( msgmode )
+        vehicle_twizy_range_msgp(cmd, 0);
+
+    return TRUE;
+}
+
+BOOL vehicle_twizy_range_sms(BOOL premsg, char *caller, char *command, char *arguments)
+{
+    if( !premsg )
+        return FALSE;
+
+    // RANGE (maxrange)
+    if( command && (command[5] != '?') )
+    {
+        if( arguments && *arguments )
+            sys_features[FEATURE_MAXRANGE] = atoi( arguments );
+        else
+            sys_features[FEATURE_MAXRANGE] = 0;
+
+        par_set( PARAM_FEATURE_BASE + FEATURE_MAXRANGE, arguments );
+    }
+
+    // RANGE?
     if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
         return FALSE; // handled, but no SMS has been started
 
@@ -805,24 +947,64 @@ BOOL vehicle_twizy_sms_handle_range(BOOL premsg, char *caller, char *command, ch
 }
 
 
-////////////////////////////////////////////////////////////////////////
-// Twizy specific SMS command: CA / CA?
-// - set/query charge alerts for sufficient SOC / range
-//
-// Syntax: CA [<soc>%] [<range>]
-//      none, either or both alerts can be set in arbitrary order,
-//      SOC alert is recognized by unit '%'.
-//      Previous alert settings will be cleared, new settings reported.
-//
-// Syntax: CA?
-//      Do not change alerts, just report current settings.
-//
-BOOL vehicle_twizy_sms_handle_ca(BOOL premsg, char *caller, char *command, char *arguments)
+
+/***********************************************************************
+ * COMMAND CLASS: CHARGE ALERT CONFIG
+ *
+ *  MSG: CMD_QueryChargeAlerts()
+ *  SMS: CA?
+ *      - output current charge alerts
+ *
+ *  MSG: CMD_SetChargeAlerts(range,soc)
+ *  SMS: CA [range] [SOC"%"]
+ *      - set/clear charge alerts
+ *      - range: in user units (mi/km)
+ *      - SMS recognizes 0-2 args, unit "%" = SOC
+ *
+ */
+
+char vehicle_twizy_ca_msgp( int cmd, char stat )
+{
+    static WORD crc;
+
+    sprintf( net_scratchpad,
+            "MP-0 c%d,0,%u,%u"
+            , cmd ? cmd : CMD_QueryChargeAlerts
+            , sys_features[FEATURE_SUFFRANGE]
+            , sys_features[FEATURE_SUFFSOC]
+            );
+
+    return net_msg_encode_statputs( stat, &crc );
+}
+
+BOOL vehicle_twizy_ca_cmd( BOOL msgmode, int cmd, char *arguments )
+{
+    if( cmd == CMD_SetChargeAlerts )
+    {
+        char *range = strtokpgmram( arguments, "," );
+        char *soc = strtokpgmram( NULL, "," );
+
+        sys_features[FEATURE_SUFFRANGE] = range ? atoi(range) : 0;
+        sys_features[FEATURE_SUFFSOC] = soc ? atoi(soc) : 0;
+
+        // store new alerts into EEPROM:
+        par_set( PARAM_FEATURE_BASE + FEATURE_SUFFRANGE, range );
+        par_set( PARAM_FEATURE_BASE + FEATURE_SUFFSOC, soc );
+    }
+
+    // CMD_QueryChargeAlerts
+    if( msgmode )
+        vehicle_twizy_ca_msgp(cmd, 0);
+
+    return TRUE;
+}
+
+BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
     if( !premsg )
         return FALSE;
 
-    if( command[2] != '?' )
+    if( command && (command[2] != '?') )
     {
         // SET CHARGE ALERTS:
 
@@ -856,10 +1038,8 @@ BOOL vehicle_twizy_sms_handle_ca(BOOL premsg, char *caller, char *command, char 
         }
 
         // store new alerts into EEPROM:
-        par_set( PARAM_FEATURE_BASE + FEATURE_SUFFSOC,
-                arg_suffsoc ? arg_suffsoc : (char *)"" );
-        par_set( PARAM_FEATURE_BASE + FEATURE_SUFFRANGE,
-                arg_suffrange ? arg_suffrange : (char *)"" );
+        par_set( PARAM_FEATURE_BASE + FEATURE_SUFFSOC, arg_suffsoc );
+        par_set( PARAM_FEATURE_BASE + FEATURE_SUFFRANGE, arg_suffrange );
     }
 
 
@@ -899,6 +1079,52 @@ BOOL vehicle_twizy_sms_handle_ca(BOOL premsg, char *caller, char *command, char 
 }
 
 
+
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+/****************************************************************
+ *
+ * COMMAND DISPATCHERS / FRAMEWORK HOOKS
+ *
+ */
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
+BOOL vehicle_twizy_fn_commandhandler( BOOL msgmode, int cmd, char *msg )
+{
+    switch( cmd )
+    {
+        /************************************************************
+         * STANDARD COMMAND OVERRIDES:
+         */
+
+        case CMD_Alert:
+            return vehicle_twizy_alert_cmd(msgmode, cmd, msg);
+
+
+        /************************************************************
+         * CAR SPECIFIC COMMANDS:
+         */
+
+        case CMD_Debug:
+            return vehicle_twizy_debug_cmd(msgmode, cmd, msg);
+
+        case CMD_QueryRange:
+        case CMD_SetRange /*(maxrange)*/:
+            return vehicle_twizy_range_cmd(msgmode, cmd, msg);
+
+        case CMD_QueryChargeAlerts:
+        case CMD_SetChargeAlerts /*(range,soc)*/:
+            return vehicle_twizy_ca_cmd(msgmode, cmd, msg);
+
+    }
+
+    // not handled
+    return FALSE;
+}
+
+
 ////////////////////////////////////////////////////////////////////////
 // This is the Twizy SMS command table
 // (for implementation notes see net_sms::sms_cmdtable comment)
@@ -908,25 +1134,25 @@ BOOL vehicle_twizy_sms_handle_ca(BOOL premsg, char *caller, char *command, char 
 //   2:     the caller must be the registered telephone
 //   3:     the caller must be the registered telephone, or first argument the module password
 
-BOOL vehicle_twizy_sms_handle_help(BOOL premsg, char *caller, char *command, char *arguments);
+BOOL vehicle_twizy_help_sms(BOOL premsg, char *caller, char *command, char *arguments);
 
 rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] =
 {
-    "3DEBUG",    // Twizy: output internal state dump for debug
-    "3STAT",     // override standard STAT
-    "3RANGE",    // Twizy: set/query max ideal range
-    "3CA",       // Twizy: set/query charge alerts
-    "3HELP",     // extend HELP output
+    "3DEBUG",       // Twizy: output internal state dump for debug
+    "3STAT",        // override standard STAT
+    "3RANGE",       // Twizy: set/query max ideal range
+    "3CA",          // Twizy: set/query charge alerts
+    "3HELP",        // extend HELP output
     ""
 };
 
 rom BOOL (*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *command, char *arguments) =
 {
-    &vehicle_twizy_sms_handle_debug,
-    &vehicle_twizy_sms_handle_stat,
-    &vehicle_twizy_sms_handle_range,
-    &vehicle_twizy_sms_handle_ca,
-    &vehicle_twizy_sms_handle_help
+    &vehicle_twizy_debug_sms,
+    &vehicle_twizy_stat_sms,
+    &vehicle_twizy_range_sms,
+    &vehicle_twizy_ca_sms,
+    &vehicle_twizy_help_sms,
 };
 
 // SMS COMMAND DISPATCHER:
@@ -969,7 +1195,6 @@ BOOL vehicle_twizy_fn_sms(BOOL checkauth, BOOL premsg, char *caller, char *comma
     return FALSE; // no vehicle command
 }
 
-
 BOOL vehicle_twizy_fn_smshandler(BOOL premsg, char *caller, char *command, char *arguments)
 {
     // called to extend/replace standard command: framework did auth check for us
@@ -987,7 +1212,7 @@ BOOL vehicle_twizy_fn_smsextensions(char *caller, char *command, char *arguments
 // Twizy specific SMS command output extension: HELP
 // - add Twizy commands
 //
-BOOL vehicle_twizy_sms_handle_help(BOOL premsg, char *caller, char *command, char *arguments)
+BOOL vehicle_twizy_help_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
     int k;
 
@@ -1003,83 +1228,6 @@ BOOL vehicle_twizy_sms_handle_help(BOOL premsg, char *caller, char *command, cha
     {
         net_puts_rom(" ");
         net_puts_rom(vehicle_twizy_sms_cmdtable[k]+1);
-    }
-
-    return TRUE;
-}
-
-
-/****************************************************************
- * HOOK: CAR SPECIFIC MSG command handler
- *   May overlay and/or extend the standard command set
- *   Called by: net_msg_cmd_do()
- *
- * PARAMS:
- *   msgmode:   FALSE=only execute cmd / TRUE=send reply msg
- *   code:      int command id
- *   msg:       char * to first parameter
- *
- * RETURNS:
- *   true : cmd has been handled completely
- *   false: fallback to standard handler net_msg_cmd_exec()
- *
- * OUTPUT SCHEME:
- *   sprintf(net_scratchpad, (rom far char*)"MP-...");
- *   net_msg_encode_puts();
- *
- * CALL SPECIFIC STANDARD FUNCTION n: (rare case)
- *   [save net_msg_cmd_* if needed later on]
- *   net_msg_cmd_code = n;
- *   strcpy( net_msg_cmd_msg, "arg1,arg2,..." );
- *   if( net_msg_cmd_exec() ) {...success...}
- *
- */
-
-// Capabilities for Renault Twizy:
-rom char vehicle_twizy_capabilities[] = "C6,C201-203";
-
-BOOL vehicle_twizy_fn_commandhandler( BOOL msgmode, int code, char *msg )
-{
-    /* Command dispatcher: */
-    switch( code )
-    {
-        /************************************************************
-         * STANDARD COMMAND OVERRIDES:
-         */
-
-        case 6: // = NET_NOTIFY_CHARGE ALERT (6 = suggestion)
-            vehicle_twizy_msg_alert();
-            break;
-
-
-        /************************************************************
-         * CAR SPECIFIC COMMANDS:
-         */
-
-        case 201: // = DEBUG
-            // todo
-            break;
-
-        case 202: // = RANGE
-            // todo
-            break;
-
-        case 203: // = CA
-            // todo
-            break;
-
-        default:
-            // not handled
-            return FALSE;
-    }
-
-    if( msgmode )
-    {
-        // SEND MSG from net_scratchpad:
-        net_msg_encode_puts();
-
-        //delay100(2);
-        //net_msgp_environment(0);
     }
 
     return TRUE;
@@ -1200,13 +1348,16 @@ BOOL vehicle_twizy_initialise(void)
     }
 
     // Hook in...
+
+    vehicle_version = vehicle_twizy_version;
+    can_capabilities = vehicle_twizy_capabilities;
+
     vehicle_fn_poll0 = &vehicle_twizy_poll0;
     vehicle_fn_poll1 = &vehicle_twizy_poll1;
     vehicle_fn_ticker1 = &vehicle_twizy_state_ticker1;
     vehicle_fn_ticker60 = &vehicle_twizy_state_ticker60;
     vehicle_fn_smshandler = &vehicle_twizy_fn_smshandler;
     vehicle_fn_smsextensions = &vehicle_twizy_fn_smsextensions;
-    can_capabilities = vehicle_twizy_capabilities;
     vehicle_fn_commandhandler = &vehicle_twizy_fn_commandhandler;
 
     net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS

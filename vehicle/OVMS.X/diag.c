@@ -165,6 +165,7 @@ void diag_handle_diag(char *command, char *arguments)
   {
   unsigned int x;
   unsigned char hwv = 1;
+  char *p;
 
   #ifdef OVMS_HW_V2
   hwv = 2;
@@ -172,8 +173,15 @@ void diag_handle_diag(char *command, char *arguments)
 
   net_puts_rom("\r\n# DIAG\r\n\n");
 
-  sprintf(net_scratchpad, (rom far char*)"#  Firmware: %d.%d.%d/V%d\r\n",
-          ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],hwv);
+  p = par_get(PARAM_VEHICLETYPE);
+  if (vehicle_version)
+      strcpypgm2ram(net_msg_scratchpad, vehicle_version);
+  else
+      net_msg_scratchpad[0] = 0;
+
+  sprintf(net_scratchpad, (rom far char*)"# Firmware: %d.%d.%d/%s%s/V%d\r\n",
+          ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],
+          p, net_msg_scratchpad, hwv);
   net_puts_ram(net_scratchpad);
 
   sprintf(net_scratchpad, (rom far char*)"#  SWITCH:   %d\r\n", inputs_gsmgprs());

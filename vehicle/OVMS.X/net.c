@@ -250,11 +250,37 @@ void net_poll(void)
 //
 void net_puts_rom(static const rom char *data)
   {
+#ifdef OVMS_DIAGMODULE
+    /* Help diag terminals with line breaks */
+    if( net_state == NET_STATE_DIAGMODE )
+    {
+        char lastdata = 0;
+
+        while(1)
+        {
+            // insert \r before \n if missing:
+            if( *data == '\n' && lastdata != '\r' )
+                while (UARTIntPutChar('\r')==0);
+            // insert \n after \r if missing:
+            else if( lastdata == '\r' && *data != '\n' )
+                while (UARTIntPutChar('\n')==0);
+
+            if( !*data )
+                break;
+
+            // output char:
+            while (UARTIntPutChar(*data)==0);
+
+            lastdata = *data++;
+        }
+    }
+    else
+#endif // OVMS_DIAGMODULE
+
   /* Send characters up to the null */
   for (;*data;data++)
     {
-    while (vUARTIntStatus.UARTIntTxBufferFull);
-    UARTIntPutChar(*data);
+    while (UARTIntPutChar(*data)==0);
     }
   }
 
@@ -265,11 +291,37 @@ void net_puts_rom(static const rom char *data)
 //
 void net_puts_ram(const char *data)
   {
+#ifdef OVMS_DIAGMODULE
+    /* Help diag terminals with line breaks */
+    if( net_state == NET_STATE_DIAGMODE )
+    {
+        char lastdata = 0;
+
+        while(1)
+        {
+            // insert \r before \n if missing:
+            if( *data == '\n' && lastdata != '\r' )
+                while (UARTIntPutChar('\r')==0);
+            // insert \n after \r if missing:
+            else if( lastdata == '\r' && *data != '\n' )
+                while (UARTIntPutChar('\n')==0);
+
+            if( !*data )
+                break;
+
+            // output char:
+            while (UARTIntPutChar(*data)==0);
+
+            lastdata = *data++;
+        }
+    }
+    else
+#endif // OVMS_DIAGMODULE
+
   /* Send characters up to the null */
   for (;*data;data++)
     {
-    while (vUARTIntStatus.UARTIntTxBufferFull);
-    UARTIntPutChar(*data);
+    while (UARTIntPutChar(*data)==0);
     }
   }
 
@@ -280,8 +332,7 @@ void net_puts_ram(const char *data)
 void net_putc_ram(const char data)
   {
   /* Send one character */
-  while (vUARTIntStatus.UARTIntTxBufferFull);
-  UARTIntPutChar(data);
+  while (UARTIntPutChar(data)==0);
   }
 
 ////////////////////////////////////////////////////////////////////////
