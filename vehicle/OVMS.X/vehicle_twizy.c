@@ -99,11 +99,8 @@ rom char vehicle_twizy_capabilities[] = "C6,C200-204";
 
 #pragma udata overlay vehicle_overlay_data
 
-//unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
-//unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
-
-unsigned char can_last_SOC = 0;              // sufficient charge SOC threshold helper
-unsigned int can_last_idealrange = 0;        // sufficient charge range threshold helper
+unsigned char can_last_SOC;                 // sufficient charge SOC threshold helper
+unsigned int can_last_idealrange;           // sufficient charge range threshold helper
 
 // Additional Twizy state variables:
 unsigned int can_soc;                       // detailed SOC (1/100 %)
@@ -111,11 +108,11 @@ unsigned int can_soc_min;                   // min SOC reached during last disch
 unsigned int can_soc_min_range;             // can_range at min SOC
 unsigned int can_soc_max;                   // max SOC reached during last charge
 unsigned int can_range;                     // range in km
-unsigned int can_speed = 0;                  // current speed in 1/100 km/h
-signed int can_power = 0;                    // current power in W, negative=charging
+unsigned int can_speed;                     // current speed in 1/100 km/h
+signed int can_power;                       // current power in W, negative=charging
 unsigned long can_odometer;                 // odometer in km
 
-unsigned char can_status = 0;               // Car + charge status from CAN:
+unsigned char can_status;                   // Car + charge status from CAN:
 #define CAN_STATUS_KEYON        0x10        //  bit 4 = 0x10: 1 = Car ON (key turned)
 #define CAN_STATUS_CHARGING     0x20        //  bit 5 = 0x20: 1 = Charging
 #define CAN_STATUS_OFFLINE      0x40        //  bit 6 = 0x40: 1 = Switch-ON/-OFF phase / 0 = normal operation
@@ -342,23 +339,6 @@ BOOL vehicle_twizy_poll1(void)
 BOOL vehicle_twizy_state_ticker1(void)
 {
     int suffSOC, suffRange, maxRange;
-
-
-    /*
-     * First boot data sanitizing:
-     */
-
-    if( can_soc == 0 || can_soc > 10000 )
-        can_soc = 5000; // fallback if ovms powered on with car powered off
-
-    // init min+max to current soc if available:
-    if( can_soc_min == 0 || can_soc_min > 10000 )
-    {
-        can_soc_min = can_status ? can_soc : 10000;
-        can_soc_min_range = can_status ? can_range : 0;
-    }
-    if( can_soc_max == 0 || can_soc_max > 10000 )
-        can_soc_max = can_status ? can_soc : 0;
 
 
     /*
@@ -1241,16 +1221,37 @@ BOOL vehicle_twizy_help_sms(BOOL premsg, char *caller, char *command, char *argu
 //
 BOOL vehicle_twizy_initialise(void)
 {
-    char *p;
+    // car_type[] is uninitialised => distinct init from crash/reset:
+    if( (car_type[0]!='R') || (car_type[1]!='T') || (car_type[2]!=0) )
+    {
+        // INIT VEHICLE VARIABLES:
 
-    car_type[0] = 'R'; // Car is type RT - Renault Twizy
-    car_type[1] = 'T';
-    car_type[2] = 0;
-    car_type[3] = 0;
-    car_type[4] = 0;
+        car_type[0] = 'R'; // Car is type RT - Renault Twizy
+        car_type[1] = 'T';
+        car_type[2] = 0;
+        car_type[3] = 0;
+        car_type[4] = 0;
 
-    car_linevoltage = 230; // fix
-    car_chargecurrent = 10; // fix
+        car_linevoltage = 230; // fix
+        car_chargecurrent = 10; // fix
+
+        can_status = 0;
+
+        can_soc = 5000;
+        can_soc_min = 10000;
+        can_soc_max = 0;
+
+        car_SOC = 50;
+        can_last_SOC = 0;
+
+        can_range = 50;
+        can_soc_min_range = 100;
+        can_last_idealrange = 0;
+
+        can_speed = 0;
+        can_power = 0;
+        can_odometer = 0;
+    }
 
     CANCON = 0b10010000; // Initialize CAN
     while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
