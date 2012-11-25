@@ -248,6 +248,14 @@ void net_poll(void)
 // Transmit zero-terminated character data from ROM to the async port.
 // N.B. This may block if the transmit buffer is full.
 //
+
+// Macro to wait for TxBuffer before call to PutChar():
+#define UART_WAIT_PUTC(c) \
+  { \
+    while (vUARTIntStatus.UARTIntTxBufferFull) ; \
+    while (UARTIntPutChar(c)==0) ; \
+  }
+
 void net_puts_rom(static const rom char *data)
   {
 #ifdef OVMS_DIAGMODULE
@@ -260,16 +268,16 @@ void net_puts_rom(static const rom char *data)
         {
             // insert \r before \n if missing:
             if( *data == '\n' && lastdata != '\r' )
-                while (UARTIntPutChar('\r')==0);
+                UART_WAIT_PUTC('\r')
             // insert \n after \r if missing:
             else if( lastdata == '\r' && *data != '\n' )
-                while (UARTIntPutChar('\n')==0);
+                UART_WAIT_PUTC('\n')
 
             if( !*data )
                 break;
 
             // output char:
-            while (UARTIntPutChar(*data)==0);
+            UART_WAIT_PUTC(*data)
 
             lastdata = *data++;
         }
@@ -279,9 +287,7 @@ void net_puts_rom(static const rom char *data)
 
   /* Send characters up to the null */
   for (;*data;data++)
-    {
-    while (UARTIntPutChar(*data)==0);
-    }
+    UART_WAIT_PUTC(*data)
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -301,16 +307,16 @@ void net_puts_ram(const char *data)
         {
             // insert \r before \n if missing:
             if( *data == '\n' && lastdata != '\r' )
-                while (UARTIntPutChar('\r')==0);
+                UART_WAIT_PUTC('\r')
             // insert \n after \r if missing:
             else if( lastdata == '\r' && *data != '\n' )
-                while (UARTIntPutChar('\n')==0);
+                UART_WAIT_PUTC('\n')
 
             if( !*data )
                 break;
 
             // output char:
-            while (UARTIntPutChar(*data)==0);
+            UART_WAIT_PUTC(*data)
 
             lastdata = *data++;
         }
@@ -320,9 +326,7 @@ void net_puts_ram(const char *data)
 
   /* Send characters up to the null */
   for (;*data;data++)
-    {
-    while (UARTIntPutChar(*data)==0);
-    }
+    UART_WAIT_PUTC(*data)
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -332,7 +336,7 @@ void net_puts_ram(const char *data)
 void net_putc_ram(const char data)
   {
   /* Send one character */
-  while (UARTIntPutChar(data)==0);
+    UART_WAIT_PUTC(data)
   }
 
 ////////////////////////////////////////////////////////////////////////
