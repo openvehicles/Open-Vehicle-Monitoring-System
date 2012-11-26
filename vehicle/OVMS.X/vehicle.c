@@ -77,18 +77,17 @@ void vehicle_initialise(void)
   vehicle_fn_smshandler = NULL;
   vehicle_fn_smsextensions = NULL;
 
-  car_type[0] = 0; // Car is undefined
-  car_type[1] = 0;
-  car_type[2] = 0;
-  car_type[3] = 0;
-  car_type[4] = 0;
-
   // Clear the internal GPS flag, unless specifically requested by the module
   net_fnbits &= ~(NET_FN_INTERNALGPS);
 
   p = par_get(PARAM_VEHICLETYPE);
   if (p == NULL)
     {
+    car_type[0] = 0; // Car is undefined
+    car_type[1] = 0;
+    car_type[2] = 0;
+    car_type[3] = 0;
+    car_type[4] = 0;
     }
 #ifdef OVMS_CAR_TESLAROADSTER
   else if (memcmppgm2ram(p, (char const rom far*)"TR", 2) == 0)
