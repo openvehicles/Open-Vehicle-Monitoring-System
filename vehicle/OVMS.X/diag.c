@@ -290,7 +290,8 @@ void diag_activity(char *buf, unsigned char pos)
   char *p;
   int k;
 
-  if (*buf == 0) return; // Ignore empty commands
+  if ((*buf == 0) || (*buf == '#'))
+      return; // Ignore empty commands and comments/debug outputs
 
   // Convert DIAG command (first word) to upper-case
   for (p=buf; ((*p!=0)&&(*p!=' ')); p++)

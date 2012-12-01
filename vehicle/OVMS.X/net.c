@@ -911,6 +911,12 @@ void net_state_activity()
                   car_latitude = lat;
                   car_longitude = lon;
                   car_altitude = alt;
+
+                  car_stale_gps = 120; // Reset stale indicator
+              }
+              else
+              {
+                  car_stale_gps = 0;
               }
           }
 

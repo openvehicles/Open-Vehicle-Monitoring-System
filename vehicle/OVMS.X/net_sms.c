@@ -403,6 +403,8 @@ BOOL net_sms_handle_params(char *caller, char *command, char *arguments)
   net_puts_rom(NET_MSG_PARAMS);
   net_send_sms_finish();
 
+  vehicle_initialise();
+
   if (net_state != NET_STATE_DIAGMODE)
     net_state_enter(NET_STATE_DONETINIT);
 
