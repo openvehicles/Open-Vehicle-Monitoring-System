@@ -60,6 +60,18 @@
 ;             with desired sim data chunk number (i.e. SMS "DEBUG 12" / MSG "200,12")
 ;           - Minor code cleanups & bug fixes
 ;
+;    2.1  8 Dec 2012 (Michael Balzer):
+;           - temperature function updated to new formula (A - 40)
+;           - cell alert thresholds changed to fixed absolute deviations
+;             3 °C temperature / 100 mV  (watch thresholds = stddev as before)
+;           - battery monitor reset now bound to "key on" event
+;             instead of full charge cycle
+;           - cell mean value / deviation calculations now done with rounding
+;           - battery text alert now also sent by MSG protocol ("PA")
+;             and triggered immediately after every alert status change
+;           - Twizy battery monitor compiler switch: OVMS_TWIZY_BATTMON
+;             current ressource usage: 6% RAM (193 byte) + 10% ROM
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -103,11 +115,6 @@
 #define KM2MI(KM)       (((KM) <= 0) ? 0 : ( ( ( (KM) * 10 - 5 ) >> 4 ) + 1 ))
 #define MI2KM(MI)       ( ( ( (MI) << 4 ) + 5 ) / 10 )
 
-// Fahrenheit -> Celsius conversion
-#define F2C(F)          ( (((float) F) - 32) * 5 / 9 )
-#define F2C_1(F)        ( (((int) F) - 32) * 5 / 9 )
-#define F2C_10(F)       ( (((int) F) - 32) * 50 / 9 )
-
 // Format scaled int into two ints for sprintf
 // ...example: sprintf( buf, "%d.%02u", FMTINT(val,100) )
 #define FMTINT(f,d)     (f) / (d), ((f) >= 0) ? ((f) % (d)) : (-(f) % (d))
@@ -142,13 +149,20 @@
 #define CMD_BatteryStatus           205 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.0";
+rom char vehicle_twizy_version[] = "2.1";
+
+#ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-205";
+#else
+rom char vehicle_twizy_capabilities[] = "C6,C200-204";
+#endif // OVMS_TWIZY_BATTMON
 
 
 /***************************************************************
  * Twizy data types
  */
+
+#ifdef OVMS_TWIZY_BATTMON
 
 typedef struct battery_pack
 {
@@ -188,6 +202,8 @@ typedef struct battery_cell
 
 } battery_cell;
 
+#endif // OVMS_TWIZY_BATTMON
+
 
 /***************************************************************
  * Twizy state variables
@@ -212,16 +228,20 @@ unsigned char can_status;                   // Car + charge status from CAN:
 #define CAN_STATUS_CHARGING     0x20        //  bit 5 = 0x20: 1 = Charging
 #define CAN_STATUS_OFFLINE      0x40        //  bit 6 = 0x40: 1 = Switch-ON/-OFF phase / 0 = normal operation
 
-UINT8 can_motor_temp;                       // Motor temperature in °F
-UINT8 can_pem_temp;                         // PEM temperature in °F
+
+#ifdef OVMS_TWIZY_BATTMON
 
 #define BATT_PACKS      1
 #define BATT_CELLS      14
 #define BATT_CMODS      7
-battery_pack can_batt[BATT_PACKS];          // size:  1 *  7 =   7 bytes
+battery_pack can_batt[BATT_PACKS];          // size:  1 * 15 =  15 bytes
 battery_cmod can_cmod[BATT_CMODS];          // size:  7 *  4 =  28 bytes
 battery_cell can_cell[BATT_CELLS];          // size: 14 *  8 = 112 bytes
-                                            // ------------- = 147 bytes
+                                            // ------------- = 155 bytes
+
+// Battery cell/cmod deviation alert thresholds:
+#define BATT_THRESHOLD_TEMP         3       // = 3 °C
+#define BATT_THRESHOLD_VOLT         20      // = 100 mV
 
 // STATE MACHINE: can_batt_sensors_state
 //  A consistent state needs all 5 battery sensor messages
@@ -229,7 +249,7 @@ battery_cell can_cell[BATT_CELLS];          // size: 14 *  8 = 112 bytes
 //  state=BATT_SENSORS_START begins a new fetch cycle.
 //  poll1() will advance/reset states accordingly to incoming msgs.
 //  ticker1() will not process the data until BATT_SENSORS_READY
-//  has been reached, then it will reset state to _START.
+//  has been reached, after processing it will reset state to _START.
 volatile UINT8 can_batt_sensors_state;
 #define BATT_SENSORS_START          0
 #define BATT_SENSORS_GOT554         1
@@ -237,6 +257,8 @@ volatile UINT8 can_batt_sensors_state;
 #define BATT_SENSORS_GOT557         3
 #define BATT_SENSORS_GOT55E         4
 #define BATT_SENSORS_READY          5
+
+#endif // OVMS_TWIZY_BATTMON
 
 
 #pragma udata   // return to default udata section -- why?
@@ -249,8 +271,10 @@ volatile UINT8 can_batt_sensors_state;
 BOOL vehicle_twizy_poll0(void);
 BOOL vehicle_twizy_poll1(void);
 
+#ifdef OVMS_TWIZY_BATTMON
 void vehicle_twizy_battstatus_reset(void);
 void vehicle_twizy_battstatus_checkalert(void);
+#endif // OVMS_TWIZY_BATTMON
 
 
 
@@ -547,9 +571,9 @@ BOOL vehicle_twizy_poll1(void)
                 can_status = can_databuffer[1];
                 // Translation to car_doors1 done in ticker1()
 
-                // PEM temperature in °F:
-                if( can_databuffer[7] > 0 )
-                    can_pem_temp = can_databuffer[7];
+                // PEM temperature:
+                if( CAN_BYTE(7) > 0 && CAN_BYTE(7) < 0xf0 )
+                    car_tpem = (signed char) CAN_BYTE(7) - 40;
 
                 break;
                 
@@ -598,9 +622,12 @@ BOOL vehicle_twizy_poll1(void)
              */
             case 0x0E:
 
-                // MOTOR TEMPERATURE in °F:
-                if( can_databuffer[5] > 0 )
-                    can_motor_temp = can_databuffer[5];
+                // MOTOR TEMPERATURE:
+                if( CAN_BYTE(5) > 40 && CAN_BYTE(5) < 0xf0 )
+                    car_tmotor = CAN_BYTE(5) - 40;
+                else
+                    car_tmotor = 0; // unsigned, no negative temps allowed...
+
 
                 break;
         }
@@ -636,6 +663,7 @@ BOOL vehicle_twizy_poll1(void)
         }
     }
 
+#ifdef OVMS_TWIZY_BATTMON
     else if( CANfilter == 4 )
     {
         // Filter 4 = CAN ID GROUP 0x55_: battery sensors.
@@ -645,7 +673,7 @@ BOOL vehicle_twizy_poll1(void)
         // group comes at once an needs to be processed together to get
         // a consistent sensor state.
 
-        if( CAN_BYTE(0) != 0xff )
+        if( CAN_BYTE(0) != 0x0ff ) // common msg validation
         switch( CANsid )
         {
             case 0x04:
@@ -742,6 +770,7 @@ BOOL vehicle_twizy_poll1(void)
 
         }
     }
+#endif // OVMS_TWIZY_BATTMON
 
     return TRUE;
 }
@@ -816,10 +845,25 @@ BOOL vehicle_twizy_state_ticker1(void)
         car_doors1 &= ~0x10; // Charging OFF
 
     if( can_status & CAN_STATUS_KEYON )
-        car_doors1 |= 0x80; // Car ON
-    else
-        car_doors1 &= ~0x80; // Car OFF
+    {
+        if( (car_doors1 & 0x80) == 0 )
+        {
+            car_doors1 |= 0x80; // Car ON
+            
+#ifdef OVMS_TWIZY_BATTMON
+            // reset battery monitor:
+            vehicle_twizy_battstatus_reset();
+#endif // OVMS_TWIZY_BATTMON
 
+        }
+    }
+    else
+    {
+        car_doors1 &= ~0x80; // Car OFF
+    }
+
+
+#ifdef OVMS_TWIZY_BATTMON
 
     // Battery voltages & temperatures:
     //   only if consistent sensor state has been reached:
@@ -838,7 +882,7 @@ BOOL vehicle_twizy_state_ticker1(void)
         UINT i, stddev, absdev;
         INT dev;
         UINT32 sum, sqrsum;
-        float f;
+        float f, m;
 
 
         // *********** Temperatures: ************
@@ -870,14 +914,14 @@ BOOL vehicle_twizy_state_ticker1(void)
         {
             // All values valid, process:
 
-            car_tbattery = F2C_1(sum / BATT_CMODS);
-            car_tmotor = (can_motor_temp>32) ? F2C_1(can_motor_temp) : 0; // unsigned...
-            car_tpem = F2C_1(can_pem_temp);
+            m = (float) sum / BATT_CMODS;
+            
+            car_tbattery = (signed char) m + 0.5 - 40;
             car_stale_temps = 120; // Reset stale indicator
 
             //stddev = (unsigned int) sqrt( ((float)sqrsum/BATT_CMODS) - SQR((float)sum/BATT_CMODS) ) + 1;
             // this is too complex for C18, we need to split this up:
-            f = ((float)sqrsum/BATT_CMODS) - SQR((float)sum/BATT_CMODS);
+            f = ((float)sqrsum/BATT_CMODS) - SQR(m);
             stddev = sqrt(f) + 1; // +1 against int precision errors (may need multiplication)
             //sprintf(net_scratchpad, "# temp sqrsum=%lu sum=%lu stddev=%u\n", sqrsum, sum, stddev);
             //net_puts_ram(net_scratchpad);
@@ -885,11 +929,12 @@ BOOL vehicle_twizy_state_ticker1(void)
             for( i=0; i < BATT_CMODS; i++ )
             {
                 // deviation:
-                dev = (INT) can_cmod[i].temp_act - (INT) (sum/BATT_CMODS);
+                dev = (can_cmod[i].temp_act - m)
+                        + ((can_cmod[i].temp_act >= m) ? 0.5 : -0.5);
                 absdev = ABS(dev);
 
                 // Set watch/alert flags:
-                if( absdev > 2*stddev )
+                if( absdev >= BATT_THRESHOLD_TEMP )
                     can_batt[0].temp_alerts |= (1 << i);
                 else if( absdev > stddev )
                     can_batt[0].temp_watches |= (1 << i);
@@ -937,9 +982,11 @@ BOOL vehicle_twizy_state_ticker1(void)
         {
             // All values valid, process:
 
+            m = (float) sum / BATT_CELLS;
+
             //stddev = (unsigned int) sqrt( ((float)sqrsum/BATT_CELLS) - SQR((float)sum/BATT_CELLS) ) + 1;
             // this is too complex for C18, we need to split this up:
-            f = ((float)sqrsum/BATT_CELLS) - SQR((float)sum/BATT_CELLS);
+            f = ((float)sqrsum/BATT_CELLS) - SQR(m);
             stddev = sqrt(f) + 1; // +1 against int precision errors (may need multiplication)
             //sprintf(net_scratchpad, "# volt sqrsum=%lu sum=%lu stddev=%u\n", sqrsum, sum, stddev);
             //net_puts_ram(net_scratchpad);
@@ -947,11 +994,12 @@ BOOL vehicle_twizy_state_ticker1(void)
             for( i=0; i < BATT_CELLS; i++ )
             {
                 // deviation:
-                dev = (INT) can_cell[i].volt_act - (INT) (sum/BATT_CELLS);
+                dev = (can_cell[i].volt_act - m)
+                        + ((can_cell[i].volt_act >= m) ? 0.5 : -0.5);
                 absdev = ABS(dev);
 
                 // Set watch/alert flags:
-                if( absdev > 2*stddev )
+                if( absdev >= BATT_THRESHOLD_VOLT )
                     can_batt[0].volt_alerts |= (1 << i);
                 else if( absdev > stddev )
                     can_batt[0].volt_watches |= (1 << i);
@@ -965,13 +1013,14 @@ BOOL vehicle_twizy_state_ticker1(void)
 
 
         // Battery monitor update/alert:
-        if( (can_granular_tick % 60) == 0 )
-            vehicle_twizy_battstatus_checkalert();
+        vehicle_twizy_battstatus_checkalert();
 
         // OK, sensors have been processed, fetch next data:
         can_batt_sensors_state = BATT_SENSORS_START;
 
     } // if( can_batt_sensors_state == BATT_SENSORS_READY )
+
+#endif // OVMS_TWIZY_BATTMON
 
 
     /***************************************************************************
@@ -1121,9 +1170,6 @@ BOOL vehicle_twizy_state_ticker1(void)
             // reset SOC minimum:
             can_soc_min = can_soc;
             can_soc_min_range = can_range;
-
-            // reset battery monitor:
-            vehicle_twizy_battstatus_reset();
         }
     }
 
@@ -1229,6 +1275,8 @@ char vehicle_twizy_debug_msgp( char stat, int cmd )
 {
     //static WORD crc; // diff crc for push msgs
 
+    stat = net_msgp_environment( stat );
+
     sprintf( net_scratchpad,
             "MP-0 c%d,0,%x,%x,%u,%d,%d,%ld,%u,%u,%d,%u,%u,%u,%u"
             , cmd ? cmd : CMD_Debug
@@ -1308,16 +1356,20 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
     }
 #endif // OVMS_DIAGMODULE
 
+#ifdef OVMS_TWIZY_BATTMON
     // battery bit fields:
     sprintf( net_scratchpad,
-            "\n# vw=%x va=%x tw=%x ta=%x ss=%u"
+            "\n# vw=%x va=%x lva=%x tw=%x ta=%x lta=%x ss=%u"
             , (UINT) can_batt[0].volt_watches
             , (UINT) can_batt[0].volt_alerts
+            , (UINT) can_batt[0].last_volt_alerts
             , (UINT) can_batt[0].temp_watches
             , (UINT) can_batt[0].temp_alerts
+            , (UINT) can_batt[0].last_temp_alerts
             , (UINT) can_batt_sensors_state
             );
     net_puts_ram( net_scratchpad );
+#endif // OVMS_TWIZY_BATTMON
 
 
     return TRUE;
@@ -1673,6 +1725,8 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
 
 
 
+#ifdef OVMS_TWIZY_BATTMON
+
 /***********************************************************************
  * COMMAND CLASS: BATTERY MONITORING
  *
@@ -1701,6 +1755,7 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
 #define CONV_PackVolt(m) ((UINT)(m) * (100 / 10))
 #define CONV_CellVolt(m) ((UINT)(m) * (1000 / 200))
 #define CONV_CellVoltS(m) ((INT)(m) * (1000 / 200))
+#define CONV_Temp(m) ((INT)(m) - 40)
 
 
 // Wait max. 1.1 seconds for consistent sensor data:
@@ -1722,6 +1777,8 @@ BOOL vehicle_twizy_battstatus_wait4sensors(void)
 void vehicle_twizy_battstatus_reset(void)
 {
     int i;
+
+    vehicle_twizy_battstatus_wait4sensors();
 
     for( i=0; i < BATT_CELLS; i++ )
     {
@@ -1753,13 +1810,77 @@ void vehicle_twizy_battstatus_reset(void)
 }
 
 
+// Prep battery[p] alert message text for SMS/MSG in net_scratchpad:
+void vehicle_twizy_battstatus_prepalert( int p )
+{
+    int c;
+
+    // Voltage deviations:
+    strcatpgm2ram( net_scratchpad, "Volts: " );
+    if( (can_batt[p].volt_alerts==0) && (can_batt[p].volt_watches==0) )
+    {
+        strcatpgm2ram( net_scratchpad, "OK " );
+    }
+    else
+    {
+        for( c = 0; c < BATT_CELLS; c++ )
+        {
+            // Alert?
+            if( can_batt[p].volt_alerts & (1<<c) )
+                strcatpgm2ram( net_scratchpad, "!" );
+            else if( can_batt[p].volt_watches & (1<<c) )
+                strcatpgm2ram( net_scratchpad, "?" );
+            else
+                continue;
+
+            sprintf( net_msg_scratchpad,
+                    "C%u:%+dmV "
+                    , c+1
+                    , CONV_CellVoltS(can_cell[c].volt_maxdev)
+                    );
+            strcat( net_scratchpad, net_msg_scratchpad );
+        }
+    }
+
+    // Temperature deviations:
+    strcatpgm2ram( net_scratchpad, "Temps: " );
+    if( (can_batt[p].temp_alerts==0) && (can_batt[p].temp_watches==0) )
+    {
+        strcatpgm2ram( net_scratchpad, "OK " );
+    }
+    else
+    {
+        for( c = 0; c < BATT_CMODS; c++ )
+        {
+            // Alert?
+            if( can_batt[p].temp_alerts & (1<<c) )
+                strcatpgm2ram( net_scratchpad, "!" );
+            else if( can_batt[p].temp_watches & (1<<c) )
+                strcatpgm2ram( net_scratchpad, "?" );
+            else
+                continue;
+
+            sprintf( net_msg_scratchpad,
+                    "M%u:%+dC "
+                    , c+1
+                    , can_cmod[c].temp_maxdev
+                    );
+            strcat( net_scratchpad, net_msg_scratchpad );
+        }
+    }
+
+    // alert text now ready to send in net_scratchpad
+}
+
+
 char vehicle_twizy_battstatus_msgp( char stat, int cmd )
 {
+    static WORD crc_alert[BATT_PACKS];
     static WORD crc_pack[BATT_PACKS];
     static WORD crc_cell[BATT_CELLS]; // RT: just one pack...
     UINT8 p, c;
     UINT8 tmin, tmax;
-    int tsum;
+    int tact;
     UINT8 volt_alert, temp_alert;
 
     // Try to wait for consistent sensor data:
@@ -1773,16 +1894,17 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
     // Prep: collect cell temperatures:
     tmin = 255;
     tmax = 0;
-    tsum = 0;
+    tact = 0;
     for( c=0; c < BATT_CMODS; c++ )
     {
-        tsum += can_cmod[c].temp_act;
+        tact += can_cmod[c].temp_act;
         if( can_cmod[c].temp_min < tmin )
             tmin = can_cmod[c].temp_min;
         if( can_cmod[c].temp_max > tmax )
             tmax = can_cmod[c].temp_max;
     }
 
+    tact = (float) tact / BATT_CMODS + 0.5;
 
     // Output pack status:
     // MP-0 B,<packnr>,<nr_of_cells>
@@ -1808,6 +1930,19 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
         else
             temp_alert = 1;
 
+        // alert:
+        if( can_batt[p].volt_alerts || can_batt[p].temp_alerts )
+        {
+            strcpypgm2ram( net_scratchpad, "MP-0 PA" );
+            vehicle_twizy_battstatus_prepalert( p );
+            stat = net_msg_encode_statputs( stat, &crc_alert[p] );
+        }
+        else
+        {
+            crc_alert[p] = 0; // reset crc for next alert
+        }
+
+        // data:
         sprintf( net_scratchpad,
                 "MP-0 B,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u"
                 , p+1, BATT_CELLS
@@ -1822,13 +1957,11 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
                 , CONV_PackVolt(can_batt[p].volt_max / BATT_CELLS)
                 );
         sprintf( net_msg_scratchpad,
-                ",%d.%01u", FMTINT( F2C_10(tsum/BATT_CMODS), 10 ) );
-        strcat( net_scratchpad, net_msg_scratchpad );
-        sprintf( net_msg_scratchpad,
-                ",%d.%01u", FMTINT( F2C_10(tmin), 10 ) );
-        strcat( net_scratchpad, net_msg_scratchpad );
-        sprintf( net_msg_scratchpad,
-                ",%d.%01u", FMTINT( F2C_10(tmax), 10 ) );
+                ",%d,%d,%d"
+                , CONV_Temp(tact)
+                , CONV_Temp(tmin)
+                , CONV_Temp(tmax)
+                );
         strcat( net_scratchpad, net_msg_scratchpad );
         stat = net_msg_encode_statputs( stat, &crc_pack[p] );
 
@@ -1864,16 +1997,12 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
                     , CONV_CellVoltS(can_cell[c].volt_maxdev)
                     );
             sprintf( net_msg_scratchpad,
-                    ",%d.%01u", FMTINT( F2C_10(can_cmod[c>>1].temp_act), 10 ) );
-            strcat( net_scratchpad, net_msg_scratchpad );
-            sprintf( net_msg_scratchpad,
-                    ",%d.%01u", FMTINT( F2C_10(can_cmod[c>>1].temp_min), 10 ) );
-            strcat( net_scratchpad, net_msg_scratchpad );
-            sprintf( net_msg_scratchpad,
-                    ",%d.%01u", FMTINT( F2C_10(can_cmod[c>>1].temp_max), 10 ) );
-            strcat( net_scratchpad, net_msg_scratchpad );
-            sprintf( net_msg_scratchpad,
-                    ",%d.%01u", FMTINT( (INT) can_cmod[c>>1].temp_maxdev * 50 / 9, 10 ) );
+                    ",%d,%d,%d,%d"
+                    , CONV_Temp(can_cmod[c>>1].temp_act)
+                    , CONV_Temp(can_cmod[c>>1].temp_min)
+                    , CONV_Temp(can_cmod[c>>1].temp_max)
+                    , can_cmod[c>>1].temp_maxdev
+                    );
             strcat( net_scratchpad, net_msg_scratchpad );
             stat = net_msg_encode_statputs( stat, &crc_cell[c] );
         }
@@ -1895,7 +2024,7 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
     int p, c;
     char argc1, argc2;
     UINT8 tmin, tmax;
-    int tsum;
+    int tact;
     UINT8 cc;
 
     if( !premsg )
@@ -1929,26 +2058,24 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
             // Prep: collect cell temperatures:
             tmin = 255;
             tmax = 0;
-            tsum = 0;
+            tact = 0;
             for( c=0; c < BATT_CMODS; c++ )
             {
-                tsum += can_cmod[c].temp_act;
+                tact += can_cmod[c].temp_act;
                 if( can_cmod[c].temp_min < tmin )
                     tmin = can_cmod[c].temp_min;
                 if( can_cmod[c].temp_max > tmax )
                     tmax = can_cmod[c].temp_max;
             }
+            tact = (float) tact / BATT_CMODS + 0.5;
 
             // Output pack status:
             sprintf( net_scratchpad,
-                    "P:%d.%01uC", FMTINT( F2C_10(tsum/BATT_CMODS), 10 ) );
-            net_puts_ram( net_scratchpad );
-
-            sprintf( net_scratchpad,
-                    " (%d.%01uC", FMTINT( F2C_10(tmin), 10 ) );
-            net_puts_ram( net_scratchpad );
-            sprintf( net_scratchpad,
-                    "..%d.%01uC) ", FMTINT( F2C_10(tmax), 10 ) );
+                    "P:%dC (%dC..%dC) "
+                    , CONV_Temp( tact )
+                    , CONV_Temp( tmin )
+                    , CONV_Temp( tmax )
+                    );
             net_puts_ram( net_scratchpad );
 
             // Output cmod status:
@@ -1963,17 +2090,17 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
                 if( argc2 == 'd' ) // deviations
                 {
                     sprintf( net_scratchpad,
-                        "%u:%+d.%01uC "
+                        "%u:%+dC "
                         , c+1
-                        , FMTINT( (INT) can_cmod[c].temp_maxdev * 50 / 9, 10 )
+                        , can_cmod[c].temp_maxdev
                         );
                 }
                 else // current values
                 {
                     sprintf( net_scratchpad,
-                        "%u:%d.%01uC "
+                        "%u:%dC "
                         , c+1
-                        , FMTINT( F2C_10(can_cmod[c].temp_act), 10 )
+                        , CONV_Temp( can_cmod[c].temp_act )
                         );
                 }
                 net_puts_ram( net_scratchpad );
@@ -2044,59 +2171,10 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
         default:
             // Battery alert status:
 
-            // Voltage deviations:
-            net_puts_rom("Volts: ");
-            if( (can_batt[0].volt_alerts==0) && (can_batt[0].volt_watches==0) )
-            {
-                net_puts_rom("OK ");
-            }
-            else
-            {
-                for( c = 0; c < BATT_CELLS; c++ )
-                {
-                    // Alert?
-                    if( can_batt[0].volt_alerts & (1<<c) )
-                        net_putc_ram('!');
-                    else if( can_batt[0].volt_watches & (1<<c) )
-                        net_putc_ram('?');
-                    else
-                        continue;
-
-                    sprintf( net_scratchpad,
-                            "C%u:%+dmV "
-                            , c+1
-                            , CONV_CellVoltS(can_cell[c].volt_maxdev)
-                            );
-                    net_puts_ram( net_scratchpad );
-                }
-            }
-
-            // Temperature deviations:
-            net_puts_rom("Temps: ");
-            if( (can_batt[0].temp_alerts==0) && (can_batt[0].temp_watches==0) )
-            {
-                net_puts_rom("OK ");
-            }
-            else
-            {
-                for( c = 0; c < BATT_CMODS; c++ )
-                {
-                    // Alert?
-                    if( can_batt[0].temp_alerts & (1<<c) )
-                        net_putc_ram('!');
-                    else if( can_batt[0].temp_watches & (1<<c) )
-                        net_putc_ram('?');
-                    else
-                        continue;
-
-                    sprintf( net_scratchpad,
-                            "M%u:%+d.%01uC "
-                            , c+1
-                            , FMTINT( (INT) can_cmod[c].temp_maxdev * 50 / 9, 10 )
-                            );
-                    net_puts_ram( net_scratchpad );
-                }
-            }
+            net_scratchpad[0] = 0;
+            vehicle_twizy_battstatus_prepalert( 0 );
+            cr2lf( net_scratchpad );
+            net_puts_ram( net_scratchpad );
 
             // Remember last alert state notified:
             can_batt[0].last_volt_alerts = can_batt[0].volt_alerts;
@@ -2119,7 +2197,10 @@ void vehicle_twizy_battstatus_checkalert(void)
     if( (net_msg_cmd_code!=0) && (net_msg_serverok==1) && (net_msg_sendpending==0) )
     {
         if( vehicle_twizy_battstatus_msgp(2, 0) == 1 )
+        {
             net_msg_send();
+            delay100(10); // give modem time to send
+        }
     }
 
     // Send SMS if voltage / temperature alert status changed:
@@ -2140,6 +2221,7 @@ void vehicle_twizy_battstatus_checkalert(void)
 
 }
 
+#endif // OVMS_TWIZY_BATTMON
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -2179,8 +2261,10 @@ BOOL vehicle_twizy_fn_commandhandler( BOOL msgmode, int cmd, char *msg )
         case CMD_SetChargeAlerts /*(range,soc)*/:
             return vehicle_twizy_ca_cmd(msgmode, cmd, msg);
 
+#ifdef OVMS_TWIZY_BATTMON
         case CMD_BatteryStatus:
             return vehicle_twizy_battstatus_cmd(msgmode, cmd, msg);
+#endif // OVMS_TWIZY_BATTMON
 
     }
 
@@ -2207,7 +2291,11 @@ rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "3RANGE",       // Twizy: set/query max ideal range
     "3CA",          // Twizy: set/query charge alerts
     "3HELP",        // extend HELP output
+
+#ifdef OVMS_TWIZY_BATTMON
     "3BATT",        // Twizy: battery status
+#endif // OVMS_TWIZY_BATTMON
+
     ""
 };
 
@@ -2218,7 +2306,11 @@ rom far BOOL (*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *co
     &vehicle_twizy_range_sms,
     &vehicle_twizy_ca_sms,
     &vehicle_twizy_help_sms,
+
+#ifdef OVMS_TWIZY_BATTMON
     &vehicle_twizy_battstatus_sms
+#endif // OVMS_TWIZY_BATTMON
+
 };
 
 // SMS COMMAND DISPATCHER:
@@ -2340,21 +2432,31 @@ BOOL vehicle_twizy_initialise(void)
         can_power = 0;
         can_odometer = 0;
 
+#ifdef OVMS_TWIZY_BATTMON
+
         // Init battery monitor:
         memset( can_batt, 0, sizeof can_batt );
-        can_batt[0].volt_min = 65535;
+        can_batt[0].volt_min = 1000; // 100 V
         memset( can_cmod, 0, sizeof can_cmod );
         for( i=0; i < BATT_CMODS; i++ )
         {
-            can_cmod[i].temp_min = 255;
+            can_cmod[i].temp_act = 40;
+            can_cmod[i].temp_min = 240;
         }
         memset( can_cell, 0, sizeof can_cell );
         for( i=0; i < BATT_CELLS; i++ )
         {
-            can_cell[i].volt_min = 65535;
+            can_cell[i].volt_min = 2000; // 10 V
         }
-        can_batt_sensors_state = BATT_SENSORS_START;
+
+#endif // OVMS_TWIZY_BATTMON
+
     }
+
+#ifdef OVMS_TWIZY_BATTMON
+    can_batt_sensors_state = BATT_SENSORS_START;
+#endif // OVMS_TWIZY_BATTMON
+
 
     CANCON = 0b10010000; // Initialize CAN
     while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
