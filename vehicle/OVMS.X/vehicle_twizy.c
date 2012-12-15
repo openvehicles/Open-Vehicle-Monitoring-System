@@ -72,6 +72,15 @@
 ;           - Twizy battery monitor compiler switch: OVMS_TWIZY_BATTMON
 ;             current ressource usage: 6% RAM (193 byte) + 10% ROM
 ;
+;    2.2  16 Dec 2012 (Michael Balzer):
+;           - Update MSG protocol for battery monitor to new "History" message type
+;             using types 'PWR-BattPack' & 'PWR-BattCell'
+;           - New function: now gathers power usage statistics. MSG command 206 /
+;             SMS command "POWER" outputs statistics, MSG notify also done after
+;             each power off. Statistics cover power usage in Wh for constant drive,
+;             acceleration & deceleration + percentages each.
+;           - Minor cleanups & fixes.
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -147,14 +156,15 @@
 #define CMD_QueryChargeAlerts       203 // ()
 #define CMD_SetChargeAlerts         204 // (range, soc)
 #define CMD_BatteryStatus           205 // ()
+#define CMD_PowerUsageNotify        206 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.1";
+rom char vehicle_twizy_version[] = "2.2";
 
 #ifdef OVMS_TWIZY_BATTMON
-rom char vehicle_twizy_capabilities[] = "C6,C200-205";
+rom char vehicle_twizy_capabilities[] = "C6,C200-206";
 #else
-rom char vehicle_twizy_capabilities[] = "C6,C200-204";
+rom char vehicle_twizy_capabilities[] = "C6,C200-204,206";
 #endif // OVMS_TWIZY_BATTMON
 
 
@@ -205,6 +215,15 @@ typedef struct battery_cell
 #endif // OVMS_TWIZY_BATTMON
 
 
+typedef struct power_sum            // power usage statistics
+{
+    unsigned long       cnt;        // count of entries
+    unsigned long       use;        // sum of power used
+    unsigned long       rec;        // sum of power recovered (recuperation)
+
+} power_sum;
+
+
 /***************************************************************
  * Twizy state variables
  */
@@ -220,8 +239,20 @@ unsigned int can_soc_min_range;             // can_range at min SOC
 unsigned int can_soc_max;                   // max SOC reached during last charge
 unsigned int can_range;                     // range in km
 unsigned int can_speed;                     // current speed in 1/100 km/h
-signed int can_power;                       // current power in W, negative=charging
 unsigned long can_odometer;                 // odometer in km
+
+
+signed int can_power;                       // current power in W, negative=charging
+
+power_sum can_pwrsum[3];                    // power usage statistics
+
+UINT8 can_speed_state;                      // speed state, one of:
+#define CAN_SPEED_CONST         0           // constant speed
+#define CAN_SPEED_ACCEL         1           // accelerating
+#define CAN_SPEED_DECEL         2           // decelerating
+
+#define CAN_SPEED_THRESHOLD     10          // speed change threshold for accel/decel
+
 
 unsigned char can_status;                   // Car + charge status from CAN:
 #define CAN_STATUS_KEYON        0x10        //  bit 4 = 0x10: 1 = Car ON (key turned)
@@ -270,6 +301,8 @@ volatile UINT8 can_batt_sensors_state;
 
 BOOL vehicle_twizy_poll0(void);
 BOOL vehicle_twizy_poll1(void);
+
+BOOL vehicle_twizy_power_cmd( BOOL msgmode, int cmd, char *arguments );
 
 #ifdef OVMS_TWIZY_BATTMON
 void vehicle_twizy_battstatus_reset(void);
@@ -482,6 +515,19 @@ BOOL vehicle_twizy_poll0(void)
             if( new_power > 0 && new_power < 0x0f00 )
             {
                 can_power = 2000 - (signed int) new_power;
+
+                if( can_power > 0 )
+                    // do we need to take base power consumption into account?
+                    // i.e. for lights etc. -- varies...
+                {
+                    can_pwrsum[can_speed_state].cnt ++;
+                    can_pwrsum[can_speed_state].use += can_power;
+                }
+                else
+                {
+                    can_pwrsum[can_speed_state].cnt ++;
+                    can_pwrsum[can_speed_state].rec += -can_power;
+                }
             }
         
         }
@@ -609,6 +655,15 @@ BOOL vehicle_twizy_poll1(void)
                 new_speed = ((unsigned int) can_databuffer[6] << 8) + can_databuffer[7];
                 if( new_speed != 0xffff )
                 {
+                    int delta = (int) new_speed - (int) can_speed;
+                    
+                    if( delta >= CAN_SPEED_THRESHOLD )
+                        can_speed_state = CAN_SPEED_ACCEL;
+                    else if( delta <= -CAN_SPEED_THRESHOLD )
+                        can_speed_state = CAN_SPEED_DECEL;
+                    else
+                        can_speed_state = CAN_SPEED_CONST;
+
                     can_speed = new_speed;
                     // car value derived in ticker1()
                 }
@@ -855,11 +910,19 @@ BOOL vehicle_twizy_state_ticker1(void)
             vehicle_twizy_battstatus_reset();
 #endif // OVMS_TWIZY_BATTMON
 
+            // reset power sums:
+            memset( can_pwrsum, 0, sizeof can_pwrsum );
         }
     }
     else
     {
-        car_doors1 &= ~0x80; // Car OFF
+        if( (car_doors1 & 0x80) != 0 )
+        {
+            car_doors1 &= ~0x80; // Car OFF
+            
+            // send power sums:
+            vehicle_twizy_power_cmd( FALSE, CMD_PowerUsageNotify, NULL );
+        }
     }
 
 
@@ -1072,6 +1135,9 @@ BOOL vehicle_twizy_state_ticker1(void)
             // reset SOC max:
             can_soc_max = can_soc;
 
+            // reset power sums:
+            memset( can_pwrsum, 0, sizeof can_pwrsum );
+
             // Send charge stat:
             net_req_notification( NET_NOTIFY_STAT );
         }
@@ -1262,6 +1328,118 @@ BOOL vehicle_twizy_state_ticker60(void)
 
 
 
+
+/***********************************************************************
+ * COMMAND CLASS: POWER
+ *
+ *  MSG: CMD_PowerUsageNotify ()
+ *  SMS: POWER
+ *      - output power usage stats as text alert
+ *
+ */
+
+BOOL vehicle_twizy_power_prepmsg(void)
+{
+    unsigned long pwr_cnt, pwr_use, pwr_rec;
+    UINT8 prc_const=0, prc_accel=0, prc_decel=0;
+
+    // overall sums:
+    pwr_cnt = can_pwrsum[CAN_SPEED_CONST].cnt
+            + can_pwrsum[CAN_SPEED_ACCEL].cnt
+            + can_pwrsum[CAN_SPEED_DECEL].cnt;
+
+    pwr_use = can_pwrsum[CAN_SPEED_CONST].use
+            + can_pwrsum[CAN_SPEED_ACCEL].use
+            + can_pwrsum[CAN_SPEED_DECEL].use;
+
+    pwr_rec = can_pwrsum[CAN_SPEED_CONST].rec
+            + can_pwrsum[CAN_SPEED_ACCEL].rec
+            + can_pwrsum[CAN_SPEED_DECEL].rec;
+
+    // time distribution:
+    if( pwr_cnt > 0 )
+    {
+        prc_const = (can_pwrsum[CAN_SPEED_CONST].cnt * 1000 / pwr_cnt + 5) / 10;
+        prc_accel = (can_pwrsum[CAN_SPEED_ACCEL].cnt * 1000 / pwr_cnt + 5) / 10;
+        prc_decel = (can_pwrsum[CAN_SPEED_DECEL].cnt * 1000 / pwr_cnt + 5) / 10;
+    }
+
+    if( (pwr_use > 0) || (pwr_rec > 0) )
+    {
+        sprintf( net_msg_scratchpad,
+                "Power -%lu +%lu Wh\r Const %u%% -%lu +%lu Wh"
+                , (pwr_use + 11250) / 22500
+                , (pwr_rec + 11250) / 22500
+                , prc_const
+                , (can_pwrsum[CAN_SPEED_CONST].use + 11250) / 22500
+                , (can_pwrsum[CAN_SPEED_CONST].rec + 11250) / 22500
+                );
+        strcat( net_scratchpad, net_msg_scratchpad );
+
+        sprintf( net_msg_scratchpad,
+                "\r Accel %u%% -%lu +%lu Wh\r Decel %u%% -%lu +%lu Wh"
+                , prc_accel
+                , (can_pwrsum[CAN_SPEED_ACCEL].use + 11250) / 22500
+                , (can_pwrsum[CAN_SPEED_ACCEL].rec + 11250) / 22500
+                , prc_decel
+                , (can_pwrsum[CAN_SPEED_DECEL].use + 11250) / 22500
+                , (can_pwrsum[CAN_SPEED_DECEL].rec + 11250) / 22500
+                );
+        strcat( net_scratchpad, net_msg_scratchpad );
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL vehicle_twizy_power_sms(BOOL premsg, char *caller, char *command, char *arguments)
+{
+    // check for replace mode:
+    if( !premsg )
+        return FALSE;
+
+    // check SMS notifies:
+    if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+        return FALSE;
+
+    // prepare message:
+    net_scratchpad[0] = 0;
+    if( vehicle_twizy_power_prepmsg() )
+    {
+        cr2lf(net_scratchpad);
+
+        // OK, start SMS:
+        delay100(2);
+        net_send_sms_start(caller);
+        net_puts_ram(net_scratchpad);
+        return TRUE; // handled
+    }
+
+    return FALSE;
+}
+
+BOOL vehicle_twizy_power_cmd( BOOL msgmode, int cmd, char *arguments )
+{
+    strcpypgm2ram( net_scratchpad, "MP-0 PA" );
+
+    if( vehicle_twizy_power_prepmsg() )
+    {
+        if( !msgmode )
+            net_msg_start();
+
+        net_msg_encode_puts();
+
+        if( !msgmode )
+            net_msg_send();
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+
 /***********************************************************************
  * COMMAND CLASS: DEBUG
  *
@@ -1288,7 +1466,7 @@ char vehicle_twizy_debug_msgp( char stat, int cmd )
 
     //return net_msg_encode_statputs( stat, &crc );
     net_msg_encode_puts();
-    return stat==2 ? 1 : stat;
+    return (stat==2) ? 1 : stat;
 }
 
 BOOL vehicle_twizy_debug_cmd( BOOL msgmode, int cmd, char *arguments )
@@ -1416,6 +1594,13 @@ void vehicle_twizy_stat_prepmsg(void)
             default:
               strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Stopped");
         }
+
+        // Power sum:
+        sprintf(net_msg_scratchpad, "\r CHG: %lu Wh"
+                , (can_pwrsum[CAN_SPEED_CONST].rec + 11250) / 22500
+                );
+        strcat(net_scratchpad,net_msg_scratchpad);
+
     }
     else
     {
@@ -1456,6 +1641,7 @@ void vehicle_twizy_stat_prepmsg(void)
         sprintf(net_msg_scratchpad, (rom far char*) "%lu km"
                 , MI2KM(car_odometer / 10)); // km
     strcat(net_scratchpad,net_msg_scratchpad);
+
 }
 
 BOOL vehicle_twizy_stat_sms(BOOL premsg, char *caller, char *command, char *arguments)
@@ -1906,14 +2092,7 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
 
     tact = (float) tact / BATT_CMODS + 0.5;
 
-    // Output pack status:
-    // MP-0 B,<packnr>,<nr_of_cells>
-    //  ,<volt_alertstatus>,<temp_alertstatus>
-    //  ,<soc>,<soc_min>,<soc_max>
-    //  ,<volt_act>,<volt_act_cellnom>
-    //  ,<volt_min>,<volt_min_cellnom>
-    //  ,<volt_max>,<volt_max_cellnom>
-    //  ,<temp_act>,<temp_min>,<temp_max>
+    // Output battery packs (just one for Twizy up to now):
     for( p=0; p < BATT_PACKS; p++ )
     {
         if( can_batt[p].volt_alerts )
@@ -1930,7 +2109,7 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
         else
             temp_alert = 1;
 
-        // alert:
+        // Output pack ALERT:
         if( can_batt[p].volt_alerts || can_batt[p].temp_alerts )
         {
             strcpypgm2ram( net_scratchpad, "MP-0 PA" );
@@ -1942,10 +2121,19 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
             crc_alert[p] = 0; // reset crc for next alert
         }
 
-        // data:
+        // Output pack STATUS:
+        // MP-0 H,PWR-BattPack,<packnr>,86400
+        //  ,<nr_of_cells>,<cell_startnr>
+        //  ,<volt_alertstatus>,<temp_alertstatus>
+        //  ,<soc>,<soc_min>,<soc_max>
+        //  ,<volt_act>,<volt_act_cellnom>
+        //  ,<volt_min>,<volt_min_cellnom>
+        //  ,<volt_max>,<volt_max_cellnom>
+        //  ,<temp_act>,<temp_min>,<temp_max>
         sprintf( net_scratchpad,
-                "MP-0 B,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u"
-                , p+1, BATT_CELLS
+                "MP-0 H,PWR-BattPack,%u,86400,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u"
+                , p+1
+                , BATT_CELLS, 1
                 , volt_alert
                 , temp_alert
                 , can_soc, can_soc_min, can_soc_max
@@ -1966,10 +2154,6 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
         stat = net_msg_encode_statputs( stat, &crc_pack[p] );
 
         // Output cell status:
-        // MP-0 H,<packnr>,<cellnr>
-        //  ,<volt_alertstatus>,<temp_alertstatus>,
-        //  ,<volt_act>,<volt_min>,<volt_max>,<volt_maxdev>
-        //  ,<temp_act>,<temp_min>,<temp_max>,<temp_maxdev>
         for( c=0; c < BATT_CELLS; c++ )
         {
             if( can_batt[p].volt_alerts & (1 << c) )
@@ -1986,9 +2170,15 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
             else
                 temp_alert = 1;
 
+            // MP-0 H,PWR-BattCell,<cellnr>,86400
+            //  ,<packnr>
+            //  ,<volt_alertstatus>,<temp_alertstatus>,
+            //  ,<volt_act>,<volt_min>,<volt_max>,<volt_maxdev>
+            //  ,<temp_act>,<temp_min>,<temp_max>,<temp_maxdev>
             sprintf( net_scratchpad,
-                    "MP-0 H,%u,%u,%u,%u,%u,%u,%u,%d"
-                    , p+1, c+1
+                    "MP-0 H,PWR-BattCell,%u,86400,%u,%u,%u,%u,%u,%u,%d"
+                    , c+1
+                    , p+1
                     , volt_alert
                     , temp_alert
                     , CONV_CellVolt(can_cell[c].volt_act)
@@ -2006,6 +2196,14 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
             strcat( net_scratchpad, net_msg_scratchpad );
             stat = net_msg_encode_statputs( stat, &crc_cell[c] );
         }
+    }
+
+    // cmd response:
+    if( cmd > 0 )
+    {
+        sprintf( net_scratchpad, "MP-0 c%d,0", cmd );
+        net_msg_encode_puts();
+        if (stat==2) stat=1;
     }
 
     return stat;
@@ -2224,6 +2422,7 @@ void vehicle_twizy_battstatus_checkalert(void)
 #endif // OVMS_TWIZY_BATTMON
 
 
+
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 /****************************************************************
@@ -2266,6 +2465,9 @@ BOOL vehicle_twizy_fn_commandhandler( BOOL msgmode, int cmd, char *msg )
             return vehicle_twizy_battstatus_cmd(msgmode, cmd, msg);
 #endif // OVMS_TWIZY_BATTMON
 
+        case CMD_PowerUsageNotify:
+            return vehicle_twizy_power_cmd(msgmode, cmd, msg);
+
     }
 
     // not handled
@@ -2296,6 +2498,8 @@ rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "3BATT",        // Twizy: battery status
 #endif // OVMS_TWIZY_BATTMON
 
+    "3POWER",       // Twizy: power usage statistics
+
     ""
 };
 
@@ -2308,9 +2512,10 @@ rom far BOOL (*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *co
     &vehicle_twizy_help_sms,
 
 #ifdef OVMS_TWIZY_BATTMON
-    &vehicle_twizy_battstatus_sms
+    &vehicle_twizy_battstatus_sms,
 #endif // OVMS_TWIZY_BATTMON
 
+    &vehicle_twizy_power_sms
 };
 
 // SMS COMMAND DISPATCHER:
@@ -2450,6 +2655,11 @@ BOOL vehicle_twizy_initialise(void)
         }
 
 #endif // OVMS_TWIZY_BATTMON
+
+
+        // init power statistics:
+        memset( can_pwrsum, 0, sizeof can_pwrsum );
+        can_speed_state = CAN_SPEED_CONST;
 
     }
 
