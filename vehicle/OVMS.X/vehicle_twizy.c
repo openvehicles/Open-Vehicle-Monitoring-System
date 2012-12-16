@@ -2122,7 +2122,7 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
         }
 
         // Output pack STATUS:
-        // MP-0 H,PWR-BattPack,<packnr>,86400
+        // MP-0 H,RT-PWR-BattPack,<packnr>,86400
         //  ,<nr_of_cells>,<cell_startnr>
         //  ,<volt_alertstatus>,<temp_alertstatus>
         //  ,<soc>,<soc_min>,<soc_max>
@@ -2131,7 +2131,7 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
         //  ,<volt_max>,<volt_max_cellnom>
         //  ,<temp_act>,<temp_min>,<temp_max>
         sprintf( net_scratchpad,
-                "MP-0 H,PWR-BattPack,%u,86400,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u"
+                "MP-0 H,RT-PWR-BattPack,%u,86400,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u"
                 , p+1
                 , BATT_CELLS, 1
                 , volt_alert
@@ -2170,13 +2170,13 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
             else
                 temp_alert = 1;
 
-            // MP-0 H,PWR-BattCell,<cellnr>,86400
+            // MP-0 H,RT-PWR-BattCell,<cellnr>,86400
             //  ,<packnr>
             //  ,<volt_alertstatus>,<temp_alertstatus>,
             //  ,<volt_act>,<volt_min>,<volt_max>,<volt_maxdev>
             //  ,<temp_act>,<temp_min>,<temp_max>,<temp_maxdev>
             sprintf( net_scratchpad,
-                    "MP-0 H,PWR-BattCell,%u,86400,%u,%u,%u,%u,%u,%u,%d"
+                    "MP-0 H,RT-PWR-BattCell,%u,86400,%u,%u,%u,%u,%u,%u,%d"
                     , c+1
                     , p+1
                     , volt_alert
