@@ -90,7 +90,8 @@ CREATE TABLE `ovms_historicalmessages` (
   `h_recordnumber` int(5) NOT NULL DEFAULT '0',
   `h_data` text NOT NULL,
   `h_expires` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`vehicleid`,`h_recordtype`,`h_recordnumber`,`h_timestamp`)
+  PRIMARY KEY (`vehicleid`,`h_recordtype`,`h_recordnumber`,`h_timestamp`),
+  KEY `h_expires` (`h_expires`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='OVMS: Stores historical data records';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -141,4 +142,4 @@ CREATE TABLE `ovms_utilisation` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-12-17  0:33:25
+-- Dump completed on 2012-12-17  0:59:49

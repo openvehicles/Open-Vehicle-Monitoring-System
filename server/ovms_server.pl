@@ -25,7 +25,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "1.2.2-20120920";
+my $VERSION = "2.1.1-20121216";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my %conns;
 my $utilisations;
@@ -702,6 +702,51 @@ sub io_message
         }
       return;
       }
+    elsif (($m_code eq $code)&&($data =~ /^(\d+)(,(.+))?$/)&&($1 == 31))
+      {
+      # Special case of an app requesting (non-paranoid) the historical data summary
+      my $sth = $db->prepare('SELECT h_recordtype,COUNT(DISTINCT h_recordnumber) AS distinctrecs, COUNT(*) AS recs,SUM(LENGTH(h_recordtype)+LENGTH(h_data)+LENGTH(vehicleid)+20) AS tsize, MIN(h_timestamp) AS first, MAX(h_timestamp) AS last '
+                           . 'FROM ovms_historicalmessages WHERE vehicleid=? GROUP BY h_recordtype ORDER BY h_recordtype;');
+      $sth->execute($vehicleid);
+      my $rows = $sth->rows;
+      my $k = 0;
+      while (my $row = $sth->fetchrow_hashref())
+        {
+        $k++;
+        &io_tx($fn, $handle, 'c', sprintf('31,0,%d,%d,%s,%d,%d,%d,%s,%s',$k,$rows,
+               $row->{'h_recordtype'},
+               $row->{'distinctrecs'},
+               $row->{'recs'},
+               $row->{'tsize'},
+               $row->{'first'},
+               $row->{'last'}));
+        }
+      if ($rows == 0)
+        {
+        &io_tx($fn, $handle, 'c', '31,1,No historical data available');
+        }
+      return;
+      }
+    elsif (($m_code eq $code)&&($data =~ /^(\d+)(,(.+))?$/)&&($1 == 32))
+      {
+      # Special case of an app requesting (non-paranoid) the GPRS data
+      my ($h_recordtype) = $3;
+      my $sth = $db->prepare('SELECT * FROM ovms_historicalmessages WHERE vehicleid=? AND h_recordtype=? ORDER BY h_timestamp,h_recordnumber');
+      $sth->execute($vehicleid,$h_recordtype);
+      my $rows = $sth->rows;
+      my $k = 0;
+      while (my $row = $sth->fetchrow_hashref())
+        {
+        $k++;
+        &io_tx($fn, $handle, 'c', sprintf('32,0,%d,%d,%s,%s,%d,%s',$k,$rows,
+               $row->{'h_recordtype'}, $row->{'h_timestamp'}, $row->{'h_recordnumber'}, $row->{'h_data'}));
+        }
+      if ($rows == 0)
+        {
+        &io_tx($fn, $handle, 'c', '32,1,No historical data available');
+        }
+      return;
+      }
     &io_tx_car($vehicleid, $code, $data); # Send it on to the car
     return;
     }
@@ -753,6 +798,20 @@ sub io_message
       my $msg = $group_msgs{$groupid}{$vehicleid};
       &io_tx($fn, $conns{$fn}{'handle'}, 'g', join(',',$vehicleid,$groupid,$msg));
       }
+    return;
+    }
+  elsif ($m_code eq 'H')
+    {
+    if ($clienttype ne 'C')
+      {
+      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'H' message from non-Car";
+      return;
+      }
+    my ($h_recordtype,$h_recordnumber,$h_lifetime,$h_data) = split /,/,$data,4;
+    $db->do("INSERT IGNORE INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) "
+          . "VALUES (?,UTC_TIMESTAMP(),?,?,?,UTC_TIMESTAMP()+INTERVAL ? SECOND)",
+            undef,
+            $vehicleid, $h_recordtype, $h_recordnumber, $h_data, $h_lifetime);
     return;
     }
 
