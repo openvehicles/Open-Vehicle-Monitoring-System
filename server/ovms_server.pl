@@ -567,6 +567,10 @@ sub db_tim
     AE::log error => "Lost database connection - reconnecting...";
     $db = DBI->connect($config->val('db','path'),$config->val('db','user'),$config->val('db','pass'));
     }
+  if (defined $db)
+    {
+    $db->do('DELETE FROM ovms_historicalmessages WHERE h_expires<UTC_TIMESTAMP();');
+    }
   }
 
 sub db_get_vehicle
