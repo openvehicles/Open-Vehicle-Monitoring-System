@@ -100,7 +100,7 @@ void net_msg_disconnected(void)
 
 // Start to send a net msg
 void net_msg_start(void)
-{
+  {
   if (net_state == NET_STATE_DIAGMODE)
     {
     net_puts_rom("# ");
@@ -112,7 +112,7 @@ void net_msg_start(void)
     net_puts_rom("AT+CIPSEND\r");
     delay100(10);
     }
-}
+  }
 
 // Finish sending a net msg
 void net_msg_send(void)
@@ -129,53 +129,53 @@ void net_msg_send(void)
 
 // Encode the message in net_scratchpad and start the send process
 void net_msg_encode_puts(void)
-{
+  {
   int k;
   char code;
 
   if (net_state == NET_STATE_DIAGMODE)
-  {
-      net_puts_ram(net_scratchpad);
-  }
+    {
+    net_puts_ram(net_scratchpad);
+    }
   else
-  {
-      if ((ptokenmade==1)&&
-          (net_scratchpad[5]!='E')&&
-          (net_scratchpad[5]!='A')&&
-          (net_scratchpad[5]!='a')&&
-          (net_scratchpad[5]!='g')&&
-          (net_scratchpad[5]!='P'))
+    {
+    if ((ptokenmade==1)&&
+        (net_scratchpad[5]!='E')&&
+        (net_scratchpad[5]!='A')&&
+        (net_scratchpad[5]!='a')&&
+        (net_scratchpad[5]!='g')&&
+        (net_scratchpad[5]!='P'))
+      {
+      // We must convert the message to a paranoid one...
+      // The message in net_scratchpad is of the form MP-0 X...
+      // Where X is the code and ... is the (optional) data
+      // Let's rebuild it in the net_msg_scratchpad...
+      code = net_scratchpad[5];
+      strcpy(net_msg_scratchpad,net_scratchpad+6);
+
+      // Paranoid encrypt the message part of the transaction
+      RC4_setup(&pm_crypto1, &pm_crypto2, pdigest, MD5_SIZE);
+      for (k=0;k<1024;k++)
         {
-        // We must convert the message to a paranoid one...
-        // The message in net_scratchpad is of the form MP-0 X...
-        // Where X is the code and ... is the (optional) data
-        // Let's rebuild it in the net_msg_scratchpad...
-        code = net_scratchpad[5];
-        strcpy(net_msg_scratchpad,net_scratchpad+6);
-
-        // Paranoid encrypt the message part of the transaction
-        RC4_setup(&pm_crypto1, &pm_crypto2, pdigest, MD5_SIZE);
-        for (k=0;k<1024;k++)
-          {
-          net_scratchpad[0] = 0;
-          RC4_crypt(&pm_crypto1, &pm_crypto2, net_scratchpad, 1);
-          }
-        k=strlen(net_msg_scratchpad);
-        RC4_crypt(&pm_crypto1, &pm_crypto2, net_msg_scratchpad, k);
-
-        strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 EM");
-        net_scratchpad[7] = code;
-        base64encode(net_msg_scratchpad,k,net_scratchpad+8);
-        // The messdage is now in paranoid mode...
+        net_scratchpad[0] = 0;
+        RC4_crypt(&pm_crypto1, &pm_crypto2, net_scratchpad, 1);
         }
+      k=strlen(net_msg_scratchpad);
+      RC4_crypt(&pm_crypto1, &pm_crypto2, net_msg_scratchpad, k);
 
-      k=strlen(net_scratchpad);
-      RC4_crypt(&tx_crypto1, &tx_crypto2, net_scratchpad, k);
-      base64encodesend(net_scratchpad,k);
-  }
+      strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 EM");
+      net_scratchpad[7] = code;
+      base64encode(net_msg_scratchpad,k,net_scratchpad+8);
+      // The messdage is now in paranoid mode...
+      }
+
+    k=strlen(net_scratchpad);
+    RC4_crypt(&tx_crypto1, &tx_crypto2, net_scratchpad, k);
+    base64encodesend(net_scratchpad,k);
+    }
 
   net_puts_rom("\r\n");
-}
+  }
 
 // Register to the NET OVMS server
 void net_msg_register(void)

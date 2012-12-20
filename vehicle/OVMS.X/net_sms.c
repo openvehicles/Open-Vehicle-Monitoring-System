@@ -822,9 +822,9 @@ BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
 
   p = par_get(PARAM_VEHICLETYPE);
   if (vehicle_version)
-      strcpypgm2ram(net_msg_scratchpad, vehicle_version);
+    strcpypgm2ram(net_msg_scratchpad, vehicle_version);
   else
-      net_msg_scratchpad[0] = 0;
+    net_msg_scratchpad[0] = 0;
 
   sprintf(net_scratchpad, (rom far char*)"OVMS Firmware version: %d.%d.%d/%s%s/V%d",
           ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],

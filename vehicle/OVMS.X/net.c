@@ -252,40 +252,38 @@ void net_poll(void)
 // Macro to wait for TxBuffer before call to PutChar():
 #define UART_WAIT_PUTC(c) \
   { \
-    while (vUARTIntStatus.UARTIntTxBufferFull) ; \
-    while (UARTIntPutChar(c)==0) ; \
+  while (vUARTIntStatus.UARTIntTxBufferFull) ; \
+  while (UARTIntPutChar(c)==0) ; \
   }
 
 void net_puts_rom(static const rom char *data)
   {
 #ifdef OVMS_DIAGMODULE
-    /* Help diag terminals with line breaks */
-    if( net_state == NET_STATE_DIAGMODE )
+  // Help diag terminals with line breaks
+  if ( net_state == NET_STATE_DIAGMODE )
     {
-        char lastdata = 0;
+    char lastdata = 0;
 
-        while(1)
-        {
-            // insert \r before \n if missing:
-            if( *data == '\n' && lastdata != '\r' )
-                UART_WAIT_PUTC('\r')
-            // insert \n after \r if missing:
-            else if( lastdata == '\r' && *data != '\n' )
-                UART_WAIT_PUTC('\n')
+    while(1)
+      {
+      if ( *data == '\n' && lastdata != '\r' )
+        UART_WAIT_PUTC('\r') // insert \r before \n if missing:
+      else if( lastdata == '\r' && *data != '\n' )
+         UART_WAIT_PUTC('\n') // insert \n after \r if missing
 
-            if( !*data )
-                break;
+      if ( !*data )
+        break;
 
-            // output char:
-            UART_WAIT_PUTC(*data)
+      // output char
+      UART_WAIT_PUTC(*data)
 
-            lastdata = *data++;
-        }
+      lastdata = *data++;
+      }
     }
-    else
+  else
 #endif // OVMS_DIAGMODULE
 
-  /* Send characters up to the null */
+  // Send characters up to the null
   for (;*data;data++)
     UART_WAIT_PUTC(*data)
   }
@@ -298,33 +296,31 @@ void net_puts_rom(static const rom char *data)
 void net_puts_ram(const char *data)
   {
 #ifdef OVMS_DIAGMODULE
-    /* Help diag terminals with line breaks */
-    if( net_state == NET_STATE_DIAGMODE )
+  // Help diag terminals with line breaks
+  if( net_state == NET_STATE_DIAGMODE )
     {
-        char lastdata = 0;
+    char lastdata = 0;
 
-        while(1)
-        {
-            // insert \r before \n if missing:
-            if( *data == '\n' && lastdata != '\r' )
-                UART_WAIT_PUTC('\r')
-            // insert \n after \r if missing:
-            else if( lastdata == '\r' && *data != '\n' )
-                UART_WAIT_PUTC('\n')
+    while(1)
+      {
+      if ( *data == '\n' && lastdata != '\r' )
+        UART_WAIT_PUTC('\r') // insert \r before \n if missing
+      else if( lastdata == '\r' && *data != '\n' )
+        UART_WAIT_PUTC('\n') // insert \n after \r if missing
 
-            if( !*data )
-                break;
+      if ( !*data )
+        break;
 
-            // output char:
-            UART_WAIT_PUTC(*data)
+      // output char
+      UART_WAIT_PUTC(*data)
 
-            lastdata = *data++;
-        }
+      lastdata = *data++;
+      }
     }
-    else
+  else
 #endif // OVMS_DIAGMODULE
 
-  /* Send characters up to the null */
+  // Send characters up to the null
   for (;*data;data++)
     UART_WAIT_PUTC(*data)
   }
@@ -335,8 +331,8 @@ void net_puts_ram(const char *data)
 // N.B. This may block if the transmit buffer is full.
 void net_putc_ram(const char data)
   {
-  /* Send one character */
-    UART_WAIT_PUTC(data)
+  // Send one character
+  UART_WAIT_PUTC(data)
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -868,82 +864,82 @@ void net_state_activity()
       else if ((memcmppgm2ram(net_buf, (char const rom far*)"2,", 2) == 0)&&
                ((net_fnbits & NET_FN_INTERNALGPS)>0))
         {
-          // Incoming GPS coordinates
-          // NMEA format $GPGGA: Global Positioning System Fixed Data
-          // 2,<Time>,<Lat>,<NS>,<Lon>,<EW>,<Fix>,<SatCnt>,<HDOP>,<Alt>,<Unit>,...
+        // Incoming GPS coordinates
+        // NMEA format $GPGGA: Global Positioning System Fixed Data
+        // 2,<Time>,<Lat>,<NS>,<Lon>,<EW>,<Fix>,<SatCnt>,<HDOP>,<Alt>,<Unit>,...
 
-          long lat, lon;
-          char ns, ew;
-          char fix;
-          int alt;
+        long lat, lon;
+        char ns, ew;
+        char fix;
+        int alt;
 
-          // Parse string:
-          if( b = strtokpgmram( net_buf+2, "," ) )
-              ;                                     // Time
-          if( b = strtokpgmram( NULL, "," ) )
-              lat = gps2latlon( b );                // Latitude
-          if( b = strtokpgmram( NULL, "," ) )
-              ns = *b;                              // North / South
-          if( b = strtokpgmram( NULL, "," ) )
-              lon = gps2latlon( b );                // Longitude
-          if( b = strtokpgmram( NULL, "," ) )
-              ew = *b;                              // East / West
-          if( b = strtokpgmram( NULL, "," ) )
-              fix = *b;                             // Fix (0/1)
-          if( b = strtokpgmram( NULL, "," ) )
-              ;                                     // Satellite count
-          if( b = strtokpgmram( NULL, "," ) )
-              ;                                     // HDOP
-          if( b = strtokpgmram( NULL, "," ) )
-              alt = atoi( b );                      // Altitude
+        // Parse string:
+        if( b = strtokpgmram( net_buf+2, "," ) )
+            ;                                     // Time
+        if( b = strtokpgmram( NULL, "," ) )
+            lat = gps2latlon( b );                // Latitude
+        if( b = strtokpgmram( NULL, "," ) )
+            ns = *b;                              // North / South
+        if( b = strtokpgmram( NULL, "," ) )
+            lon = gps2latlon( b );                // Longitude
+        if( b = strtokpgmram( NULL, "," ) )
+            ew = *b;                              // East / West
+        if( b = strtokpgmram( NULL, "," ) )
+            fix = *b;                             // Fix (0/1)
+        if( b = strtokpgmram( NULL, "," ) )
+            ;                                     // Satellite count
+        if( b = strtokpgmram( NULL, "," ) )
+            ;                                     // HDOP
+        if( b = strtokpgmram( NULL, "," ) )
+            alt = atoi( b );                      // Altitude
 
-          if( b )
+        if( b )
           {
-              // data set complete, store:
+          // data set complete, store:
 
-              car_gpslock = fix & 0x01;
+          car_gpslock = fix & 0x01;
 
-              if( car_gpslock )
-              {
-                  if( ns == 'S' ) lat = ~lat;
-                  if( ew == 'W' ) lon = ~lon;
+          if( car_gpslock )
+            {
+            if( ns == 'S' ) lat = ~lat;
+            if( ew == 'W' ) lon = ~lon;
 
-                  car_latitude = lat;
-                  car_longitude = lon;
-                  car_altitude = alt;
+            car_latitude = lat;
+            car_longitude = lon;
+            car_altitude = alt;
 
-                  car_stale_gps = 120; // Reset stale indicator
-              }
-              else
-              {
-                  car_stale_gps = 0;
-              }
-          }
+            car_stale_gps = 120; // Reset stale indicator
+            }
+          else
+            {
+            car_stale_gps = 0;
+            }
+         }
 
-        }
-      else if ((memcmppgm2ram(net_buf, (char const rom far*)"64,", 3) == 0)&&
-               ((net_fnbits & NET_FN_INTERNALGPS)>0))
+      }
+    else if ((memcmppgm2ram(net_buf, (char const rom far*)"64,", 3) == 0)&&
+             ((net_fnbits & NET_FN_INTERNALGPS)>0))
+      {
+      // Incoming GPS coordinates
+      // NMEA format $GPVTG: Course over ground
+      // 64,<Course>,<Ref>,...
+
+      int dir;
+
+      // Parse string:
+      if( b = strtokpgmram( net_buf+3, "," ) )
+        dir = atoi( b );                      // Course
+
+      if( b )
         {
-          // Incoming GPS coordinates
-          // NMEA format $GPVTG: Course over ground
-          // 64,<Course>,<Ref>,...
-
-          int dir;
-
-          // Parse string:
-          if( b = strtokpgmram( net_buf+3, "," ) )
-              dir = atoi( b );                      // Course
-
-          if( b )
+        // data set complete, store:
+        if( car_gpslock )
           {
-              // data set complete, store:
-              if( car_gpslock )
-              {
-                  car_direction = dir;
-              }
+          car_direction = dir;
           }
-
         }
+
+      }
 #endif
       else if (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT OK", 10) == 0)
         {

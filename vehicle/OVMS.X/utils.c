@@ -180,10 +180,10 @@ WORD crc16(char *data, int length)
 
 // cr2lf: replace \r by \n in s (to convert msg text to sms)
 void cr2lf(char *s)
-{
-    while(s && *s)
+  {
+  while(s && *s)
     {
-        if(*s == '\r') *s = '\n';
-        ++s;
+    if(*s == '\r') *s = '\n';
+    ++s;
     }
-}
+  }
