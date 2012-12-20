@@ -47,10 +47,10 @@
 
 char orig_canwrite = 0;
 int canwrite_state = -1;
-unsigned int CANIDMap[4]
+rom unsigned int CANIDMap[4]
         = { 0x100, 0x344, 0x400, 0x402 };
 
-unsigned char DummyData[DATA_COUNT * 9]
+rom unsigned char DummyData[DATA_COUNT * 9]
         = {
 0x00, 0x83, 0x03, 0x00, 0x00, 0x3F, 0x71, 0xD1, 0x09,   //      VDS GPS latitude (latitude 22.341710)
 0x00, 0x84, 0x03, 0x00, 0x00, 0xCC, 0xB2, 0x2E, 0x32,   //      VDS GPS longitude (longitude 114.192875)
