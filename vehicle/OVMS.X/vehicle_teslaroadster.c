@@ -183,7 +183,7 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
             (car_doors4 != can_databuffer[4]))
           net_req_notification(NET_NOTIFY_ENV);
 
-        if (((car_doors2&0x40)==0)&&(can_databuffer[2]&0x40)&&(can_databuffer[2]&0x10))
+        if (((car_doors2&0x80)==0)&&(can_databuffer[2]&0x80)&&(can_databuffer[2]&0x10))
           net_req_notification(NET_NOTIFY_TRUNK); // Valet mode is active, and trunk was opened
 
         if (((car_doors4&0x02)==0)&&((can_databuffer[4]&0x02)!=0))
