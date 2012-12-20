@@ -912,9 +912,11 @@ void vehicle_twizy_notify(void)
     {
         if( strstrrampgm(channels,"SMS") )
         {
+#ifdef OVMS_TWIZY_BATTMON
             delay100(10);
             if( vehicle_twizy_battstatus_sms( TRUE, NULL, NULL, NULL ) )
                 net_send_sms_finish();
+#endif // OVMS_TWIZY_BATTMON
         }
         // IP alert: TODO
 
@@ -1263,7 +1265,9 @@ BOOL vehicle_twizy_state_ticker60(void)
         {
             delay100(10);
             stat = 2;
+#ifdef OVMS_TWIZY_BATTMON
             stat = vehicle_twizy_battstatus_msgp( stat, CMD_BatteryStatus );
+#endif // OVMS_TWIZY_BATTMON
             stat = vehicle_twizy_power_msgp( stat, CMD_PowerUsageStats );
             if( stat != 2 )
                 net_msg_send();
