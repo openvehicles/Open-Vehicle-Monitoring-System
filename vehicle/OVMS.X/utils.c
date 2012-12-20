@@ -187,3 +187,136 @@ void cr2lf(char *s)
         ++s;
     }
 }
+
+
+// stpcpy rom string (not in C18 lib):
+char *stp_rom( char *dst, const rom char *val )
+{
+    while( *dst = *val++ ) dst++;
+    return dst;
+}
+
+// stpcpy ram string (not in C18 lib):
+char *stp_ram( char *dst, const char *val )
+{
+    while( *dst = *val++ ) dst++;
+    return dst;
+}
+
+// stpcpy integer with optional string prefix:
+char *stp_i( char *dst, const rom char *prefix, int val )
+{
+    if( prefix )
+        dst = stp_rom( dst, prefix );
+    itoa( val, dst );
+    while( *dst ) dst++;
+    return dst;
+}
+
+// stpcpy long with optional string prefix:
+char *stp_l( char *dst, const rom char *prefix, long val )
+{
+    if( prefix )
+        dst = stp_rom( dst, prefix );
+    ltoa( val, dst );
+    while( *dst ) dst++;
+    return dst;
+}
+
+// stpcpy unsigned long with optional string prefix:
+char *stp_ul( char *dst, const rom char *prefix, unsigned long val )
+{
+    if( prefix )
+        dst = stp_rom( dst, prefix );
+    ultoa( val, dst );
+    while( *dst ) dst++;
+    return dst;
+}
+
+// itox
+//  (note: fills fixed 4 chars with '0' padding = sprintf %04x)
+void itox(unsigned int i, char *s)
+{
+    unsigned char n;
+
+    s += 4;
+    *s = '\0';
+
+    for (n = 4; n != 0; --n) {
+        *--s = "0123456789ABCDEF"[i & 0x0F];
+        i >>= 4;
+    }
+}
+
+// stpcpy unsigned integer hexadecimal with optional string prefix:
+//  (note: fills fixed 4 chars with '0' padding = sprintf %04x)
+char *stp_x( char *dst, const rom char *prefix, unsigned int val )
+{
+    if( prefix )
+        dst = stp_rom( dst, prefix );
+    itox( val, dst );
+    while( *dst ) dst++;
+    return dst;
+}
+
+// ltox
+//  (note: fills fixed 8 chars with '0' padding = sprintf %08lx)
+void ltox(unsigned long i, char *s)
+{
+    unsigned char n;
+
+    s += 8;
+    *s = '\0';
+
+    for (n = 8; n != 0; --n) {
+        *--s = "0123456789ABCDEF"[i & 0x0F];
+        i >>= 4;
+    }
+}
+
+// stpcpy unsigned long hexadecimal with optional string prefix:
+//  (note: fills fixed 8 chars with '0' padding = sprintf %08lx)
+char *stp_lx( char *dst, const rom char *prefix, unsigned long val )
+{
+    if( prefix )
+        dst = stp_rom( dst, prefix );
+    ltox( val, dst );
+    while( *dst ) dst++;
+    return dst;
+}
+
+// format unsigned long to fixed size with padding
+char *stp_ulp( char *dst, const rom char *prefix, unsigned long val, int len, char pad )
+{
+    char buf[11];
+    char bl;
+
+    if( prefix )
+        dst = stp_rom( dst, prefix );
+
+    ultoa( val, buf );
+
+    for( bl=strlen(buf); bl < len; bl++ )
+        *dst++ = pad;
+
+    dst = stp_ram( dst, buf );
+
+    return dst;
+}
+
+// format fixed precision long as float
+char *stp_l2f( char *dst, const rom char *prefix, long val, int prec )
+{
+    long factor;
+    char p;
+
+    for( factor=1, p=prec; p > 0; p-- )
+        factor *= 10;
+
+    dst = stp_l( dst, prefix, val / factor );
+    *dst++ = '.';
+    dst = stp_ulp( dst, NULL, val % factor, prec, '0' );
+
+    return dst;
+}
+

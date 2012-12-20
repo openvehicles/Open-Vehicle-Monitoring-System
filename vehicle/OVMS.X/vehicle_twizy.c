@@ -81,6 +81,10 @@
 ;             acceleration & deceleration + percentages each.
 ;           - Minor cleanups & fixes.
 ;
+;    2.3  20 Dec 2012 (Michael Balzer):
+;           - Replaced all sprintf() calls by new stp_* utils (to reduce stack usage)
+;           - Bug fixes on power usage statistics
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -123,11 +127,6 @@
 // smalles error approximation: mi = (km * 10 - 5) / 16 + 1
 #define KM2MI(KM)       (((KM) <= 0) ? 0 : ( ( ( (KM) * 10 - 5 ) >> 4 ) + 1 ))
 #define MI2KM(MI)       ( ( ( (MI) << 4 ) + 5 ) / 10 )
-
-// Format scaled int into two ints for sprintf
-// ...example: sprintf( buf, "%d.%02u", FMTINT(val,100) )
-#define FMTINT(f,d)     (f) / (d), ((f) >= 0) ? ((f) % (d)) : (-(f) % (d))
-#define FMTUINT(f,d)     (f) / (d), (f) % (d)
 
 // can_databuffer nibble access macros: b=byte# 0..7 / n=nibble# 0..15
 #define CAN_BYTE(b) can_databuffer[b]
@@ -315,8 +314,8 @@ volatile UINT8 can_batt_sensors_state;
 
 // MSG notification queue (like net_notify for vehicle specific notifies)
 volatile UINT8 twizy_notify;        // bit set of...
-#define TWIZY_NOTIFY_BATTALERT      0x01
-#define TWIZY_NOTIFY_POWERSTATS     0x02
+#define SEND_BatteryAlert           0x01
+#define SEND_PowerNotify            0x02
 
 
 #pragma udata   // return to default udata section -- why?
@@ -375,6 +374,9 @@ rom BYTE can_sim_data[][11] =
     { 0, 0, 1 }, // chunk 1: charge
     { 0x05,0x97,0x08,0x20,0xA4,0x03,0xB1,0x29,0x00,0x01,0x64 }, // STATUS
 
+    { 0, 0, 2 }, // chunk 2: off
+    { 0x05,0x97,0x08,0x00,0xE4,0x00,0xD1,0x29,0x00,0x01,0x31 }, // STATUS
+
     { 0, 0, 10 }, // chunk 10: normal battery data
     { 0x05,0x54,0x08,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x00 },
     { 0x05,0x56,0x08,0x33,0x73,0x35,0x33,0x53,0x35,0x33,0x5A },
@@ -416,6 +418,7 @@ void vehicle_twizy_simulator_run(int chunk)
 {
     UINT8 cc;
     int line;
+    char *s;
 
     for( line=0, cc=0; cc <= chunk; line++ )
     {
@@ -430,7 +433,8 @@ void vehicle_twizy_simulator_run(int chunk)
             // this is the chunk: inject sim data
             if( net_state == NET_STATE_DIAGMODE )
             {
-                sprintf( net_scratchpad, "# sim data line %d\n", line );
+                s = stp_i( net_scratchpad, "# sim data line ", line );
+                s = stp_rom( s, "\n" );
                 net_puts_ram( net_scratchpad );
             }
 
@@ -890,6 +894,12 @@ void vehicle_twizy_notify(void)
 {
     char *channels;
 
+#ifdef OVMS_DIAGMODULE
+    if( (net_state==NET_STATE_DIAGMODE) )
+        ; // disable connection check
+    else
+#endif // OVMS_DIAGMODULE
+
     // Server connection ready & available?
     if( (net_state!=NET_STATE_READY) || (!net_msg_serverok) )
         return;
@@ -898,7 +908,7 @@ void vehicle_twizy_notify(void)
     channels = par_get( PARAM_NOTIFIES );
 
     // Send battery status alert?
-    if( (twizy_notify & TWIZY_NOTIFY_BATTALERT) && (net_msg_sendpending==0) )
+    if( (twizy_notify & SEND_BatteryAlert) && (net_msg_sendpending==0) )
     {
         if( strstrrampgm(channels,"SMS") )
         {
@@ -908,11 +918,11 @@ void vehicle_twizy_notify(void)
         }
         // IP alert: TODO
 
-        twizy_notify &= ~TWIZY_NOTIFY_BATTALERT;
+        twizy_notify &= ~SEND_BatteryAlert;
     }
 
     // Send power usage statistics?
-    if( (twizy_notify & TWIZY_NOTIFY_POWERSTATS) && (net_msg_sendpending==0) )
+    if( (twizy_notify & SEND_PowerNotify) && (net_msg_sendpending==0) )
     {
         if( strstrrampgm(channels,"IP") )
         {
@@ -927,7 +937,7 @@ void vehicle_twizy_notify(void)
                 net_send_sms_finish();
         }
 
-        twizy_notify &= ~TWIZY_NOTIFY_POWERSTATS;
+        twizy_notify &= ~SEND_PowerNotify;
     }
     
 }
@@ -1032,7 +1042,8 @@ BOOL vehicle_twizy_state_ticker1(void)
             car_doors1 &= ~0x80; // Car OFF
             
             // send power statistics:
-            twizy_notify |= TWIZY_NOTIFY_POWERSTATS;
+            if( can_speedpwr[CAN_SPEED_CONST].use > 22500 )
+                twizy_notify |= SEND_PowerNotify;
         }
     }
 
@@ -1087,7 +1098,7 @@ BOOL vehicle_twizy_state_ticker1(void)
             can_soc_max = can_soc;
 
             // reset power sums:
-            memset( can_speedpwr, 0, sizeof can_speedpwr );
+            vehicle_twizy_power_reset();
 
             // Send charge stat:
             net_req_notification( NET_NOTIFY_STAT );
@@ -1248,7 +1259,7 @@ BOOL vehicle_twizy_state_ticker60(void)
         {
             can_granular_tick -= 5; // Try again in 5 seconds...
         }
-        else if( (net_link==1) && (net_apps_connected>0) )
+        else if( (net_link==1) && (net_msg_serverok==1) )
         {
             delay100(10);
             stat = 2;
@@ -1325,47 +1336,56 @@ BOOL vehicle_twizy_state_ticker60(void)
 
 void vehicle_twizy_power_reset(void)
 {
-    memset( can_speedpwr, 0, sizeof can_speedpwr );
-    can_speed_state = CAN_SPEED_CONST;
-
-    memset( can_levelpwr, 0, sizeof can_levelpwr );
-    can_level_odo = can_odometer;
-    if( (car_gpslock==0) || (car_stale_gps==0) )
-        can_level_alt = -32767;
-    else
-        can_level_alt = car_altitude;
-
-    PIE3bits.RXB1IE = 0; // disable interrupt for CAN buffer 1
+    PIE3bits.RXB0IE = 0; // disable interrupts
     {
+        memset( can_speedpwr, 0, sizeof can_speedpwr );
+        can_speed_state = CAN_SPEED_CONST;
         can_level_use = 0;
         can_level_rec = 0;
     }
-    PIE3bits.RXB1IE = 1; // enable interrupt for CAN buffer 1
+    PIE3bits.RXB0IE = 1; // enable interrupt
+
+    memset( can_levelpwr, 0, sizeof can_levelpwr );
+    can_level_odo = 0;
+    can_level_alt = 0;
+
 }
 
 
 // Collect power usage sections:
 void vehicle_twizy_power_collect(void)
 {
-    unsigned long dist;
+    long dist;
     int alt_diff, grade_perc;
     unsigned long coll_use, coll_rec;
     
-    if( (car_gpslock==0) || (car_stale_gps==0) )
+    if( car_stale_gps==0 )
     {
-        // no GPS
+        // no GPS for 2 minutes: reset section
+        can_level_odo = 0;
+        can_level_alt = 0;
+
         return;
     }
-    else if( (can_level_odo==0) || (can_level_alt==-32767) )
+    else if( can_level_odo==0 )
     {
-        // init section reference:
+        // start new section:
+
         can_level_odo = can_odometer;
         can_level_alt = car_altitude;
+
+        PIE3bits.RXB0IE = 0; // disable interrupt
+        {
+            can_level_use = 0;
+            can_level_rec = 0;
+        }
+        PIE3bits.RXB0IE = 1; // enable interrupt
+
         return;
     }
     
     // calc section length:
-    dist = (can_odometer - can_level_odo) * 100;
+    dist = (can_odometer - can_level_odo) * 10;
     if( dist < CAN_LEVEL_MINSECTLEN )
     {
         // section too short to collect
@@ -1373,18 +1393,18 @@ void vehicle_twizy_power_collect(void)
     }
     
     // OK, read + reset collected power sums:
-    PIE3bits.RXB1IE = 0; // disable interrupt for CAN buffer 1
+    PIE3bits.RXB0IE = 0; // disable interrupt
     {
         coll_use = can_level_use;
         coll_rec = can_level_rec;
         can_level_use = 0;
         can_level_rec = 0;
     }
-    PIE3bits.RXB1IE = 1; // enable interrupt for CAN buffer 1
+    PIE3bits.RXB0IE = 1; // enable interrupt
     
     // calc grade in percent:
     alt_diff = car_altitude - can_level_alt;
-    grade_perc = alt_diff * 100 / dist;
+    grade_perc = (long) alt_diff * 100 / (long) dist;
     
     // set new section reference:
     can_level_odo = can_odometer;
@@ -1399,17 +1419,18 @@ void vehicle_twizy_power_collect(void)
     }
     else if( grade_perc <= -CAN_LEVEL_THRESHOLD )
     {
-        can_levelpwr[CAN_LEVEL_DOWN].hsum -= alt_diff;
+        can_levelpwr[CAN_LEVEL_DOWN].hsum += -alt_diff;
         can_levelpwr[CAN_LEVEL_DOWN].use  += coll_use;
         can_levelpwr[CAN_LEVEL_DOWN].rec  += coll_rec;
     }
 }
 
 
-BOOL vehicle_twizy_power_prepmsg(void)
+void vehicle_twizy_power_prepmsg(void)
 {
     unsigned long pwr_cnt, pwr_use, pwr_rec;
     UINT8 prc_const=0, prc_accel=0, prc_decel=0;
+    char *s;
 
     // overall sums:
     pwr_cnt = can_speedpwr[CAN_SPEED_CONST].cnt
@@ -1432,50 +1453,32 @@ BOOL vehicle_twizy_power_prepmsg(void)
         prc_decel = (can_speedpwr[CAN_SPEED_DECEL].cnt * 1000 / pwr_cnt + 5) / 10;
     }
 
-    if( (pwr_use > 0) || (pwr_rec > 0) )
-    {
-        sprintf( net_msg_scratchpad,
-                "Power -%lu +%lu Wh\r Const %u%% -%lu +%lu Wh"
-                , (pwr_use + 11250) / 22500
-                , (pwr_rec + 11250) / 22500
-                , prc_const
-                , (can_speedpwr[CAN_SPEED_CONST].use + 11250) / 22500
-                , (can_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500
-                );
-        strcat( net_scratchpad, net_msg_scratchpad );
-
-        sprintf( net_msg_scratchpad,
-                "\r Accel %u%% -%lu +%lu Wh\r Decel %u%% -%lu +%lu Wh"
-                , prc_accel
-                , (can_speedpwr[CAN_SPEED_ACCEL].use + 11250) / 22500
-                , (can_speedpwr[CAN_SPEED_ACCEL].rec + 11250) / 22500
-                , prc_decel
-                , (can_speedpwr[CAN_SPEED_DECEL].use + 11250) / 22500
-                , (can_speedpwr[CAN_SPEED_DECEL].rec + 11250) / 22500
-                );
-        strcat( net_scratchpad, net_msg_scratchpad );
-
-        sprintf( net_msg_scratchpad,
-                "\r Up %um -%lu +%lu Wh\r Down %um -%lu +%lu Wh"
-                , can_levelpwr[CAN_LEVEL_UP].hsum
-                , (can_levelpwr[CAN_LEVEL_UP].use + 11250) / 22500
-                , (can_levelpwr[CAN_LEVEL_UP].rec + 11250) / 22500
-                , can_levelpwr[CAN_LEVEL_DOWN].hsum
-                , (can_levelpwr[CAN_LEVEL_DOWN].use + 11250) / 22500
-                , (can_levelpwr[CAN_LEVEL_DOWN].rec + 11250) / 22500
-                );
-        strcat( net_scratchpad, net_msg_scratchpad );
-
-        return TRUE;
-    }
-
-    return FALSE;
+    s = strchr( net_scratchpad, 0 ); // append to net_scratchpad
+    s = stp_ul( s, "Power -",        (pwr_use + 11250) / 22500 );
+    s = stp_ul( s, " +",             (pwr_rec + 11250) / 22500 );
+    s = stp_i ( s, " Wh\r Const ",   prc_const );
+    s = stp_ul( s, "% -",            (can_speedpwr[CAN_SPEED_CONST].use + 11250) / 22500 );
+    s = stp_ul( s, " +",             (can_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500 );
+    s = stp_i ( s, " Wh\r Accel ",   prc_accel );
+    s = stp_ul( s, "% -",            (can_speedpwr[CAN_SPEED_ACCEL].use + 11250) / 22500 );
+    s = stp_ul( s, " +",             (can_speedpwr[CAN_SPEED_ACCEL].rec + 11250) / 22500 );
+    s = stp_i ( s, " Wh\r Decel ",   prc_decel );
+    s = stp_ul( s, "% -",            (can_speedpwr[CAN_SPEED_DECEL].use + 11250) / 22500 );
+    s = stp_ul( s, " +",             (can_speedpwr[CAN_SPEED_DECEL].rec + 11250) / 22500 );
+    s = stp_ul( s, " Wh\r Up ",      can_levelpwr[CAN_LEVEL_UP].hsum );
+    s = stp_ul( s, "m -",            (can_levelpwr[CAN_LEVEL_UP].use + 11250) / 22500 );
+    s = stp_ul( s, " +",             (can_levelpwr[CAN_LEVEL_UP].rec + 11250) / 22500 );
+    s = stp_ul( s, " Wh\r Down ",    can_levelpwr[CAN_LEVEL_DOWN].hsum );
+    s = stp_ul( s, "m -",            (can_levelpwr[CAN_LEVEL_DOWN].use + 11250) / 22500 );
+    s = stp_ul( s, " +",             (can_levelpwr[CAN_LEVEL_DOWN].rec + 11250) / 22500 );
+    s = stp_rom( s, " Wh" );
 }
 
 
 char vehicle_twizy_power_msgp( char stat, int cmd )
 {
     static WORD crc;
+    char *s;
 
     if( cmd == CMD_PowerUsageStats )
     {
@@ -1489,29 +1492,28 @@ char vehicle_twizy_power_msgp( char stat, int cmd )
          *  ,<level_DOWN_hsum>,<level_DOWN_use>,<level_DOWN_rec>
          *
          */
-        sprintf( net_scratchpad,
-                "MP-0 HRT-PWR-UsageStats,0,86400,%u,%u,%u,%u,%u,%u,%u,%u,%u"
-                , can_speedpwr[CAN_SPEED_CONST].cnt
-                , can_speedpwr[CAN_SPEED_CONST].use
-                , can_speedpwr[CAN_SPEED_CONST].rec
-                , can_speedpwr[CAN_SPEED_ACCEL].cnt
-                , can_speedpwr[CAN_SPEED_ACCEL].use
-                , can_speedpwr[CAN_SPEED_ACCEL].rec
-                , can_speedpwr[CAN_SPEED_DECEL].cnt
-                , can_speedpwr[CAN_SPEED_DECEL].use
-                , can_speedpwr[CAN_SPEED_DECEL].rec
-                );
-        
-        sprintf( net_msg_scratchpad,
-                ",%u,%u,%u,%u,%u,%u"
-                , can_levelpwr[CAN_LEVEL_UP].hsum
-                , can_levelpwr[CAN_LEVEL_UP].use
-                , can_levelpwr[CAN_LEVEL_UP].rec
-                , can_levelpwr[CAN_LEVEL_DOWN].hsum
-                , can_levelpwr[CAN_LEVEL_DOWN].use
-                , can_levelpwr[CAN_LEVEL_DOWN].rec
-                );
-        strcat( net_scratchpad, net_msg_scratchpad );
+
+        s = stp_rom( net_scratchpad, "MP-0 HRT-PWR-UsageStats,0,86400" );
+
+        s = stp_ul( s, ",", can_speedpwr[CAN_SPEED_CONST].cnt );
+        s = stp_ul( s, ",", can_speedpwr[CAN_SPEED_CONST].use );
+        s = stp_ul( s, ",", can_speedpwr[CAN_SPEED_CONST].rec );
+
+        s = stp_ul( s, ",", can_speedpwr[CAN_SPEED_ACCEL].cnt );
+        s = stp_ul( s, ",", can_speedpwr[CAN_SPEED_ACCEL].use );
+        s = stp_ul( s, ",", can_speedpwr[CAN_SPEED_ACCEL].rec );
+
+        s = stp_ul( s, ",", can_speedpwr[CAN_SPEED_DECEL].cnt );
+        s = stp_ul( s, ",", can_speedpwr[CAN_SPEED_DECEL].use );
+        s = stp_ul( s, ",", can_speedpwr[CAN_SPEED_DECEL].rec );
+
+        s = stp_ul( s, ",", can_levelpwr[CAN_LEVEL_UP].hsum );
+        s = stp_ul( s, ",", can_levelpwr[CAN_LEVEL_UP].use );
+        s = stp_ul( s, ",", can_levelpwr[CAN_LEVEL_UP].rec );
+
+        s = stp_ul( s, ",", can_levelpwr[CAN_LEVEL_DOWN].hsum );
+        s = stp_ul( s, ",", can_levelpwr[CAN_LEVEL_DOWN].use );
+        s = stp_ul( s, ",", can_levelpwr[CAN_LEVEL_DOWN].rec );
 
         stat = net_msg_encode_statputs( stat, &crc );
     }
@@ -1522,7 +1524,6 @@ char vehicle_twizy_power_msgp( char stat, int cmd )
 
 BOOL vehicle_twizy_power_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
-    // check for replace mode:
     if( !premsg )
         return FALSE;
 
@@ -1539,23 +1540,22 @@ BOOL vehicle_twizy_power_sms(BOOL premsg, char *caller, char *command, char *arg
 
     // prepare message:
     net_scratchpad[0] = 0;
-    if( vehicle_twizy_power_prepmsg() )
-    {
-        cr2lf(net_scratchpad);
+    vehicle_twizy_power_prepmsg();
+    cr2lf(net_scratchpad);
 
-        // OK, start SMS:
-        delay100(2);
-        net_send_sms_start(caller);
-        net_puts_ram(net_scratchpad);
-        return TRUE; // handled
-    }
+    // OK, send SMS:
+    delay100(2);
+    net_send_sms_start(caller);
+    net_puts_ram(net_scratchpad);
 
-    return FALSE;
+    return TRUE; // handled
 }
 
 
 BOOL vehicle_twizy_power_cmd( BOOL msgmode, int cmd, char *arguments )
 {
+    char *s;
+
     if( cmd == CMD_PowerUsageStats )
     {
         // send statistics:
@@ -1564,7 +1564,8 @@ BOOL vehicle_twizy_power_cmd( BOOL msgmode, int cmd, char *arguments )
             vehicle_twizy_power_msgp( 0, cmd );
             
             // msg command response:
-            sprintf( net_scratchpad, "MP-0 c%d,0", cmd );
+            s = stp_i( net_scratchpad, "MP-0 c", cmd );
+            s = stp_rom( s, ",0" );
             net_msg_encode_puts();
         }
         else
@@ -1580,24 +1581,22 @@ BOOL vehicle_twizy_power_cmd( BOOL msgmode, int cmd, char *arguments )
     {
         // send text alert:
         strcpypgm2ram( net_scratchpad, "MP-0 PA" );
+        vehicle_twizy_power_prepmsg();
 
         if( msgmode )
         {
-            if( vehicle_twizy_power_prepmsg() )
-                net_msg_encode_puts();
+            net_msg_encode_puts();
 
             // msg command response:
-            sprintf( net_scratchpad, "MP-0 c%d,0", cmd );
+            s = stp_i( net_scratchpad, "MP-0 c", cmd );
+            s = stp_rom( s, ",0" );
             net_msg_encode_puts();
         }
         else
         {
-            if( vehicle_twizy_power_prepmsg() )
-            {
-                net_msg_start();
-                net_msg_encode_puts();
-                net_msg_send();
-            }
+            net_msg_start();
+            net_msg_encode_puts();
+            net_msg_send();
         }
 
         return TRUE;
@@ -1619,19 +1618,26 @@ BOOL vehicle_twizy_power_cmd( BOOL msgmode, int cmd, char *arguments )
 char vehicle_twizy_debug_msgp( char stat, int cmd )
 {
     //static WORD crc; // diff crc for push msgs
+    char *s;
 
     stat = net_msgp_environment( stat );
 
-    sprintf( net_scratchpad,
-            "MP-0 c%d,0,%x,%x,%u,%d,%d,%ld,%u,%u,%d,%u,%u,%u,%u"
-            , cmd ? cmd : CMD_Debug
-            , can_status, car_doors1, car_chargestate
-            , can_speed, can_power, can_odometer
-            , can_soc, can_soc_min, can_soc_max
-            , can_range, can_soc_min_range
-            , car_estrange, car_idealrange );
+    s = stp_rom( net_scratchpad, "MP-0 " );
+    s = stp_i  ( s, "c",   cmd ? cmd : CMD_Debug );
+    s = stp_x  ( s, ",0,", can_status );
+    s = stp_x  ( s, ",",   car_doors1 );
+    s = stp_i  ( s, ",",   car_chargestate );
+    s = stp_i  ( s, ",",   can_speed );
+    s = stp_i  ( s, ",",   can_power );
+    s = stp_ul ( s, ",",   can_odometer );
+    s = stp_i  ( s, ",",   can_soc );
+    s = stp_i  ( s, ",",   can_soc_min );
+    s = stp_i  ( s, ",",   can_soc_max );
+    s = stp_i  ( s, ",",   can_range );
+    s = stp_i  ( s, ",",   can_soc_min_range );
+    s = stp_i  ( s, ",",   car_estrange );
+    s = stp_i  ( s, ",",   car_idealrange );
 
-    //return net_msg_encode_statputs( stat, &crc );
     net_msg_encode_puts();
     return (stat==2) ? 1 : stat;
 }
@@ -1654,6 +1660,8 @@ BOOL vehicle_twizy_debug_cmd( BOOL msgmode, int cmd, char *arguments )
 
 BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
+    char *s;
+
 #ifdef OVMS_DIAGMODULE
     if( arguments && *arguments )
     {
@@ -1677,49 +1685,46 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
 
     // SMS PART:
 
-    // ATT! net_scratchpad can in theory take up to 199 chars
-    //      BUT sprintf() fails with strange effects if called
-    //      with a too complex format template, i.e. >80 chars && >10 args!
-    //      => KISS / D&C!
-
-    sprintf( net_scratchpad,
-            "STS=%x DS1=%x CHG=%u SPD=%d PWR=%d ODO=%ld SOC=%u SMIN=%u SMAX=%d"
-            , can_status, car_doors1, car_chargestate
-            , can_speed, can_power, can_odometer
-            , can_soc, can_soc_min, can_soc_max
-            );
-    net_puts_ram( net_scratchpad );
-
-    sprintf( net_scratchpad,
-            " CRNG=%u MRNG=%u ERNG=%u IRNG=%u"
-            , can_range, can_soc_min_range
-            , car_estrange, car_idealrange
-            );
+    s = net_scratchpad;
+    s = stp_x  ( s, " STS=",   can_status );
+    s = stp_x  ( s, " DS1=",   car_doors1 );
+    s = stp_i  ( s, " CHG=",   car_chargestate );
+    s = stp_i  ( s, " SPD=",   can_speed );
+    s = stp_i  ( s, " PWR=",   can_power );
+    s = stp_ul ( s, " ODO=",   can_odometer );
+    s = stp_i  ( s, " SOC=",   can_soc );
+    s = stp_i  ( s, " SMIN=",  can_soc_min );
+    s = stp_i  ( s, " SMAX=",  can_soc_max );
+    s = stp_i  ( s, " CRNG=",  can_range );
+    s = stp_i  ( s, " MRNG=",  can_soc_min_range );
+    s = stp_i  ( s, " ERNG=",  car_estrange );
+    s = stp_i  ( s, " IRNG=",  car_idealrange );
     net_puts_ram( net_scratchpad );
 
 #ifdef OVMS_DIAGMODULE
     // ...MORE IN DIAG MODE (serial port):
     if( net_state == NET_STATE_DIAGMODE )
     {
-        sprintf( net_scratchpad,
-                " FIX=%d LAT=%08lx LON=%08lx ALT=%d DIR=%d"
-                , car_gpslock, car_latitude, car_longitude, car_altitude, car_direction );
+        s = net_scratchpad;
+        s = stp_i  ( s, "\n# FIX=", car_gpslock );
+        s = stp_lx ( s, " LAT=",    car_latitude );
+        s = stp_lx ( s, " LON=",    car_longitude );
+        s = stp_i  ( s, " ALT=",    car_altitude );
+        s = stp_i  ( s, " DIR=",    car_direction );
         net_puts_ram( net_scratchpad );
     }
 #endif // OVMS_DIAGMODULE
 
 #ifdef OVMS_TWIZY_BATTMON
     // battery bit fields:
-    sprintf( net_scratchpad,
-            "\n# vw=%x va=%x lva=%x tw=%x ta=%x lta=%x ss=%u"
-            , (UINT) can_batt[0].volt_watches
-            , (UINT) can_batt[0].volt_alerts
-            , (UINT) can_batt[0].last_volt_alerts
-            , (UINT) can_batt[0].temp_watches
-            , (UINT) can_batt[0].temp_alerts
-            , (UINT) can_batt[0].last_temp_alerts
-            , (UINT) can_batt_sensors_state
-            );
+    s = net_scratchpad;
+    s = stp_x  ( s, "\n# vw=",  can_batt[0].volt_watches );
+    s = stp_x  ( s, " va=",     can_batt[0].volt_alerts );
+    s = stp_x  ( s, " lva=",    can_batt[0].last_volt_alerts );
+    s = stp_x  ( s, " tw=",     can_batt[0].temp_watches );
+    s = stp_x  ( s, " ta=",     can_batt[0].temp_alerts );
+    s = stp_x  ( s, " lta=",    can_batt[0].last_temp_alerts );
+    s = stp_i  ( s, " ss=",     can_batt_sensors_state );
     net_puts_ram( net_scratchpad );
 #endif // OVMS_TWIZY_BATTMON
 
@@ -1750,6 +1755,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
 void vehicle_twizy_stat_prepmsg(void)
 {
     // Charge State:
+    char *s = net_scratchpad;
 
     if (car_doors1 & 0x04)
     {
@@ -1757,64 +1763,62 @@ void vehicle_twizy_stat_prepmsg(void)
         switch (car_chargestate)
         {
             case 0x01:
-              strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging");
+              s = stp_rom( s, "Charging" );
               break;
             case 0x02:
-              strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging, Topping off");
+              s = stp_rom( s, "Charging, Topping off" );
               break;
             case 0x04:
-              strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Done");
+              s = stp_rom( s, "Charging Done" );
               break;
             default:
-              strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Stopped");
+              s = stp_rom( s, "Charging Stopped" );
         }
 
         // Power sum:
-        sprintf(net_msg_scratchpad, "\r CHG: %lu Wh"
-                , (can_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500
-                );
-        strcat(net_scratchpad,net_msg_scratchpad);
+        s = stp_ul( s, "\r CHG: ", (can_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500 );
+        s = stp_rom( s, " Wh" );
 
     }
     else
     {
         // Charge port door is closed, not charging
-        strcatpgm2ram(net_scratchpad,(char const rom far *)"Not charging");
+        s = stp_rom( s, "Not charging" );
     }
 
-    // Estimated + Ideal Range
-
-    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r Range: ");
+    
+    // Estimated + Ideal Range:
     if (can_mileskm == 'M')
-        sprintf(net_msg_scratchpad, (rom far char*) "%u - %u mi"
-            , car_estrange
-            , car_idealrange); // Miles
+    {
+        s = stp_i( s, "\r Range: ", car_estrange );
+        s = stp_i( s, " - ", car_idealrange );
+        s = stp_rom( s, " mi" );
+    }
     else
-        sprintf(net_msg_scratchpad, (rom far char*) "%u - %u km"
-            , MI2KM(car_estrange)
-            , MI2KM(car_idealrange)); // km
-    strcat((char*)net_scratchpad,net_msg_scratchpad);
+    {
+        s = stp_i( s, "\r Range: ", MI2KM(car_estrange) );
+        s = stp_i( s, " - ", MI2KM(car_idealrange) );
+        s = stp_rom( s, " km" );
+    }
+
 
     // SOC + min/max:
-
-    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r SOC: ");
-    sprintf(net_msg_scratchpad, (rom far char*) "%u%% (%d.%02u%%..%d.%02u%%)"
-            , car_SOC
-            , FMTUINT(can_soc_min, 100)
-            , FMTUINT(can_soc_max, 100)
-            );
-    strcat(net_scratchpad,net_msg_scratchpad);
+    s = stp_l2f( s, "\r SOC: ", can_soc, 2 );
+    s = stp_l2f( s, "% (", can_soc_min, 2 );
+    s = stp_l2f( s, "%..", can_soc_max, 2 );
+    s = stp_rom( s, "%)" );
 
     // ODOMETER:
-
-    strcatpgm2ram(net_scratchpad,(char const rom far *)"\r ODO: ");
-    if (can_mileskm == 'M') // Km or Miles
-        sprintf(net_msg_scratchpad, (rom far char*) "%lu mi"
-                , car_odometer / 10); // Miles
+    if (can_mileskm == 'M')
+    {
+        s = stp_ul( s, "\r ODO: ", car_odometer / 10 );
+        s = stp_rom( s, " mi" );
+    }
     else
-        sprintf(net_msg_scratchpad, (rom far char*) "%lu km"
-                , MI2KM(car_odometer / 10)); // km
-    strcat(net_scratchpad,net_msg_scratchpad);
+    {
+        s = stp_ul( s, "\r ODO: ", MI2KM(car_odometer / 10) );
+        s = stp_rom( s, " km" );
+    }
 
 }
 
@@ -1880,16 +1884,15 @@ BOOL vehicle_twizy_alert_cmd( BOOL msgmode, int cmd, char *arguments )
 char vehicle_twizy_range_msgp( char stat, int cmd )
 {
     //static WORD crc; // diff crc for push msgs
-
-    sprintf( net_scratchpad,
-            "MP-0 c%d,0,%u"
-            , cmd ? cmd : CMD_QueryRange
-            , sys_features[FEATURE_MAXRANGE]
-            );
+    char *s;
+    
+    s = stp_rom( net_scratchpad, "MP-0 " );
+    s = stp_i( s, "c", cmd ? cmd : CMD_QueryRange );
+    s = stp_i( s, ",0,", sys_features[FEATURE_MAXRANGE] );
 
     //return net_msg_encode_statputs( stat, &crc );
     net_msg_encode_puts();
-    return stat==2 ? 1 : stat;
+    return (stat==2) ? 1 : stat;
 }
 
 BOOL vehicle_twizy_range_cmd( BOOL msgmode, int cmd, char *arguments )
@@ -1913,6 +1916,8 @@ BOOL vehicle_twizy_range_cmd( BOOL msgmode, int cmd, char *arguments )
 
 BOOL vehicle_twizy_range_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
+    char *s;
+
     if( !premsg )
         return FALSE;
 
@@ -1941,18 +1946,19 @@ BOOL vehicle_twizy_range_sms(BOOL premsg, char *caller, char *command, char *arg
     // Reply current range:
     net_send_sms_start( caller );
 
-    net_puts_rom("Max ideal range: ");
+    s = stp_rom( net_scratchpad, "Max ideal range: " );
+
     if( sys_features[FEATURE_MAXRANGE] == 0 )
     {
-        net_puts_rom("UNSET");
+        s = stp_rom( s, "UNSET" );
     }
     else
     {
-        sprintf( net_scratchpad, (rom far char*) "%u "
-                , sys_features[FEATURE_MAXRANGE] );
-        net_puts_ram( net_scratchpad );
-        net_puts_rom( (can_mileskm == 'M') ? "mi" : "km" );
+        s = stp_i( s, NULL, sys_features[FEATURE_MAXRANGE] );
+        s = stp_rom( s, (can_mileskm == 'M') ? " mi" : " km" );
     }
+
+    net_puts_ram( net_scratchpad );
 
     return TRUE;
 }
@@ -1977,17 +1983,16 @@ BOOL vehicle_twizy_range_sms(BOOL premsg, char *caller, char *command, char *arg
 char vehicle_twizy_ca_msgp( char stat, int cmd )
 {
     //static WORD crc; // diff crc for push msgs
+    char *s;
 
-    sprintf( net_scratchpad,
-            "MP-0 c%d,0,%u,%u"
-            , cmd ? cmd : CMD_QueryChargeAlerts
-            , sys_features[FEATURE_SUFFRANGE]
-            , sys_features[FEATURE_SUFFSOC]
-            );
+    s = stp_rom( net_scratchpad, "MP-0 " );
+    s = stp_i( s, "c",   cmd ? cmd : CMD_QueryChargeAlerts );
+    s = stp_i( s, ",0,", sys_features[FEATURE_SUFFRANGE] );
+    s = stp_i( s, ",",   sys_features[FEATURE_SUFFSOC] );
 
     //return net_msg_encode_statputs( stat, &crc );
     net_msg_encode_puts();
-    return stat==2 ? 1 : stat;
+    return (stat==2) ? 1 : stat;
 }
 
 BOOL vehicle_twizy_ca_cmd( BOOL msgmode, int cmd, char *arguments )
@@ -2019,6 +2024,8 @@ BOOL vehicle_twizy_ca_cmd( BOOL msgmode, int cmd, char *arguments )
 
 BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
+    char *s;
+
     if( !premsg )
         return FALSE;
 
@@ -2074,31 +2081,31 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
         return FALSE; // handled, but no SMS has been started
 
     net_send_sms_start( caller );
-    net_puts_rom("Charge Alert: ");
+    
+    s = stp_rom( net_scratchpad, "Charge Alert: " );
 
     if( (sys_features[FEATURE_SUFFSOC]==0) && (sys_features[FEATURE_SUFFRANGE]==0) )
     {
-        net_puts_rom("OFF");
+        s = stp_rom( s, "OFF" );
     }
     else
     {
         if( sys_features[FEATURE_SUFFSOC] > 0 )
         {
-            sprintf( net_scratchpad, (rom far char*) "%u%%"
-                    , sys_features[FEATURE_SUFFSOC] );
-            net_puts_ram( net_scratchpad );
+            s = stp_i( s, NULL, sys_features[FEATURE_SUFFSOC] );
+            s = stp_rom( s, "%" );
         }
 
         if( sys_features[FEATURE_SUFFRANGE] > 0 )
         {
             if( sys_features[FEATURE_SUFFSOC] > 0 )
-                net_puts_rom( " or " );
-            sprintf( net_scratchpad, (rom far char*) "%u "
-                    , sys_features[FEATURE_SUFFRANGE] );
-            net_puts_ram( net_scratchpad );
-            net_puts_rom( (can_mileskm == 'M') ? "mi" : "km" );
+                s = stp_rom( s, " or " );
+            s = stp_i( s, NULL, sys_features[FEATURE_SUFFRANGE] );
+            s = stp_rom( s, (can_mileskm == 'M') ? " mi" : " km" );
         }
     }
+    
+    net_puts_ram( net_scratchpad );
 
     return TRUE;
 }
@@ -2206,7 +2213,9 @@ void vehicle_twizy_battstatus_collect(void)
     /*
     if( (net_buf_mode == NET_BUF_CRLF) && (net_buf_pos == 0) )
     {
-        sprintf( net_scratchpad, "# tic1: ss=%d\r\n", can_batt_sensors_state );
+        char *s;
+        s = stp_i( net_scratchpad, "# tic1: ss=", can_batt_sensors_state );
+        s = stp_rom( s, "\r\n" );
         net_puts_ram( net_scratchpad );
     }
     */
@@ -2249,8 +2258,6 @@ void vehicle_twizy_battstatus_collect(void)
         // this is too complex for C18, we need to split this up:
         f = ((float)sqrsum/BATT_CMODS) - SQR(m);
         stddev = sqrt(f) + 1; // +1 against int precision errors (may need multiplication)
-        //sprintf(net_scratchpad, "# temp sqrsum=%lu sum=%lu stddev=%u\n", sqrsum, sum, stddev);
-        //net_puts_ram(net_scratchpad);
 
         for( i=0; i < BATT_CMODS; i++ )
         {
@@ -2314,8 +2321,6 @@ void vehicle_twizy_battstatus_collect(void)
         // this is too complex for C18, we need to split this up:
         f = ((float)sqrsum/BATT_CELLS) - SQR(m);
         stddev = sqrt(f) + 1; // +1 against int precision errors (may need multiplication)
-        //sprintf(net_scratchpad, "# volt sqrsum=%lu sum=%lu stddev=%u\n", sqrsum, sum, stddev);
-        //net_puts_ram(net_scratchpad);
 
         for( i=0; i < BATT_CELLS; i++ )
         {
@@ -2342,7 +2347,7 @@ void vehicle_twizy_battstatus_collect(void)
     if( (can_batt[0].volt_alerts != can_batt[0].last_volt_alerts)
      || (can_batt[0].temp_alerts != can_batt[0].last_temp_alerts) )
     {
-        twizy_notify |= TWIZY_NOTIFY_BATTALERT;
+        twizy_notify |= SEND_BatteryAlert;
     }
 
 
@@ -2356,13 +2361,16 @@ void vehicle_twizy_battstatus_collect(void)
 // Prep battery[p] alert message text for SMS/MSG in net_scratchpad:
 void vehicle_twizy_battstatus_prepalert( int p )
 {
-    int c;
+    int c, val;
+    char *s;
+
+    s = strchr( net_scratchpad, 0 ); // append to net_scratchpad
 
     // Voltage deviations:
-    strcatpgm2ram( net_scratchpad, "Volts: " );
+    s = stp_rom( s, "Volts: " );
     if( (can_batt[p].volt_alerts==0) && (can_batt[p].volt_watches==0) )
     {
-        strcatpgm2ram( net_scratchpad, "OK " );
+        s = stp_rom( s, "OK " );
     }
     else
     {
@@ -2376,20 +2384,22 @@ void vehicle_twizy_battstatus_prepalert( int p )
             else
                 continue;
 
-            sprintf( net_msg_scratchpad,
-                    "C%u:%+dmV "
-                    , c+1
-                    , CONV_CellVoltS(can_cell[c].volt_maxdev)
-                    );
-            strcat( net_scratchpad, net_msg_scratchpad );
+            val = CONV_CellVoltS(can_cell[c].volt_maxdev);
+
+            s = stp_i( s, "C", c+1 );
+            if( val >= 0 )
+                s = stp_i( s, ":+", val );
+            else
+                s = stp_i( s, ":", val );
+            s = stp_rom( s, "mV ");
         }
     }
 
     // Temperature deviations:
-    strcatpgm2ram( net_scratchpad, "Temps: " );
+    s = stp_rom( s, "Temps: " );
     if( (can_batt[p].temp_alerts==0) && (can_batt[p].temp_watches==0) )
     {
-        strcatpgm2ram( net_scratchpad, "OK " );
+        s = stp_rom( s, "OK " );
     }
     else
     {
@@ -2403,12 +2413,14 @@ void vehicle_twizy_battstatus_prepalert( int p )
             else
                 continue;
 
-            sprintf( net_msg_scratchpad,
-                    "M%u:%+dC "
-                    , c+1
-                    , can_cmod[c].temp_maxdev
-                    );
-            strcat( net_scratchpad, net_msg_scratchpad );
+            val = can_cmod[c].temp_maxdev;
+
+            s = stp_i( s, "M", c+1 );
+            if( val >= 0 )
+                s = stp_i( s, ":+", val );
+            else
+                s = stp_i( s, ":", val );
+            s = stp_rom( s, "C ");
         }
     }
 
@@ -2425,6 +2437,8 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
     UINT8 tmin, tmax;
     int tact;
     UINT8 volt_alert, temp_alert;
+    char *s;
+
 
     // Try to wait for consistent sensor data:
     if( vehicle_twizy_battstatus_wait4sensors() == FALSE )
@@ -2487,27 +2501,26 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
         //  ,<volt_min>,<volt_min_cellnom>
         //  ,<volt_max>,<volt_max_cellnom>
         //  ,<temp_act>,<temp_min>,<temp_max>
-        sprintf( net_scratchpad,
-                "MP-0 HRT-PWR-BattPack,%u,86400,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u"
-                , p+1
-                , BATT_CELLS, 1
-                , volt_alert
-                , temp_alert
-                , can_soc, can_soc_min, can_soc_max
-                , CONV_PackVolt(can_batt[p].volt_act)
-                , CONV_PackVolt(can_batt[p].volt_act / BATT_CELLS)
-                , CONV_PackVolt(can_batt[p].volt_min)
-                , CONV_PackVolt(can_batt[p].volt_min / BATT_CELLS)
-                , CONV_PackVolt(can_batt[p].volt_max)
-                , CONV_PackVolt(can_batt[p].volt_max / BATT_CELLS)
-                );
-        sprintf( net_msg_scratchpad,
-                ",%d,%d,%d"
-                , CONV_Temp(tact)
-                , CONV_Temp(tmin)
-                , CONV_Temp(tmax)
-                );
-        strcat( net_scratchpad, net_msg_scratchpad );
+
+        s = stp_rom( net_scratchpad, "MP-0 H" );
+        s = stp_i  ( s, "RT-PWR-BattPack,", p+1 );
+        s = stp_i  ( s, ",86400,", BATT_CELLS );
+        s = stp_i  ( s, ",",       1 );
+        s = stp_i  ( s, ",",       volt_alert );
+        s = stp_i  ( s, ",",       temp_alert );
+        s = stp_i  ( s, ",",       can_soc );
+        s = stp_i  ( s, ",",       can_soc_min );
+        s = stp_i  ( s, ",",       can_soc_max );
+        s = stp_i  ( s, ",",       CONV_PackVolt(can_batt[p].volt_act) );
+        s = stp_i  ( s, ",",       CONV_PackVolt(can_batt[p].volt_act / BATT_CELLS) );
+        s = stp_i  ( s, ",",       CONV_PackVolt(can_batt[p].volt_min) );
+        s = stp_i  ( s, ",",       CONV_PackVolt(can_batt[p].volt_min / BATT_CELLS) );
+        s = stp_i  ( s, ",",       CONV_PackVolt(can_batt[p].volt_max) );
+        s = stp_i  ( s, ",",       CONV_PackVolt(can_batt[p].volt_max / BATT_CELLS) );
+        s = stp_i  ( s, ",",       CONV_Temp(tact) );
+        s = stp_i  ( s, ",",       CONV_Temp(tmin) );
+        s = stp_i  ( s, ",",       CONV_Temp(tmax) );
+
         stat = net_msg_encode_statputs( stat, &crc_pack[p] );
 
         // Output cell status:
@@ -2532,25 +2545,21 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
             //  ,<volt_alertstatus>,<temp_alertstatus>,
             //  ,<volt_act>,<volt_min>,<volt_max>,<volt_maxdev>
             //  ,<temp_act>,<temp_min>,<temp_max>,<temp_maxdev>
-            sprintf( net_scratchpad,
-                    "MP-0 HRT-PWR-BattCell,%u,86400,%u,%u,%u,%u,%u,%u,%d"
-                    , c+1
-                    , p+1
-                    , volt_alert
-                    , temp_alert
-                    , CONV_CellVolt(can_cell[c].volt_act)
-                    , CONV_CellVolt(can_cell[c].volt_min)
-                    , CONV_CellVolt(can_cell[c].volt_max)
-                    , CONV_CellVoltS(can_cell[c].volt_maxdev)
-                    );
-            sprintf( net_msg_scratchpad,
-                    ",%d,%d,%d,%d"
-                    , CONV_Temp(can_cmod[c>>1].temp_act)
-                    , CONV_Temp(can_cmod[c>>1].temp_min)
-                    , CONV_Temp(can_cmod[c>>1].temp_max)
-                    , can_cmod[c>>1].temp_maxdev
-                    );
-            strcat( net_scratchpad, net_msg_scratchpad );
+
+            s = stp_rom( net_scratchpad, "MP-0 H" );
+            s = stp_i  ( s, "RT-PWR-BattCell,", c+1 );
+            s = stp_i  ( s, ",86400,", p+1 );
+            s = stp_i  ( s, ",",       volt_alert );
+            s = stp_i  ( s, ",",       temp_alert );
+            s = stp_i  ( s, ",",       CONV_CellVolt(can_cell[c].volt_act) );
+            s = stp_i  ( s, ",",       CONV_CellVolt(can_cell[c].volt_min) );
+            s = stp_i  ( s, ",",       CONV_CellVolt(can_cell[c].volt_max) );
+            s = stp_i  ( s, ",",       CONV_CellVoltS(can_cell[c].volt_maxdev) );
+            s = stp_i  ( s, ",",       CONV_Temp(can_cmod[c>>1].temp_act) );
+            s = stp_i  ( s, ",",       CONV_Temp(can_cmod[c>>1].temp_min) );
+            s = stp_i  ( s, ",",       CONV_Temp(can_cmod[c>>1].temp_max) );
+            s = stp_i  ( s, ",",       can_cmod[c>>1].temp_maxdev );
+
             stat = net_msg_encode_statputs( stat, &crc_cell[c] );
         }
     }
@@ -2560,11 +2569,14 @@ char vehicle_twizy_battstatus_msgp( char stat, int cmd )
 
 BOOL vehicle_twizy_battstatus_cmd( BOOL msgmode, int cmd, char *arguments )
 {
+    char *s;
+
     if( msgmode )
     {
         vehicle_twizy_battstatus_msgp( 0, cmd );
 
-        sprintf( net_scratchpad, "MP-0 c%d,0", cmd );
+        s = stp_i( net_scratchpad, "MP-0 c", cmd ? cmd : CMD_BatteryStatus );
+        s = stp_rom( s, ",0" );
         net_msg_encode_puts();
     }
     else
@@ -2583,6 +2595,7 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
     UINT8 tmin, tmax;
     int tact;
     UINT8 cc;
+    char *s;
 
     if( !premsg )
         return FALSE;
@@ -2634,41 +2647,38 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
             tact = (float) tact / BATT_CMODS + 0.5;
 
             // Output pack status:
-            sprintf( net_scratchpad,
-                    "P:%dC (%dC..%dC) "
-                    , CONV_Temp( tact )
-                    , CONV_Temp( tmin )
-                    , CONV_Temp( tmax )
-                    );
-            net_puts_ram( net_scratchpad );
+            s = net_scratchpad;
+            s = stp_i( s, "P:", CONV_Temp( tact ) );
+            s = stp_i( s, "C (", CONV_Temp( tmin ) );
+            s = stp_i( s, "C..", CONV_Temp( tmax ) );
+            s = stp_rom( s, "C) " );
 
             // Output cmod status:
             for( c=0; c < BATT_CMODS; c++ )
             {
                 // Alert?
                 if( can_batt[0].temp_alerts & (1<<c) )
-                    net_putc_ram('!');
+                    s = stp_rom( s, "!" );
                 else if( can_batt[0].temp_watches & (1<<c) )
-                    net_putc_ram('?');
+                    s = stp_rom( s, "?" );
 
+                s = stp_i( s, NULL, c+1 );
                 if( argc2 == 'd' ) // deviations
                 {
-                    sprintf( net_scratchpad,
-                        "%u:%+dC "
-                        , c+1
-                        , can_cmod[c].temp_maxdev
-                        );
+                    if( can_cmod[c].temp_maxdev >= 0 )
+                        s = stp_i( s, ":+", can_cmod[c].temp_maxdev );
+                    else
+                        s = stp_i( s, ":", can_cmod[c].temp_maxdev );
+                    s = stp_rom( s, "C " );
                 }
                 else // current values
                 {
-                    sprintf( net_scratchpad,
-                        "%u:%dC "
-                        , c+1
-                        , CONV_Temp( can_cmod[c].temp_act )
-                        );
+                    s = stp_i( s, ":", CONV_Temp( can_cmod[c].temp_act ) );
+                    s = stp_rom( s, "C " );
                 }
-                net_puts_ram( net_scratchpad );
             }
+
+            net_puts_ram( net_scratchpad );
 
             break;
 
@@ -2676,58 +2686,52 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
         case 'v':
             // Current voltage levels ("v") or deviations ("vd"):
 
+            s = net_scratchpad;
+
             for( p=0; p < BATT_PACKS; p++ )
             {
                 // Output pack status:
-                cc = sprintf( net_scratchpad,
-                        "P:%u.%02uV "
-                        , FMTUINT( CONV_PackVolt(can_batt[p].volt_act), 100 )
-                        );
-                net_puts_ram( net_scratchpad );
+
+                s = stp_l2f( s, "P:", CONV_PackVolt(can_batt[p].volt_act), 2 );
+                s = stp_rom( s, "V " );
 
                 // Output cell status:
                 for( c=0; c < BATT_CELLS; c++ )
                 {
                     // Split SMS?
-                    if( cc > (160-13) )
+                    if( s > (net_scratchpad+160-13) )
                     {
+                        net_puts_ram( net_scratchpad );
                         net_send_sms_finish();
                         delay100(30);
                         net_send_sms_start( caller );
-                        cc = 0;
+                        s = net_scratchpad;
                     }
 
                     // Alert?
                     if( can_batt[p].volt_alerts & (1<<c) )
-                    {
-                        net_putc_ram('!');
-                        cc++;
-                    }
+                        s = stp_rom( s, "!" );
                     else if( can_batt[p].volt_watches & (1<<c) )
-                    {
-                        net_putc_ram('?');
-                        cc++;
-                    }
+                        s = stp_rom( s, "?" );
 
+                    s = stp_i( s, NULL, c+1 );
                     if( argc2 == 'd' ) // deviations
                     {
-                        cc += sprintf( net_scratchpad,
-                            "%u:%+dmV "
-                            , c+1
-                            , CONV_CellVoltS(can_cell[c].volt_maxdev)
-                            );
+                        if( can_cell[c].volt_maxdev >= 0 )
+                            s = stp_i( s, ":+", CONV_CellVoltS(can_cell[c].volt_maxdev) );
+                        else
+                            s = stp_i( s, ":", CONV_CellVoltS(can_cell[c].volt_maxdev) );
+                        s = stp_rom( s, "mV " );
                     }
                     else
                     {
-                        cc += sprintf( net_scratchpad,
-                            "%u:%u.%03uV "
-                            , c+1
-                            , FMTUINT( CONV_CellVolt(can_cell[c].volt_act), 1000 )
-                            );
+                        s = stp_l2f( s, ":", CONV_CellVolt(can_cell[c].volt_act), 3 );
+                        s = stp_rom( s, "V " );
                     }
-                    net_puts_ram( net_scratchpad );
                 }
             }
+
+            net_puts_ram( net_scratchpad );
 
             break;
 
@@ -2799,6 +2803,7 @@ BOOL vehicle_twizy_fn_commandhandler( BOOL msgmode, int cmd, char *msg )
 #endif // OVMS_TWIZY_BATTMON
 
         case CMD_PowerUsageNotify:
+        case CMD_PowerUsageStats:
             return vehicle_twizy_power_cmd(msgmode, cmd, msg);
 
     }
@@ -2996,7 +3001,7 @@ BOOL vehicle_twizy_initialise(void)
 
         memset( can_levelpwr, 0, sizeof can_levelpwr );
         can_level_odo = 0;
-        can_level_alt = -32767;
+        can_level_alt = 0;
         can_level_use = 0;
         can_level_rec = 0;
     }
