@@ -45,4 +45,17 @@ long gps2latlon(char *gpscoord);   // convert GPS coordinate to latlon value
 WORD crc16(char *data, int length);  // Calculate a 16bit CRC and return it
 void cr2lf(char *s);                // replace \r by \n in s (to convert msg text to sms)
 
+// sprintf replacement utils: stp string print
+char *stp_rom( char *dst, const rom char *val );
+char *stp_ram( char *dst, const char *val );
+char *stp_i( char *dst, const rom char *prefix, int val );
+char *stp_l( char *dst, const rom char *prefix, long val );
+char *stp_ul( char *dst, const rom char *prefix, unsigned long val );
+void itox(unsigned int i, char *s);
+char *stp_x( char *dst, const rom char *prefix, unsigned int val );
+void ltox(unsigned long i, char *s);
+char *stp_lx( char *dst, const rom char *prefix, unsigned long val );
+char *stp_ulp( char *dst, const rom char *prefix, unsigned long val, int len, char pad );
+char *stp_l2f( char *dst, const rom char *prefix, long val, int prec );
+
 #endif // #ifndef __OVMS_UTILS_H
