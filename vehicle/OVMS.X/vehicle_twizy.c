@@ -1203,35 +1203,6 @@ BOOL vehicle_twizy_state_ticker1(void)
         }
     }
 
-
-    /***************************************************************************
-     * Resolve CAN lockups:
-     * PIC manual 23.15.6.1 Receiver Overflow:
-            An overflow condition occurs when the MAB has
-            assembled a valid received message (the message
-            meets the criteria of the acceptance filters) and the
-            receive buffer associated with the filter is not available
-            for loading of a new message. The associated
-            RXBnOVFL bit in the COMSTAT register will be set to
-            indicate the overflow condition.
-            >>> This bit must be cleared by the MCU. <<< !!!
-     * ...to be sure we're clearing all relevant flags...
-     */
-    if( COMSTATbits.RXB0OVFL )
-    {
-        RXB0CONbits.RXFUL = 0; // clear buffer full flag
-        PIR3bits.RXB0IF = 0; // clear interrupt flag
-        COMSTATbits.RXB0OVFL = 0; // clear buffer overflow bit
-    }
-    if( COMSTATbits.RXB1OVFL )
-    {
-        RXB1CONbits.RXFUL = 0; // clear buffer full flag
-        PIR3bits.RXB1IF = 0; // clear interrupt flag
-        COMSTATbits.RXB1OVFL = 0; // clear buffer overflow bit
-    }
-
-
-
     /***************************************************************************
      * Process notification queue:
      */
