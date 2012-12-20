@@ -159,7 +159,7 @@
 #define CMD_PowerUsageStats         207 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.2";
+rom char vehicle_twizy_version[] = "2.3";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-207";
