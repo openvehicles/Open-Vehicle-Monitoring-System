@@ -88,10 +88,10 @@ BOOL vehicle_voltampera_poll1(void)
     if (v>soc_largest) v=soc_largest;
     car_SOC = (char)((v-soc_smallest)/((soc_largest-soc_smallest)/100));
     }
-  else if ((CANctrl & 0x07) == 3)           // Acceptance Filter 3 (RXF3) = CAN ID 4F1
+  else if ((CANctrl & 0x07) == 3)           // Acceptance Filter 3 (RXF3) = CAN ID 4E1
     {
-    // The VIN can be constructed by taking the number "1" and converting the CAN IDs 4F1 and 514 to ASCII.
-    // So with "4F1 4255313032363839" and "514 4731524436453436",
+    // The VIN can be constructed by taking the number "1" and converting the CAN IDs 4E1 and 514 to ASCII.
+    // So with "4E1 4255313032363839" and "514 4731524436453436",
     // you would end up with 42 55 31 30 32 36 38 39 47 31 52 44 36 45 34 36,
     // where 42 is ASCII for B, 55 is U, etc.
     for (k=0;k<8;k++)
@@ -151,9 +151,9 @@ BOOL vehicle_voltampera_initialise(void)
   RXF2SIDL = 0b11000000;	// Setup Filter2 so that CAN ID 0x206 will be accepted
   RXF2SIDH = 0b01000000;
 
-  // Filter 3: Used for ID#0x4F1
-  RXF3SIDL = 0b00100000;	// Setup Filter3 so that CAN ID 0x4F1 will be accepted
-  RXF3SIDH = 0b10011110;
+  // Filter 3: Used for ID#0x4E1
+  RXF3SIDL = 0b00100000;	// Setup Filter3 so that CAN ID 0x4E1 will be accepted
+  RXF3SIDH = 0b10011100;
 
   // Filter 4: Used for ID#0x514
   RXF4SIDL = 0b10000000;        // Setup Filter4 so that CAN ID 0x514 will be accepted
