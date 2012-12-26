@@ -30,6 +30,12 @@
 #include "ovms.h"
 #include "params.h"
 
+// Volt/Ampera state variables
+
+#pragma udata overlay vehicle_overlay_data
+unsigned int soc_largest  = 56028;
+unsigned int soc_smallest = 13524;
+
 #pragma udata
 
 ////////////////////////////////////////////////////////////////////////
@@ -77,7 +83,10 @@ BOOL vehicle_voltampera_poll1(void)
     // SOC
     // For the SOC, each 4,000 is 1kWh. Assuming a 16.1kWh battery, 1% SOC is 644 decimal bytes
     // The SOC itself is d1<<8 + d2
-    car_SOC = (char)((can_databuffer[1]+((unsigned int) can_databuffer[0] << 8))/644);
+    unsigned int v = (can_databuffer[1]+((unsigned int) can_databuffer[0] << 8));
+    if ((v<soc_smallest)&&(v>0)) v=soc_smallest;
+    if (v>soc_largest) v=soc_largest;
+    car_SOC = (char)((v-soc_smallest)/((soc_largest-soc_smallest)/100));
     }
   else if ((CANctrl & 0x07) == 3)           // Acceptance Filter 3 (RXF3) = CAN ID 4F1
     {
