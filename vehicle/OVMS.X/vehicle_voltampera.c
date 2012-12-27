@@ -78,7 +78,7 @@ BOOL vehicle_voltampera_poll1(void)
   CANctrl=RXB1CON;		// copy CAN RX1 Control register
   RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
 
-  if ((CANctrl & 0x07) == 2)    	// Acceptance Filter 2 (RXF2) = CAN ID 0x206
+  if ((CANctrl & 0x07) == 2)             // Acceptance Filter 2 (RXF2) = CAN ID 0x206
     {
     // SOC
     // For the SOC, each 4,000 is 1kWh. Assuming a 16.1kWh battery, 1% SOC is 644 decimal bytes
@@ -88,20 +88,21 @@ BOOL vehicle_voltampera_poll1(void)
     if (v>soc_largest) v=soc_largest;
     car_SOC = (char)((v-soc_smallest)/((soc_largest-soc_smallest)/100));
     }
-  else if ((CANctrl & 0x07) == 3)           // Acceptance Filter 3 (RXF3) = CAN ID 4E1
+  else if ((CANctrl & 0x07) == 3)        // Acceptance Filter 3 (RXF3) = CAN ID 4E1
     {
     // The VIN can be constructed by taking the number "1" and converting the CAN IDs 4E1 and 514 to ASCII.
     // So with "4E1 4255313032363839" and "514 4731524436453436",
     // you would end up with 42 55 31 30 32 36 38 39 47 31 52 44 36 45 34 36,
     // where 42 is ASCII for B, 55 is U, etc.
     for (k=0;k<8;k++)
-      car_vin[k] = can_databuffer[k];
+      car_vin[k+9] = can_databuffer[k];
+    car_vin[17] = 0;
     }
-  else if ((CANctrl & 0x07) == 4)           // Acceptance Filter 4 (RXF4) = CAN ID 514
+  else if ((CANctrl & 0x07) == 4)        // Acceptance Filter 4 (RXF4) = CAN ID 514
     {
+    car_vin[0] = '1';
     for (k=0;k<8;k++)
-      car_vin[k+8] = can_databuffer[k];
-    car_vin[16] = 0;
+      car_vin[k+1] = can_databuffer[k];
     }
 
   return TRUE;
