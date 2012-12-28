@@ -57,6 +57,7 @@
 //#define OVMS_CAR_VOLTAMPERA
 //#define OVMS_CAR_RENAULTTWIZY
 //#define OVMS_CAR_OBDII
+//#define OVMS_CAR_THINKCITY
 
 // August 2012 saw the introduction of a new hardware platform (v2), with
 // support for SIM908 GPS, voltage sampling, a new processor, and a few other

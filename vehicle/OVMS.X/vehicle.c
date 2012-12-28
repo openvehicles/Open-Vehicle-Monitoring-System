@@ -117,6 +117,13 @@ void vehicle_initialise(void)
     vehicle_obdii_initialise();
     }
 #endif
+#ifdef OVMS_CAR_THINKCITY
+  else if (memcmppgm2ram(p, (char const rom far*)"TC", 2) == 0)
+    {
+    void vehicle_thinkcity_initialise(void);
+    vehicle_thinkcity_initialise();
+    }
+#endif
 #ifdef OVMS_CAR_NONE
   else
     {
