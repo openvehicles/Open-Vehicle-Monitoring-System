@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ovms.h"
+#include "utils.h"
 
 // Reset the cpu
 void reset_cpu(void)
@@ -91,68 +92,51 @@ void modem_reboot(void)
   PORTBbits.RB0 = 0;
   delay100(20);
   PORTBbits.RB0 = 1;
-  }
-
-// Format a Latitude/Longitude as a string
-// <dest> must have room to receive the output
-void format_latlon(long latlon, char* dest)
-  {
-  float res;
-  long lWhole; // Stores digits left of decimal
-  unsigned long ulPart; // Stores digits right of decimal
-
-  if (latlon < 0)
-    {
-    *dest++ = '-';
-    latlon = ~latlon; // and invert value
-    }
-  res = (float) latlon / 2048 / 3600; // Tesla specific GPS conversion
-  lWhole = (long) ((float) res); // As the PIC has no floating point support in printf,
-  // we do it manually
-  ulPart = (unsigned long) ((float) res * 1000000) - lWhole * 1000000;
-  sprintf(dest, (rom far char*)"%li.%06li", lWhole, ulPart); // make sure we print leading zero's after the decimal point
-  }
+}
 
 
 // builtin atof() does not work... returns strange values
-float myatof( char *src )
+
+float myatof(char *src)
+{
+  long whole, frac, pot;
+  char *s;
+
+  whole = atol(src);
+
+  if (s = strchr(src, '.'))
   {
-    long whole, frac, pot;
-    char *s;
-    float res;
+    frac = 0;
+    pot = 1;
 
-    whole = atol( src );
-
-    if( s = strchr( src, '.' ) )
+    while (*++s)
     {
-        frac = 0;
-        pot = 1;
-
-        while( *++s )
-        {
-            frac = frac * 10 + (*s - 48);
-            pot = pot * 10;
-        }
-
-        return (float) whole + (float) frac / pot;
+      frac = frac * 10 + (*s - 48);
+      pot = pot * 10;
     }
-    else
-    {
-        return (float) whole;
-    }
+
+    return (float) whole + (float) frac / pot;
+  }
+  else
+  {
+    return (float) whole;
+  }
 }
+
 
 // Convert GPS coordinate form DDDMM.MMMMMM to internal latlon value
-long gps2latlon( char *gpscoord )
-{
-    float f;
-    long d;
 
-    f = myatof( gpscoord );
-    d = (long) ( f / 100 ); // extract degrees
-    f = (float) d + ( f - (d * 100) ) / 60; // convert to decimal format
-    return (long) ( f * 3600 * 2048 ); // convert to raw format
+long gps2latlon(char *gpscoord)
+{
+  float f;
+  long d;
+
+  f = myatof(gpscoord);
+  d = (long) (f / 100); // extract degrees
+  f = (float) d + (f - (d * 100)) / 60; // convert to decimal format
+  return (long) (f * 3600 * 2048); // convert to raw format
 }
+
 
 // Calculate a 16bit CRC and return it
 WORD crc16(char *data, int length)
@@ -175,150 +159,191 @@ WORD crc16(char *data, int length)
     }
 
   return crc;
-  }
+}
 
 
 // cr2lf: replace \r by \n in s (to convert msg text to sms)
+
 void cr2lf(char *s)
+{
+  while (s && *s)
   {
-  while(s && *s)
-    {
-    if(*s == '\r') *s = '\n';
+    if (*s == '\r') *s = '\n';
     ++s;
-    }
   }
+}
 
 
-// stpcpy rom string (not in C18 lib):
-char *stp_rom( char *dst, const rom char *val )
-  {
-  while( *dst = *val++ ) dst++;
+// string-print rom string:
+
+char *stp_rom(char *dst, const rom char *val)
+{
+  while (*dst = *val++) dst++;
   return dst;
-  }
+}
 
-// stpcpy ram string (not in C18 lib):
-char *stp_ram( char *dst, const char *val )
-  {
-  while( *dst = *val++ ) dst++;
-  return dst;
-  }
+// string-print ram string:
 
-// stpcpy integer with optional string prefix:
-char *stp_i( char *dst, const rom char *prefix, int val )
-  {
-  if( prefix )
-    dst = stp_rom( dst, prefix );
-  itoa( val, dst );
-  while( *dst ) dst++;
+char *stp_ram(char *dst, const char *val)
+{
+  while (*dst = *val++) dst++;
   return dst;
-  }
+}
 
-// stpcpy long with optional string prefix:
-char *stp_l( char *dst, const rom char *prefix, long val )
-  {
-  if( prefix )
-    dst = stp_rom( dst, prefix );
-  ltoa( val, dst );
-  while( *dst ) dst++;
-  return dst;
-  }
+// string-print ram string with optional prefix:
 
-// stpcpy unsigned long with optional string prefix:
-char *stp_ul( char *dst, const rom char *prefix, unsigned long val )
-  {
-  if( prefix )
-    dst = stp_rom( dst, prefix );
-  ultoa( val, dst );
-  while( *dst ) dst++;
+char *stp_s(char *dst, const rom char *prefix, char *val)
+{
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+  return stp_ram(dst, val);
+}
+
+// string-print integer with optional string prefix:
+
+char *stp_i(char *dst, const rom char *prefix, int val)
+{
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+  itoa(val, dst);
+  while (*dst) dst++;
   return dst;
-  }
+}
+
+// string-print long with optional string prefix:
+
+char *stp_l(char *dst, const rom char *prefix, long val)
+{
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+  ltoa(val, dst);
+  while (*dst) dst++;
+  return dst;
+}
+
+// string-print unsigned long with optional string prefix:
+
+char *stp_ul(char *dst, const rom char *prefix, unsigned long val)
+{
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+  ultoa(val, dst);
+  while (*dst) dst++;
+  return dst;
+}
 
 // itox
 //  (note: fills fixed 4 chars with '0' padding = sprintf %04x)
+
 void itox(unsigned int i, char *s)
-  {
+{
   unsigned char n;
 
   s += 4;
   *s = '\0';
 
   for (n = 4; n != 0; --n)
-    {
+  {
     *--s = "0123456789ABCDEF"[i & 0x0F];
     i >>= 4;
-    }
   }
+}
 
-// stpcpy unsigned integer hexadecimal with optional string prefix:
+// string-print unsigned integer hexadecimal with optional string prefix:
 //  (note: fills fixed 4 chars with '0' padding = sprintf %04x)
-char *stp_x( char *dst, const rom char *prefix, unsigned int val )
-  {
-  if( prefix )
-    dst = stp_rom( dst, prefix );
-  itox( val, dst );
-  while( *dst ) dst++;
+
+char *stp_x(char *dst, const rom char *prefix, unsigned int val)
+{
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+  itox(val, dst);
+  while (*dst) dst++;
   return dst;
-  }
+}
 
 // ltox
 //  (note: fills fixed 8 chars with '0' padding = sprintf %08lx)
+
 void ltox(unsigned long i, char *s)
-  {
+{
   unsigned char n;
 
   s += 8;
   *s = '\0';
 
   for (n = 8; n != 0; --n)
-    {
+  {
     *--s = "0123456789ABCDEF"[i & 0x0F];
     i >>= 4;
-    }
   }
+}
 
-// stpcpy unsigned long hexadecimal with optional string prefix:
+// string-print unsigned long hexadecimal with optional string prefix:
 //  (note: fills fixed 8 chars with '0' padding = sprintf %08lx)
-char *stp_lx( char *dst, const rom char *prefix, unsigned long val )
-  {
-  if( prefix )
-    dst = stp_rom( dst, prefix );
-  ltox( val, dst );
-  while( *dst ) dst++;
-  return dst;
-  }
 
-// format unsigned long to fixed size with padding
-char *stp_ulp( char *dst, const rom char *prefix, unsigned long val, int len, char pad )
-  {
+char *stp_lx(char *dst, const rom char *prefix, unsigned long val)
+{
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+  ltox(val, dst);
+  while (*dst) dst++;
+  return dst;
+}
+
+// string-print unsigned long to fixed size with padding
+
+char *stp_ulp(char *dst, const rom char *prefix, unsigned long val, int len, char pad)
+{
   char buf[11];
   char bl;
 
-  if( prefix )
-    dst = stp_rom( dst, prefix );
+  if (prefix)
+    dst = stp_rom(dst, prefix);
 
-  ultoa( val, buf );
+  ultoa(val, buf);
 
-  for( bl=strlen(buf); bl < len; bl++ )
+  for (bl = strlen(buf); bl < len; bl++)
     *dst++ = pad;
 
-  dst = stp_ram( dst, buf );
+  dst = stp_ram(dst, buf);
 
   return dst;
-  }
+}
 
-// format fixed precision long as float
-char *stp_l2f( char *dst, const rom char *prefix, long val, int prec )
-  {
+// string-print fixed precision long as float
+
+char *stp_l2f(char *dst, const rom char *prefix, long val, int prec)
+{
   long factor;
   char p;
 
-  for( factor=1, p=prec; p > 0; p-- )
+  for (factor = 1, p = prec; p > 0; p--)
     factor *= 10;
 
-  dst = stp_l( dst, prefix, val / factor );
+  dst = stp_l(dst, prefix, val / factor);
   *dst++ = '.';
-  dst = stp_ulp( dst, NULL, val % factor, prec, '0' );
+  dst = stp_ulp(dst, NULL, val % factor, prec, '0');
 
   return dst;
+}
+
+
+// string-print Latitude/Longitude as a string
+
+char *stp_latlon(char *dst, const rom char *prefix, long latlon)
+{
+  float res;
+
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+
+  if (latlon < 0)
+  {
+    *dst++ = '-';
+    latlon = ~latlon; // and invert value
   }
+  res = (float) latlon / 2048 / 3600; // Tesla specific GPS conversion
+  return stp_l2f(dst, NULL, res * 1000000, 6);
+}
+
 

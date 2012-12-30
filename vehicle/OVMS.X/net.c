@@ -81,8 +81,8 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 #ifdef OVMS_INTERNALGPS
 // Using internal SIM908 GPS:
-rom char NET_INIT1[] = "AT+CGPSPWR=1;+CGPSRST=1;+CSMINS?\r";
-rom char NET_REQGPS[] = "AT+CGPSINF=2;+CGPSINF=64\r";
+rom char NET_INIT1[] = "AT+CGPSPWR=1;+CGPSRST=0;+CSMINS?\r";
+rom char NET_REQGPS[] = "AT+CGPSINF=2;+CGPSINF=64;+CGPSPWR=1\r";
 #else
 // Using external GPS from car:
 rom char NET_INIT1[] = "AT+CSMINS?\r";
@@ -622,19 +622,22 @@ void net_state_activity()
       net_watchdog=0; // Disable watchdog, as we have connectivity
       net_reg = 0x05;
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
-      }
+    }
+    CHECKPOINT(10)
     net_sms_in(net_caller,net_buf,net_buf_pos);
     return;
     }
   else if (net_buf_mode != NET_BUF_CRLF)
     {
     // An IP data message has arrived
+    CHECKPOINT(20)
     net_msg_in(net_buf);
     // Getting GPRS data from the server means our connection was good
     net_state_vint = NET_GPRS_RETRIES; // Count-down for DONETINIT attempts
     return;
     }
 
+  CHECKPOINT(30)
   switch (net_state)
     {
 #ifdef OVMS_DIAGMODULE
@@ -1220,12 +1223,12 @@ void net_state_ticker1(void)
 
 #ifdef OVMS_INTERNALGPS
         // Request internal SIM908 GPS coordinates
-        // once per second while driving,
-        // else once every 5 minutes (to trace theft / transportation)
-        if (((car_speed > 0) || ((net_granular_tick % 300) == 0))&&
-            ((net_fnbits & NET_FN_INTERNALGPS)>0))
+        // once per second while car is on,
+        // else once every minute (to trace theft / transportation)
+        if ((((car_doors1 & 0x80) > 0) || ((net_granular_tick % 60) == 0))
+                && ((net_fnbits & NET_FN_INTERNALGPS) > 0))
         {
-            net_puts_rom( NET_REQGPS );
+          net_puts_rom(NET_REQGPS);
         }
 #endif
 
@@ -1479,7 +1482,7 @@ void net_ticker(void)
     net_timeout_rxdata = NET_RXDATA_TIMEOUT;
     // Temporary kludge to record in feature #10 the number of times this happened
     sys_features[10] += 1;
-    sprintf(net_scratchpad,"%d",sys_features[10]);
+    stp_i(net_scratchpad, NULL, sys_features[10]);
     par_set(PARAM_FEATURE10,net_scratchpad);
     reset_cpu();
     }

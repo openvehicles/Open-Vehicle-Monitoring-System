@@ -117,19 +117,51 @@ unsigned char net_sq = 0; // GSM Network Signal Quality
 unsigned int car_12vline = 0; // 12V line level
 unsigned char car_gsmcops[9] = ""; // GSM provider
 
-void main(void)
-  {
-  unsigned char x,y;
-  char *p;
+#ifdef OVMS_DIAGMODULE
+UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
+UINT8 debug_crashreason;        // last saved reset reason (bit set)
+UINT8 debug_checkpoint;         // number of last checkpoint before crash
+#endif // OVMS_DIAGMODULE
 
-  for (x=0;x<FEATURES_MAP_PARAM;x++)
-    sys_features[x]=0; // Turn off the features
+void main(void)
+{
+  unsigned char x, y;
+
+#ifdef OVMS_DIAGMODULE
+  // DEBUG: get last reset reason:
+  x = (~RCON) & 0x1f;
+  if (STKPTRbits.STKFUL) x += 32;
+  if (STKPTRbits.STKUNF) x += 64;
+
+  // ...clear RCON:
+  RCONbits.NOT_BOR = 1; // b0 = 1  = Brown Out Reset
+  RCONbits.NOT_POR = 1; // b1 = 2  = Power On Reset
+  //RCONbits.NOT_PD = 1;    // b2 = 4  = Power Down detection
+  //RCONbits.NOT_TO = 1;    // b3 = 8  = watchdog TimeOut occured
+  RCONbits.NOT_RI = 1; // b4 = 16 = Reset Instruction
+
+  if (x == 3) // 3 = normal Power On
+  {
+    debug_crashreason = 0;
+    debug_crashcnt = 0;
+  }
+  else
+  {
+    debug_crashreason = x | 0x80; // 0x80 = keep checkpoint until sent to server
+    debug_crashcnt++;
+  }
+#endif // OVMS_DIAGMODULE
+
+  CHECKPOINT(0)
+
+  for (x = 0; x < FEATURES_MAP_PARAM; x++)
+    sys_features[x] = 0; // Turn off the features
 
   // The top N features are persistent
-  for (x=FEATURES_MAP_PARAM;x<FEATURES_MAX;x++)
-    {
-    sys_features[x] = atoi(par_get(PARAM_FEATURE_S+(x-FEATURES_MAP_PARAM)));
-    }
+  for (x = FEATURES_MAP_PARAM; x < FEATURES_MAX; x++)
+  {
+    sys_features[x] = atoi(par_get(PARAM_FEATURE_S + (x - FEATURES_MAP_PARAM)));
+  }
 
   // Port configuration
   inputs_initialise();
@@ -148,65 +180,75 @@ void main(void)
   // Startup sequence...
   // Holding the RED led on, pulse out the firmware version on the GREEN led
   delay100(10); // Delay 1 second
-  led_set(OVMS_LED_RED,OVMS_LED_ON);
-  led_set(OVMS_LED_GRN,OVMS_LED_OFF);
+  led_set(OVMS_LED_RED, OVMS_LED_ON);
+  led_set(OVMS_LED_GRN, OVMS_LED_OFF);
   led_start();
   delay100(10); // Delay 1.0 seconds
   led_set(OVMS_LED_GRN, ovms_firmware[0]);
   led_start();
   delay100(35); // Delay 3.5 seconds
-  ClrWdt();		// Clear Watchdog Timer
+  ClrWdt(); // Clear Watchdog Timer
   led_set(OVMS_LED_GRN, ovms_firmware[1]);
   led_start();
   delay100(35); // Delay 3.5 seconds
-  ClrWdt();		// Clear Watchdog Timer
+  ClrWdt(); // Clear Watchdog Timer
   led_set(OVMS_LED_GRN, ovms_firmware[2]);
   led_start();
   delay100(35); // Delay 3.5 seconds
-  ClrWdt();		// Clear Watchdog Timer
+  ClrWdt(); // Clear Watchdog Timer
   led_set(OVMS_LED_GRN, OVMS_LED_OFF);
   led_set(OVMS_LED_RED, OVMS_LED_OFF);
   led_start();
   delay100(10); // Delay 1 second
-  ClrWdt();		// Clear Watchdog Timer
+  ClrWdt(); // Clear Watchdog Timer
 
   // Setup ready for the main loop
-  led_set(OVMS_LED_GRN,OVMS_LED_OFF);
+  led_set(OVMS_LED_GRN, OVMS_LED_OFF);
   led_start();
 
-  #ifdef OVMS_HW_V2
+#ifdef OVMS_HW_V2
   car_12vline = inputs_voltage()*10;
-  #endif
+#endif
 
   // Proceed to main loop
   y = 0; // Last TMR0H
   while (1) // Main Loop
-    {
-    if((vUARTIntStatus.UARTIntRxError) ||
-       (vUARTIntStatus.UARTIntRxOverFlow))
+  {
+    CHECKPOINT(1)
+    if ((vUARTIntStatus.UARTIntRxError) ||
+            (vUARTIntStatus.UARTIntRxOverFlow))
       net_reset_async();
-    if (! vUARTIntStatus.UARTIntRxBufferEmpty)
+    if (!vUARTIntStatus.UARTIntRxBufferEmpty)
+    {
+      CHECKPOINT(2)
       net_poll();
+    }
 
+    CHECKPOINT(3)
     vehicle_idlepoll();
 
-    ClrWdt();		// Clear Watchdog Timer
+    ClrWdt(); // Clear Watchdog Timer
 
     x = TMR0L;
     if (TMR0H >= 0x4c) // Timout ~1sec (actually 996ms)
-      {
-      TMR0H = 0; TMR0L = 0; // Reset timer
+    {
+      TMR0H = 0;
+      TMR0L = 0; // Reset timer
+      CHECKPOINT(4)
       net_ticker();
+      CHECKPOINT(5)
       vehicle_ticker();
-      }
+    }
     else if (TMR0H != y)
+    {
+      if ((TMR0H % 0x04) == 0)
       {
-      if ((TMR0H % 0x04)==0)
-        {
+        CHECKPOINT(6)
         net_ticker10th();
+        CHECKPOINT(7)
         vehicle_ticker10th();
-        }
-      y = TMR0H;
       }
+      y = TMR0H;
     }
   }
+}

@@ -260,141 +260,154 @@ char net_msg_encode_statputs(char stat, WORD *oldcrc)
       break;
     }
   return stat;
-  }
+}
 
 char net_msgp_stat(char stat)
-  {
-  char *p;
+{
+  char *p, *s;
 
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 S");
   p = par_get(PARAM_MILESKM);
-  sprintf(net_msg_scratchpad,(rom far char*)"%d,%s,%d,%d,",car_SOC,p,car_linevoltage,car_chargecurrent);
-  strcat(net_scratchpad,net_msg_scratchpad);
+
+  s = stp_i(net_scratchpad, "MP-0 S", car_SOC);
+  s = stp_s(s, ",", p);
+  s = stp_i(s, ",", car_linevoltage);
+  s = stp_i(s, ",", car_chargecurrent);
+
   switch (car_chargestate)
-    {
-    case 0x01:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"charging,"); // Charge State Charging
-      break;
-    case 0x02:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"topoff,"); // Topping off
-      break;
-    case 0x04:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"done,"); // Done
-      break;
-    case 0x0d:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"prepare,"); // Preparing
-      break;
-    case 0x0f:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"heating,"); // Heating
-      break;
-    default:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"stopped,"); // Stopped
-    }
+  {
+  case 0x01:
+    s = stp_rom(s, ",charging");
+    break;
+  case 0x02:
+    s = stp_rom(s, ",topoff");
+    break;
+  case 0x04:
+    s = stp_rom(s, ",done");
+    break;
+  case 0x0d:
+    s = stp_rom(s, ",prepare");
+    break;
+  case 0x0f:
+    s = stp_rom(s, ",heating");
+    break;
+  default:
+    s = stp_rom(s, ",stopped");
+  }
+
   switch (car_chargemode)
-    {
-    case 0x00:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"standard,"); // Charge Mode Standard
-      break;
-    case 0x01:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"storage,"); // Storage
-      break;
-    case 0x03:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"range,"); // Range
-      break;
-    case 0x04:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)"performance,"); // Performance
-      break;
-    default:
-      strcatpgm2ram(net_scratchpad,(char const rom far*)",");
-    }
+  {
+  case 0x00:
+    s = stp_rom(s, ",standard");
+    break;
+  case 0x01:
+    s = stp_rom(s, ",storage");
+    break;
+  case 0x03:
+    s = stp_rom(s, ",range");
+    break;
+  case 0x04:
+    s = stp_rom(s, ",performance");
+    break;
+  default:
+    s = stp_rom(s, ",");
+  }
+
   if (*p == 'M') // Kmh or Miles
-    sprintf(net_msg_scratchpad, (rom far char*)"%u,", car_idealrange);
+  {
+    s = stp_i(s, ",", car_idealrange);
+    s = stp_i(s, ",", car_estrange);
+  }
   else
-    sprintf(net_msg_scratchpad, (rom far char*)"%u,", (((car_idealrange << 4)+5)/10));
-  strcat(net_scratchpad,net_msg_scratchpad);
-  if (*p == 'M') // Kmh or Miles
-    sprintf(net_msg_scratchpad, (rom far char*)"%u,", car_estrange);
-  else
-    sprintf(net_msg_scratchpad, (rom far char*)"%u,", (((car_estrange << 4)+5)/10));
-  strcat(net_scratchpad,net_msg_scratchpad);
-  sprintf(net_msg_scratchpad,(rom far char*)"%d,%u,%d,%d,%d,%d,%d,%d,%d,%d",
-          car_chargelimit,car_chargeduration,
-          car_charge_b4, car_chargekwh, car_chargesubstate,
-          car_chargestate,car_chargemode,
-          car_timermode,car_timerstart,car_stale_timer);
-  strcat(net_scratchpad,net_msg_scratchpad);
+  {
+    s = stp_i(s, ",", MI2KM(car_idealrange));
+    s = stp_i(s, ",", MI2KM(car_estrange));
+  }
+
+  s = stp_i(s, ",", car_chargelimit);
+  s = stp_i(s, ",", car_chargeduration);
+  s = stp_i(s, ",", car_charge_b4);
+  s = stp_i(s, ",", car_chargekwh);
+  s = stp_i(s, ",", car_chargesubstate);
+  s = stp_i(s, ",", car_chargestate);
+  s = stp_i(s, ",", car_chargemode);
+  s = stp_i(s, ",", car_timermode);
+  s = stp_i(s, ",", car_timerstart);
+  s = stp_i(s, ",", car_stale_timer);
 
   return net_msg_encode_statputs(stat, &crc_stat);
-  }
+}
 
 char net_msgp_gps(char stat)
-  {
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 L");
-  format_latlon(car_latitude,net_msg_scratchpad);
-  strcat(net_scratchpad,net_msg_scratchpad);
-  strcatpgm2ram(net_scratchpad,(char const rom far*)",");
-  format_latlon(car_longitude,net_msg_scratchpad);
-  strcat(net_scratchpad,net_msg_scratchpad);
-  sprintf(net_msg_scratchpad, (rom far char*)",%d,%d,%d,%d",
-          car_direction, car_altitude, car_gpslock,car_stale_gps);
-  strcat(net_scratchpad,net_msg_scratchpad);
+{
+  char *s;
+
+  s = stp_latlon(net_scratchpad, "MP-0 L", car_latitude);
+  s = stp_latlon(s, ",", car_longitude);
+  s = stp_i(s, ",", car_direction);
+  s = stp_i(s, ",", car_altitude);
+  s = stp_i(s, ",", car_gpslock);
+  s = stp_i(s, ",", car_stale_gps);
 
   return net_msg_encode_statputs(stat, &crc_gps);
-  }
+}
 
 char net_msgp_tpms(char stat)
-  {
-  char k;
+{
+  char k, *s;
   long p;
-  int b,a;
 
-  if ((car_tpms_t[0]==0)&&(car_tpms_t[1]==0)&&
-      (car_tpms_t[2]==0)&&(car_tpms_t[3]==0))
+#if 0
+  if ((car_tpms_t[0] == 0) && (car_tpms_t[1] == 0) &&
+          (car_tpms_t[2] == 0) && (car_tpms_t[3] == 0))
     return stat; // No TPMS, no report
+  // ...new stat fn: No TMPS = one report with stale=-1
+#endif
 
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 W");
-  for (k=0;k<4;k++)
+  s = stp_rom(net_scratchpad, "MP-0 W");
+  for (k = 0; k < 4; k++)
+  {
+    if (car_tpms_t[k] > 0)
     {
-    if (car_tpms_t[k]>0)
-      {
-      p = (long)((float)car_tpms_p[k]/0.2755);
-      b = (p / 10);
-      a = (p % 10);
-      sprintf(net_msg_scratchpad, (rom far char*)"%d.%d,%d,",
-              b,a,(int)(car_tpms_t[k]-40));
-      strcat(net_scratchpad,net_msg_scratchpad);
-      }
-    else
-      {
-      strcatpgm2ram(net_scratchpad, (rom far char*)"0,0,");
-      }
+      p = (long) ((float) car_tpms_p[k] / 0.2755);
+      s = stp_l2f(s, NULL, p, 1);
+      s = stp_i(s, ",", car_tpms_t[k] - 40);
+      s = stp_rom(s, ",");
     }
-  sprintf(net_msg_scratchpad, (rom far char*)"%d",car_stale_tpms);
-  strcat(net_scratchpad,net_msg_scratchpad);
+    else
+    {
+      s = stp_rom(s, "0,0,");
+    }
+  }
+  s = stp_i(s, NULL, car_stale_tpms);
 
   return net_msg_encode_statputs(stat, &crc_tpms);
-  }
+}
 
 char net_msgp_firmware(char stat)
-  {
+{
   // Send firmware version and GSM signal level
+  char *s;
   unsigned char hwv = 1;
-  #ifdef OVMS_HW_V2
+#ifdef OVMS_HW_V2
   hwv = 2;
-  #endif
+#endif
 
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 F");
-  sprintf(net_msg_scratchpad, (rom far char*)"%d.%d.%d/V%d,%s,%d,%d,%s,%s",
-    ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],hwv,
-    car_vin, net_sq, sys_features[FEATURE_CANWRITE],car_type,
-    car_gsmcops);
-  strcat(net_scratchpad,net_msg_scratchpad);
+  s = stp_i(net_scratchpad, "MP-0 F", ovms_firmware[0]);
+  s = stp_i(s, ".", ovms_firmware[1]);
+  s = stp_i(s, ".", ovms_firmware[2]);
+  s = stp_i(s, "/V", hwv);
+  s = stp_s(s, ",", car_vin);
+  s = stp_i(s, ",", net_sq);
+  s = stp_i(s, ",", sys_features[FEATURE_CANWRITE]);
+  s = stp_s(s, ",", car_type);
+  s = stp_s(s, ",", car_gsmcops);
 
   return net_msg_encode_statputs(stat, &crc_firmware);
-  }
+}
 
 char net_msgp_environment(char stat)
-  {
+{
+  char *s;
   unsigned long park;
 
   if (car_parktime == 0)
@@ -402,53 +415,60 @@ char net_msgp_environment(char stat)
   else
     park = car_time - car_parktime;
 
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 D");
-  sprintf(net_msg_scratchpad, (rom far char*)"%d,%d,%d,%d,%d,%d,%d,%lu,%d,%lu,%d,%d,%d,%d,%d.%d,%d",
-          car_doors1, car_doors2, car_lockstate,
-          car_tpem, car_tmotor, car_tbattery,
-          car_trip, car_odometer, car_speed, park,
-          car_ambient_temp, car_doors3,
-          car_stale_temps, car_stale_ambient,
-          car_12vline/10,car_12vline%10,
-          car_doors4);
-  strcat(net_scratchpad,net_msg_scratchpad);
+  s = stp_i(net_scratchpad, "MP-0 D", car_doors1);
+  s = stp_i(s, ",", car_doors2);
+  s = stp_i(s, ",", car_lockstate);
+  s = stp_i(s, ",", car_tpem);
+  s = stp_i(s, ",", car_tmotor);
+  s = stp_i(s, ",", car_tbattery);
+  s = stp_i(s, ",", car_trip);
+  s = stp_ul(s, ",", car_odometer);
+  s = stp_i(s, ",", car_speed);
+  s = stp_ul(s, ",", park);
+  s = stp_i(s, ",", car_ambient_temp);
+  s = stp_i(s, ",", car_doors3);
+  s = stp_i(s, ",", car_stale_temps);
+  s = stp_i(s, ",", car_stale_ambient);
+  s = stp_l2f(s, ",", car_12vline, 1);
+  s = stp_i(s, ",", car_doors4);
 
   return net_msg_encode_statputs(stat, &crc_environment);
-  }
+}
 
 char net_msgp_capabilities(char stat)
-  {
+{
+  char *s;
 
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 V");
-  if ((can_capabilities != NULL)&&(can_capabilities[0]!=0))
-    {
-    strcatpgm2ram(net_scratchpad,(rom char*)can_capabilities);
-    strcatpgm2ram(net_scratchpad,",");
-    }
-  strcatpgm2ram(net_scratchpad,"C1-6,C40-41,C49");
+  s = stp_rom(net_scratchpad, "MP-0 V");
+  if ((can_capabilities != NULL) && (can_capabilities[0] != 0))
+  {
+    s = stp_rom(s, can_capabilities);
+    s = stp_rom(s, ",");
+  }
+  s = stp_rom(s, "C1-6,C40-41,C49");
 
   return net_msg_encode_statputs(stat, &crc_capabilities);
-  }
+}
 
 char net_msgp_group(char stat, char groupnumber, char *groupname)
-  {
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 g");
-  sprintf(net_msg_scratchpad, (rom far char*)"%s,%d,%d,%d,%d,%d,%d,",
-          groupname, car_SOC, car_speed,
-          car_direction, car_altitude, car_gpslock, car_stale_gps);
-  strcat(net_scratchpad,net_msg_scratchpad);
+{
+  char *s;
 
-  format_latlon(car_latitude,net_msg_scratchpad);
-  strcat(net_scratchpad,net_msg_scratchpad);
-  strcatpgm2ram(net_scratchpad,(char const rom far*)",");
-  format_latlon(car_longitude,net_msg_scratchpad);
-  strcat(net_scratchpad,net_msg_scratchpad);
+  s = stp_s(net_scratchpad, "MP-0 g", groupname);
+  s = stp_i(s, ",", car_SOC);
+  s = stp_i(s, ",", car_speed);
+  s = stp_i(s, ",", car_direction);
+  s = stp_i(s, ",", car_altitude);
+  s = stp_i(s, ",", car_gpslock);
+  s = stp_i(s, ",", car_stale_gps);
+  s = stp_latlon(s, ",", car_latitude);
+  s = stp_latlon(s, ",", car_longitude);
 
-  if (groupnumber==1)
+  if (groupnumber == 1)
     return net_msg_encode_statputs(stat, &crc_group1);
   else
-    return net_msg_encode_statputs(stat, &crc_group1);
-  }
+    return net_msg_encode_statputs(stat, &crc_group2);
+}
 
 void net_msg_server_welcome(char *msg)
   {
@@ -456,6 +476,7 @@ void net_msg_server_welcome(char *msg)
   char *d,*p;
   int k;
 
+  if( !msg ) return;
   for (d=msg;(*d != 0)&&(*d != ' ');d++) ;
   if (*d != ' ') return;
   *d++ = 0;
@@ -525,8 +546,21 @@ void net_msg_server_welcome(char *msg)
   else
     {
     ptokenmade = 0; // This disables paranoid mode
-    }
   }
+
+#ifdef OVMS_DIAGMODULE
+  // DEBUG: Send crash counter and last reason:
+  delay100(20);
+  debug_crashreason &= ~0x80; // clear checkpoint hold bit
+  p = stp_i(net_scratchpad, "MP-0 H*-OVM-DebugCrash,", debug_crashcnt);
+  p = stp_x(p, ",86400,", debug_crashreason);
+  p = stp_i(p, ",", debug_checkpoint);
+  net_msg_start();
+  net_msg_encode_puts();
+  net_msg_send();
+#endif // OVMS_DIAGMODULE
+
+}
 
 // Receive a NET msg from the OVMS server
 void net_msg_in(char* msg)
@@ -579,6 +613,7 @@ void net_msg_in(char* msg)
     msg = net_msg_scratchpad;
     }
 
+  CHECKPOINT (21)
   switch (*msg)
     {
     case 'A': // PING
@@ -634,7 +669,7 @@ void net_msg_cmd_in(char* msg)
 BOOL net_msg_cmd_exec(void)
   {
   int k;
-  char *p;
+  char *p, *s;
 
   delay100(2);
 
@@ -643,9 +678,10 @@ BOOL net_msg_cmd_exec(void)
     case 1: // Request feature list (params unused)
       for (k=0;k<FEATURES_MAX;k++)
         {
-        sprintf(net_scratchpad, (rom far char*)"MP-0 c1,0,%d,%d,%d",
-                k,FEATURES_MAX,sys_features[k]);
-        net_msg_encode_puts();
+          s = stp_i(net_scratchpad, "MP-0 c1,0,", k);
+          s = stp_i(s, ",", FEATURES_MAX);
+          s = stp_i(s, ",", sys_features[k]);
+          net_msg_encode_puts();
         }
       break;
 
@@ -680,11 +716,12 @@ BOOL net_msg_cmd_exec(void)
     case 3: // Request parameter list (params unused)
       for (k=0;k<PARAM_MAX;k++)
         {
-        p = par_get(k);
-        if (k==PARAM_SERVERPASS) *p=0; // Don't show netpass1
-        sprintf(net_scratchpad, (rom far char*)"MP-0 c3,0,%d,%d,%s",
-                k,PARAM_MAX,p);
-        net_msg_encode_puts();
+          p = par_get(k);
+          if (k==PARAM_SERVERPASS) *p=0; // Don't show netpass1
+          s = stp_i(net_scratchpad, "MP-0 c3,0,", k);
+          s = stp_i(s, ",", PARAM_MAX);
+          s = stp_s(s, ",", p);
+          net_msg_encode_puts();
         }
       break;
 
@@ -777,6 +814,7 @@ BOOL net_msg_cmd_exec(void)
 
 void net_msg_cmd_do(void)
   {
+  CHECKPOINT (22)
   delay100(2);
 
   // commands 40-49 are special AT commands, thus, disable net_msg here
@@ -821,62 +859,67 @@ void net_msg_forward_sms(char *caller, char *SMS)
   strcat(net_scratchpad, SMS);
   net_msg_encode_puts();
   net_msg_send();
-  }
+}
 
 void net_msg_alert(void)
-  {
-  char *p;
+{
+  char *p, *s;
 
   delay100(2);
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PA");
+
+  s = stp_rom(net_scratchpad, "MP-0 PA");
 
   switch (car_chargemode)
-    {
-    case 0x00:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Standard - "); // Charge Mode Standard
-      break;
-    case 0x01:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Storage - "); // Storage
-      break;
-    case 0x03:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Range - "); // Range
-      break;
-    case 0x04:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Performance - "); // Performance
-    }
-  switch (car_chargestate)
-    {
-    case 0x01:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging"); // Charge State Charging
-      break;
-    case 0x02:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging, Topping off"); // Topping off
-      break;
-    case 0x04:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Done"); // Done
-      break;
-    case 0x0d:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Preparing"); // Preparing
-      break;
-    case 0x0f:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging, Heating"); // Heating
-      break;
-    default:
-      strcatpgm2ram(net_scratchpad,(char const rom far *)"Charging Stopped"); // Stopped
-    }
-
-  strcatpgm2ram(net_scratchpad,(char const rom far *)"\rIdeal Range: "); // Ideal Range
-  p = par_get(PARAM_MILESKM);
-  if (*p == 'M') // Kmh or Miles
-    sprintf(net_msg_scratchpad, (rom far char*)"%u mi", car_idealrange); // Miles
-  else
-    sprintf(net_msg_scratchpad, (rom far char*)"%u Km", (((car_idealrange << 4)+5)/10)); // Kmh
-  strcat((char*)net_scratchpad,net_msg_scratchpad);
-
-  strcatpgm2ram(net_scratchpad,(char const rom far *)" SOC: ");
-  sprintf(net_msg_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
-  strcat(net_scratchpad,net_msg_scratchpad);
+  {
+  case 0x00:
+    s = stp_rom(s, "Standard - "); // Charge Mode Standard
+    break;
+  case 0x01:
+    s = stp_rom(s, "Storage - "); // Storage
+    break;
+  case 0x03:
+    s = stp_rom(s, "Range - "); // Range
+    break;
+  case 0x04:
+    s = stp_rom(s, "Performance - "); // Performance
   }
+  switch (car_chargestate)
+  {
+  case 0x01:
+    s = stp_rom(s, "Charging"); // Charge State Charging
+    break;
+  case 0x02:
+    s = stp_rom(s, "Charging, Topping off"); // Topping off
+    break;
+  case 0x04:
+    s = stp_rom(s, "Charging Done"); // Done
+    break;
+  case 0x0d:
+    s = stp_rom(s, "Preparing"); // Preparing
+    break;
+  case 0x0f:
+    s = stp_rom(s, "Charging, Heating"); // Heating
+    break;
+  default:
+    s = stp_rom(s, "Charging Stopped"); // Stopped
+  }
+
+  p = par_get(PARAM_MILESKM);
+  if (can_mileskm == 'M')
+  {
+    s = stp_i(s, "\rIdeal Range: ", car_idealrange);
+    s = stp_rom(s, " mi");
+  }
+  else
+  {
+    s = stp_i(s, "\rIdeal Range: ", MI2KM(car_idealrange));
+    s = stp_rom(s, " km");
+  }
+
+  s = stp_i(s, " SOC: ", car_SOC);
+  s = stp_rom(s, "%");
+
+}
 
 void net_msg_alarm(void)
   {

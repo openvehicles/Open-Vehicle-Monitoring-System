@@ -32,8 +32,18 @@
 #define __OVMS_VEHICLE_H
 
 extern unsigned int   can_granular_tick;         // An internal ticker used to generate 1min, 5min, etc, calls
+
 extern unsigned char  can_datalength;            // The number of valid bytes in the can_databuffer
 extern unsigned char  can_databuffer[8];
+
+// can_databuffer byte + nibble access macros: b=byte# 0..7 / n=nibble# 0..15
+#define CAN_BYTE(b)     can_databuffer[b]
+#define CAN_NIBL(b)     (can_databuffer[b] & 0x0f)
+#define CAN_NIBH(b)     (can_databuffer[b] >> 4)
+#define CAN_NIB(n)      (((n)&1) ? CAN_NIBL((n)>>1) : CAN_NIBH((n)>>1))
+// please note: MPLAB C18 does not optimize CAN_NIB(loopvar)
+//   as good as CAN_NIBL/H used separately
+
 extern unsigned char  can_minSOCnotified;        // minSOC notified flag
 extern unsigned char  can_mileskm;               // Miles of Kilometers
 

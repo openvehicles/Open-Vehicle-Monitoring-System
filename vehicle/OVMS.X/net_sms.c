@@ -651,32 +651,50 @@ BOOL net_sms_handle_server(char *caller, char *command, char *arguments)
     net_state_enter(NET_STATE_DONETINIT);
 
   return serverq_result;
-  }
+}
 
 BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
-  {
-  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
+{
+  char *s;
+
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS) return FALSE;
 
   net_send_sms_start(caller);
-  net_puts_rom("DIAG:");
 
-  sprintf(net_scratchpad, (rom far char*)"\r\n RED Led:%d", led_code[OVMS_LED_RED]);
+  s = stp_rom(net_scratchpad, "DIAG:");
+  s = stp_i(s, "\n RED Led:", led_code[OVMS_LED_RED]);
+  s = stp_i(s, "\n GRN Led:", led_code[OVMS_LED_GRN]);
+  s = stp_x(s, "\n NET State:0x", net_state);
+
+  if (car_12vline > 0)
+    s = stp_l2f(s, "\n 12V Line:", car_12vline, 1);
+
+#ifdef OVMS_DIAGMODULE
+  s = stp_i(s, "\n Crashes:", debug_crashcnt);
+  if (debug_crashreason)
+  {
+    s = stp_rom(s, "\n ..last:");
+    if (debug_crashreason & 0x01)
+      s = stp_rom(s, " BOR"); // Brown Out Reset
+    if (debug_crashreason & 0x02)
+      s = stp_rom(s, " POR"); // Power On Reset
+    if (debug_crashreason & 0x04)
+      s = stp_rom(s, " PD"); // Power-Down Detection
+    if (debug_crashreason & 0x08)
+      s = stp_rom(s, " TO"); // Watchdog Timeout
+    if (debug_crashreason & 0x10)
+      s = stp_rom(s, " RI"); // Reset Instruction
+    if (debug_crashreason & 0x20)
+      s = stp_rom(s, " STKFUL"); // Stack overflow
+    if (debug_crashreason & 0x40)
+      s = stp_rom(s, " STKUNF"); // Stack underflow
+  }
+#endif // OVMS_DIAGMODULE
+
   net_puts_ram(net_scratchpad);
-
-  sprintf(net_scratchpad, (rom far char*)"\r\n GRN Led:%d", led_code[OVMS_LED_GRN]);
-  net_puts_ram(net_scratchpad);
-
-  sprintf(net_scratchpad, (rom far char*)"\r\n NET State:0x%02x", net_state);
-  net_puts_ram(net_scratchpad);
-
-  if (car_12vline>0)
-    {
-    sprintf(net_scratchpad, (rom far char*)"\r\n 12V Line:%d.%d", car_12vline/10,car_12vline%10);
-    net_puts_ram(net_scratchpad);
-    }
 
   return TRUE;
-  }
+}
 
 BOOL net_sms_handle_featuresq(char *caller, char *command, char *arguments)
   {
