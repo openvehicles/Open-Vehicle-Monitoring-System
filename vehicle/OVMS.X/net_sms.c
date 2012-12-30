@@ -114,70 +114,9 @@ BOOL net_sms_stat(char* number)
 
   delay100(2);
   net_send_sms_start(number);
-
-  if (car_doors1 & 0x04)
-    { // Charge port door is open, we are charging
-    switch (car_chargemode)
-      {
-      case 0x00:
-        net_puts_rom("Standard - "); // Charge Mode Standard
-        break;
-      case 0x01:
-        net_puts_rom("Storage - "); // Storage
-        break;
-      case 0x03:
-        net_puts_rom("Range - "); // Range
-        break;
-      case 0x04:
-        net_puts_rom("Performance - "); // Performance
-      }
-    switch (car_chargestate)
-      {
-      case 0x01:
-        net_puts_rom("Charging"); // Charge State Charging
-        break;
-      case 0x02:
-        net_puts_rom("Charging, Topping off"); // Topping off
-        break;
-      case 0x04:
-        net_puts_rom("Charging Done"); // Done
-        break;
-      case 0x0d:
-        net_puts_rom("Charging, Preparing"); // Preparing
-        break;
-      case 0x0f:
-        net_puts_rom("Charging, Heating"); // Preparing
-        break;
-      default:
-        net_puts_rom("Charging Stopped"); // Stopped
-      }
-    }
-  else
-    { // Charge port door is closed, we are not charging
-    net_puts_rom("Not charging");
-    }
-
-  net_puts_rom(" \r\nRange: "); // Estimated + Ideal Range
-  p = par_get(PARAM_MILESKM);
-  if (*p == 'M') // Kmh or Miles
-    sprintf(net_scratchpad, (rom far char*)"%u - %u mi"
-            , car_estrange
-            , car_idealrange ); // Miles
-  else
-    sprintf(net_scratchpad, (rom far char*)"%u - %u Km"
-            , (((car_estrange << 4)+5)/10)
-            , (((car_idealrange << 4)+5)/10) ); // Km
-  net_puts_ram(net_scratchpad);
-
-  net_puts_rom(" \r\nSOC: ");
-  sprintf(net_scratchpad, (rom far char*)"%u%%", car_SOC); // 95%
-  net_puts_ram(net_scratchpad);
-
-  net_puts_rom(" \r\nODO: ");
-  if (*p == 'M') // Km or Miles
-    sprintf(net_scratchpad, (rom far char*)"%lu mi", car_odometer / 10); // Miles
-  else
-    sprintf(net_scratchpad, (rom far char*)"%lu Km", (((car_odometer << 4)+5)/100)); // Km
+  
+  net_prep_stat(net_scratchpad);
+  cr2lf(net_scratchpad);
   net_puts_ram(net_scratchpad);
 
   return TRUE;
@@ -209,13 +148,15 @@ void net_sms_valettrunk(char* number)
 
 void net_sms_socalert(char* number)
   {
-  char *p;
+  char *s;
 
   delay100(10);
   net_send_sms_start(number);
 
-  sprintf(net_scratchpad, (rom far char*)"ALERT!!! CRITICAL SOC LEVEL APPROACHED (%u%% SOC)", car_SOC); // 95%
+  s = stp_i(net_scratchpad, "ALERT!!! CRITICAL SOC LEVEL APPROACHED (", car_SOC); // 95%
+  s = stp_rom(s, "% SOC)");
   net_puts_ram(net_scratchpad);
+
   net_send_sms_finish();
   delay100(5);
   }
@@ -295,7 +236,7 @@ BOOL net_sms_handle_registerq(char *caller, char *command, char *arguments)
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
   net_send_sms_start(caller);
-  sprintf(net_scratchpad, (rom far char*)"Registered number: %s", p);
+  stp_s(net_scratchpad, "Registered number: ", p);
   net_puts_ram(net_scratchpad);
   return TRUE;
   }
@@ -318,7 +259,7 @@ BOOL net_sms_handle_passq(char *caller, char *command, char *arguments)
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
   net_send_sms_start(caller);
-  sprintf(net_scratchpad, (rom far char*)"Module password: %s", p);
+  stp_s(net_scratchpad, "Module password: ", p);
   net_puts_ram(net_scratchpad);
   return TRUE;
   }
@@ -336,16 +277,18 @@ BOOL net_sms_handle_pass(char *caller, char *command, char *arguments)
 
 BOOL net_sms_handle_gps(char *caller, char *command, char *arguments)
   {
+  char *s;
+
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
   delay100(2);
   net_send_sms_start(caller);
-  net_puts_rom(NET_MSG_GOOGLEMAPS);
-  format_latlon(car_latitude,net_scratchpad);
+  
+  s = stp_latlon(net_scratchpad, NET_MSG_GOOGLEMAPS, car_latitude);
+  s = stp_latlon(s, ",", car_longitude);
+
   net_puts_ram(net_scratchpad);
-  net_puts_rom(",");
-  format_latlon(car_longitude,net_scratchpad);
-  net_puts_ram(net_scratchpad);
+
   return TRUE;
   }
 
@@ -357,7 +300,7 @@ BOOL net_sms_handle_stat(char *caller, char *command, char *arguments)
 BOOL net_sms_handle_paramsq(char *caller, char *command, char *arguments)
   {
   unsigned char k, splen, msglen;
-  char *p;
+  char *p, *s;
 
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
@@ -369,7 +312,9 @@ BOOL net_sms_handle_paramsq(char *caller, char *command, char *arguments)
     p = par_get(k);
     if (*p != 0)
       {
-      splen = sprintf(net_scratchpad, (rom far char*)"\n%u:", k);
+      s = stp_i(net_scratchpad, "\n", k);
+      s = stp_s(s, ":", p);
+      splen = s - net_scratchpad;
       if((msglen+splen) > 160)
         {
           // SMS becomes too long, finish & start next:
@@ -380,7 +325,6 @@ BOOL net_sms_handle_paramsq(char *caller, char *command, char *arguments)
           msglen=7+splen;
         }
       net_puts_ram(net_scratchpad);
-      net_puts_ram(p);
       }
     }
   return TRUE;
@@ -433,27 +377,18 @@ BOOL net_sms_handle_ap(char *caller, char *command, char *arguments)
 
 BOOL net_sms_handle_moduleq(char *caller, char *command, char *arguments)
   {
-  char *p;
+  char *s;
 
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
   net_send_sms_start(caller);
-  net_puts_rom("Module:");
 
-  p = par_get(PARAM_VEHICLEID);
-  sprintf(net_scratchpad, (rom far char*)"\r\n VehicleID:%s", p);
-  net_puts_ram(net_scratchpad);
+  s = stp_rom(net_scratchpad, "Module:");
+  s = stp_s(s, "\r\n VehicleID:", par_get(PARAM_VEHICLEID));
+  s = stp_s(s, "\r\n VehicleType:", par_get(PARAM_VEHICLETYPE));
+  s = stp_s(s, "\r\n Units:", par_get(PARAM_MILESKM));
+  s = stp_s(s, "\r\n Notifications:", par_get(PARAM_NOTIFIES));
 
-  p = par_get(PARAM_VEHICLETYPE);
-  sprintf(net_scratchpad, (rom far char*)"\r\n VehicleType:%s", p);
-  net_puts_ram(net_scratchpad);
-
-  p = par_get(PARAM_MILESKM);
-  sprintf(net_scratchpad, (rom far char*)"\r\n Units:%s", p);
-  net_puts_ram(net_scratchpad);
-
-  p = par_get(PARAM_NOTIFIES);
-  sprintf(net_scratchpad, (rom far char*)"\r\n Notifications:%s", p);
   net_puts_ram(net_scratchpad);
 
   return TRUE;
@@ -491,37 +426,29 @@ BOOL net_sms_handle_module(char *caller, char *command, char *arguments)
 
 BOOL net_sms_handle_gprsq(char *caller, char *command, char *arguments)
   {
-  char *p;
+  char *s;
 
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
   net_send_sms_start(caller);
-  net_puts_rom("GPRS:");
 
-  p = par_get(PARAM_GPRSAPN);
-  sprintf(net_scratchpad, (rom far char*)"\r\n APN:%s", p);
-  net_puts_ram(net_scratchpad);
-
-  p = par_get(PARAM_GPRSUSER);
-  sprintf(net_scratchpad, (rom far char*)"\r\n User:%s", p);
-  net_puts_ram(net_scratchpad);
-
-  p = par_get(PARAM_GPRSPASS);
-  sprintf(net_scratchpad, (rom far char*)"\r\n Password:%s", p);
-  net_puts_ram(net_scratchpad);
-
-  sprintf(net_scratchpad, (rom far char*)"\r\n GSM:%s", car_gsmcops);
-  net_puts_ram(net_scratchpad);
+  s = stp_rom(net_scratchpad, "GPRS:");
+  s = stp_s(s, "\r\n APN:", par_get(PARAM_GPRSAPN));
+  s = stp_s(s, "\r\n User:", par_get(PARAM_GPRSUSER));
+  s = stp_s(s, "\r\n Password:", par_get(PARAM_GPRSPASS));
+  s = stp_s(s, "\r\n GSM:", car_gsmcops);
 
   if (net_msg_serverok)
-    net_puts_rom("\r\n GPRS: OK\r\n Server: Connected OK");
+    s = stp_rom(s, "\r\n GPRS: OK\r\n Server: Connected OK");
   else if (net_state == NET_STATE_READY)
-    net_puts_rom("\r\n GSM: OK\r\n Server: Not connected");
+    s = stp_rom(s, "\r\n GSM: OK\r\n Server: Not connected");
   else
     {
-    sprintf(net_scratchpad, (rom far char*)"\r\n GSM/GPRS: Not connected (0x%02x)", net_state);
-    net_puts_ram(net_scratchpad);
+    s = stp_x(s, "\r\n GSM/GPRS: Not connected (0x", net_state);
+    s = stp_rom(s, ")");
     }
+
+  net_puts_ram(net_scratchpad);
 
   return TRUE;
   }
@@ -576,7 +503,7 @@ BOOL net_sms_handle_gsmlockq(char *caller, char *command, char *arguments)
     net_puts_rom("\r\n");
     }
 
-  sprintf(net_scratchpad, (rom far char*)"Current: %s", car_gsmcops);
+  stp_s(net_scratchpad, "Current: ", car_gsmcops);
   net_puts_ram(net_scratchpad);
 
   return TRUE;
@@ -607,23 +534,17 @@ BOOL net_sms_handle_gsmlock(char *caller, char *command, char *arguments)
 
 BOOL net_sms_handle_serverq(char *caller, char *command, char *arguments)
   {
-  char *p;
+  char *s;
 
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
   net_send_sms_start(caller);
-  net_puts_rom("Server:");
 
-  p = par_get(PARAM_SERVERIP);
-  sprintf(net_scratchpad, (rom far char*)"\r\n IP:%s", p);
-  net_puts_ram(net_scratchpad);
+  s = stp_rom(net_scratchpad, "Server:");
+  s = stp_s(s, "\r\n IP:", par_get(PARAM_SERVERIP));
+  s = stp_s(s, "\r\n Password:", par_get(PARAM_SERVERPASS));
+  s = stp_s(s, "\r\n Paranoid:", par_get(PARAM_PARANOID));
 
-  p = par_get(PARAM_SERVERPASS);
-  sprintf(net_scratchpad, (rom far char*)"\r\n Password:%s", p);
-  net_puts_ram(net_scratchpad);
-
-  p = par_get(PARAM_PARANOID);
-  sprintf(net_scratchpad, (rom far char*)"\r\n Paranoid:%s", p);
   net_puts_ram(net_scratchpad);
 
   return TRUE;
@@ -699,6 +620,7 @@ BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
 BOOL net_sms_handle_featuresq(char *caller, char *command, char *arguments)
   {
   unsigned char k;
+  char *s;
 
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
@@ -708,7 +630,8 @@ BOOL net_sms_handle_featuresq(char *caller, char *command, char *arguments)
     {
     if (sys_features[k] != 0)
       {
-      sprintf(net_scratchpad, (rom far char*)"\r\n %u:%d", k,sys_features[k]);
+      s = stp_i(net_scratchpad, "\r\n ", k);
+      s = stp_i(s, ":", sys_features[k]);
       net_puts_ram(net_scratchpad);
       }
     }
@@ -833,20 +756,19 @@ BOOL net_sms_handle_chargestop(char *caller, char *command, char *arguments)
 BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
   {
   unsigned char hwv = 1;
-  char *p;
+  char *s;
   #ifdef OVMS_HW_V2
   hwv = 2;
   #endif
 
-  p = par_get(PARAM_VEHICLETYPE);
+  s = stp_i(net_scratchpad, "OVMS Firmware version: ", ovms_firmware[0]);
+  s = stp_i(s, ".", ovms_firmware[1]);
+  s = stp_i(s, ".", ovms_firmware[2]);
+  s = stp_s(s, "/", par_get(PARAM_VEHICLETYPE));
   if (vehicle_version)
-    strcpypgm2ram(net_msg_scratchpad, vehicle_version);
-  else
-    net_msg_scratchpad[0] = 0;
+    s = stp_rom(s, vehicle_version);
+  s = stp_i(s, "/V", hwv);
 
-  sprintf(net_scratchpad, (rom far char*)"OVMS Firmware version: %d.%d.%d/%s%s/V%d",
-          ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],
-          p, net_msg_scratchpad, hwv);
   net_send_sms_start(caller);
   net_puts_ram(net_scratchpad);
   return TRUE;

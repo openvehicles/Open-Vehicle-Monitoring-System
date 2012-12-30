@@ -165,7 +165,7 @@ void diag_handle_diag(char *command, char *arguments)
   {
   unsigned int x;
   unsigned char hwv = 1;
-  char *p;
+  char *s;
 
   #ifdef OVMS_HW_V2
   hwv = 2;
@@ -173,41 +173,47 @@ void diag_handle_diag(char *command, char *arguments)
 
   net_puts_rom("\r\n# DIAG\r\n\n");
 
-  p = par_get(PARAM_VEHICLETYPE);
+  s = stp_i(net_scratchpad, "# Firmware: ", ovms_firmware[0]);
+  s = stp_i(s, ".", ovms_firmware[1]);
+  s = stp_i(s, ".", ovms_firmware[2]);
+  s = stp_s(s, "/", par_get(PARAM_VEHICLETYPE));
   if (vehicle_version)
-      strcpypgm2ram(net_msg_scratchpad, vehicle_version);
-  else
-      net_msg_scratchpad[0] = 0;
-
-  sprintf(net_scratchpad, (rom far char*)"# Firmware: %d.%d.%d/%s%s/V%d\r\n",
-          ovms_firmware[0],ovms_firmware[1],ovms_firmware[2],
-          p, net_msg_scratchpad, hwv);
+    s = stp_rom(s, vehicle_version);
+  s = stp_i(s, "/V", hwv);
+  s = stp_rom(s, "\r\n");
   net_puts_ram(net_scratchpad);
 
-  sprintf(net_scratchpad, (rom far char*)"#  SWITCH:   %d\r\n", inputs_gsmgprs());
+  s = stp_i(net_scratchpad, "#  SWITCH:   ", inputs_gsmgprs());
+  s = stp_rom(s, "\r\n");
   net_puts_ram(net_scratchpad);
 
   #ifdef OVMS_HW_V2
   x = inputs_voltage()*10;
-  sprintf(net_scratchpad, (rom far char*)"#  12V Line: %d.%d V\r\n", x/10,x%10);
+  s = stp_l2f(net_scratchpad, "#  12V Line: ", x, 1);
+  s = stp_rom(s, " V\r\n");
   net_puts_ram(net_scratchpad);
   #endif // #ifdef OVMS_HW_V2
 
-  sprintf(net_scratchpad, (rom far char*)"#  Signal:   %d\r\n\n", net_sq);
+  s = stp_i(net_scratchpad, "#  Signal:   ", net_sq);
+  s = stp_rom(s, "\r\n\n");
   net_puts_ram(net_scratchpad);
 
-  sprintf(net_scratchpad, (rom far char*)"#  VIN:      %s (%s)\r\n",
-          car_vin, car_type);
+  s = stp_s(net_scratchpad, "#  VIN:      ", car_vin);
+  s = stp_s(s, " (", car_type);
+  s = stp_rom(s, ")\r\n");
   net_puts_ram(net_scratchpad);
 
-  sprintf(net_scratchpad, (rom far char*)"#  SOC:      %d%% (%d ideal, %d est miles)\r\n",
-          car_SOC, car_idealrange, car_estrange);
+  s = stp_i(net_scratchpad, "#  SOC:      ", car_SOC);
+  s = stp_i(s, "% (", car_idealrange);
+  s = stp_i(s, " ideal, ", car_estrange);
+  s = stp_rom(s, " est miles)\r\n");
   net_puts_ram(net_scratchpad);
 
   if (canwrite_state>=0)
     {
-    sprintf(net_scratchpad, (rom far char*)"#  Sim Tx: %d/%d\r\n",
-            canwrite_state,DATA_COUNT);
+    s = stp_i(net_scratchpad, "#  Sim Tx: ", canwrite_state);
+    s = stp_i(s, "/", DATA_COUNT);
+    s = stp_rom(s, "\r\n");
     net_puts_ram(net_scratchpad);
     }
 

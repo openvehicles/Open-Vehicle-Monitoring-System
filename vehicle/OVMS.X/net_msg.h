@@ -33,12 +33,22 @@
 
 #include "net.h"
 
-extern rom char NET_MSG_OK[];
-extern rom char NET_MSG_INVALIDSYNTAX[];
-extern rom char NET_MSG_NOCANWRITE[];
-extern rom char NET_MSG_INVALIDRANGE[];
-extern rom char NET_MSG_NOCANCHARGE[];
-extern rom char NET_MSG_NOCANSTOPCHARGE[];
+extern rom char NET_MSG_CMDRESP[];
+extern rom char NET_MSG_CMDOK[];
+extern rom char NET_MSG_CMDINVALIDSYNTAX[];
+extern rom char NET_MSG_CMDNOCANWRITE[];
+extern rom char NET_MSG_CMDINVALIDRANGE[];
+extern rom char NET_MSG_CMDNOCANCHARGE[];
+extern rom char NET_MSG_CMDNOCANSTOPCHARGE[];
+extern rom char NET_MSG_CMDUNIMPLEMENTED[];
+
+#define STP_OK(buf,cmd)               stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDOK)
+#define STP_INVALIDSYNTAX(buf,cmd)    stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDINVALIDSYNTAX)
+#define STP_NOCANWRITE(buf,cmd)       stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDNOCANWRITE)
+#define STP_INVALIDRANGE(buf,cmd)     stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDINVALIDRANGE)
+#define STP_NOCANCHARGE(buf,cmd)      stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDNOCANCHARGE)
+#define STP_NOCANSTOPCHARGE(buf,cmd)  stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDNOCANSTOPCHARGE)
+#define STP_UNIMPLEMENTED(buf,cmd)    stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDUNIMPLEMENTED)
 
 extern char net_msg_serverok;
 extern char net_msg_sendpending;
@@ -80,6 +90,7 @@ void net_msg_cmd_do(void);
 
 void net_msg_forward_sms(char* caller, char* SMS);
 
+char *net_prep_stat(char *s);
 void net_msg_alert(void);
 void net_msg_valettrunk(void);
 void net_msg_alarm(void);

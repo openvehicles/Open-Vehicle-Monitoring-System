@@ -349,8 +349,8 @@ vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char *arg
 // Charge time approximation constants:
 // @ ~13 °C  -- temperature compensation needed?
 #define CHARGETIME_CVSOC    9400    // CV phase normally begins at 93..95%
-#define CHARGETIME_CC       180     // CC phase time
-#define CHARGETIME_CV       30      // CV phase time (topoff)
+#define CHARGETIME_CC       180     // CC phase time (160..180 min.)
+#define CHARGETIME_CV       40      // CV phase time (topoff) (20..40 min.)
 
 int vehicle_twizy_chargetime(int dstsoc)
 {

@@ -81,12 +81,15 @@ RC4_CTX1 tx_crypto1;
 RC4_CTX1 rx_crypto1;
 RC4_CTX1 pm_crypto1;
 
-rom char NET_MSG_OK[] = "MP-0 c%d,0";
-rom char NET_MSG_INVALIDSYNTAX[] = "MP-0 c%d,1,Invalid syntax";
-rom char NET_MSG_NOCANWRITE[] = "MP-0 c%d,1,No write access to CAN";
-rom char NET_MSG_INVALIDRANGE[] = "MP-0 c%d,1,Parameter out of range";
-rom char NET_MSG_NOCANCHARGE[] = "MP-0 c%d,1,Cannot charge (charge port closed)";
-rom char NET_MSG_NOCANSTOPCHARGE[] = "MP-0 c%d,1,Cannot stop charge (charge not in progress)";
+rom char NET_MSG_CMDRESP[] = "MP-0 c";
+rom char NET_MSG_CMDOK[] = ",0";
+rom char NET_MSG_CMDINVALIDSYNTAX[] = ",1,Invalid syntax";
+rom char NET_MSG_CMDNOCANWRITE[] = ",1,No write access to CAN";
+rom char NET_MSG_CMDINVALIDRANGE[] = ",1,Parameter out of range";
+rom char NET_MSG_CMDNOCANCHARGE[] = ",1,Cannot charge (charge port closed)";
+rom char NET_MSG_CMDNOCANSTOPCHARGE[] = ",1,Cannot stop charge (charge not in progress)";
+rom char NET_MSG_CMDUNIMPLEMENTED[] = ",3";
+
 
 void net_msg_init(void)
   {
@@ -699,16 +702,16 @@ BOOL net_msg_cmd_exec(void)
           if (k>=FEATURES_MAP_PARAM) // Top N features are persistent
             par_set(PARAM_FEATURE_S+(k-FEATURES_MAP_PARAM), p);
           if (k == FEATURE_CANWRITE) vehicle_initialise();
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+          STP_OK(net_scratchpad, net_msg_cmd_code);
           }
         else
           {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDRANGE,net_msg_cmd_code);
+          STP_INVALIDRANGE(net_scratchpad, net_msg_cmd_code);
           }
         }
       else
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
+        STP_INVALIDSYNTAX(net_scratchpad, net_msg_cmd_code);
         }
       net_msg_encode_puts();
       break;
@@ -736,23 +739,23 @@ BOOL net_msg_cmd_exec(void)
         if ((k>=0)&&(k<PARAM_FEATURE_S))
           {
           par_set(k, p);
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+          STP_OK(net_scratchpad, net_msg_cmd_code);
           if ((k==PARAM_MILESKM) || (k==PARAM_VEHICLETYPE)) vehicle_initialise();
           }
         else
           {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDRANGE,net_msg_cmd_code);
+          STP_INVALIDRANGE(net_scratchpad, net_msg_cmd_code);
           }
         }
       else
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
+        STP_INVALIDSYNTAX(net_scratchpad, net_msg_cmd_code);
         }
       net_msg_encode_puts();
       break;
 
     case 5: // Reboot (params unused)
-      sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      STP_OK(net_scratchpad, net_msg_cmd_code);
       net_msg_encode_puts();
       net_state_enter(NET_STATE_HARDSTOP);
       break;
@@ -774,12 +777,12 @@ BOOL net_msg_cmd_exec(void)
         net_puts_rom("\x1a");
         delay100(5);
         net_msg_start();
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+        STP_OK(net_scratchpad, net_msg_cmd_code);
         }
       else
         {
         net_msg_start();
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,net_msg_cmd_code);
+        STP_INVALIDSYNTAX(net_scratchpad, net_msg_cmd_code);
         }
       net_msg_encode_puts();
       delay100(2);
@@ -791,7 +794,7 @@ BOOL net_msg_cmd_exec(void)
       net_puts_rom("\",15\r");
       delay100(5);
       net_msg_start();
-      sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      STP_OK(net_scratchpad, net_msg_cmd_code);
       net_msg_encode_puts();
       delay100(2);
       break;
@@ -801,7 +804,7 @@ BOOL net_msg_cmd_exec(void)
       net_puts_rom("\r");
       delay100(5);
       net_msg_start();
-      sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,net_msg_cmd_code);
+      STP_OK(net_scratchpad, net_msg_cmd_code);
       net_msg_encode_puts();
       delay100(2);
       break;
@@ -829,7 +832,7 @@ void net_msg_cmd_do(void)
      if( !net_msg_cmd_exec() )
        {
        // No standard as well => return "unimplemented"
-       sprintf(net_scratchpad, (rom far char*)"MP-0 c%d,3",net_msg_cmd_code);
+       STP_UNIMPLEMENTED(net_scratchpad, net_msg_cmd_code);
        net_msg_encode_puts();
        }
      }
@@ -861,64 +864,89 @@ void net_msg_forward_sms(char *caller, char *SMS)
   net_msg_send();
 }
 
-void net_msg_alert(void)
+char *net_prep_stat(char *s)
 {
-  char *p, *s;
-
-  delay100(2);
-
-  s = stp_rom(net_scratchpad, "MP-0 PA");
-
-  switch (car_chargemode)
+  if (car_doors1 & 0x04)
   {
-  case 0x00:
-    s = stp_rom(s, "Standard - "); // Charge Mode Standard
-    break;
-  case 0x01:
-    s = stp_rom(s, "Storage - "); // Storage
-    break;
-  case 0x03:
-    s = stp_rom(s, "Range - "); // Range
-    break;
-  case 0x04:
-    s = stp_rom(s, "Performance - "); // Performance
+    // Charge port door is open, we are charging
+    switch (car_chargemode)
+    {
+    case 0x00:
+      s = stp_rom(s, "Standard - "); // Charge Mode Standard
+      break;
+    case 0x01:
+      s = stp_rom(s, "Storage - "); // Storage
+      break;
+    case 0x03:
+      s = stp_rom(s, "Range - "); // Range
+      break;
+    case 0x04:
+      s = stp_rom(s, "Performance - "); // Performance
+    }
+    switch (car_chargestate)
+    {
+    case 0x01:
+      s = stp_rom(s, "Charging"); // Charge State Charging
+      break;
+    case 0x02:
+      s = stp_rom(s, "Charging, Topping off"); // Topping off
+      break;
+    case 0x04:
+      s = stp_rom(s, "Charging Done"); // Done
+      break;
+    case 0x0d:
+      s = stp_rom(s, "Preparing"); // Preparing
+      break;
+    case 0x0f:
+      s = stp_rom(s, "Charging, Heating"); // Heating
+      break;
+    default:
+      s = stp_rom(s, "Charging Stopped"); // Stopped
+    }
   }
-  switch (car_chargestate)
+  else
   {
-  case 0x01:
-    s = stp_rom(s, "Charging"); // Charge State Charging
-    break;
-  case 0x02:
-    s = stp_rom(s, "Charging, Topping off"); // Topping off
-    break;
-  case 0x04:
-    s = stp_rom(s, "Charging Done"); // Done
-    break;
-  case 0x0d:
-    s = stp_rom(s, "Preparing"); // Preparing
-    break;
-  case 0x0f:
-    s = stp_rom(s, "Charging, Heating"); // Heating
-    break;
-  default:
-    s = stp_rom(s, "Charging Stopped"); // Stopped
+    s = stp_rom(s, "Not charging");
   }
 
-  p = par_get(PARAM_MILESKM);
   if (can_mileskm == 'M')
   {
-    s = stp_i(s, "\rIdeal Range: ", car_idealrange);
+    s = stp_i(s, "\r Range: ", car_estrange);
+    s = stp_i(s, " - ", car_idealrange);
     s = stp_rom(s, " mi");
   }
   else
   {
-    s = stp_i(s, "\rIdeal Range: ", MI2KM(car_idealrange));
+    s = stp_i(s, "\r Range: ", MI2KM(car_estrange));
+    s = stp_i(s, " - ", MI2KM(car_idealrange));
     s = stp_rom(s, " km");
   }
 
-  s = stp_i(s, " SOC: ", car_SOC);
+  s = stp_i(s, "\r SOC: ", car_SOC);
   s = stp_rom(s, "%");
 
+  if (can_mileskm == 'M')
+  {
+    s = stp_ul(s, "\r ODO: ", car_odometer / 10);
+    s = stp_rom(s, " mi");
+  }
+  else
+  {
+    s = stp_ul(s, "\r ODO: ", MI2KM(car_odometer / 10));
+    s = stp_rom(s, " km");
+  }
+
+  return s;
+}
+
+void net_msg_alert(void)
+{
+  char *s;
+
+  delay100(2);
+
+  s = stp_rom(net_scratchpad, "MP-0 PA");
+  net_prep_stat(s);
 }
 
 void net_msg_alarm(void)
@@ -945,8 +973,9 @@ void net_msg_valettrunk(void)
 
 void net_msg_socalert(void)
   {
-  char *p;
+  char *s;
 
-  sprintf(net_scratchpad, (rom far char*)"MP-0 PAALERT!!! CRITICAL SOC LEVEL APPROACHED (%u%% SOC)", car_SOC); // 95%
+  s = stp_i(net_scratchpad, "MP-0 PAALERT!!! CRITICAL SOC LEVEL APPROACHED (", car_SOC); // 95%
+  s = stp_rom(s, "% SOC)");
   net_msg_encode_puts();
   }

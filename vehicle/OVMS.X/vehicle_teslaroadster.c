@@ -583,13 +583,13 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 10: // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
         vehicle_teslaroadster_tx_setchargemode(atoi(msg));
         vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        STP_OK(net_scratchpad, code);
         }
       break;
 
@@ -597,7 +597,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 11: // Start charge (params unused)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
@@ -605,11 +605,11 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
           {
           vehicle_teslaroadster_tx_startstopcharge(1);
           net_notify_suppresscount = 0; // Enable notifications
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+          STP_OK(net_scratchpad, code);
           }
         else
           {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANCHARGE,code);
+          STP_NOCANCHARGE(net_scratchpad, code);
           }
         }
       break;
@@ -617,7 +617,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 12: // Stop charge (params unused)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
@@ -625,11 +625,11 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
           {
           vehicle_teslaroadster_tx_startstopcharge(0);
           net_notify_suppresscount = 30; // Suppress notifications for 30 seconds
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+          STP_OK(net_scratchpad, code);
           }
         else
           {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANSTOPCHARGE,code);
+          STP_NOCANSTOPCHARGE(net_scratchpad, code);
           }
         }
       break;
@@ -637,19 +637,19 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 15: // Set charge current (params: current in amps)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
         vehicle_teslaroadster_tx_setchargecurrent(atoi(net_msg_cmd_msg));
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        STP_OK(net_scratchpad, code);
         }
       break;
 
     case 16: // Set charge mode and current (params: mode, current)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
@@ -661,11 +661,11 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
           // At this point, <net_msg_cmd_msg> points to the mode, and p to the current
           vehicle_teslaroadster_tx_setchargemode(atoi(net_msg_cmd_msg));
           vehicle_teslaroadster_tx_setchargecurrent(atoi(p));
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+          STP_OK(net_scratchpad, code);
           }
         else
           {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,code);
+          STP_INVALIDSYNTAX(net_scratchpad, code);
           }
         }
       break;
@@ -673,7 +673,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 17: // Set charge timer mode and start time
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
@@ -684,11 +684,11 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
           *p++ = 0;
           // At this point, <net_msg_cmd_msg> points to the mode, and p to the time
           vehicle_teslaroadster_tx_timermode(atoi(net_msg_cmd_msg),atoi(p));
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+          STP_OK(net_scratchpad, code);
           }
         else
           {
-          sprintf(net_scratchpad, (rom far char*)NET_MSG_INVALIDSYNTAX,code);
+          STP_INVALIDSYNTAX(net_scratchpad, code);
           }
         }
       break;
@@ -696,37 +696,37 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 18: // Wakeup car
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
         vehicle_teslaroadster_tx_wakeup();
         vehicle_teslaroadster_tx_wakeuptemps();
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        STP_OK(net_scratchpad, code);
         }
       break;
 
     case 19: // Wakeup temperature subsystem
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
         vehicle_teslaroadster_tx_wakeuptemps();
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        STP_OK(net_scratchpad, code);
         }
       break;
 
     case 20: // Lock car (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
         vehicle_teslaroadster_tx_lockunlockcar(2, net_msg_cmd_msg);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        STP_OK(net_scratchpad, code);
         }
       sendenv=TRUE;
       break;
@@ -734,12 +734,12 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 21: // Activate valet mode (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
         vehicle_teslaroadster_tx_lockunlockcar(0, net_msg_cmd_msg);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        STP_OK(net_scratchpad, code);
         }
       sendenv=TRUE;
       break;
@@ -747,12 +747,12 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 22: // Unlock car (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
         vehicle_teslaroadster_tx_lockunlockcar(3, net_msg_cmd_msg);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        STP_OK(net_scratchpad, code);
         }
       sendenv=TRUE;
       break;
@@ -760,12 +760,12 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 23: // Deactivate valet mode (params pin)
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
         vehicle_teslaroadster_tx_lockunlockcar(1, net_msg_cmd_msg);
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        STP_OK(net_scratchpad, code);
         }
       sendenv=TRUE;
       break;
@@ -773,12 +773,12 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
     case 24: // Home Link
       if (sys_features[FEATURE_CANWRITE]==0)
         {
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_NOCANWRITE,code);
+        STP_NOCANWRITE(net_scratchpad, code);
         }
       else
         {
         vehicle_teslaroadster_tx_homelink(atoi(net_msg_cmd_msg));
-        sprintf(net_scratchpad, (rom far char*)NET_MSG_OK,code);
+        STP_OK(net_scratchpad, code);
         }
       break;
 
