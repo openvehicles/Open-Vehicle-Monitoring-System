@@ -44,6 +44,7 @@ rom BOOL (*vehicle_fn_init)(void) = NULL;
 rom BOOL (*vehicle_fn_poll0)(void) = NULL;
 rom BOOL (*vehicle_fn_poll1)(void) = NULL;
 rom BOOL (*vehicle_fn_ticker1)(void) = NULL;
+rom BOOL (*vehicle_fn_ticker10)(void) = NULL;
 rom BOOL (*vehicle_fn_ticker60)(void) = NULL;
 rom BOOL (*vehicle_fn_ticker300)(void) = NULL;
 rom BOOL (*vehicle_fn_ticker600)(void) = NULL;
@@ -67,6 +68,7 @@ void vehicle_initialise(void)
   vehicle_fn_poll0 = NULL;
   vehicle_fn_poll1 = NULL;
   vehicle_fn_ticker1 = NULL;
+  vehicle_fn_ticker10 = NULL;
   vehicle_fn_ticker60 = NULL;
   vehicle_fn_ticker300 = NULL;
   vehicle_fn_ticker600 = NULL;
@@ -115,6 +117,13 @@ void vehicle_initialise(void)
     {
     void vehicle_obdii_initialise(void);
     vehicle_obdii_initialise();
+    }
+#endif
+#ifdef OVMS_CAR_THINKCITY
+  else if (memcmppgm2ram(p, (char const rom far*)"TC", 2) == 0)
+    {
+    void vehicle_thinkcity_initialise(void);
+    vehicle_thinkcity_initialise();
     }
 #endif
 #ifdef OVMS_CAR_NONE
@@ -205,6 +214,11 @@ void vehicle_ticker(void)
     if (vehicle_fn_ticker1()) return;
     }
 
+  if ((can_granular_tick % 10)==0)
+    {
+    if (vehicle_fn_ticker10 != NULL) vehicle_fn_ticker10();
+    }
+
   if ((can_granular_tick % 60)==0)
     {
     int minSOC;
@@ -223,10 +237,12 @@ void vehicle_ticker(void)
       }
     if (vehicle_fn_ticker60 != NULL) vehicle_fn_ticker60();
     }
+
   if ((can_granular_tick % 300)==0)
     {
     if (vehicle_fn_ticker300 != NULL) vehicle_fn_ticker300();
     }
+  
   if ((can_granular_tick % 600)==0)
     {
     if (vehicle_fn_ticker600 != NULL) vehicle_fn_ticker600();

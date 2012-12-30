@@ -60,6 +60,7 @@ extern rom BOOL (*vehicle_fn_init)(void);
 extern rom BOOL (*vehicle_fn_poll0)(void);
 extern rom BOOL (*vehicle_fn_poll1)(void);
 extern rom BOOL (*vehicle_fn_ticker1)(void);
+extern rom BOOL (*vehicle_fn_ticker10)(void);
 extern rom BOOL (*vehicle_fn_ticker60)(void);
 extern rom BOOL (*vehicle_fn_ticker300)(void);
 extern rom BOOL (*vehicle_fn_ticker600)(void);
