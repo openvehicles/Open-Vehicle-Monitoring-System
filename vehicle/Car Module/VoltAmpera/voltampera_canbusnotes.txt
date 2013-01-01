@@ -56,11 +56,12 @@ bits are numbered bit0 to bit7
 	ID=3E3	B4-B5	Battery kWh ???
 
 	ID=4C1	B5	Outside temperature in degrees fahrenheit with an offset of 50 (0x76 would be 68 degrees F)
-			T = (hexindez(CAN ID 4C1 B5) / 2 ) - 40
+			For German (Celsius) T = (hexindez(CAN ID 4C1 B5) / 2 ) - 40
 
 	ID=514	B1-B8	VIN (part 1)
 	ID=4E1	B1-B8	VIN (part 2)
 			Take "1" + ID=514 + ID=4E1 to generate entire 17 character VIN
+			Every Byte read as ASCII Code
 
 PRIMARY POWERTRAIN BUS - ENHANCED DIAGNOSTICS
 
