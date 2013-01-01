@@ -91,6 +91,7 @@ rom char NET_INIT1[] = "AT+CSMINS?\r";
 rom char NET_INIT2[] = "AT+CCID;+CPBF=\"O-\";+CPIN?\r";
 rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
 //rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
+// NOTE: changing IP mode to QSEND=0 needs handling change for "SEND OK"/"DATA ACCEPT" in net_state_activity()
 rom char NET_COPS[] = "AT+COPS=0,1;+COPS?\r";
 
 rom char NET_WAKEUP[] = "AT\r";
@@ -1000,10 +1001,16 @@ void net_state_activity()
         }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"SEND OK", 7) == 0)
         {
-        net_msg_sendpending = 0;
+        // CIPSEND success response in QSEND=0 mode
+        //net_msg_sendpending = 0;
+        // as we operate in QSEND=1 mode this means we somehow missed
+        // a modem crash/reset: do full re-init
+        net_msg_disconnected();
+        net_state_enter(NET_STATE_START);
         }
       else if (memcmppgm2ram(net_buf, (char const rom far*)"DATA ACCEPT", 11) == 0)
         {
+        // CIPSEND success response in QSEND=1 mode
         net_msg_sendpending = 0;
         }
       else if ( (memcmppgm2ram(net_buf, (char const rom far*)"CLOSED", 6) == 0) ||
@@ -1020,6 +1027,13 @@ void net_state_activity()
         // Re-initialize GPRS network and TCP socket, after short pause
         net_msg_disconnected();
         net_state_enter(NET_STATE_NETINITP);
+        }
+      else if ( (memcmppgm2ram(net_buf, (char const rom far*)"RDY", 4) == 0)||
+                (memcmppgm2ram(net_buf, (char const rom far*)"+CFUN:", 6) == 0) )
+        {
+        // Modem crash/reset: do full re-init
+        net_msg_disconnected();
+        net_state_enter(NET_STATE_START);
         }
       break;
 #ifdef OVMS_DIAGMODULE
