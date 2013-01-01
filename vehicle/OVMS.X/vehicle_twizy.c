@@ -93,6 +93,10 @@
 ;           - Moved common macros to common includes
 ;           - Source code reformatting in style ANSI / indent 2
 ;
+;    2.5  1 Jan 2013 (Michael Balzer):
+;           - Split up battery MSG and separated from DataUpdate (due to size)
+;             (incl. implementation of MSG mode battery alerts)
+;           - "CA?" now adds time estimation for full charge in any case
 ;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -142,17 +146,18 @@
 #define CMD_SetRange                202 // (maxrange)
 #define CMD_QueryChargeAlerts       203 // ()
 #define CMD_SetChargeAlerts         204 // (range, soc)
-#define CMD_BatteryStatus           205 // ()
-#define CMD_PowerUsageNotify        206 // ()
-#define CMD_PowerUsageStats         207 // ()
+#define CMD_BatteryAlert            205 // ()
+#define CMD_BatteryStatus           206 // ()
+#define CMD_PowerUsageNotify        207 // ()
+#define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.4";
+rom char vehicle_twizy_version[] = "2.5";
 
 #ifdef OVMS_TWIZY_BATTMON
-rom char vehicle_twizy_capabilities[] = "C6,C200-207";
+rom char vehicle_twizy_capabilities[] = "C6,C200-208";
 #else
-rom char vehicle_twizy_capabilities[] = "C6,C200-204,206-207";
+rom char vehicle_twizy_capabilities[] = "C6,C200-204,207-208";
 #endif // OVMS_TWIZY_BATTMON
 
 
@@ -306,6 +311,7 @@ volatile UINT8 twizy_notify; // bit set of...
 #define SEND_PowerNotify            0x02  // text alert: power usage summary
 #define SEND_DataUpdate             0x04  // regular data update (per minute)
 #define SEND_StreamUpdate           0x08  // stream data update (per second)
+#define SEND_BatteryStats           0x10  // separate battery stats (large)
 
 
 #ifdef OVMS_DIAGMODULE
@@ -983,18 +989,21 @@ void vehicle_twizy_notify(void)
 
 
 #ifdef OVMS_TWIZY_BATTMON
-  // Send battery status alert?
+  // Send battery alert:
   if ((twizy_notify & SEND_BatteryAlert))
   {
-    if (notify_sms)
+    if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
     {
-      //delay100(10);
-      if (vehicle_twizy_battstatus_sms(TRUE, NULL, NULL, NULL))
-        net_send_sms_finish();
-
+      vehicle_twizy_battstatus_cmd(FALSE, CMD_BatteryAlert, NULL);
       twizy_notify &= ~SEND_BatteryAlert;
     }
-    // IP alert: TODO
+
+    if (notify_sms)
+    {
+      if (vehicle_twizy_battstatus_sms(TRUE, NULL, NULL, NULL))
+        net_send_sms_finish();
+      twizy_notify &= ~SEND_BatteryAlert;
+    }
   }
 #endif // OVMS_TWIZY_BATTMON
 
@@ -1004,21 +1013,30 @@ void vehicle_twizy_notify(void)
   {
     if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
     {
-      //delay100(10);
       vehicle_twizy_power_cmd(FALSE, CMD_PowerUsageNotify, NULL);
-
       twizy_notify &= ~SEND_PowerNotify;
     }
 
     if (notify_sms)
     {
-      //delay100(10);
       if (vehicle_twizy_power_sms(TRUE, NULL, NULL, NULL))
         net_send_sms_finish();
-
       twizy_notify &= ~SEND_PowerNotify;
     }
   }
+
+
+#ifdef OVMS_TWIZY_BATTMON
+  // Send battery status update:
+  if ((twizy_notify & SEND_BatteryStats))
+  {
+    if ((net_msg_serverok == 1) && (net_msg_sendpending == 0))
+    {
+      vehicle_twizy_battstatus_cmd(FALSE, CMD_BatteryStatus, NULL);
+      twizy_notify &= ~SEND_BatteryStats;
+    }
+  }
+#endif // OVMS_TWIZY_BATTMON
 
 
   // Send regular data update:
@@ -1026,17 +1044,18 @@ void vehicle_twizy_notify(void)
   {
     if ((net_msg_serverok == 1) && (net_msg_sendpending == 0))
     {
-      //delay100(2);
       stat = 2;
-#ifdef OVMS_TWIZY_BATTMON
-      stat = vehicle_twizy_battstatus_msgp(stat, CMD_BatteryStatus);
-#endif // OVMS_TWIZY_BATTMON
       stat = vehicle_twizy_power_msgp(stat, CMD_PowerUsageStats);
       stat = vehicle_twizy_gpslog_msgp(stat);
       if (stat != 2)
         net_msg_send();
 
       twizy_notify &= ~SEND_DataUpdate;
+
+#ifdef OVMS_TWIZY_BATTMON
+      // send battery status update separately, may need a full CIPSEND length:
+      twizy_notify |= SEND_BatteryStats;
+#endif // OVMS_TWIZY_BATTMON
     }
   }
 
@@ -1046,10 +1065,8 @@ void vehicle_twizy_notify(void)
   {
     if ((net_msg_serverok == 1) && (net_msg_sendpending == 0))
     {
-      //delay100(2);
       if (vehicle_twizy_gpslog_msgp(2) != 2)
         net_msg_send();
-
       twizy_notify &= ~SEND_StreamUpdate;
     }
   }
@@ -2233,10 +2250,6 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
   if ((sys_features[FEATURE_SUFFSOC] == 0) && (sys_features[FEATURE_SUFFRANGE] == 0))
   {
     s = stp_rom(s, "OFF");
-
-    // Estimated time remaining for 100%:
-    s = stp_i(s, "\r Full charge: ", vehicle_twizy_chargetime(10000));
-    s = stp_rom(s, " min.");
   }
   else
   {
@@ -2282,12 +2295,16 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
 
     // output smallest ETR:
     if ((etr_range > 0) && ((etr_soc == 0) || (etr_range < etr_soc)))
-      s = stp_i(s, "\r Time: ", etr_range);
+      s = stp_i(s, "\n Time: ", etr_range);
     else if (etr_soc > 0)
-      s = stp_i(s, "\r Time: ", etr_soc);
+      s = stp_i(s, "\n Time: ", etr_soc);
     s = stp_rom(s, " min.");
 
   }
+
+  // Estimated time for 100%:
+  s = stp_i(s, "\n Full charge: ", vehicle_twizy_chargetime(10000));
+  s = stp_rom(s, " min.");
 
   net_puts_ram(net_scratchpad);
 
@@ -2534,7 +2551,7 @@ void vehicle_twizy_battstatus_collect(void)
   if ((can_batt[0].volt_alerts != can_batt[0].last_volt_alerts)
           || (can_batt[0].temp_alerts != can_batt[0].last_temp_alerts))
   {
-    twizy_notify |= SEND_BatteryAlert;
+    twizy_notify |= (SEND_BatteryAlert | SEND_BatteryStats);
   }
 
 
@@ -2635,121 +2652,138 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
       return stat;
   }
 
-  // Prep: collect cell temperatures:
-  tmin = 255;
-  tmax = 0;
-  tact = 0;
-  for (c = 0; c < BATT_CMODS; c++)
+
+  if (cmd == CMD_BatteryAlert)
   {
-    tact += can_cmod[c].temp_act;
-    if (can_cmod[c].temp_min < tmin)
-      tmin = can_cmod[c].temp_min;
-    if (can_cmod[c].temp_max > tmax)
-      tmax = can_cmod[c].temp_max;
-  }
 
-  tact = (float) tact / BATT_CMODS + 0.5;
-
-  // Output battery packs (just one for Twizy up to now):
-  for (p = 0; p < BATT_PACKS; p++)
-  {
-    if (can_batt[p].volt_alerts)
-      volt_alert = 3;
-    else if (can_batt[p].volt_watches)
-      volt_alert = 2;
-    else
-      volt_alert = 1;
-
-    if (can_batt[p].temp_alerts)
-      temp_alert = 3;
-    else if (can_batt[p].temp_watches)
-      temp_alert = 2;
-    else
-      temp_alert = 1;
-
-    // Output pack ALERT:
-    if (can_batt[p].volt_alerts || can_batt[p].temp_alerts)
+    // Output battery packs (just one for Twizy up to now):
+    for (p = 0; p < BATT_PACKS; p++)
     {
-      strcpypgm2ram(net_scratchpad, "MP-0 PA");
-      vehicle_twizy_battstatus_prepalert(p);
-      stat = net_msg_encode_statputs(stat, &crc_alert[p]);
-    }
-    else
-    {
-      crc_alert[p] = 0; // reset crc for next alert
+      // Output pack ALERT:
+      if (can_batt[p].volt_alerts || can_batt[p].temp_alerts)
+      {
+        strcpypgm2ram(net_scratchpad, "MP-0 PA");
+        vehicle_twizy_battstatus_prepalert(p);
+        stat = net_msg_encode_statputs(stat, &crc_alert[p]);
+      }
+      else
+      {
+        crc_alert[p] = 0; // reset crc for next alert
+      }
     }
 
-    // Output pack STATUS:
-    // MP-0 HRT-PWR-BattPack,<packnr>,86400
-    //  ,<nr_of_cells>,<cell_startnr>
-    //  ,<volt_alertstatus>,<temp_alertstatus>
-    //  ,<soc>,<soc_min>,<soc_max>
-    //  ,<volt_act>,<volt_act_cellnom>
-    //  ,<volt_min>,<volt_min_cellnom>
-    //  ,<volt_max>,<volt_max_cellnom>
-    //  ,<temp_act>,<temp_min>,<temp_max>
+  } // cmd == CMD_BatteryAlert
 
-    s = stp_rom(net_scratchpad, "MP-0 H");
-    s = stp_i(s, "RT-PWR-BattPack,", p + 1);
-    s = stp_i(s, ",86400,", BATT_CELLS);
-    s = stp_i(s, ",", 1);
-    s = stp_i(s, ",", volt_alert);
-    s = stp_i(s, ",", temp_alert);
-    s = stp_i(s, ",", can_soc);
-    s = stp_i(s, ",", can_soc_min);
-    s = stp_i(s, ",", can_soc_max);
-    s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_act));
-    s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_act / BATT_CELLS));
-    s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_min));
-    s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_min / BATT_CELLS));
-    s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_max));
-    s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_max / BATT_CELLS));
-    s = stp_i(s, ",", CONV_Temp(tact));
-    s = stp_i(s, ",", CONV_Temp(tmin));
-    s = stp_i(s, ",", CONV_Temp(tmax));
+  else // cmd == CMD_BatteryStatus (default)
+  {
+    // NOTE: this already needs a full CIPSEND length, needs to be 
+    //        split up if extended further!
 
-    stat = net_msg_encode_statputs(stat, &crc_pack[p]);
-
-    // Output cell status:
-    for (c = 0; c < BATT_CELLS; c++)
+    // Prep: collect cell temperatures:
+    tmin = 255;
+    tmax = 0;
+    tact = 0;
+    for (c = 0; c < BATT_CMODS; c++)
     {
-      if (can_batt[p].volt_alerts & (1 << c))
+      tact += can_cmod[c].temp_act;
+      if (can_cmod[c].temp_min < tmin)
+        tmin = can_cmod[c].temp_min;
+      if (can_cmod[c].temp_max > tmax)
+        tmax = can_cmod[c].temp_max;
+    }
+
+    tact = (float) tact / BATT_CMODS + 0.5;
+
+    // Output battery packs (just one for Twizy up to now):
+    for (p = 0; p < BATT_PACKS; p++)
+    {
+      if (can_batt[p].volt_alerts)
         volt_alert = 3;
-      else if (can_batt[p].volt_watches & (1 << c))
+      else if (can_batt[p].volt_watches)
         volt_alert = 2;
       else
         volt_alert = 1;
 
-      if (can_batt[p].temp_alerts & (1 << (c >> 1)))
+      if (can_batt[p].temp_alerts)
         temp_alert = 3;
-      else if (can_batt[p].temp_watches & (1 << (c >> 1)))
+      else if (can_batt[p].temp_watches)
         temp_alert = 2;
       else
         temp_alert = 1;
 
-      // MP-0 HRT-PWR-BattCell,<cellnr>,86400
-      //  ,<packnr>
-      //  ,<volt_alertstatus>,<temp_alertstatus>,
-      //  ,<volt_act>,<volt_min>,<volt_max>,<volt_maxdev>
-      //  ,<temp_act>,<temp_min>,<temp_max>,<temp_maxdev>
+      // Output pack STATUS:
+      // MP-0 HRT-PWR-BattPack,<packnr>,86400
+      //  ,<nr_of_cells>,<cell_startnr>
+      //  ,<volt_alertstatus>,<temp_alertstatus>
+      //  ,<soc>,<soc_min>,<soc_max>
+      //  ,<volt_act>,<volt_act_cellnom>
+      //  ,<volt_min>,<volt_min_cellnom>
+      //  ,<volt_max>,<volt_max_cellnom>
+      //  ,<temp_act>,<temp_min>,<temp_max>
 
       s = stp_rom(net_scratchpad, "MP-0 H");
-      s = stp_i(s, "RT-PWR-BattCell,", c + 1);
-      s = stp_i(s, ",86400,", p + 1);
+      s = stp_i(s, "RT-PWR-BattPack,", p + 1);
+      s = stp_i(s, ",86400,", BATT_CELLS);
+      s = stp_i(s, ",", 1);
       s = stp_i(s, ",", volt_alert);
       s = stp_i(s, ",", temp_alert);
-      s = stp_i(s, ",", CONV_CellVolt(can_cell[c].volt_act));
-      s = stp_i(s, ",", CONV_CellVolt(can_cell[c].volt_min));
-      s = stp_i(s, ",", CONV_CellVolt(can_cell[c].volt_max));
-      s = stp_i(s, ",", CONV_CellVoltS(can_cell[c].volt_maxdev));
-      s = stp_i(s, ",", CONV_Temp(can_cmod[c >> 1].temp_act));
-      s = stp_i(s, ",", CONV_Temp(can_cmod[c >> 1].temp_min));
-      s = stp_i(s, ",", CONV_Temp(can_cmod[c >> 1].temp_max));
-      s = stp_i(s, ",", can_cmod[c >> 1].temp_maxdev);
+      s = stp_i(s, ",", can_soc);
+      s = stp_i(s, ",", can_soc_min);
+      s = stp_i(s, ",", can_soc_max);
+      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_act));
+      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_act / BATT_CELLS));
+      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_min));
+      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_min / BATT_CELLS));
+      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_max));
+      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_max / BATT_CELLS));
+      s = stp_i(s, ",", CONV_Temp(tact));
+      s = stp_i(s, ",", CONV_Temp(tmin));
+      s = stp_i(s, ",", CONV_Temp(tmax));
 
-      stat = net_msg_encode_statputs(stat, &crc_cell[c]);
+      stat = net_msg_encode_statputs(stat, &crc_pack[p]);
+
+      // Output cell status:
+      for (c = 0; c < BATT_CELLS; c++)
+      {
+        if (can_batt[p].volt_alerts & (1 << c))
+          volt_alert = 3;
+        else if (can_batt[p].volt_watches & (1 << c))
+          volt_alert = 2;
+        else
+          volt_alert = 1;
+
+        if (can_batt[p].temp_alerts & (1 << (c >> 1)))
+          temp_alert = 3;
+        else if (can_batt[p].temp_watches & (1 << (c >> 1)))
+          temp_alert = 2;
+        else
+          temp_alert = 1;
+
+        // MP-0 HRT-PWR-BattCell,<cellnr>,86400
+        //  ,<packnr>
+        //  ,<volt_alertstatus>,<temp_alertstatus>,
+        //  ,<volt_act>,<volt_min>,<volt_max>,<volt_maxdev>
+        //  ,<temp_act>,<temp_min>,<temp_max>,<temp_maxdev>
+
+        s = stp_rom(net_scratchpad, "MP-0 H");
+        s = stp_i(s, "RT-PWR-BattCell,", c + 1);
+        s = stp_i(s, ",86400,", p + 1);
+        s = stp_i(s, ",", volt_alert);
+        s = stp_i(s, ",", temp_alert);
+        s = stp_i(s, ",", CONV_CellVolt(can_cell[c].volt_act));
+        s = stp_i(s, ",", CONV_CellVolt(can_cell[c].volt_min));
+        s = stp_i(s, ",", CONV_CellVolt(can_cell[c].volt_max));
+        s = stp_i(s, ",", CONV_CellVoltS(can_cell[c].volt_maxdev));
+        s = stp_i(s, ",", CONV_Temp(can_cmod[c >> 1].temp_act));
+        s = stp_i(s, ",", CONV_Temp(can_cmod[c >> 1].temp_min));
+        s = stp_i(s, ",", CONV_Temp(can_cmod[c >> 1].temp_max));
+        s = stp_i(s, ",", can_cmod[c >> 1].temp_maxdev);
+
+        stat = net_msg_encode_statputs(stat, &crc_cell[c]);
+      }
     }
-  }
+
+  } // cmd == CMD_BatteryStatus
 
   return stat;
 }
@@ -2985,6 +3019,7 @@ BOOL vehicle_twizy_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
     return vehicle_twizy_ca_cmd(msgmode, cmd, msg);
 
 #ifdef OVMS_TWIZY_BATTMON
+  case CMD_BatteryAlert:
   case CMD_BatteryStatus:
     return vehicle_twizy_battstatus_cmd(msgmode, cmd, msg);
 #endif // OVMS_TWIZY_BATTMON
