@@ -77,3 +77,17 @@ RX 5EC      8 FE 43 70 00 00 00 00 00   (results, ~160 reads for a few seconds)
 	ID=5EC	B2	Charging Current units 0.2 A (ex. 0x43 = 13.4 A)
 		B3	Charging Voltage units 2 V (ex. 0x70 = 224 V)
 
+Tachy writes: To request current and voltage of the charger and the outside temperature, you have to send the following sequence:
+ 
+	7E4      8 10 08 2C FE 43 69 43 68 
+	7E4      8 21 80 1F 00 00 00 00 00 
+	7E4      8 03 AA 04 FE 00 00 00 00
+ 
+The answer (160 times) is:
+ 
+	5EC      8 FE xx yy zz 00 00 00 00
+ 
+	xx = Charging Current, units 0.2 A (ex. 0x43 = 13.4 A)
+	yy = Charging Voltage, units 2 V (ex. 0x70 = 224 V)
+	zz = outside temperature, units 0,5°C, offset +40 ( ex. 0x60 => 8°C )
+
