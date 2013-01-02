@@ -1,0 +1,93 @@
+Can bus Notes for Volt/Ampera
+
+CREDIT
+
+; Quite a few contributors, so please free to add/change as necessary.
+
+; RScott for http://www.evtools.info/ChevyVoltOBD2CAN.html and his initial work on this.
+; Mikeljo for his work on OVMS and decoding these messages.
+; Johannes for his work with Dashdaq, and OVMS.
+
+CAN BUSES
+
+http://www.evtools.info/ChevyVoltOBD2CAN.html
+
+The Volt has 2 connectors (the standard one on the drivers' side, and an extra auxillary one on the passengers' side), with a total of 5 buses:
+
+  OBD2 Location                 Pins    OBD2 Protocol                        Data Protocol      Speed      CAN ID  length   Use
+  Primary Data Link Connector   1       SAE J2411 (SWCAN)                    Low Speed GMLAN    33.3kbps   ???              Body Electrical Services
+  Primary Data Link Connector   6, 14   Standard CAN (ISO 15765-4, J2284-3)  High Speed GMLAN   500kbps    11 bits          Primary Powertrain Bus
+  Primary Data Link Connector   12, 13  ???                                  High Speed GMLAN   500kbps    ???              Chassis Expansion Bus
+  Auxillary Data Connector      3, 11   ???                                  High Speed GMLAN   500kbps    ???              High Volt Energy Management
+  Auxillary Data Connector      12, 13  ???                                  High Speed GMLAN   500kbps    ???              High Volt Powertrain Expansion Bus
+
+The Primary Powertrain Bus is easily accessible via inexpensive tools. It has been said that all data is gatewayed to the primary DLC,
+and that the right-hand side was is really only useful for service programming of specific modules.
+
+PRIMARY POWERTRAIN BUS - KNOWN MESSAGES
+
+Bytes are numbered B1 to B8 not B0-B7
+bits are numbered bit0 to bit7
+
+	ID=0C9	B5	Accelerator 0 (0%) to 254 (100%)
+
+        ID=0F1	B2	Brake 0 (0%) to unknown (perhaps 254)
+			Typical pressure on brake pedal generates about 30
+
+	ID=135	B1	Drive position 0=park, 1=neutral, 2=drive/L, 3=reverse
+
+	ID=1A1	B8	Accelerator 0 (0%) to 254 (100%)
+
+	ID=1C3	B8	Accelerator 0 (0%) to 254 (100%)
+
+	ID=1EF	B3,B4	Gas engine rpm (in rpm)
+
+	ID=1F5	B4	Shift position PRNDL 1=park, 2=reverse, ?=neutral, ?=drive, ?=low
+
+	ID=206	B1,B2	Battery SOC (.250kWh units, possibly .244kWh)
+
+	ID=32A	B1-B4	GPS Latitude in milliarcseconds (appears to be only cars with OnStar)
+		B5-B8	GOS Longitude in millarcseconds (appears to be only cars with OnStar)
+
+	ID=3E9	B1-B2	Speed in 1/100mph steps (e.g.; 55pmh would be 0x157c)
+
+	ID=0BC	B1	Bit 7 set indicates the car is on, and bit 4 set indicates the car is off
+
+	ID=3E3	B4-B5	Battery kWh ???
+
+	ID=4C1	B5	Outside temperature in degrees fahrenheit with an offset of 50 (0x76 would be 68 degrees F)
+			For German (Celsius) T = (hexindez(CAN ID 4C1 B5) / 2 ) - 40
+
+	ID=514	B1-B8	VIN (part 1)
+	ID=4E1	B1-B8	VIN (part 2)
+			Take "1" + ID=514 + ID=4E1 to generate entire 17 character VIN
+			Every Byte read as ASCII Code
+
+PRIMARY POWERTRAIN BUS - ENHANCED DIAGNOSTICS
+
+http://www.canbushack.com/blog/index.php?title=service-s-please&more=1&c=1&tb=1&pb=1
+http://gm-volt.com/forum/showthread.php?12958-CAN-bus-reading-remote-viewing-of-charge-state&p=227238#post227238
+
+TX 7E4      8 06 2C FE 43 69 43 68 00   (input: config for voltage/current of charger)
+RX 7EC      8 02 6C FE AA AA AA AA AA   (OK?)
+
+TX 7E4      8 03 AA 04 FE 00 00 00 00   (input for display results)
+RX 5EC      8 FE 43 70 00 00 00 00 00   (results, ~160 reads for a few seconds)
+
+	ID=5EC	B2	Charging Current units 0.2 A (ex. 0x43 = 13.4 A)
+		B3	Charging Voltage units 2 V (ex. 0x70 = 224 V)
+
+Tachy writes: To request current and voltage of the charger and the outside temperature, you have to send the following sequence:
+ 
+	7E4      8 10 08 2C FE 43 69 43 68 
+	7E4      8 21 80 1F 00 00 00 00 00 
+	7E4      8 03 AA 04 FE 00 00 00 00
+ 
+The answer (160 times) is:
+ 
+	5EC      8 FE xx yy zz 00 00 00 00
+ 
+	xx = Charging Current, units 0.2 A (ex. 0x43 = 13.4 A)
+	yy = Charging Voltage, units 2 V (ex. 0x70 = 224 V)
+	zz = outside temperature, units 0,5°C, offset +40 ( ex. 0x60 => 8°C )
+
