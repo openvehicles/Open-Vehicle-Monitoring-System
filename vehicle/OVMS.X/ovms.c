@@ -65,7 +65,7 @@
 
 // Global data
 #pragma udata
-unsigned char ovms_firmware[3] = {OVMS_FIRMWARE_VERSION}; // Firmware version
+rom unsigned char ovms_firmware[3] = {OVMS_FIRMWARE_VERSION}; // Firmware version
 unsigned int car_linevoltage = 0; // Line Voltage
 unsigned char car_chargecurrent = 0; // Charge Current
 unsigned char car_chargelimit = 0; // Charge Limit (amps)
@@ -127,8 +127,7 @@ void main(void)
 {
   unsigned char x, y;
 
-#ifdef OVMS_DIAGMODULE
-  // DEBUG: get last reset reason:
+  // DEBUG / QA stats: get last reset reason:
   x = (~RCON) & 0x1f;
   if (STKPTRbits.STKFUL) x += 32;
   if (STKPTRbits.STKUNF) x += 64;
@@ -150,7 +149,6 @@ void main(void)
     debug_crashreason = x | 0x80; // 0x80 = keep checkpoint until sent to server
     debug_crashcnt++;
   }
-#endif // OVMS_DIAGMODULE
 
   CHECKPOINT(0)
 

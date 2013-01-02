@@ -476,8 +476,13 @@ char net_msgp_group(char stat, char groupnumber, char *groupname)
 void net_msg_server_welcome(char *msg)
   {
   // The server has sent a welcome (token <space> base64digest)
-  char *d,*p;
+  char *d,*p,*s;
   int k;
+  unsigned char hwv = 1;
+
+  #ifdef OVMS_HW_V2
+  hwv = 2;
+  #endif
 
   if( !msg ) return;
   for (d=msg;(*d != 0)&&(*d != ' ');d++) ;
@@ -551,17 +556,31 @@ void net_msg_server_welcome(char *msg)
     ptokenmade = 0; // This disables paranoid mode
   }
 
-#ifdef OVMS_DIAGMODULE
-  // DEBUG: Send crash counter and last reason:
-  delay100(20);
+
+  /* DEBUG / QA stats: Send crash counter and last reason:
+   *
+   * MP-0 H*-OVM-DebugCrash,0,86400
+   *  ,<firmware_version>/<vehicle_type><vehicle_version>/V<hardware_version>
+   *  ,<crashcnt>,<crashreason>,<checkpoint>
+   */
+
   debug_crashreason &= ~0x80; // clear checkpoint hold bit
-  p = stp_i(net_scratchpad, "MP-0 H*-OVM-DebugCrash,", debug_crashcnt);
-  p = stp_x(p, ",86400,", debug_crashreason);
-  p = stp_i(p, ",", debug_checkpoint);
+
+  s = stp_i(net_scratchpad, "MP-0 H*-OVM-DebugCrash,0,86400,", ovms_firmware[0]);
+  s = stp_i(s, ".", ovms_firmware[1]);
+  s = stp_i(s, ".", ovms_firmware[2]);
+  s = stp_s(s, "/", par_get(PARAM_VEHICLETYPE));
+  if (vehicle_version)
+    s = stp_rom(s, vehicle_version);
+  s = stp_i(s, "/V", hwv);
+  s = stp_i(s, ",", debug_crashcnt);
+  s = stp_x(s, ",", debug_crashreason);
+  s = stp_i(s, ",", debug_checkpoint);
+
+  delay100(20);
   net_msg_start();
   net_msg_encode_puts();
   net_msg_send();
-#endif // OVMS_DIAGMODULE
 
 }
 

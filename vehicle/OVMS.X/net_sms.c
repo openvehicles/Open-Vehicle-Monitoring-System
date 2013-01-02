@@ -590,7 +590,8 @@ BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
   if (car_12vline > 0)
     s = stp_l2f(s, "\n 12V Line:", car_12vline, 1);
 
-#ifdef OVMS_DIAGMODULE
+  /* DEBUG / QA stats: output crash counter and decode last reason:
+   */
   s = stp_i(s, "\n Crashes:", debug_crashcnt);
   if (debug_crashreason)
   {
@@ -610,7 +611,6 @@ BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
     if (debug_crashreason & 0x40)
       s = stp_rom(s, " STKUNF"); // Stack underflow
   }
-#endif // OVMS_DIAGMODULE
 
   net_puts_ram(net_scratchpad);
 

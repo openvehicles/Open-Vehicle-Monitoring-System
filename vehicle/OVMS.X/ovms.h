@@ -71,7 +71,7 @@
 #define MAX_ICCID 24
 
 #pragma udata
-extern unsigned char ovms_firmware[3]; // Firmware version
+extern rom unsigned char ovms_firmware[3]; // Firmware version
 extern unsigned int car_linevoltage; // Line Voltage
 extern unsigned char car_chargecurrent; // Charge Current
 extern unsigned char car_chargelimit; // Charge Limit (amps)
@@ -123,13 +123,10 @@ extern unsigned char net_sq; // GSM Network Signal Quality
 extern unsigned int car_12vline; // 12V line level
 extern unsigned char car_gsmcops[9]; // GSM provider
 
-#ifdef OVMS_DIAGMODULE
+// DEBUG / QA stats:
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 extern UINT8 debug_crashreason;        // last saved reset reason (bit set)
 extern UINT8 debug_checkpoint;         // number of last checkpoint before crash
 #define CHECKPOINT(n) if ((debug_crashreason & 0x80)==0) debug_checkpoint = n;
-#else
-#define CHECKPOINT(n) /*NOP*/
-#endif // OVMS_DIAGMODULE
 
 #endif
