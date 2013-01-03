@@ -1035,6 +1035,11 @@ void net_state_activity()
         net_msg_disconnected();
         net_state_enter(NET_STATE_START);
         }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CUSD:", 6) == 0)
+      {
+        // reply MMI/USSD command result:
+        net_msg_reply_ussd(net_buf);
+      }
       break;
 #ifdef OVMS_DIAGMODULE
     case NET_STATE_DIAGMODE:

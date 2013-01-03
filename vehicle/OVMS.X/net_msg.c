@@ -811,11 +811,13 @@ BOOL net_msg_cmd_exec(void)
       net_puts_rom("AT+CUSD=1,\"");
       net_puts_ram(net_msg_cmd_msg);
       net_puts_rom("\",15\r");
+      // cmd reply #1 to acknowledge command:
       delay100(5);
       net_msg_start();
       STP_OK(net_scratchpad, net_msg_cmd_code);
       net_msg_encode_puts();
       delay100(2);
+      // cmd reply #2 sent on USSD response, see net_msg_reply_ussd()
       break;
       
     case 49: // Send raw AT command (param: raw AT command)
@@ -879,6 +881,46 @@ void net_msg_forward_sms(char *caller, char *SMS)
   strcatpgm2ram(net_scratchpad,(char const rom far*)" - MSG: ");
   SMS[170]=0; // Hacky limit on the max size of an SMS forwarded
   strcat(net_scratchpad, SMS);
+  net_msg_encode_puts();
+  net_msg_send();
+}
+
+void net_msg_reply_ussd(char *buf)
+{
+  // called from net_state_activity()
+  // buf contains a "+CUSD:" USSD command result
+  // parse and return as command reply:
+  char *s, *t = NULL;
+
+  // Server not ready? abort
+  // TODO: store, resend when server is connected
+  if ((!net_msg_serverok) || (!buf))
+    return;
+
+  // isolate USSD reply text
+  if (t = strchr(buf, '"'))
+  {
+    buf = ++t; // start of USSD string
+    while ((*t) && (*t != '"'))
+    {
+      if (*t == ',') // replace comma
+        *t = '.';
+      t++;
+    }
+    *t = 0; // end of USSD string
+  }
+
+  // format reply:
+  s = stp_i(net_scratchpad, "MP-0 c", CMD_SendUSSD);
+  if (t)
+    s = stp_s(s, ",0,", buf);
+  else
+    s = stp_rom(s, ",1,Invalid USSD result");
+
+  // send reply:
+  if (net_msg_sendpending > 0)
+    delay100(20); // HACK... should abort, buffer & retry later...
+  net_msg_start();
   net_msg_encode_puts();
   net_msg_send();
 }

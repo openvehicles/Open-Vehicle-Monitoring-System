@@ -89,6 +89,7 @@ void net_msg_cmd_do(void);
 #define CMD_SendRawAT           42  // (raw AT command)
 
 void net_msg_forward_sms(char* caller, char* SMS);
+void net_msg_reply_ussd(char *buf);
 
 char *net_prep_stat(char *s);
 void net_msg_alert(void);
