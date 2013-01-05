@@ -1283,8 +1283,8 @@ BOOL vehicle_twizy_state_ticker1(void)
         net_req_notification(NET_NOTIFY_STAT);
       }
 
-        // ...else set "topping off" from 95% SOC:
-      else if ((car_chargestate != 2) && (can_soc >= 9500))
+        // ...else set "topping off" from 94% SOC:
+      else if ((car_chargestate != 2) && (can_soc >= 9400))
       {
         // ...enter state 2=topping off:
         car_chargestate = 2;
@@ -2583,9 +2583,9 @@ void vehicle_twizy_battstatus_prepalert(int p)
     {
       // Alert?
       if (can_batt[p].volt_alerts & (1 << c))
-        strcatpgm2ram(net_scratchpad, "!");
+        s = stp_rom(s, "!");
       else if (can_batt[p].volt_watches & (1 << c))
-        strcatpgm2ram(net_scratchpad, "?");
+        s = stp_rom(s, "?");
       else
         continue;
 
@@ -2612,9 +2612,9 @@ void vehicle_twizy_battstatus_prepalert(int p)
     {
       // Alert?
       if (can_batt[p].temp_alerts & (1 << c))
-        strcatpgm2ram(net_scratchpad, "!");
+        s = stp_rom(s, "!");
       else if (can_batt[p].temp_watches & (1 << c))
-        strcatpgm2ram(net_scratchpad, "?");
+        s = stp_rom(s, "?");
       else
         continue;
 
