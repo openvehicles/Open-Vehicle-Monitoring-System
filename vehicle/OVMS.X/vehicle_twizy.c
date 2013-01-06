@@ -2731,11 +2731,11 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
       s = stp_i(s, ",", can_soc_min);
       s = stp_i(s, ",", can_soc_max);
       s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_act));
-      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_act / BATT_CELLS));
+      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_act) / BATT_CELLS);
       s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_min));
-      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_min / BATT_CELLS));
+      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_min) / BATT_CELLS);
       s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_max));
-      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_max / BATT_CELLS));
+      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_max) / BATT_CELLS);
       s = stp_i(s, ",", CONV_Temp(tact));
       s = stp_i(s, ",", CONV_Temp(tmin));
       s = stp_i(s, ",", CONV_Temp(tmax));
