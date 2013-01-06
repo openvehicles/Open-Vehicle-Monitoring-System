@@ -7,6 +7,15 @@ use MIME::Base64;
 use IO::Socket::INET;
 use Config::IniFiles;
 
+# Read command line arguments:
+my $cmd_code = $ARGV[0];
+my $cmd_args = $ARGV[1];
+
+if (!$cmd_code) {
+ print "usage: cmd.pl code [args]\n";
+ exit;
+}
+
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 # Configuration
@@ -18,7 +27,6 @@ my $module_password  = $config->val('client','module_password','OVMS');
 
 my $server_ip        = $config->val('client','server_ip','64.111.70.40');
 
-print STDERR "Shared Secret is: ",$server_password,"\n";
 
 #####
 ##### CONNECT
@@ -29,31 +37,24 @@ my $sock = IO::Socket::INET->new(PeerAddr => $server_ip,
                                  Proto    => 'tcp');
 
 #####
-##### CLIENT
+##### REGISTER
 #####
-
-print STDERR "I am the client\n";
 
 rand;
 my $client_token;
 foreach (0 .. 21)
   { $client_token .= substr($b64tab,rand(64),1); }
-print STDERR "  Client token is  $client_token\n";
 
 my $client_hmac = Digest::HMAC->new($server_password, "Digest::MD5");
 $client_hmac->add($client_token);
 my $client_digest = $client_hmac->b64digest();
-print STDERR "  Client digest is $client_digest\n";
 
 print $sock "MP-A 0 $client_token $client_digest $vehicle_id\r\n";
 
 my $line = <$sock>;
 chop $line;
 chop $line;
-print STDERR "  Received $line from server\n";
 my ($welcome,$crypt,$server_token,$server_digest) = split /\s+/,$line;
-
-print STDERR "  Received $server_token $server_digest from server\n";
 
 my $d_server_digest = decode_base64($server_digest);
 my $client_hmac = Digest::HMAC->new($server_password, "Digest::MD5");
@@ -63,46 +64,88 @@ if ($client_hmac->digest() ne $d_server_digest)
   print STDERR "  Client detects server digest is invalid - aborting\n";
   exit(1);
   }
-print STDERR "  Client verification of server digest is ok\n";
 
 $client_hmac = Digest::HMAC->new($server_password, "Digest::MD5");
 $client_hmac->add($server_token);
 $client_hmac->add($client_token);
 my $client_key = $client_hmac->digest;
-print STDERR "  Client version of shared key is: ",encode_base64($client_key,''),"\n";
 
 my $txcipher = Crypt::RC4::XS->new($client_key);
 $txcipher->RC4(chr(0) x 1024); # Prime the cipher
 my $rxcipher = Crypt::RC4::XS->new($client_key);
 $rxcipher->RC4(chr(0) x 1024); # Prime the cipher
 
-my $encrypted = encode_base64($txcipher->RC4("MP-0 A"),'');
-print STDERR "  Sending message $encrypted\n";
+
+##### 
+##### SEND COMMAND
+##### 
+
+my $cmd;
+if ($cmd_args)
+ { $cmd = $cmd_code.",".$cmd_args; }
+else
+ { $cmd = $cmd_code; }
+
+my $encrypted = encode_base64($txcipher->RC4("MP-0 C".$cmd),'');
 print $sock "$encrypted\r\n";
+
+
+##### 
+##### READ RESPONSE
+##### 
 
 my $ptoken = "";
 my $pdigest = "";
-while(<$sock>)
-  {
-  chop; chop;
-  print STDERR "  Received $_ from server\n";
-  my $decoded = $rxcipher->RC4(decode_base64($_));
-  print STDERR "  Server message decodes to: ",$decoded,"\n";
+my $data = "";
+my $discardcnt = 0;
 
-  if ($decoded =~ /^MP-0 ET(.+)/)
-    {
-    $ptoken = $1;
-    print STDERR "    Paranoid token $ptoken received\n";
-    my $paranoid_hmac = Digest::HMAC->new($module_password, "Digest::MD5");
-    $paranoid_hmac->add($ptoken);
-    $pdigest = $paranoid_hmac->digest;
-    }
-  elsif ($decoded =~ /^MP-0 EM(.)(.*)/)
-    {
-    my ($code,$data) = ($1,$2);
-    my $pmcipher = Crypt::RC4::XS->new($pdigest);
-    $pmcipher->RC4(chr(0) x 1024); # Prime the cipher
-    $decoded = $pmcipher->RC4(decode_base64($data));
-    print STDERR "    Paranoid message $code $decoded\n";
-    }
-  }
+while(1)
+{
+	# Timeout socket reads after 10 seconds:
+	eval {
+			local $SIG{ALRM} = sub { die "Timed Out" };
+			alarm 10;
+			$data = <$sock>;
+			alarm 0;
+		};
+		if ($@ and $@ =~ /Timed Out/) {
+			print STDERR "No more results, exit.\n";
+			exit;
+		}
+
+	chop $data; chop $data;
+	my $decoded = $rxcipher->RC4(decode_base64($data));
+
+	if ($decoded =~ /^MP-0 ET(.+)/)
+	{
+		$ptoken = $1;
+		my $paranoid_hmac = Digest::HMAC->new($module_password, "Digest::MD5");
+		$paranoid_hmac->add($ptoken);
+		$pdigest = $paranoid_hmac->digest;
+		# discard:
+		$decoded = "";
+	}
+	elsif ($decoded =~ /^MP-0 EM(.)(.*)/)
+	{
+		my ($code,$data) = ($1,$2);
+		my $pmcipher = Crypt::RC4::XS->new($pdigest);
+		$pmcipher->RC4(chr(0) x 1024); # Prime the cipher
+		$decoded = $pmcipher->RC4(decode_base64($data));
+	}
+	
+	if ($decoded =~ /^MP-0 c$cmd_code/)
+	{
+		print STDOUT $code,$decoded,"\n";
+		$discardcnt = 0;
+	}
+	else
+	{
+		# exit if more than 25 other msgs received in series (assuming cmd done):
+		$discardcnt++;
+		if ($discardcnt > 25)
+		{
+			print STDERR "No more results, exit.\n";
+			exit;
+		}
+	}
+}
