@@ -131,11 +131,13 @@ while(1)
 		my $pmcipher = Crypt::RC4::XS->new($pdigest);
 		$pmcipher->RC4(chr(0) x 1024); # Prime the cipher
 		$decoded = $pmcipher->RC4(decode_base64($data));
+		# reformat as std msg:
+		$decoded = "MP-0 ".$code.$decoded;
 	}
 	
 	if ($decoded =~ /^MP-0 c$cmd_code/)
 	{
-		print STDOUT $code,$decoded,"\n";
+		print STDOUT $decoded,"\n";
 		$discardcnt = 0;
 	}
 	else
