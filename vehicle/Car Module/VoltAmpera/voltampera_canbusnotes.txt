@@ -91,6 +91,55 @@ The answer (160 times) is:
 	yy = Charging Voltage, units 2 V (ex. 0x70 = 224 V)
 	zz = outside temperature, units 0,5°C, offset +40 ( ex. 0x60 => 8°C )
 
+Summary by nie-mehr-benzin.de:
+
+  One Single PID:
+    7E4   8 04 2C FE <PID> 00 00 00
+
+  Two PIDs:
+    7E4   8 06 2C FE <PID1> <PID2> 00
+
+  Three PIDs:
+    7E4   8 10 08 2C FE <PID1> <PID2>
+    7E4   8 21 <PID3> 00 00 00 00 00
+
+  Byte 1 is the Message length
+
+  With three PIDs, Byte 1 of the first set is 0x10 = 16 Bytes = two requests with 8 Bytes.
+  For the complete message, the length is "08" ( command "request" (0x2CFE) + 3 PIDs), 
+  0x21 in the first Byte of the second requests means "follows" , i think.
+
+  The known PIDs are so far:
+
+    request over 7E4, answer in 5EC:
+      Onboard charger current: 0x4369
+      Onboard charger voltage: 0x4368
+      outside temperature (filtered): 0x801F
+      outside temperature (raw): 0x801E
+      High Voltage battery Temperature: 0x434F
+      Power Electronics Cooling Loop temperature: 0x1C43
+
+    request over 7E0, answer in 5E8:
+      ambient temperature: 0x0046
+
+  Examples:
+
+    To request the High Voltage Battery temperature in one single PID, you have to request:
+
+      7E4   8 04 2C FE 43 4F 00 00 00   (command: request 0x434F)
+      7EC   8 02 6C FE AA AA AA AA AA   (answer: OK)
+
+      7E4   8 03 AA 04 FE 00 00 00 00   (command: display data)
+      5EC   8 FE 30 00 00 00 00 00 00   (answer: HV Temp in Byte 2, 0x30 => 8°C (unit 1 °C offset 40) )
+
+    to request the ambient temperature:
+
+      7E0   8 04 2C FE 00 46 00 00 00   (command: request 0x0046)
+      7E8   8 02 6C FE AA AA AA AA AA   (answer: OK)
+
+      7E0   8 03 AA 04 FE 00 00 00 00   (command: display data)
+      5E8   8 FE 2F 00 00 00 00 00 00   (answer: HV Temp in Byte 2, 0x2F => 7°C (unit 1 °C offset 40) )
+
 Explanatory notes by Burro:
 
   I have been watching this thread for a few days. I don't have a Volt but I do have extensive experience with automotive
