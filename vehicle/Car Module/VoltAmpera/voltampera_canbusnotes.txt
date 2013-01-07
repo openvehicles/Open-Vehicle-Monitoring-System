@@ -91,3 +91,49 @@ The answer (160 times) is:
 	yy = Charging Voltage, units 2 V (ex. 0x70 = 224 V)
 	zz = outside temperature, units 0,5°C, offset +40 ( ex. 0x60 => 8°C )
 
+Explanatory notes by Burro:
+
+  I have been watching this thread for a few days. I don't have a Volt but I do have extensive experience with automotive
+  CAN bus applications and I think I can add some value to the discussion.
+
+  According to the bus data presented above the DashDaq is using mode 0x2C to request the identifiers. The message
+  structure for mode 0x2C for one, two and three parameters is as described above. Using that example, the ID 0x7E4
+  is the battery module, 8 is the message length, 04 is the significant bytes in current message, 2C is the
+  mode(dynamically defined data identifier), FE is the requested response ID and the next two bytes are the PID.
+
+  The response is as follows: 0x7EC is the battery module response (0x7E4 + 0x08). This offset id response always holds
+  true, that is why you see 0x7E8 as the response to a 0x7E0(engine controller) request. 8 is the message length again.
+  6C is the affirmative response to the 2C request(0x2C + 0x40). This holds true for any mode request(mode 0x22 request
+  should be affirmed with a 0x62 in the response). If you get a 7F in the response, this means there is an error with
+  the mode request, either it isnt supported or there is a problem with the way the format was requested. FE is the
+  response ID as requested in the previous message. You can request basically any ID between 00-FF. It is just a way
+  for the tool to recognize which identifier(s) are being broadcast. The rest of the bytes in the response are just
+  padding so that it is 8 bytes long.
+
+  The next request is 0x7E4 again, letting the bus know you are asking for a response from the battery module. 8 is the
+  message length. 03 is the significant bytes in the message. AA is read data by packet id, which is the ID you requested
+  in the first message(FE). 04 is the next byte and that lets the module know you are looking for a fast response rate.
+  Decreasing numbers here means decreasing response speed. 01 will get you one response and 00 will stop the response
+  all together. The next byte in the message is FE and it lets you know you are getting the PIDs requested in that
+  message as set up in the first message. The rest of the bytes are padding once again.
+
+  Finally the response is 0x5E8. This is the ID assigned to the battery module for dynamically defined responses.
+  It is 0x200 less than the standard response ID and should hold true for any module request. As an example, a request
+  from 0x7E0 should generate a response from 0x7E8 unless you are asking for dynamically defined data in which case it
+  will respond with 0x5E8(0x7E8-0X200). 8 is the message length. FE is the response ID you set up in the first message.
+  2F is the data and rest is padding.
+
+  This is a good way to reduce the clutter on the bus because you can request and receive multiple pids in one shot. As
+  opposed to mode 22 which nets you one response per request. If you want to set up more than three you can just change
+  the response ID from FE to one of the others like FD, FC, FB.... add your PIDs and then ask for the response. 
+
+  A couple of quick notes. If you want to receive the messages for longer than about three seconds you will need to send
+  the 0x101 message that was questioned in previous posts. This is the tester present message and it lets the module
+  know you are still there and expecting a response. All of the generic OBD messages should work in this mode as well.
+  The generic engine RPM ID is 0x0C(or 0x000C). In your original message if you specify this ID you should get engine
+  RPM (make sure you ask 0x7E0 for this information). There are generic OBD Id's all over the net just use your favorite
+  search engine. Finally, these PIDs may also work for mode 22 requests so those of you with a scangauge that are brave
+  enough to still use it, should be able to code it in xgauge. Be cautious you don't clog up the CAN bus with too many requests though.
+
+  Sorry for the long post, hopefully some of it makes sense.
+
