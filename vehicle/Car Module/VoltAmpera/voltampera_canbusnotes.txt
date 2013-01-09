@@ -186,3 +186,30 @@ Explanatory notes by Burro:
 
   Sorry for the long post, hopefully some of it makes sense.
 
+Service 0x22 explanation by Burro:
+
+  Service 0x22 is an easier single state call.
+
+  Let say you wanted engine RPM then you would send 
+    7E0 03 22 00 0C 00 00 00 00
+
+  And this will hopefully return:
+    7E8 04 62 00 0C 10 7E 00 00
+
+  Letting A=10 B=7E from the return, RPM = (A*255+b)/4 or 1055 RPM. 
+
+  Format of the return data is
+    requsedID+0x08, 
+    length, 
+    confirm of requested mode+0x40 (i.e. 22 + 40)
+    2 bytes for PID
+    length-2 bytes of data
+
+  For your request for OAT
+    7E0 03 22 00 46 00 00 00 00
+
+  would response something like
+    7E8 03 62 00 46 30 00 00 00 00 
+
+  (answer as before is Temp (now in in Byte 4) where 0x30 => 8°C (unit 1 °C offset 40) )
+
