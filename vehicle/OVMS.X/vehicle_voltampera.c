@@ -85,7 +85,7 @@ BOOL vehicle_voltampera_ticker1(void)
       {
       // OK. Let's send it...
       if (doneone)
-        delay5b(); // Delay a little... (5ms, approx)
+        delay100b(); // Delay a little... (100ms, approx)
 
       while (TXB0CONbits.TXREQ) {} // Loop until TX is done
       TXB0CON = 0;
@@ -134,7 +134,7 @@ BOOL vehicle_voltampera_poll0(void)
 
   if (can_databuffer[1] != 0x62) return TRUE; // Check the return code
 
-  pid = (unsigned int)can_databuffer[2]<<8 + can_databuffer[3];
+  pid = can_databuffer[3]+((unsigned int) can_databuffer[2] << 8);
   value = can_databuffer[4];
   
   switch (pid)
@@ -146,7 +146,6 @@ BOOL vehicle_voltampera_poll0(void)
       car_linevoltage = (unsigned int)value << 1;
       break;
     case 0x801f:  // Outside temperature (filtered)
-      car_ambient_temp = ((int)value >> 1) - 0x28;
       break;
     case 0x801e:  // Outside temperature (raw)
       break;
