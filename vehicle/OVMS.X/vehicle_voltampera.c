@@ -46,16 +46,19 @@ BOOL bus_is_active = FALSE;       // Indicates recent activity on the bus
 rom struct
   {
   unsigned int moduleid;
-  unsigned char requestid;
   unsigned char polltime;
-  unsigned int pid1;
-  unsigned int pid2;
-  unsigned int pid3;
+  unsigned int pid;
   } vehicle_voltampera_polls[]
   =
   {
-    { 0x07E0, 0xA0, 10, 0x0046, 0x0000, 0x0000 },
-    { 0x0000, 0x00, 0,  0x0000, 0x0000, 0x0000 }
+    { 0x07E0, 10, 0x0046 },
+    { 0x07E4, 10, 0x4369 },
+    { 0x07E4, 10, 0x4368 },
+    { 0x07E4, 10, 0x801f },
+    { 0x07E4, 10, 0x801e },
+    { 0x07E4, 10, 0x434f },
+    { 0x07E4, 10, 0x1c43 },
+    { 0x0000, 0,  0x0000 }
   };
 
 ////////////////////////////////////////////////////////////////////////
@@ -66,6 +69,7 @@ rom struct
 BOOL vehicle_voltampera_ticker1(void)
   {
   int k;
+  BOOL doneone = FALSE;
 
   // bus_is_active indicates we've recently seen a message on the can bus
   // Quick exit if bus is recently not active
@@ -80,85 +84,24 @@ BOOL vehicle_voltampera_ticker1(void)
     if ((can_granular_tick % vehicle_voltampera_polls[k].polltime) == 0)
       {
       // OK. Let's send it...
-      while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-      if ((vehicle_voltampera_polls[k].pid3==0)&&
-          (vehicle_voltampera_polls[k].pid2==0))
-        { // Single PID request...
-        TXB0CON = 0;
-        TXB0SIDL = (vehicle_voltampera_polls[k].moduleid & 0x07)<<5;
-        TXB0SIDH = (vehicle_voltampera_polls[k].moduleid>>3);
-        TXB0D0 = 0x04;
-        TXB0D1 = 0x2C;        // Get extended PID
-        TXB0D2 = vehicle_voltampera_polls[k].requestid;
-        TXB0D3 = vehicle_voltampera_polls[k].pid1 >> 8;
-        TXB0D4 = vehicle_voltampera_polls[k].pid1 & 0xff;
-        TXB0D5 = 0x00;
-        TXB0D6 = 0x00;
-        TXB0D7 = 0x00;
-        TXB0DLC = 0b00001000; // data length (8)
-        TXB0CON = 0b00001000; // mark for transmission
-        }
-      else if (vehicle_voltampera_polls[k].pid3==0)
-        { // Dual PID request...
-        TXB0CON = 0;
-        TXB0SIDL = (vehicle_voltampera_polls[k].moduleid & 0x07)<<5;
-        TXB0SIDH = (vehicle_voltampera_polls[k].moduleid>>3);
-        TXB0D0 = 0x06;
-        TXB0D1 = 0x2C;        // Get extended PID
-        TXB0D2 = vehicle_voltampera_polls[k].requestid;
-        TXB0D3 = vehicle_voltampera_polls[k].pid1 >> 8;
-        TXB0D4 = vehicle_voltampera_polls[k].pid1 & 0xff;
-        TXB0D5 = vehicle_voltampera_polls[k].pid2 >> 8;
-        TXB0D6 = vehicle_voltampera_polls[k].pid2 & 0xff;
-        TXB0D7 = 0x00;
-        TXB0DLC = 0b00001000; // data length (8)
-        TXB0CON = 0b00001000; // mark for transmission
-        }
-      else
-        { // Triple PID request...
-        TXB0CON = 0;
-        TXB0SIDL = (vehicle_voltampera_polls[k].moduleid & 0x07)<<5;
-        TXB0SIDH = (vehicle_voltampera_polls[k].moduleid>>3);
-        TXB0D0 = 0x10;
-        TXB0D1 = 0x08;
-        TXB0D2 = 0x2C;        // Get extended PID
-        TXB0D3 = vehicle_voltampera_polls[k].requestid;
-        TXB0D4 = vehicle_voltampera_polls[k].pid1 >> 8;
-        TXB0D5 = vehicle_voltampera_polls[k].pid1 & 0xff;
-        TXB0D6 = vehicle_voltampera_polls[k].pid2 >> 8;
-        TXB0D7 = vehicle_voltampera_polls[k].pid2 & 0xff;
-        TXB0DLC = 0b00001000; // data length (8)
-        TXB0CON = 0b00001000; // mark for transmission
-        while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-        TXB0CON = 0;
-        TXB0SIDL = (vehicle_voltampera_polls[k].moduleid & 0x07)<<5;
-        TXB0SIDH = (vehicle_voltampera_polls[k].moduleid>>3);
-        TXB0D0 = 0x21;
-        TXB0D1 = vehicle_voltampera_polls[k].pid3 >> 8;
-        TXB0D2 = vehicle_voltampera_polls[k].pid3 & 0xff;
-        TXB0D3 = 0x00;
-        TXB0D4 = 0x00;
-        TXB0D5 = 0x00;
-        TXB0D6 = 0x00;
-        TXB0D7 = 0x00;
-        TXB0DLC = 0b00001000; // data length (8)
-        TXB0CON = 0b00001000; // mark for transmission
-        while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-        }
+      if (doneone)
+        delay5b(); // Delay a little... (5ms, approx)
+
       while (TXB0CONbits.TXREQ) {} // Loop until TX is done
       TXB0CON = 0;
       TXB0SIDL = (vehicle_voltampera_polls[k].moduleid & 0x07)<<5;
       TXB0SIDH = (vehicle_voltampera_polls[k].moduleid>>3);
       TXB0D0 = 0x03;
-      TXB0D1 = 0xAA;
-      TXB0D2 = 0x01; // One shot
-      TXB0D3 = vehicle_voltampera_polls[k].requestid;
+      TXB0D1 = 0x22;        // Get extended PID
+      TXB0D2 = vehicle_voltampera_polls[k].pid >> 8;
+      TXB0D3 = vehicle_voltampera_polls[k].pid & 0xff;
       TXB0D4 = 0x00;
       TXB0D5 = 0x00;
       TXB0D6 = 0x00;
       TXB0D7 = 0x00;
       TXB0DLC = 0b00001000; // data length (8)
       TXB0CON = 0b00001000; // mark for transmission
+      doneone = TRUE;
       }
     }
   // Assume the bus is not active, so we won't poll any more until we see
@@ -174,6 +117,9 @@ BOOL vehicle_voltampera_ticker1(void)
 //
 BOOL vehicle_voltampera_poll0(void)
   {
+  unsigned int pid;
+  unsigned char value;
+
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
   can_databuffer[1] = RXB0D1;
@@ -185,6 +131,35 @@ BOOL vehicle_voltampera_poll0(void)
   can_databuffer[7] = RXB0D7;
 
   RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
+
+  if (can_databuffer[1] != 0x62) return TRUE; // Check the return code
+
+  pid = (unsigned int)can_databuffer[2]<<8 + can_databuffer[3];
+  value = can_databuffer[4];
+  
+  switch (pid)
+    {
+    case 0x4369:  // On-board charger current
+      car_chargecurrent = (unsigned int)value / 5;
+      break;
+    case 0x4368:  // On-board charger voltage
+      car_linevoltage = (unsigned int)value << 1;
+      break;
+    case 0x801f:  // Outside temperature (filtered)
+      car_ambient_temp = ((int)value >> 1) - 0x28;
+      break;
+    case 0x801e:  // Outside temperature (raw)
+      break;
+    case 0x434f:  // High-voltage Battery temperature
+      car_tbattery = (int)value - 0x28;
+      break;
+    case 0x1c43:  // PEM temperature
+      car_tpem = (int)value - 0x28;
+      break;
+    case 0x0046:  // Ambient temperature
+      car_ambient_temp = (signed char)((int)value - 0x28);
+      break;
+    }
 
   return TRUE;
   }
@@ -235,13 +210,6 @@ BOOL vehicle_voltampera_poll1(void)
     for (k=0;k<8;k++)
       car_vin[k+1] = can_databuffer[k];
     }
-  else if ((CANctrl & 0x07) == 5)       // Acceptance Filter 5 (RXF5) = CAN ID 5E8
-    {
-    if (can_databuffer[0] == 0xA0)
-      {
-      car_ambient_temp = (can_databuffer[1]>>1)-40;
-      }
-    }
   return TRUE;
   }
 
@@ -269,11 +237,15 @@ BOOL vehicle_voltampera_initialise(void)
   RXM0SIDL = 0b10100000;
   RXM0SIDH = 0b11111111;	// Set Mask0 to 0x7fd
 
-  // Not yet used for VA
-  RXF0SIDL = 0b00000000;	// Setup Filter0 and Mask so that only CAN ID 0x100 and 0x102 will be accepted
-  RXF0SIDH = 0b00100000;	// Set Filter0 to 0x100
+  // Filter 0: Used for ID#0x7E8
+  RXF0SIDL = 0b00000000;
+  RXF0SIDH = 0b11111101;
 
-  RXB1CON = 0b00000000;	// RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
+  // Filter 1: Used for ID#0x7EC
+  RXF1SIDL = 0b10000000;
+  RXF1SIDH = 0b11111101;
+
+  RXB1CON  = 0b00000000;	// RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
 
   RXM1SIDL = 0b11100000;
   RXM1SIDH = 0b11111111;	// Set Mask1 to 0x7ff
@@ -296,10 +268,6 @@ BOOL vehicle_voltampera_initialise(void)
   // Filter 4: Used for ID#0x514
   RXF4SIDL = 0b10000000;        // Setup Filter4 so that CAN ID 0x514 will be accepted
   RXF4SIDH = 0b10100010;
-
-  // Filter 5: Used for ID#0x5E8
-  RXF5SIDL = 0b00000000;        // Setup Filter5 so that CAN ID 0x5E8 will be accepted
-  RXF5SIDH = 0b10111101;
 
   BRGCON1 = 0x01; // SET BAUDRATE to 500 Kbps
   BRGCON2 = 0xD2;
