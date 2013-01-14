@@ -276,8 +276,8 @@ volatile UINT8 twizy_notify; // bit set of...
 
 // -----------------------------------------------
 // RAM USAGE FOR STD VARS: 25 bytes (w/o DIAG)
-// + 18 static CRC WORDS = 36 bytes
-// = TOTAL: 61 bytes
+// + 1 static CRC WORDS = 2 bytes
+// = TOTAL: 27 bytes
 // -----------------------------------------------
 
 
@@ -314,6 +314,8 @@ volatile unsigned long twizy_level_rec; // level section rec collector
 
 // -----------------------------------------------
 // TOTAL RAM USAGE FOR POWER STATS: 81 bytes
+// + 1 static CRC WORDS = 2 bytes
+// = TOTAL: 83 bytes
 // -----------------------------------------------
 
 
@@ -367,6 +369,8 @@ volatile UINT8 twizy_batt_sensors_state;
 
 // -------------------------------------------------
 // TOTAL RAM USAGE FOR BATTERY MONITOR: 159 bytes
+// + 16 static CRC WORDS = 32 bytes
+// = TOTAL: 191 bytes
 // -------------------------------------------------
 
 #pragma udata overlay vehicle_overlay_data
