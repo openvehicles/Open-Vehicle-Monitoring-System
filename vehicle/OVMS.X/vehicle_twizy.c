@@ -219,6 +219,7 @@ typedef struct battery_cell
 
 #endif // OVMS_TWIZY_BATTMON
 
+
 typedef struct speedpwr // power usage statistics for accel/decel
 {
   unsigned long dist; // distance sum in 1/10 m
@@ -256,9 +257,38 @@ unsigned int twizy_speed; // current speed in 1/100 km/h
 unsigned long twizy_odometer; // odometer in 1/100 km = 10 m
 volatile unsigned int twizy_dist; // cyclic distance counter in 1/10 m = 10 cm
 
-
 signed int twizy_power; // current power in 16*W, negative=charging
 
+unsigned char twizy_status; // Car + charge status from CAN:
+#define CAN_STATUS_KEYON        0x10        //  bit 4 = 0x10: 1 = Car ON (key turned)
+#define CAN_STATUS_CHARGING     0x20        //  bit 5 = 0x20: 1 = Charging
+#define CAN_STATUS_OFFLINE      0x40        //  bit 6 = 0x40: 1 = Switch-ON/-OFF phase / 0 = normal operation
+
+
+// MSG notification queue (like net_notify for vehicle specific notifies)
+volatile UINT8 twizy_notify; // bit set of...
+#define SEND_BatteryAlert           0x01  // text alert: battery problem
+#define SEND_PowerNotify            0x02  // text alert: power usage summary
+#define SEND_DataUpdate             0x04  // regular data update (per minute)
+#define SEND_StreamUpdate           0x08  // stream data update (per second)
+#define SEND_BatteryStats           0x10  // separate battery stats (large)
+
+
+// -----------------------------------------------
+// RAM USAGE FOR STD VARS: 25 bytes (w/o DIAG)
+// + 18 static CRC WORDS = 36 bytes
+// = TOTAL: 61 bytes
+// -----------------------------------------------
+
+
+#ifdef OVMS_DIAGMODULE
+volatile int twizy_sim = -1; // CAN simulator: -1=off, else read index in twizy_sim_data
+#endif // OVMS_DIAGMODULE
+
+
+/***************************************************************
+ * Twizy POWER STATISTICS variables
+ */
 
 speedpwr twizy_speedpwr[3]; // speed power usage statistics
 UINT8 twizy_speed_state; // speed state, one of:
@@ -282,12 +312,14 @@ volatile unsigned long twizy_level_rec; // level section rec collector
 #define CAN_LEVEL_MINSECTLEN    100         // min section length (in m)
 #define CAN_LEVEL_THRESHOLD     1           // level change threshold (in percent)
 
+// -----------------------------------------------
+// TOTAL RAM USAGE FOR POWER STATS: 81 bytes
+// -----------------------------------------------
 
-unsigned char twizy_status; // Car + charge status from CAN:
-#define CAN_STATUS_KEYON        0x10        //  bit 4 = 0x10: 1 = Car ON (key turned)
-#define CAN_STATUS_CHARGING     0x20        //  bit 5 = 0x20: 1 = Charging
-#define CAN_STATUS_OFFLINE      0x40        //  bit 6 = 0x40: 1 = Switch-ON/-OFF phase / 0 = normal operation
 
+/***************************************************************
+ * Twizy BATTERY MONITORING variables
+ */
 
 #ifdef OVMS_TWIZY_BATTMON
 
@@ -298,10 +330,10 @@ unsigned char twizy_status; // Car + charge status from CAN:
 #define BATT_PACKS      1
 #define BATT_CELLS      14
 #define BATT_CMODS      7
-battery_pack twizy_batt[BATT_PACKS]; // size:  1 * 15 =  15 bytes
+battery_pack twizy_batt[BATT_PACKS]; // size:  1 * 18 =  18 bytes
 battery_cmod twizy_cmod[BATT_CMODS]; // size:  7 *  4 =  28 bytes
 battery_cell twizy_cell[BATT_CELLS]; // size: 14 *  8 = 112 bytes
-// ------------- = 155 bytes
+// ------------- = 158 bytes
 
 // Battery cell/cmod deviation alert thresholds:
 #define BATT_DEV_TEMP_ALERT         3       // = 3 °C
@@ -333,23 +365,13 @@ volatile UINT8 twizy_batt_sensors_state;
 #define BATT_SENSORS_GOT55E         4
 #define BATT_SENSORS_READY          5
 
+// -------------------------------------------------
+// TOTAL RAM USAGE FOR BATTERY MONITOR: 159 bytes
+// -------------------------------------------------
+
 #pragma udata overlay vehicle_overlay_data
 
 #endif // OVMS_TWIZY_BATTMON
-
-
-// MSG notification queue (like net_notify for vehicle specific notifies)
-volatile UINT8 twizy_notify; // bit set of...
-#define SEND_BatteryAlert           0x01  // text alert: battery problem
-#define SEND_PowerNotify            0x02  // text alert: power usage summary
-#define SEND_DataUpdate             0x04  // regular data update (per minute)
-#define SEND_StreamUpdate           0x08  // stream data update (per second)
-#define SEND_BatteryStats           0x10  // separate battery stats (large)
-
-
-#ifdef OVMS_DIAGMODULE
-volatile int twizy_sim = -1; // CAN simulator: -1=off, else read index in twizy_sim_data
-#endif // OVMS_DIAGMODULE
 
 
 //#pragma udata   // return to default udata section -- why?
