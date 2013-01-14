@@ -33,9 +33,12 @@
 // Volt/Ampera state variables
 
 #pragma udata overlay vehicle_overlay_data
-unsigned int soc_largest  = 56028;
-unsigned int soc_smallest = 13524;
-BOOL bus_is_active = FALSE;       // Indicates recent activity on the bus
+unsigned int soc_largest;     // Largest SOC value seen
+unsigned int soc_smallest;    // Smallest SOC value seen
+BOOL bus_is_active;           // Indicates recent activity on the bus
+unsigned char charge_timer;   // A per-second charge timer
+unsigned long charge_wm;      // A per-minute watt accumulator
+unsigned char candata_timer;  // A per-second timer for CAN bus data
 
 #pragma udata
 
@@ -70,6 +73,90 @@ BOOL vehicle_voltampera_ticker1(void)
   {
   int k;
   BOOL doneone = FALSE;
+
+  ////////////////////////////////////////////////////////////////////////
+  // Stale tickers
+  ////////////////////////////////////////////////////////////////////////
+  if (car_stale_ambient>0) car_stale_ambient--;
+  if (car_stale_temps>0) car_stale_temps--;
+  if (candata_timer>0)
+    {
+    if (--candata_timer == 0)
+      { // Car has gone to sleep
+      car_doors3 &= ~0x01;      // Car is asleep
+      }
+    else
+      {
+      car_doors3 |= 0x01;       // Car is awake
+      }
+    }
+  car_time++;
+
+  ////////////////////////////////////////////////////////////////////////
+  // Charge state determination
+  ////////////////////////////////////////////////////////////////////////
+
+  if ((car_chargecurrent!=0)&&(car_linevoltage!=0))
+    { // CAN says the car is charging
+    if ((car_doors1 & 0x08)==0)
+      { // Charge has started
+      car_doors1 |= 0x0c;     // Set charge and pilot bits
+      car_chargemode = 0;     // Standard charge mode
+      car_charge_b4 = 0;      // Not required
+      car_chargestate = 1;    // Charging state
+      car_chargesubstate = 3; // Charging by request
+      car_chargelimit = 0;    // Unknown charge limit
+      car_chargeduration = 0; // Reset charge duration
+      car_chargekwh = 0;      // Reset charge kWh
+      charge_timer = 0;       // Reset the per-second charge timer
+      charge_wm = 0;          // Reset the per-minute watt accumulator
+      net_req_notification(NET_NOTIFY_STAT);
+      }
+    else
+      { // Charge is ongoing
+      charge_timer++;
+      if (charge_timer>=60)
+        { // One minute has passed
+        charge_timer=0;
+
+        car_chargeduration++;
+        charge_wm += (car_chargecurrent*car_linevoltage);
+        if (charge_wm >= 60000L)
+          {
+          // Let's move 1kWh to the virtual car
+          car_chargekwh += 1;
+          charge_wm -= 60000L;
+          }
+        }
+      }
+    }
+  else if ((car_chargecurrent==0)&&(car_linevoltage==0))
+    { // CAN says the car is not charging
+    if (car_doors1 & 0x08)
+      { // Charge has completed / stopped
+      car_doors1 &= ~0x0c;    // Clear charge and pilot bits
+      car_chargemode = 0;     // Standard charge mode
+      car_charge_b4 = 0;      // Not required
+      if (car_SOC > 95)
+        { // Assume charge was interrupted
+        car_chargestate = 21;    // Charge STOPPED
+        car_chargesubstate = 14; // Charge INTERRUPTED
+        net_req_notification(NET_NOTIFY_CHARGE);
+        }
+      else
+        { // Assume chrge completed normally
+        car_chargestate = 4;    // Charge DONE
+        car_chargesubstate = 3; // Leave it as is
+        }
+      charge_timer = 0;       // Reset the per-second charge timer
+      charge_wm = 0;          // Reset the per-minute watt accumulator
+      net_req_notification(NET_NOTIFY_STAT);
+      }
+    }
+
+  ////////////////////////////////////////////////////////////////////////
+  // OBDII extended PID polling
+  ////////////////////////////////////////////////////////////////////////
 
   // bus_is_active indicates we've recently seen a message on the can bus
   // Quick exit if bus is recently not active
@@ -132,6 +219,8 @@ BOOL vehicle_voltampera_poll0(void)
 
   RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
+  candata_timer = 60;   // Reset the timer
+
   if (can_databuffer[1] != 0x62) return TRUE; // Check the return code
 
   pid = can_databuffer[3]+((unsigned int) can_databuffer[2] << 8);
@@ -146,16 +235,21 @@ BOOL vehicle_voltampera_poll0(void)
       car_linevoltage = (unsigned int)value << 1;
       break;
     case 0x801f:  // Outside temperature (filtered)
+      car_stale_temps = 60;
       break;
     case 0x801e:  // Outside temperature (raw)
+      car_stale_temps = 60;
       break;
     case 0x434f:  // High-voltage Battery temperature
+      car_stale_temps = 60;
       car_tbattery = (int)value - 0x28;
       break;
     case 0x1c43:  // PEM temperature
+      car_stale_temps = 60;
       car_tpem = (int)value - 0x28;
       break;
     case 0x0046:  // Ambient temperature
+      car_stale_ambient = 60;
       car_ambient_temp = (signed char)((int)value - 0x28);
       break;
     }
@@ -182,6 +276,7 @@ BOOL vehicle_voltampera_poll1(void)
   RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
 
   bus_is_active = TRUE; // Activity has been seen on the bus
+  candata_timer = 60;   // Reset the timer
 
   if ((CANctrl & 0x07) == 2)             // Acceptance Filter 2 (RXF2) = CAN ID 0x206
     {
@@ -192,6 +287,8 @@ BOOL vehicle_voltampera_poll1(void)
     if ((v<soc_smallest)&&(v>0)) v=soc_smallest;
     if (v>soc_largest) v=soc_largest;
     car_SOC = (char)((v-soc_smallest)/((soc_largest-soc_smallest)/100));
+    car_idealrange = ((unsigned int)car_SOC * (unsigned int)37)/100;  // Kludgy, but ok for the moment
+    car_estrange = car_idealrange;                              // Very kludgy, but ok ...
     }
   else if ((CANctrl & 0x07) == 3)        // Acceptance Filter 3 (RXF3) = CAN ID 4E1
     {
@@ -226,6 +323,16 @@ BOOL vehicle_voltampera_initialise(void)
   car_type[2] = 0;
   car_type[3] = 0;
   car_type[4] = 0;
+
+  // Vehicle specific data initialisation
+  soc_largest  = 56028;
+  soc_smallest = 13524;
+  bus_is_active = FALSE;       // Indicates recent activity on the bus
+  charge_timer = 0;
+  charge_wm = 0;
+  candata_timer = 0;
+  car_stale_timer = -1; // Timed charging is not supported for OVMS VA
+  car_time = 0;
 
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
