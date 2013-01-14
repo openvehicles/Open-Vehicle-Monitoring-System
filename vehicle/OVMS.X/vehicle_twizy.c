@@ -98,6 +98,13 @@
 ;             (incl. implementation of MSG mode battery alerts)
 ;           - "CA?" now adds time estimation for full charge in any case
 ;
+;    2.6  13 Jan 2013 (Michael Balzer):
+;           - Renamed local Twizy variables to avoid name space conflicts
+;           - Battery monitor extended by stddev alert mode
+;           - Power stats extended by distance / efficiency
+;           - Minor bug fixes & changes
+;           Note: introduced second overlay section "vehicle_overlay_data2"
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -148,11 +155,11 @@
 #define CMD_SetChargeAlerts         204 // (range, soc)
 #define CMD_BatteryAlert            205 // ()
 #define CMD_BatteryStatus           206 // ()
-#define CMD_PowerUsageNotify        207 // ()
+#define CMD_PowerUsageNotify        207 // (mode)
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.5";
+rom char vehicle_twizy_version[] = "2.6";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -174,12 +181,17 @@ typedef struct battery_pack
   UINT volt_max; // charge cycle max voltage
 
   UINT volt_watches; // bitfield: dev > stddev
-  UINT volt_alerts; // bitfield: dev > 2*stddev
+  UINT volt_alerts; // bitfield: dev > BATT_DEV_VOLT_ALERT
   UINT last_volt_alerts; // recognize alert state changes
 
   UINT8 temp_watches; // bitfield: dev > stddev
-  UINT8 temp_alerts; // bitfield: dev > 2*stddev
+  UINT8 temp_alerts; // bitfield: dev > BATT_DEV_TEMP_ALERT
   UINT8 last_temp_alerts; // recognize alert state changes
+
+  UINT cell_volt_stddev_max; // max cell voltage std deviation
+  // => watch/alert bit #15 (1<<15)
+  UINT8 cmod_temp_stddev_max; // max cmod temperature std deviation
+  // => watch/alert bit #7 (1<<7)
 
 } battery_pack;
 
@@ -209,7 +221,7 @@ typedef struct battery_cell
 
 typedef struct speedpwr // power usage statistics for accel/decel
 {
-  unsigned long cnt; // count of entries
+  unsigned long dist; // distance sum in 1/10 m
   unsigned long use; // sum of power used
   unsigned long rec; // sum of power recovered (recuperation)
 
@@ -217,7 +229,8 @@ typedef struct speedpwr // power usage statistics for accel/decel
 
 typedef struct levelpwr // power usage statistics for level up/down
 {
-  unsigned int hsum; // height sum
+  unsigned long dist; // distance sum in 1 m
+  unsigned int hsum; // height sum in 1 m
   unsigned long use; // sum of power used
   unsigned long rec; // sum of power recovered (recuperation)
 
@@ -230,44 +243,47 @@ typedef struct levelpwr // power usage statistics for level up/down
 
 #pragma udata overlay vehicle_overlay_data
 
-unsigned char can_last_SOC; // sufficient charge SOC threshold helper
-unsigned int can_last_idealrange; // sufficient charge range threshold helper
+unsigned char twizy_last_SOC; // sufficient charge SOC threshold helper
+unsigned int twizy_last_idealrange; // sufficient charge range threshold helper
 
-unsigned int can_soc; // detailed SOC (1/100 %)
-unsigned int can_soc_min; // min SOC reached during last discharge
-unsigned int can_soc_min_range; // can_range at min SOC
-unsigned int can_soc_max; // max SOC reached during last charge
+unsigned int twizy_soc; // detailed SOC (1/100 %)
+unsigned int twizy_soc_min; // min SOC reached during last discharge
+unsigned int twizy_soc_min_range; // twizy_range at min SOC
+unsigned int twizy_soc_max; // max SOC reached during last charge
 
-unsigned int can_range; // range in km
-unsigned int can_speed; // current speed in 1/100 km/h
-unsigned long can_odometer; // odometer in 1/100 km
-
-
-signed int can_power; // current power in 16*W, negative=charging
+unsigned int twizy_range; // range in km
+unsigned int twizy_speed; // current speed in 1/100 km/h
+unsigned long twizy_odometer; // odometer in 1/100 km = 10 m
+volatile unsigned int twizy_dist; // cyclic distance counter in 1/10 m = 10 cm
 
 
-speedpwr can_speedpwr[3]; // speed power usage statistics
-UINT8 can_speed_state; // speed state, one of:
+signed int twizy_power; // current power in 16*W, negative=charging
+
+
+speedpwr twizy_speedpwr[3]; // speed power usage statistics
+UINT8 twizy_speed_state; // speed state, one of:
 #define CAN_SPEED_CONST         0           // constant speed
 #define CAN_SPEED_ACCEL         1           // accelerating
 #define CAN_SPEED_DECEL         2           // decelerating
 
 #define CAN_SPEED_THRESHOLD     10          // speed change threshold for accel/decel
 
+volatile unsigned int twizy_speed_distref; // distance reference for speed section
 
-levelpwr can_levelpwr[2]; // level power usage statistics
+
+levelpwr twizy_levelpwr[2]; // level power usage statistics
 #define CAN_LEVEL_UP            0           // uphill
 #define CAN_LEVEL_DOWN          1           // downhill
 
-unsigned long can_level_odo; // level section odometer reference
-signed int can_level_alt; // level section altitude reference
-volatile unsigned long can_level_use; // level section use collector
-volatile unsigned long can_level_rec; // level section rec collector
+unsigned long twizy_level_odo; // level section odometer reference
+signed int twizy_level_alt; // level section altitude reference
+volatile unsigned long twizy_level_use; // level section use collector
+volatile unsigned long twizy_level_rec; // level section rec collector
 #define CAN_LEVEL_MINSECTLEN    100         // min section length (in m)
 #define CAN_LEVEL_THRESHOLD     1           // level change threshold (in percent)
 
 
-unsigned char can_status; // Car + charge status from CAN:
+unsigned char twizy_status; // Car + charge status from CAN:
 #define CAN_STATUS_KEYON        0x10        //  bit 4 = 0x10: 1 = Car ON (key turned)
 #define CAN_STATUS_CHARGING     0x20        //  bit 5 = 0x20: 1 = Charging
 #define CAN_STATUS_OFFLINE      0x40        //  bit 6 = 0x40: 1 = Switch-ON/-OFF phase / 0 = normal operation
@@ -275,32 +291,49 @@ unsigned char can_status; // Car + charge status from CAN:
 
 #ifdef OVMS_TWIZY_BATTMON
 
+// put the battmon vars into a separate section to prevent
+// C18 "cannot fit the section" linker bug:
+#pragma udata overlay vehicle_overlay_data2
+
 #define BATT_PACKS      1
 #define BATT_CELLS      14
 #define BATT_CMODS      7
-battery_pack can_batt[BATT_PACKS]; // size:  1 * 15 =  15 bytes
-battery_cmod can_cmod[BATT_CMODS]; // size:  7 *  4 =  28 bytes
-battery_cell can_cell[BATT_CELLS]; // size: 14 *  8 = 112 bytes
+battery_pack twizy_batt[BATT_PACKS]; // size:  1 * 15 =  15 bytes
+battery_cmod twizy_cmod[BATT_CMODS]; // size:  7 *  4 =  28 bytes
+battery_cell twizy_cell[BATT_CELLS]; // size: 14 *  8 = 112 bytes
 // ------------- = 155 bytes
 
 // Battery cell/cmod deviation alert thresholds:
-#define BATT_THRESHOLD_TEMP         3       // = 3 °C
-#define BATT_THRESHOLD_VOLT         20      // = 100 mV
+#define BATT_DEV_TEMP_ALERT         3       // = 3 °C
+#define BATT_DEV_VOLT_ALERT         6       // = 30 mV
 
-// STATE MACHINE: can_batt_sensors_state
+// ...thresholds for overall stddev:
+#define BATT_STDDEV_TEMP_WATCH      2       // = 2 °C
+#define BATT_STDDEV_TEMP_ALERT      3       // = 3 °C
+#define BATT_STDDEV_VOLT_WATCH      3       // = 15 mV
+#define BATT_STDDEV_VOLT_ALERT      5       // = 25 mV
+
+// watch/alert flags for overall stddev:
+#define BATT_STDDEV_TEMP_FLAG       0x80    // bit #7
+#define BATT_STDDEV_VOLT_FLAG       0x8000  // bit #15
+
+
+// STATE MACHINE: twizy_batt_sensors_state
 //  A consistent state needs all 5 battery sensor messages
 //  of one series (i.e. 554-6-7-E-F) to be read.
 //  state=BATT_SENSORS_START begins a new fetch cycle.
 //  poll1() will advance/reset states accordingly to incoming msgs.
 //  ticker1() will not process the data until BATT_SENSORS_READY
 //  has been reached, after processing it will reset state to _START.
-volatile UINT8 can_batt_sensors_state;
+volatile UINT8 twizy_batt_sensors_state;
 #define BATT_SENSORS_START          0
 #define BATT_SENSORS_GOT554         1
 #define BATT_SENSORS_GOT556         2
 #define BATT_SENSORS_GOT557         3
 #define BATT_SENSORS_GOT55E         4
 #define BATT_SENSORS_READY          5
+
+#pragma udata overlay vehicle_overlay_data
 
 #endif // OVMS_TWIZY_BATTMON
 
@@ -315,11 +348,11 @@ volatile UINT8 twizy_notify; // bit set of...
 
 
 #ifdef OVMS_DIAGMODULE
-volatile int can_sim = -1; // CAN simulator: -1=off, else read index in can_sim_data
+volatile int twizy_sim = -1; // CAN simulator: -1=off, else read index in twizy_sim_data
 #endif // OVMS_DIAGMODULE
 
 
-#pragma udata   // return to default udata section -- why?
+//#pragma udata   // return to default udata section -- why?
 
 
 /***************************************************************
@@ -365,7 +398,7 @@ int vehicle_twizy_chargetime(int dstsoc)
   if (dstsoc > 10000)
     dstsoc = 10000;
 
-  if (can_soc >= dstsoc)
+  if (twizy_soc >= dstsoc)
     return 0;
 
   minutes = 0;
@@ -373,19 +406,19 @@ int vehicle_twizy_chargetime(int dstsoc)
   if (dstsoc > CHARGETIME_CVSOC)
   {
     // CV phase
-    if (can_soc < CHARGETIME_CVSOC)
+    if (twizy_soc < CHARGETIME_CVSOC)
       minutes += ((long) (dstsoc - CHARGETIME_CVSOC) * CHARGETIME_CV
               + ((10000-CHARGETIME_CVSOC)/2)) / (10000-CHARGETIME_CVSOC);
     else
-      minutes += ((long) (dstsoc - can_soc) * CHARGETIME_CV
+      minutes += ((long) (dstsoc - twizy_soc) * CHARGETIME_CV
               + ((10000-CHARGETIME_CVSOC)/2)) / (10000-CHARGETIME_CVSOC);
 
     dstsoc = CHARGETIME_CVSOC;
   }
 
   // CC phase
-  if (can_soc < dstsoc)
-    minutes += ((long) (dstsoc - can_soc) * CHARGETIME_CC 
+  if (twizy_soc < dstsoc)
+    minutes += ((long) (dstsoc - twizy_soc) * CHARGETIME_CC
             + (CHARGETIME_CVSOC/2)) / CHARGETIME_CVSOC;
 
   return minutes;
@@ -425,7 +458,7 @@ char vehicle_twizy_gpslog_msgp(char stat)
  *  SMS: S DEBUG chunknr
  *  MSG: M 200,chunknr
  *
- * To create can_sim_data[] from CAN log:
+ * To create twizy_sim_data[] from CAN log:
  * cat canlog \
  *      | sed -e 's/\(..\)/0x\1,/g' \
  *      | sed -e 's/^0x\(.\)\(.\),0x\(.\)/0x0\1,0x\2\3,0x0/' \
@@ -433,7 +466,7 @@ char vehicle_twizy_gpslog_msgp(char stat)
  *
  */
 
-rom BYTE can_sim_data[][11] = {
+rom BYTE twizy_sim_data[][11] = {
   //{ 0, 0, 0 }, // chunk 0: init/on
   { 0x06, 0x9F, 0x04, 0xF0, 0x82, 0x87, 0x37}, // VIN
   { 0x05, 0x97, 0x08, 0x00, 0x95, 0x21, 0x41, 0x29, 0x00, 0x01, 0x35}, // STATUS
@@ -468,15 +501,22 @@ rom BYTE can_sim_data[][11] = {
   { 0x05, 0x5E, 0x08, 0x33, 0x53, 0x34, 0x33, 0x43, 0x36, 0x01, 0x59},
   { 0x05, 0x5F, 0x08, 0x00, 0xFE, 0x73, 0x00, 0x00, 0x23, 0xE2, 0x3E},
 
-  { 0, 0, 21}, // chunk 13: partial battery data #1 (state=1?)
+  { 0, 0, 13}, // chunk 13: battery stddev alert test
+  { 0x05, 0x54, 0x08, 0x33, 0x35, 0x31, 0x32, 0x30, 0x37, 0x2E, 0x00},
+  { 0x05, 0x56, 0x08, 0x33, 0xA3, 0x35, 0x32, 0x53, 0x36, 0x33, 0x1A},
+  { 0x05, 0x57, 0x08, 0x32, 0x23, 0x34, 0x34, 0x03, 0x35, 0x33, 0x20},
+  { 0x05, 0x5E, 0x08, 0x32, 0xA3, 0x30, 0x33, 0x43, 0x51, 0x01, 0x59},
+  { 0x05, 0x5F, 0x08, 0x00, 0xFE, 0x73, 0x00, 0x00, 0x23, 0xE2, 0x3E},
+
+  { 0, 0, 21}, // chunk 21: partial battery data #1 (state=1?)
   { 0x05, 0x54, 0x08, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x00},
-  { 0, 0, 22}, // chunk 13: partial battery data #1 (state=2?)
+  { 0, 0, 22}, // chunk 22: partial battery data #1 (state=2?)
   { 0x05, 0x56, 0x08, 0x33, 0x73, 0x35, 0x33, 0x53, 0x35, 0x33, 0x5A},
-  { 0, 0, 23}, // chunk 13: partial battery data #1 (state=3?)
+  { 0, 0, 23}, // chunk 23: partial battery data #1 (state=3?)
   { 0x05, 0x57, 0x08, 0x33, 0x53, 0x35, 0x33, 0x53, 0x35, 0x33, 0x50},
-  { 0, 0, 24}, // chunk 13: partial battery data #1 (state=4?)
+  { 0, 0, 24}, // chunk 24: partial battery data #1 (state=4?)
   { 0x05, 0x5E, 0x08, 0x33, 0x53, 0x34, 0x33, 0x43, 0x36, 0x01, 0x59},
-  { 0, 0, 25}, // chunk 13: partial battery data #2 (state=5?)
+  { 0, 0, 25}, // chunk 25: partial battery data #2 (state=5?)
   { 0x05, 0x5F, 0x08, 0x00, 0xFE, 0x73, 0x00, 0x00, 0x23, 0xE2, 0x3E},
 
   { 0, 0, 255} // end
@@ -490,10 +530,10 @@ void vehicle_twizy_simulator_run(int chunk)
 
   for (line = 0, cc = 0; cc <= chunk; line++)
   {
-    if ((can_sim_data[line][0] == 0) && (can_sim_data[line][1] == 0))
+    if ((twizy_sim_data[line][0] == 0) && (twizy_sim_data[line][1] == 0))
     {
       // next chunk:
-      cc = can_sim_data[line][2];
+      cc = twizy_sim_data[line][2];
     }
 
     else if (cc == chunk)
@@ -511,10 +551,10 @@ void vehicle_twizy_simulator_run(int chunk)
       PIE3bits.RXB1IE = 0;
 
       // process sim data:
-      can_sim = line;
+      twizy_sim = line;
       vehicle_twizy_poll0();
       vehicle_twizy_poll1();
-      can_sim = -1;
+      twizy_sim = -1;
 
       // turn on CAN RX interrupts:
       PIE3bits.RXB1IE = 1;
@@ -526,7 +566,7 @@ void vehicle_twizy_simulator_run(int chunk)
 
 
 ////////////////////////////////////////////////////////////////////////
-// can_poll()
+// twizy_poll()
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
 //
@@ -540,27 +580,26 @@ BOOL vehicle_twizy_poll0(void)
   unsigned char CANfilter;
   //unsigned char CANsidh;
   //unsigned char CANsidl;
-  unsigned int new_soc;
-  unsigned int new_power;
+  unsigned int t;
 
 
 #ifdef OVMS_DIAGMODULE
-  if (can_sim >= 0)
+  if (twizy_sim >= 0)
   {
     // READ SIMULATION DATA:
     UINT i;
 
-    i = (((UINT) can_sim_data[can_sim][0]) << 8)
-            + can_sim_data[can_sim][1];
+    i = (((UINT) twizy_sim_data[twizy_sim][0]) << 8)
+            + twizy_sim_data[twizy_sim][1];
 
     if (i == 0x155)
       CANfilter = 0;
     else
       return FALSE;
 
-    can_datalength = can_sim_data[can_sim][2];
+    can_datalength = twizy_sim_data[twizy_sim][2];
     for (i = 0; i < 8; i++)
-      can_databuffer[i] = can_sim_data[can_sim][3 + i];
+      can_databuffer[i] = twizy_sim_data[twizy_sim][3 + i];
   }
   else
 #endif // OVMS_DIAGMODULE
@@ -600,44 +639,52 @@ BOOL vehicle_twizy_poll0(void)
     if (can_databuffer[3] == 0x54)
     {
       // SOC:
-      new_soc = ((unsigned int) can_databuffer[4] << 8) + can_databuffer[5];
-      if (new_soc > 0 && new_soc <= 40000)
+      t = ((unsigned int) can_databuffer[4] << 8) + can_databuffer[5];
+      if (t > 0 && t <= 40000)
       {
-        can_soc = new_soc >> 2;
+        twizy_soc = t >> 2;
         // car value derived in ticker1()
 
         // Remember maximum SOC for charging "done" distinction:
-        if (can_soc > can_soc_max)
-          can_soc_max = can_soc;
+        if (twizy_soc > twizy_soc_max)
+          twizy_soc_max = twizy_soc;
 
         // ...and minimum SOC for range calculation during charging:
-        if (can_soc < can_soc_min)
+        if (twizy_soc < twizy_soc_min)
         {
-          can_soc_min = can_soc;
-          can_soc_min_range = can_range;
+          twizy_soc_min = twizy_soc;
+          twizy_soc_min_range = twizy_range;
         }
       }
 
       // POWER:
-      new_power = ((unsigned int) (can_databuffer[1] & 0x0f) << 8) + can_databuffer[2];
-      if (new_power > 0 && new_power < 0x0f00)
+      t = ((unsigned int) (can_databuffer[1] & 0x0f) << 8) + can_databuffer[2];
+      if (t > 0 && t < 0x0f00)
       {
-        can_power = 2000 - (signed int) new_power;
+        twizy_power = 2000 - (signed int) t;
 
-        if (can_power > 0)
-          // do we need to take base power consumption into account?
-          // i.e. for lights etc. -- varies...
+        // calculate distance from ref:
+        if (twizy_dist >= twizy_speed_distref)
+          t = twizy_dist - twizy_speed_distref;
+        else
+          t = twizy_dist + (0x10000L - twizy_speed_distref);
+        twizy_speed_distref = twizy_dist;
+
+        // add to speed state:
+        twizy_speedpwr[twizy_speed_state].dist += t;
+        if (twizy_power > 0)
         {
-          can_speedpwr[can_speed_state].cnt++;
-          can_speedpwr[can_speed_state].use += can_power;
-          can_level_use += can_power;
+          twizy_speedpwr[twizy_speed_state].use += twizy_power;
+          twizy_level_use += twizy_power;
         }
         else
         {
-          can_speedpwr[can_speed_state].cnt++;
-          can_speedpwr[can_speed_state].rec += -can_power;
-          can_level_rec += -can_power;
+          twizy_speedpwr[twizy_speed_state].rec += -twizy_power;
+          twizy_level_rec += -twizy_power;
         }
+
+        // do we need to take base power consumption into account?
+        // i.e. for lights etc. -- varies...
       }
 
     }
@@ -660,13 +707,13 @@ BOOL vehicle_twizy_poll1(void)
 
 
 #ifdef OVMS_DIAGMODULE
-  if (can_sim >= 0)
+  if (twizy_sim >= 0)
   {
     // READ SIMULATION DATA:
     UINT i;
 
-    i = (((UINT) can_sim_data[can_sim][0]) << 8)
-            + can_sim_data[can_sim][1];
+    i = (((UINT) twizy_sim_data[twizy_sim][0]) << 8)
+            + twizy_sim_data[twizy_sim][1];
 
     if ((i & 0x590) == 0x590)
       CANfilter = 2;
@@ -679,9 +726,9 @@ BOOL vehicle_twizy_poll1(void)
 
     CANsid = i & 0x00f;
 
-    can_datalength = can_sim_data[can_sim][2];
+    can_datalength = twizy_sim_data[twizy_sim][2];
     for (i = 0; i < 8; i++)
-      can_databuffer[i] = can_sim_data[can_sim][3 + i];
+      can_databuffer[i] = twizy_sim_data[twizy_sim][3 + i];
   }
   else
 #endif // OVMS_DIAGMODULE
@@ -725,7 +772,7 @@ BOOL vehicle_twizy_poll1(void)
       //  [1] bit 5 = 0x20 CAN_STATUS_CHARGING: 1 = Charging
       //  [1] bit 6 = 0x40 CAN_STATUS_OFFLINE: 1 = Switch-ON/-OFF phase
 
-      can_status = can_databuffer[1];
+      twizy_status = can_databuffer[1];
       // Translation to car_doors1 done in ticker1()
 
       // PEM temperature:
@@ -745,10 +792,10 @@ BOOL vehicle_twizy_poll1(void)
       // RANGE:
       // we need to check for charging, as the Twizy
       // does not update range during charging
-      if (((can_status & 0x60) == 0)
+      if (((twizy_status & 0x60) == 0)
               && (can_databuffer[5] != 0xff) && (can_databuffer[5] > 0))
       {
-        can_range = can_databuffer[5];
+        twizy_range = can_databuffer[5];
         // car values derived in ticker1()
       }
 
@@ -756,16 +803,16 @@ BOOL vehicle_twizy_poll1(void)
       new_speed = ((unsigned int) can_databuffer[6] << 8) + can_databuffer[7];
       if (new_speed != 0xffff)
       {
-        int delta = (int) new_speed - (int) can_speed;
+        int delta = (int) new_speed - (int) twizy_speed;
 
         if (delta >= CAN_SPEED_THRESHOLD)
-          can_speed_state = CAN_SPEED_ACCEL;
+          twizy_speed_state = CAN_SPEED_ACCEL;
         else if (delta <= -CAN_SPEED_THRESHOLD)
-          can_speed_state = CAN_SPEED_DECEL;
+          twizy_speed_state = CAN_SPEED_DECEL;
         else
-          can_speed_state = CAN_SPEED_CONST;
+          twizy_speed_state = CAN_SPEED_CONST;
 
-        can_speed = new_speed;
+        twizy_speed = new_speed;
         // car value derived in ticker1()
       }
 
@@ -777,6 +824,9 @@ BOOL vehicle_twizy_poll1(void)
        * CAN ID 0x59E: sent every 100 ms (10 per second)
        */
     case 0x0E:
+
+      // CYCLIC DISTANCE COUNTER:
+      twizy_dist = ((UINT) CAN_BYTE(0) << 8) + CAN_BYTE(1);
 
       // MOTOR TEMPERATURE:
       if (CAN_BYTE(5) > 40 && CAN_BYTE(5) < 0xf0)
@@ -835,79 +885,79 @@ BOOL vehicle_twizy_poll1(void)
       case 0x04:
         // CAN ID 0x554: Battery cell module temperatures
         // (1000 ms = 1 per second)
-        if (can_batt_sensors_state != BATT_SENSORS_READY)
+        if (twizy_batt_sensors_state != BATT_SENSORS_READY)
         {
           UINT8 i;
 
           for (i = 0; i < BATT_CMODS; i++)
-            can_cmod[i].temp_act = CAN_BYTE(i);
+            twizy_cmod[i].temp_act = CAN_BYTE(i);
 
-          can_batt_sensors_state = BATT_SENSORS_GOT554;
+          twizy_batt_sensors_state = BATT_SENSORS_GOT554;
         }
         break;
 
       case 0x06:
         // CAN ID 0x556: Battery cell voltages 1-5
         // (100 ms = 10 per second, for no apparent reason...)
-        if (can_batt_sensors_state == BATT_SENSORS_GOT554)
+        if (twizy_batt_sensors_state == BATT_SENSORS_GOT554)
         {
-          can_cell[0].volt_act = ((UINT) CAN_BYTE(0) << 4)
+          twizy_cell[0].volt_act = ((UINT) CAN_BYTE(0) << 4)
                   | ((UINT) CAN_NIBH(1));
-          can_cell[1].volt_act = ((UINT) CAN_NIBL(1) << 8)
+          twizy_cell[1].volt_act = ((UINT) CAN_NIBL(1) << 8)
                   | ((UINT) CAN_BYTE(2));
-          can_cell[2].volt_act = ((UINT) CAN_BYTE(3) << 4)
+          twizy_cell[2].volt_act = ((UINT) CAN_BYTE(3) << 4)
                   | ((UINT) CAN_NIBH(4));
-          can_cell[3].volt_act = ((UINT) CAN_NIBL(4) << 8)
+          twizy_cell[3].volt_act = ((UINT) CAN_NIBL(4) << 8)
                   | ((UINT) CAN_BYTE(5));
-          can_cell[4].volt_act = ((UINT) CAN_BYTE(6) << 4)
+          twizy_cell[4].volt_act = ((UINT) CAN_BYTE(6) << 4)
                   | ((UINT) CAN_NIBH(7));
 
-          can_batt_sensors_state = BATT_SENSORS_GOT556;
+          twizy_batt_sensors_state = BATT_SENSORS_GOT556;
         }
         break;
 
       case 0x07:
         // CAN ID 0x557: Battery cell voltages 6-10
         // (1000 ms = 1 per second)
-        if (can_batt_sensors_state == BATT_SENSORS_GOT556)
+        if (twizy_batt_sensors_state == BATT_SENSORS_GOT556)
         {
-          can_cell[5].volt_act = ((UINT) CAN_BYTE(0) << 4)
+          twizy_cell[5].volt_act = ((UINT) CAN_BYTE(0) << 4)
                   | ((UINT) CAN_NIBH(1));
-          can_cell[6].volt_act = ((UINT) CAN_NIBL(1) << 8)
+          twizy_cell[6].volt_act = ((UINT) CAN_NIBL(1) << 8)
                   | ((UINT) CAN_BYTE(2));
-          can_cell[7].volt_act = ((UINT) CAN_BYTE(3) << 4)
+          twizy_cell[7].volt_act = ((UINT) CAN_BYTE(3) << 4)
                   | ((UINT) CAN_NIBH(4));
-          can_cell[8].volt_act = ((UINT) CAN_NIBL(4) << 8)
+          twizy_cell[8].volt_act = ((UINT) CAN_NIBL(4) << 8)
                   | ((UINT) CAN_BYTE(5));
-          can_cell[9].volt_act = ((UINT) CAN_BYTE(6) << 4)
+          twizy_cell[9].volt_act = ((UINT) CAN_BYTE(6) << 4)
                   | ((UINT) CAN_NIBH(7));
 
-          can_batt_sensors_state = BATT_SENSORS_GOT557;
+          twizy_batt_sensors_state = BATT_SENSORS_GOT557;
         }
         break;
 
       case 0x0E:
         // CAN ID 0x55E: Battery cell voltages 11-14
         // (1000 ms = 1 per second)
-        if (can_batt_sensors_state == BATT_SENSORS_GOT557)
+        if (twizy_batt_sensors_state == BATT_SENSORS_GOT557)
         {
-          can_cell[10].volt_act = ((UINT) CAN_BYTE(0) << 4)
+          twizy_cell[10].volt_act = ((UINT) CAN_BYTE(0) << 4)
                   | ((UINT) CAN_NIBH(1));
-          can_cell[11].volt_act = ((UINT) CAN_NIBL(1) << 8)
+          twizy_cell[11].volt_act = ((UINT) CAN_NIBL(1) << 8)
                   | ((UINT) CAN_BYTE(2));
-          can_cell[12].volt_act = ((UINT) CAN_BYTE(3) << 4)
+          twizy_cell[12].volt_act = ((UINT) CAN_BYTE(3) << 4)
                   | ((UINT) CAN_NIBH(4));
-          can_cell[13].volt_act = ((UINT) CAN_NIBL(4) << 8)
+          twizy_cell[13].volt_act = ((UINT) CAN_NIBL(4) << 8)
                   | ((UINT) CAN_BYTE(5));
 
-          can_batt_sensors_state = BATT_SENSORS_GOT55E;
+          twizy_batt_sensors_state = BATT_SENSORS_GOT55E;
         }
         break;
 
       case 0x0F:
         // CAN ID 0x55F: Battery pack voltages
         // (1000 ms = 1 per second)
-        if (can_batt_sensors_state == BATT_SENSORS_GOT55E)
+        if (twizy_batt_sensors_state == BATT_SENSORS_GOT55E)
         {
           // we still don't know why there are two pack voltages
           // best guess: take avg
@@ -918,9 +968,9 @@ BOOL vehicle_twizy_poll1(void)
           v2 = ((UINT) CAN_NIBL(6) << 8)
                   | ((UINT) CAN_BYTE(7));
 
-          can_batt[0].volt_act = (v1 + v2) >> 1;
+          twizy_batt[0].volt_act = (v1 + v2) >> 1;
 
-          can_batt_sensors_state = BATT_SENSORS_READY;
+          twizy_batt_sensors_state = BATT_SENSORS_READY;
         }
         break;
 
@@ -941,7 +991,7 @@ BOOL vehicle_twizy_poll1(void)
     case 0x07:
 
       // ODOMETER:
-      can_odometer = ((unsigned long) CAN_BYTE(5) >> 4)
+      twizy_odometer = ((unsigned long) CAN_BYTE(5) >> 4)
               | ((unsigned long) CAN_BYTE(4) << 4)
               | ((unsigned long) CAN_BYTE(3) << 12)
               | ((unsigned long) CAN_BYTE(2) << 20);
@@ -1091,7 +1141,7 @@ BOOL vehicle_twizy_idlepoll(void)
 
 
 ////////////////////////////////////////////////////////////////////////
-// can_state_ticker1()
+// twizy_state_ticker1()
 // State Model: Per-second ticker
 // This function is called approximately once per second, and gives
 // the state a timeslice for activity.
@@ -1126,16 +1176,16 @@ BOOL vehicle_twizy_state_ticker1(void)
    */
 
   // SOC: convert to percent:
-  car_SOC = (can_soc + 50) / 100;
+  car_SOC = (twizy_soc + 50) / 100;
 
   // ODOMETER: convert to miles/10:
-  car_odometer = KM2MI(can_odometer / 10);
+  car_odometer = KM2MI(twizy_odometer / 10);
 
   // SPEED:
   if (can_mileskm == 'M')
-    car_speed = KM2MI(can_speed / 100); // miles/hour
+    car_speed = KM2MI(twizy_speed / 100); // miles/hour
   else
-    car_speed = can_speed / 100; // km/hour
+    car_speed = twizy_speed / 100; // km/hour
 
 
   // STATUS: convert Twizy flags to car_doors1:
@@ -1147,17 +1197,17 @@ BOOL vehicle_twizy_state_ticker1(void)
   //
   // ATT: bit 2 = 0x04 = needs to be set for net_sms_stat()!
   //
-  // Twizy message: can_status
+  // Twizy message: twizy_status
   //  bit 4 = 0x10 CAN_STATUS_KEYON: 1 = Car ON (key switch)
   //  bit 5 = 0x20 CAN_STATUS_CHARGING: 1 = Charging
   //  bit 6 = 0x40 CAN_STATUS_OFFLINE: 1 = Switch-ON/-OFF phase
 
-  if ((can_status & 0x60) == 0x20)
+  if ((twizy_status & 0x60) == 0x20)
     car_doors1 |= 0x14; // Charging ON, Port OPEN
   else
     car_doors1 &= ~0x10; // Charging OFF
 
-  if (can_status & CAN_STATUS_KEYON)
+  if (twizy_status & CAN_STATUS_KEYON)
   {
     if ((car_doors1 & 0x80) == 0)
     {
@@ -1183,7 +1233,7 @@ BOOL vehicle_twizy_state_ticker1(void)
       car_doors1 &= ~0x80; // Car OFF
 
       // send power statistics:
-      if (can_speedpwr[CAN_SPEED_CONST].use > 22500)
+      if (twizy_speedpwr[CAN_SPEED_CONST].use > 22500)
         twizy_notify |= SEND_PowerNotify;
     }
   }
@@ -1217,22 +1267,22 @@ BOOL vehicle_twizy_state_ticker1(void)
      * CHARGING
      */
     
-    unsigned char can_curr_SOC = can_soc / 100; // unrounded SOC% for charge alerts
+    unsigned char twizy_curr_SOC = twizy_soc / 100; // unrounded SOC% for charge alerts
 
 
     // Calculate range during charging:
-    // scale can_soc_min_range to can_soc
-    if ((can_soc_min_range > 0) && (can_soc > 0) && (can_soc_min > 0))
+    // scale twizy_soc_min_range to twizy_soc
+    if ((twizy_soc_min_range > 0) && (twizy_soc > 0) && (twizy_soc_min > 0))
     {
-      // Update can_range:
-      can_range =
-              (((float) can_soc_min_range) / can_soc_min) * can_soc;
+      // Update twizy_range:
+      twizy_range =
+              (((float) twizy_soc_min_range) / twizy_soc_min) * twizy_soc;
 
-      if (can_range > 0)
-        car_estrange = KM2MI(can_range);
+      if (twizy_range > 0)
+        car_estrange = KM2MI(twizy_range);
 
       if (maxRange > 0)
-        car_idealrange = (((float) maxRange) * can_soc) / 10000;
+        car_idealrange = (((float) maxRange) * twizy_soc) / 10000;
       else
         car_idealrange = car_estrange;
     }
@@ -1253,7 +1303,7 @@ BOOL vehicle_twizy_state_ticker1(void)
       car_chargestate = 1;
 
       // reset SOC max:
-      can_soc_max = can_soc;
+      twizy_soc_max = twizy_soc;
 
       // reset power sums:
       vehicle_twizy_power_reset();
@@ -1268,11 +1318,11 @@ BOOL vehicle_twizy_state_ticker1(void)
 
       // check for crossing "sufficient SOC/Range" thresholds:
       if (
-              ((can_soc > 0) && (suffSOC > 0)
-              && (can_curr_SOC >= suffSOC) && (can_last_SOC < suffSOC))
+              ((twizy_soc > 0) && (suffSOC > 0)
+              && (twizy_curr_SOC >= suffSOC) && (twizy_last_SOC < suffSOC))
               ||
-              ((can_range > 0) && (suffRange > 0)
-              && (car_idealrange >= suffRange) && (can_last_idealrange < suffRange))
+              ((twizy_range > 0) && (suffRange > 0)
+              && (car_idealrange >= suffRange) && (twizy_last_idealrange < suffRange))
               )
       {
         // ...enter state 2=topping off:
@@ -1284,7 +1334,7 @@ BOOL vehicle_twizy_state_ticker1(void)
       }
 
         // ...else set "topping off" from 94% SOC:
-      else if ((car_chargestate != 2) && (can_soc >= 9400))
+      else if ((car_chargestate != 2) && (twizy_soc >= 9400))
       {
         // ...enter state 2=topping off:
         car_chargestate = 2;
@@ -1294,8 +1344,8 @@ BOOL vehicle_twizy_state_ticker1(void)
     }
 
     // update "sufficient" threshold helpers:
-    can_last_SOC = can_curr_SOC;
-    can_last_idealrange = car_idealrange;
+    twizy_last_SOC = twizy_curr_SOC;
+    twizy_last_idealrange = car_idealrange;
 
   }
 
@@ -1307,12 +1357,12 @@ BOOL vehicle_twizy_state_ticker1(void)
 
 
     // Calculate range:
-    if (can_range > 0)
+    if (twizy_range > 0)
     {
-      car_estrange = KM2MI(can_range);
+      car_estrange = KM2MI(twizy_range);
 
       if (maxRange > 0)
-        car_idealrange = (((float) maxRange) * can_soc) / 10000;
+        car_idealrange = (((float) maxRange) * twizy_soc) / 10000;
       else
         car_idealrange = car_estrange;
     }
@@ -1322,7 +1372,7 @@ BOOL vehicle_twizy_state_ticker1(void)
     if (car_chargestate <= 2)
     {
       // yes, check if we've reached 100.00% SOC:
-      if (can_soc_max >= 10000)
+      if (twizy_soc_max >= 10000)
       {
         // yes, means "done"
         car_chargestate = 4;
@@ -1354,8 +1404,8 @@ BOOL vehicle_twizy_state_ticker1(void)
       car_chargestate = 4;
 
       // reset SOC minimum:
-      can_soc_min = can_soc;
-      can_soc_min_range = can_range;
+      twizy_soc_min = twizy_soc;
+      twizy_soc_min_range = twizy_range;
     }
   }
 
@@ -1366,7 +1416,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 
   // send stream updates (GPS log) while car is moving:
   // (every 5 seconds for debug/test, should be per second if possible...)
-  if ((can_speed > 0) && (sys_features[FEATURE_STREAM] > 0)
+  if ((twizy_speed > 0) && (sys_features[FEATURE_STREAM] > 0)
           && ((can_granular_tick % 5) == 0))
   {
     twizy_notify |= SEND_StreamUpdate;
@@ -1377,7 +1427,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 
 
 ////////////////////////////////////////////////////////////////////////
-// can_state_ticker60()
+// twizy_state_ticker60()
 // State Model: Per-minute ticker
 // This function is called approximately once per minute (since state
 // was first entered), and gives the state a timeslice for activity.
@@ -1452,16 +1502,16 @@ void vehicle_twizy_power_reset(void)
 {
   PIE3bits.RXB0IE = 0; // disable interrupts
   {
-    memset(can_speedpwr, 0, sizeof can_speedpwr);
-    can_speed_state = CAN_SPEED_CONST;
-    can_level_use = 0;
-    can_level_rec = 0;
+    memset(twizy_speedpwr, 0, sizeof twizy_speedpwr);
+    twizy_speed_state = CAN_SPEED_CONST;
+    twizy_level_use = 0;
+    twizy_level_rec = 0;
   }
   PIE3bits.RXB0IE = 1; // enable interrupt
 
-  memset(can_levelpwr, 0, sizeof can_levelpwr);
-  can_level_odo = 0;
-  can_level_alt = 0;
+  memset(twizy_levelpwr, 0, sizeof twizy_levelpwr);
+  twizy_level_odo = 0;
+  twizy_level_alt = 0;
 
 }
 
@@ -1474,7 +1524,7 @@ void vehicle_twizy_power_collect(void)
   int alt_diff, grade_perc;
   unsigned long coll_use, coll_rec;
 
-  if ((can_status & CAN_STATUS_KEYON) == 0)
+  if ((twizy_status & CAN_STATUS_KEYON) == 0)
   {
     // CAR is turned off
     return;
@@ -1482,22 +1532,22 @@ void vehicle_twizy_power_collect(void)
   else if (car_stale_gps == 0)
   {
     // no GPS for 2 minutes: reset section
-    can_level_odo = 0;
-    can_level_alt = 0;
+    twizy_level_odo = 0;
+    twizy_level_alt = 0;
 
     return;
   }
-  else if (can_level_odo == 0)
+  else if (twizy_level_odo == 0)
   {
     // start new section:
 
-    can_level_odo = can_odometer;
-    can_level_alt = car_altitude;
+    twizy_level_odo = twizy_odometer;
+    twizy_level_alt = car_altitude;
 
     PIE3bits.RXB0IE = 0; // disable interrupt
     {
-      can_level_use = 0;
-      can_level_rec = 0;
+      twizy_level_use = 0;
+      twizy_level_rec = 0;
     }
     PIE3bits.RXB0IE = 1; // enable interrupt
 
@@ -1505,7 +1555,7 @@ void vehicle_twizy_power_collect(void)
   }
 
   // calc section length:
-  dist = (can_odometer - can_level_odo) * 10;
+  dist = (twizy_odometer - twizy_level_odo) * 10;
   if (dist < CAN_LEVEL_MINSECTLEN)
   {
     // section too short to collect
@@ -1515,82 +1565,175 @@ void vehicle_twizy_power_collect(void)
   // OK, read + reset collected power sums:
   PIE3bits.RXB0IE = 0; // disable interrupt
   {
-    coll_use = can_level_use;
-    coll_rec = can_level_rec;
-    can_level_use = 0;
-    can_level_rec = 0;
+    coll_use = twizy_level_use;
+    coll_rec = twizy_level_rec;
+    twizy_level_use = 0;
+    twizy_level_rec = 0;
   }
   PIE3bits.RXB0IE = 1; // enable interrupt
 
   // calc grade in percent:
-  alt_diff = car_altitude - can_level_alt;
+  alt_diff = car_altitude - twizy_level_alt;
   grade_perc = (long) alt_diff * 100 / (long) dist;
 
   // set new section reference:
-  can_level_odo = can_odometer;
-  can_level_alt = car_altitude;
+  twizy_level_odo = twizy_odometer;
+  twizy_level_alt = car_altitude;
 
   // collect:
   if (grade_perc >= CAN_LEVEL_THRESHOLD)
   {
-    can_levelpwr[CAN_LEVEL_UP].hsum += alt_diff;
-    can_levelpwr[CAN_LEVEL_UP].use += coll_use;
-    can_levelpwr[CAN_LEVEL_UP].rec += coll_rec;
+    twizy_levelpwr[CAN_LEVEL_UP].dist += dist; // in m
+    twizy_levelpwr[CAN_LEVEL_UP].hsum += alt_diff; // in m
+    twizy_levelpwr[CAN_LEVEL_UP].use += coll_use;
+    twizy_levelpwr[CAN_LEVEL_UP].rec += coll_rec;
   }
   else if (grade_perc <= -CAN_LEVEL_THRESHOLD)
   {
-    can_levelpwr[CAN_LEVEL_DOWN].hsum += -alt_diff;
-    can_levelpwr[CAN_LEVEL_DOWN].use += coll_use;
-    can_levelpwr[CAN_LEVEL_DOWN].rec += coll_rec;
+    twizy_levelpwr[CAN_LEVEL_DOWN].dist += dist; // in m
+    twizy_levelpwr[CAN_LEVEL_DOWN].hsum += -alt_diff; // in m
+    twizy_levelpwr[CAN_LEVEL_DOWN].use += coll_use;
+    twizy_levelpwr[CAN_LEVEL_DOWN].rec += coll_rec;
   }
 }
 
-void vehicle_twizy_power_prepmsg(void)
+void vehicle_twizy_power_prepmsg(char mode)
 {
-  unsigned long pwr_cnt, pwr_use, pwr_rec;
+  unsigned long pwr_dist, pwr_use, pwr_rec;
   UINT8 prc_const = 0, prc_accel = 0, prc_decel = 0;
   char *s;
 
   // overall sums:
-  pwr_cnt = can_speedpwr[CAN_SPEED_CONST].cnt
-          + can_speedpwr[CAN_SPEED_ACCEL].cnt
-          + can_speedpwr[CAN_SPEED_DECEL].cnt;
+  pwr_dist = twizy_speedpwr[CAN_SPEED_CONST].dist
+          + twizy_speedpwr[CAN_SPEED_ACCEL].dist
+          + twizy_speedpwr[CAN_SPEED_DECEL].dist;
 
-  pwr_use = can_speedpwr[CAN_SPEED_CONST].use
-          + can_speedpwr[CAN_SPEED_ACCEL].use
-          + can_speedpwr[CAN_SPEED_DECEL].use;
+  if (pwr_dist == 0)
+    pwr_dist = 1; // avoid div/0
 
-  pwr_rec = can_speedpwr[CAN_SPEED_CONST].rec
-          + can_speedpwr[CAN_SPEED_ACCEL].rec
-          + can_speedpwr[CAN_SPEED_DECEL].rec;
+  pwr_use = twizy_speedpwr[CAN_SPEED_CONST].use
+          + twizy_speedpwr[CAN_SPEED_ACCEL].use
+          + twizy_speedpwr[CAN_SPEED_DECEL].use;
 
-  // time distribution:
-  if (pwr_cnt > 0)
-  {
-    prc_const = (can_speedpwr[CAN_SPEED_CONST].cnt * 1000 / pwr_cnt + 5) / 10;
-    prc_accel = (can_speedpwr[CAN_SPEED_ACCEL].cnt * 1000 / pwr_cnt + 5) / 10;
-    prc_decel = (can_speedpwr[CAN_SPEED_DECEL].cnt * 1000 / pwr_cnt + 5) / 10;
-  }
+  pwr_rec = twizy_speedpwr[CAN_SPEED_CONST].rec
+          + twizy_speedpwr[CAN_SPEED_ACCEL].rec
+          + twizy_speedpwr[CAN_SPEED_DECEL].rec;
+
+  // distribution:
+  prc_const = (twizy_speedpwr[CAN_SPEED_CONST].dist * 1000 / pwr_dist + 5) / 10;
+  prc_accel = (twizy_speedpwr[CAN_SPEED_ACCEL].dist * 1000 / pwr_dist + 5) / 10;
+  prc_decel = (twizy_speedpwr[CAN_SPEED_DECEL].dist * 1000 / pwr_dist + 5) / 10;
 
   s = strchr(net_scratchpad, 0); // append to net_scratchpad
-  s = stp_ul(s, "Power -", (pwr_use + 11250) / 22500);
-  s = stp_ul(s, " +", (pwr_rec + 11250) / 22500);
-  s = stp_i(s, " Wh\r Const ", prc_const);
-  s = stp_ul(s, "% -", (can_speedpwr[CAN_SPEED_CONST].use + 11250) / 22500);
-  s = stp_ul(s, " +", (can_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500);
-  s = stp_i(s, " Wh\r Accel ", prc_accel);
-  s = stp_ul(s, "% -", (can_speedpwr[CAN_SPEED_ACCEL].use + 11250) / 22500);
-  s = stp_ul(s, " +", (can_speedpwr[CAN_SPEED_ACCEL].rec + 11250) / 22500);
-  s = stp_i(s, " Wh\r Decel ", prc_decel);
-  s = stp_ul(s, "% -", (can_speedpwr[CAN_SPEED_DECEL].use + 11250) / 22500);
-  s = stp_ul(s, " +", (can_speedpwr[CAN_SPEED_DECEL].rec + 11250) / 22500);
-  s = stp_ul(s, " Wh\r Up ", can_levelpwr[CAN_LEVEL_UP].hsum);
-  s = stp_ul(s, "m -", (can_levelpwr[CAN_LEVEL_UP].use + 11250) / 22500);
-  s = stp_ul(s, " +", (can_levelpwr[CAN_LEVEL_UP].rec + 11250) / 22500);
-  s = stp_ul(s, " Wh\r Down ", can_levelpwr[CAN_LEVEL_DOWN].hsum);
-  s = stp_ul(s, "m -", (can_levelpwr[CAN_LEVEL_DOWN].use + 11250) / 22500);
-  s = stp_ul(s, " +", (can_levelpwr[CAN_LEVEL_DOWN].rec + 11250) / 22500);
-  s = stp_rom(s, " Wh");
+
+  if (mode == 't')
+  {
+    // power totals:
+    s = stp_ul(s, "Power -", (pwr_use + 11250) / 22500);
+    s = stp_ul(s, " +", (pwr_rec + 11250) / 22500);
+    s = stp_l2f(s, " Wh ", pwr_dist / 1000, 1);
+    s = stp_i(s, " km\r Const ", prc_const);
+    s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_CONST].use + 11250) / 22500);
+    s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500);
+    s = stp_i(s, " Wh\r Accel ", prc_accel);
+    s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_ACCEL].use + 11250) / 22500);
+    s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_ACCEL].rec + 11250) / 22500);
+    s = stp_i(s, " Wh\r Decel ", prc_decel);
+    s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_DECEL].use + 11250) / 22500);
+    s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_DECEL].rec + 11250) / 22500);
+    s = stp_ul(s, " Wh\r Up ", twizy_levelpwr[CAN_LEVEL_UP].hsum);
+    s = stp_ul(s, "m -", (twizy_levelpwr[CAN_LEVEL_UP].use + 11250) / 22500);
+    s = stp_ul(s, " +", (twizy_levelpwr[CAN_LEVEL_UP].rec + 11250) / 22500);
+    s = stp_ul(s, " Wh\r Down ", twizy_levelpwr[CAN_LEVEL_DOWN].hsum);
+    s = stp_ul(s, "m -", (twizy_levelpwr[CAN_LEVEL_DOWN].use + 11250) / 22500);
+    s = stp_ul(s, " +", (twizy_levelpwr[CAN_LEVEL_DOWN].rec + 11250) / 22500);
+    s = stp_rom(s, " Wh");
+  }
+  else
+  {
+    // power efficiency (default):
+    long pwr;
+    unsigned long dist;
+
+    // speed distances are in 1/10 m
+
+    dist = pwr_dist;
+    pwr = pwr_use - pwr_rec;
+    if ((pwr_use == 0) || (dist == 0))
+    {
+      s = stp_rom(s, "Efficiency unknown, no power/distance data available.");
+      return;
+    }
+    else
+    {
+      s = stp_l(s, "Efficiency ", (pwr / dist * 10000 + 11250) / 22500);
+      s = stp_i(s, " Wh/km R=", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_rom(s, "%");
+    }
+
+    pwr_use = twizy_speedpwr[CAN_SPEED_CONST].use;
+    pwr_rec = twizy_speedpwr[CAN_SPEED_CONST].rec;
+    dist = twizy_speedpwr[CAN_SPEED_CONST].dist;
+    pwr = pwr_use - pwr_rec;
+    if ((pwr_use > 0) && (dist > 0))
+    {
+      s = stp_i(s, "\r Const ", prc_const);
+      s = stp_l(s, "% ", (pwr / dist * 10000 + 11250) / 22500);
+      s = stp_i(s, " Wh/km R=", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_rom(s, "%");
+    }
+
+    pwr_use = twizy_speedpwr[CAN_SPEED_ACCEL].use;
+    pwr_rec = twizy_speedpwr[CAN_SPEED_ACCEL].rec;
+    dist = twizy_speedpwr[CAN_SPEED_ACCEL].dist;
+    pwr = pwr_use - pwr_rec;
+    if ((pwr_use > 0) && (dist > 0))
+    {
+      s = stp_i(s, "\r Accel ", prc_accel);
+      s = stp_l(s, "% ", (pwr / dist * 10000 + 11250) / 22500);
+      s = stp_i(s, " Wh/km R=", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_rom(s, "%");
+    }
+
+    pwr_use = twizy_speedpwr[CAN_SPEED_DECEL].use;
+    pwr_rec = twizy_speedpwr[CAN_SPEED_DECEL].rec;
+    dist = twizy_speedpwr[CAN_SPEED_DECEL].dist;
+    pwr = pwr_use - pwr_rec;
+    if ((pwr_use > 0) && (dist > 0))
+    {
+      s = stp_i(s, "\r Decel ", prc_decel);
+      s = stp_l(s, "% ", (pwr / dist * 10000 + 11250) / 22500);
+      s = stp_i(s, " Wh/km R=", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_rom(s, "%");
+    }
+
+    // level distances are in 1 m
+
+    pwr_use = twizy_levelpwr[CAN_LEVEL_UP].use;
+    pwr_rec = twizy_levelpwr[CAN_LEVEL_UP].rec;
+    dist = twizy_levelpwr[CAN_LEVEL_UP].dist;
+    pwr = pwr_use - pwr_rec;
+    if ((pwr_use > 0) && (dist > 0))
+    {
+      s = stp_i(s, "\r Up ", twizy_levelpwr[CAN_LEVEL_UP].hsum);
+      s = stp_l(s, "m ", (pwr / dist * 1000 + 11250) / 22500);
+      s = stp_i(s, " Wh/km R=", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_rom(s, "%");
+    }
+
+    pwr_use = twizy_levelpwr[CAN_LEVEL_DOWN].use;
+    pwr_rec = twizy_levelpwr[CAN_LEVEL_DOWN].rec;
+    dist = twizy_levelpwr[CAN_LEVEL_DOWN].dist;
+    pwr = pwr_use - pwr_rec;
+    if ((pwr_use > 0) && (dist > 0))
+    {
+      s = stp_i(s, "\r Down ", twizy_levelpwr[CAN_LEVEL_DOWN].hsum);
+      s = stp_l(s, "m ", (pwr / dist * 1000 + 11250) / 22500);
+      s = stp_i(s, " Wh/km R=", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_rom(s, "%");
+    }
+
+  }
 }
 
 char vehicle_twizy_power_msgp(char stat, int cmd)
@@ -1603,35 +1746,37 @@ char vehicle_twizy_power_msgp(char stat, int cmd)
     /* Output power usage statistics:
      *
      * MP-0 HRT-PWR-UsageStats,0,86400
-     *  ,<speed_CONST_cnt>,<speed_CONST_use>,<speed_CONST_rec>
-     *  ,<speed_ACCEL_cnt>,<speed_ACCEL_use>,<speed_ACCEL_rec>
-     *  ,<speed_DECEL_cnt>,<speed_DECEL_use>,<speed_DECEL_rec>
-     *  ,<level_UP_hsum>,<level_UP_use>,<level_UP_rec>
-     *  ,<level_DOWN_hsum>,<level_DOWN_use>,<level_DOWN_rec>
+     *  ,<speed_CONST_dist>,<speed_CONST_use>,<speed_CONST_rec>
+     *  ,<speed_ACCEL_dist>,<speed_ACCEL_use>,<speed_ACCEL_rec>
+     *  ,<speed_DECEL_dist>,<speed_DECEL_use>,<speed_DECEL_rec>
+     *  ,<level_UP_dist>,<level_UP_hsum>,<level_UP_use>,<level_UP_rec>
+     *  ,<level_DOWN_dist>,<level_DOWN_hsum>,<level_DOWN_use>,<level_DOWN_rec>
      *
      */
 
     s = stp_rom(net_scratchpad, "MP-0 HRT-PWR-UsageStats,0,86400");
 
-    s = stp_ul(s, ",", can_speedpwr[CAN_SPEED_CONST].cnt);
-    s = stp_ul(s, ",", can_speedpwr[CAN_SPEED_CONST].use);
-    s = stp_ul(s, ",", can_speedpwr[CAN_SPEED_CONST].rec);
+    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_CONST].dist);
+    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_CONST].use);
+    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_CONST].rec);
 
-    s = stp_ul(s, ",", can_speedpwr[CAN_SPEED_ACCEL].cnt);
-    s = stp_ul(s, ",", can_speedpwr[CAN_SPEED_ACCEL].use);
-    s = stp_ul(s, ",", can_speedpwr[CAN_SPEED_ACCEL].rec);
+    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_ACCEL].dist);
+    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_ACCEL].use);
+    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_ACCEL].rec);
 
-    s = stp_ul(s, ",", can_speedpwr[CAN_SPEED_DECEL].cnt);
-    s = stp_ul(s, ",", can_speedpwr[CAN_SPEED_DECEL].use);
-    s = stp_ul(s, ",", can_speedpwr[CAN_SPEED_DECEL].rec);
+    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_DECEL].dist);
+    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_DECEL].use);
+    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_DECEL].rec);
 
-    s = stp_ul(s, ",", can_levelpwr[CAN_LEVEL_UP].hsum);
-    s = stp_ul(s, ",", can_levelpwr[CAN_LEVEL_UP].use);
-    s = stp_ul(s, ",", can_levelpwr[CAN_LEVEL_UP].rec);
+    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_UP].dist);
+    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_UP].hsum);
+    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_UP].use);
+    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_UP].rec);
 
-    s = stp_ul(s, ",", can_levelpwr[CAN_LEVEL_DOWN].hsum);
-    s = stp_ul(s, ",", can_levelpwr[CAN_LEVEL_DOWN].use);
-    s = stp_ul(s, ",", can_levelpwr[CAN_LEVEL_DOWN].rec);
+    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_DOWN].dist);
+    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_DOWN].hsum);
+    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_DOWN].use);
+    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_DOWN].rec);
 
     stat = net_msg_encode_statputs(stat, &crc);
   }
@@ -1641,6 +1786,8 @@ char vehicle_twizy_power_msgp(char stat, int cmd)
 
 BOOL vehicle_twizy_power_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
+  char argc1;
+
   if (!premsg)
     return FALSE;
 
@@ -1655,9 +1802,12 @@ BOOL vehicle_twizy_power_sms(BOOL premsg, char *caller, char *command, char *arg
       return FALSE;
   }
 
+  // argc1 = mode: 't' = totals, fallback 'e' = efficiency
+  argc1 = (arguments) ? (arguments[0] | 0x20) : 'e';
+
   // prepare message:
   net_scratchpad[0] = 0;
-  vehicle_twizy_power_prepmsg();
+  vehicle_twizy_power_prepmsg(argc1);
   cr2lf(net_scratchpad);
 
   // OK, send SMS:
@@ -1671,6 +1821,7 @@ BOOL vehicle_twizy_power_sms(BOOL premsg, char *caller, char *command, char *arg
 BOOL vehicle_twizy_power_cmd(BOOL msgmode, int cmd, char *arguments)
 {
   char *s;
+  char argc1;
 
   if (cmd == CMD_PowerUsageStats)
   {
@@ -1693,11 +1844,14 @@ BOOL vehicle_twizy_power_cmd(BOOL msgmode, int cmd, char *arguments)
     return TRUE;
   }
 
-  else // cmd == CMD_PowerUsageNotify
+  else // cmd == CMD_PowerUsageNotify(mode)
   {
+    // argc1 = mode: 't' = totals, fallback 'e' = efficiency
+    argc1 = (arguments) ? (arguments[0] | 0x20) : 'e';
+    
     // send text alert:
     strcpypgm2ram(net_scratchpad, "MP-0 PA");
-    vehicle_twizy_power_prepmsg();
+    vehicle_twizy_power_prepmsg(argc1);
 
     if (msgmode)
     {
@@ -1741,17 +1895,17 @@ char vehicle_twizy_debug_msgp(char stat, int cmd)
 
   s = stp_rom(net_scratchpad, "MP-0 ");
   s = stp_i(s, "c", cmd ? cmd : CMD_Debug);
-  s = stp_x(s, ",0,", can_status);
+  s = stp_x(s, ",0,", twizy_status);
   s = stp_x(s, ",", car_doors1);
   s = stp_i(s, ",", car_chargestate);
-  s = stp_i(s, ",", can_speed);
-  s = stp_i(s, ",", can_power);
-  s = stp_ul(s, ",", can_odometer);
-  s = stp_i(s, ",", can_soc);
-  s = stp_i(s, ",", can_soc_min);
-  s = stp_i(s, ",", can_soc_max);
-  s = stp_i(s, ",", can_range);
-  s = stp_i(s, ",", can_soc_min_range);
+  s = stp_i(s, ",", twizy_speed);
+  s = stp_i(s, ",", twizy_power);
+  s = stp_ul(s, ",", twizy_odometer);
+  s = stp_i(s, ",", twizy_soc);
+  s = stp_i(s, ",", twizy_soc_min);
+  s = stp_i(s, ",", twizy_soc_max);
+  s = stp_i(s, ",", twizy_range);
+  s = stp_i(s, ",", twizy_soc_min_range);
   s = stp_i(s, ",", car_estrange);
   s = stp_i(s, ",", car_idealrange);
 
@@ -1803,17 +1957,17 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
   // SMS PART:
 
   s = net_scratchpad;
-  s = stp_x(s, " STS=", can_status);
+  s = stp_x(s, " STS=", twizy_status);
   s = stp_x(s, " DS1=", car_doors1);
   //s = stp_i(s, " CHG=", car_chargestate);
-  //s = stp_i(s, " SPD=", can_speed);
-  //s = stp_i(s, " PWR=", can_power);
-  //s = stp_ul(s, " ODO=", can_odometer);
-  //s = stp_i(s, " SOC=", can_soc);
-  //s = stp_i(s, " SMIN=", can_soc_min);
-  //s = stp_i(s, " SMAX=", can_soc_max);
-  //s = stp_i(s, " CRNG=", can_range);
-  //s = stp_i(s, " MRNG=", can_soc_min_range);
+  //s = stp_i(s, " SPD=", twizy_speed);
+  //s = stp_i(s, " PWR=", twizy_power);
+  //s = stp_ul(s, " ODO=", twizy_odometer);
+  //s = stp_i(s, " SOC=", twizy_soc);
+  //s = stp_i(s, " SMIN=", twizy_soc_min);
+  //s = stp_i(s, " SMAX=", twizy_soc_max);
+  //s = stp_i(s, " CRNG=", twizy_range);
+  //s = stp_i(s, " MRNG=", twizy_soc_min_range);
   //s = stp_i(s, " ERNG=", car_estrange);
   //s = stp_i(s, " IRNG=", car_idealrange);
   s = stp_i(s, " SQ=", net_sq);
@@ -1841,13 +1995,13 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
 #ifdef OVMS_TWIZY_BATTMON
   // battery bit fields:
   s = net_scratchpad;
-  s = stp_x(s, "\n# vw=", can_batt[0].volt_watches);
-  s = stp_x(s, " va=", can_batt[0].volt_alerts);
-  s = stp_x(s, " lva=", can_batt[0].last_volt_alerts);
-  s = stp_x(s, " tw=", can_batt[0].temp_watches);
-  s = stp_x(s, " ta=", can_batt[0].temp_alerts);
-  s = stp_x(s, " lta=", can_batt[0].last_temp_alerts);
-  s = stp_i(s, " ss=", can_batt_sensors_state);
+  s = stp_x(s, "\n# vw=", twizy_batt[0].volt_watches);
+  s = stp_x(s, " va=", twizy_batt[0].volt_alerts);
+  s = stp_x(s, " lva=", twizy_batt[0].last_volt_alerts);
+  s = stp_x(s, " tw=", twizy_batt[0].temp_watches);
+  s = stp_x(s, " ta=", twizy_batt[0].temp_alerts);
+  s = stp_x(s, " lta=", twizy_batt[0].last_temp_alerts);
+  s = stp_i(s, " ss=", twizy_batt_sensors_state);
   net_puts_ram(net_scratchpad);
 #endif // OVMS_TWIZY_BATTMON
 
@@ -1869,7 +2023,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
 // prepmsg: Generate STAT message for SMS & MSG mode
 // - no charge mode
 // - output estrange
-// - output can_soc_min + can_soc_max
+// - output twizy_soc_min + twizy_soc_max
 // - output odometer
 //
 // => cat to net_scratchpad (to be sent as SMS or MSG)
@@ -1901,7 +2055,7 @@ void vehicle_twizy_stat_prepmsg(void)
     }
 
     // Power sum:
-    s = stp_ul(s, "\r CHG: ", (can_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500);
+    s = stp_ul(s, "\r CHG: ", (twizy_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500);
     s = stp_rom(s, " Wh");
 
     if (car_chargestate != 4)
@@ -1918,7 +2072,7 @@ void vehicle_twizy_stat_prepmsg(void)
     s = stp_rom(s, "Not charging");
 
     // Estimated charge time for 100%:
-    if (can_soc < 10000)
+    if (twizy_soc < 10000)
     {
       s = stp_i(s, "\r Full charge: ", vehicle_twizy_chargetime(10000));
       s = stp_rom(s, " min.");
@@ -1942,9 +2096,9 @@ void vehicle_twizy_stat_prepmsg(void)
 
 
   // SOC + min/max:
-  s = stp_l2f(s, "\r SOC: ", can_soc, 2);
-  s = stp_l2f(s, "% (", can_soc_min, 2);
-  s = stp_l2f(s, "%..", can_soc_max, 2);
+  s = stp_l2f(s, "\r SOC: ", twizy_soc, 2);
+  s = stp_l2f(s, "% (", twizy_soc_min, 2);
+  s = stp_l2f(s, "%..", twizy_soc_max, 2);
   s = stp_rom(s, "%)");
 
   // ODOMETER:
@@ -2133,8 +2287,8 @@ char vehicle_twizy_ca_msgp(char stat, int cmd)
   }
   else
   {
-    if (can_soc_min && can_soc_min_range)
-      maxrange = (((float) can_soc_min_range) / can_soc_min) * 10000;
+    if (twizy_soc_min && twizy_soc_min_range)
+      maxrange = (((float) twizy_soc_min_range) / twizy_soc_min) * 10000;
     else
       maxrange = 0;
     if (can_mileskm == 'M')
@@ -2275,8 +2429,8 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
       }
       else
       {
-        if (can_soc_min && can_soc_min_range)
-          maxrange = (((float) can_soc_min_range) / can_soc_min) * 10000;
+        if (twizy_soc_min && twizy_soc_min_range)
+          maxrange = (((float) twizy_soc_min_range) / twizy_soc_min) * 10000;
         else
           maxrange = 0;
         if (can_mileskm == 'M')
@@ -2353,13 +2507,13 @@ BOOL vehicle_twizy_battstatus_wait4sensors(void)
 {
   UINT8 n;
 
-  if ((can_status & CAN_STATUS_OFFLINE)) // only wait if CAN is online
+  if ((twizy_status & CAN_STATUS_OFFLINE)) // only wait if CAN is online
     return TRUE;
 
-  for (n = 11; (can_batt_sensors_state != BATT_SENSORS_READY) && (n > 0); n--)
+  for (n = 11; (twizy_batt_sensors_state != BATT_SENSORS_READY) && (n > 0); n--)
     delay100(1);
 
-  return ( can_batt_sensors_state == BATT_SENSORS_READY);
+  return ( twizy_batt_sensors_state == BATT_SENSORS_READY);
 }
 
 
@@ -2373,31 +2527,33 @@ void vehicle_twizy_battstatus_reset(void)
 
   for (i = 0; i < BATT_CELLS; i++)
   {
-    can_cell[i].volt_max = can_cell[i].volt_act;
-    can_cell[i].volt_min = can_cell[i].volt_act;
-    can_cell[i].volt_maxdev = 0;
+    twizy_cell[i].volt_max = twizy_cell[i].volt_act;
+    twizy_cell[i].volt_min = twizy_cell[i].volt_act;
+    twizy_cell[i].volt_maxdev = 0;
   }
 
   for (i = 0; i < BATT_CMODS; i++)
   {
-    can_cmod[i].temp_max = can_cmod[i].temp_act;
-    can_cmod[i].temp_min = can_cmod[i].temp_act;
-    can_cmod[i].temp_maxdev = 0;
+    twizy_cmod[i].temp_max = twizy_cmod[i].temp_act;
+    twizy_cmod[i].temp_min = twizy_cmod[i].temp_act;
+    twizy_cmod[i].temp_maxdev = 0;
   }
 
   for (i = 0; i < BATT_PACKS; i++)
   {
-    can_batt[i].volt_min = can_batt[i].volt_act;
-    can_batt[i].volt_max = can_batt[i].volt_act;
-    can_batt[i].temp_watches = 0;
-    can_batt[i].temp_alerts = 0;
-    can_batt[i].volt_watches = 0;
-    can_batt[i].volt_alerts = 0;
-    can_batt[i].last_temp_alerts = 0;
-    can_batt[i].last_volt_alerts = 0;
+    twizy_batt[i].volt_min = twizy_batt[i].volt_act;
+    twizy_batt[i].volt_max = twizy_batt[i].volt_act;
+    twizy_batt[i].cell_volt_stddev_max = 0;
+    twizy_batt[i].cmod_temp_stddev_max = 0;
+    twizy_batt[i].temp_watches = 0;
+    twizy_batt[i].temp_alerts = 0;
+    twizy_batt[i].volt_watches = 0;
+    twizy_batt[i].volt_alerts = 0;
+    twizy_batt[i].last_temp_alerts = 0;
+    twizy_batt[i].last_volt_alerts = 0;
   }
 
-  can_batt_sensors_state = BATT_SENSORS_START;
+  twizy_batt_sensors_state = BATT_SENSORS_START;
 }
 
 
@@ -2411,14 +2567,14 @@ void vehicle_twizy_battstatus_collect(void)
   float f, m;
 
   // only if consistent sensor state has been reached:
-  if (can_batt_sensors_state != BATT_SENSORS_READY)
+  if (twizy_batt_sensors_state != BATT_SENSORS_READY)
     return;
 
   /*
   if( (net_buf_mode == NET_BUF_CRLF) && (net_buf_pos == 0) )
   {
       char *s;
-      s = stp_i( net_scratchpad, "# tic1: ss=", can_batt_sensors_state );
+      s = stp_i( net_scratchpad, "# tic1: ss=", twizy_batt_sensors_state );
       s = stp_rom( s, "\r\n" );
       net_puts_ram( net_scratchpad );
   }
@@ -2433,20 +2589,20 @@ void vehicle_twizy_battstatus_collect(void)
   for (i = 0; i < BATT_CMODS; i++)
   {
     // Validate:
-    if ((can_cmod[i].temp_act == 0) || (can_cmod[i].temp_act >= 0x0f0))
+    if ((twizy_cmod[i].temp_act == 0) || (twizy_cmod[i].temp_act >= 0x0f0))
       break;
 
     // Remember min:
-    if ((can_cmod[i].temp_min == 0) || (can_cmod[i].temp_act < can_cmod[i].temp_min))
-      can_cmod[i].temp_min = can_cmod[i].temp_act;
+    if ((twizy_cmod[i].temp_min == 0) || (twizy_cmod[i].temp_act < twizy_cmod[i].temp_min))
+      twizy_cmod[i].temp_min = twizy_cmod[i].temp_act;
 
     // Remember max:
-    if ((can_cmod[i].temp_max == 0) || (can_cmod[i].temp_act > can_cmod[i].temp_max))
-      can_cmod[i].temp_max = can_cmod[i].temp_act;
+    if ((twizy_cmod[i].temp_max == 0) || (twizy_cmod[i].temp_act > twizy_cmod[i].temp_max))
+      twizy_cmod[i].temp_max = twizy_cmod[i].temp_act;
 
     // build sums:
-    sum += can_cmod[i].temp_act;
-    sqrsum += SQR((UINT32) can_cmod[i].temp_act);
+    sum += twizy_cmod[i].temp_act;
+    sqrsum += SQR((UINT32) twizy_cmod[i].temp_act);
   }
 
   if (i == BATT_CMODS)
@@ -2461,24 +2617,47 @@ void vehicle_twizy_battstatus_collect(void)
     //stddev = (unsigned int) sqrt( ((float)sqrsum/BATT_CMODS) - SQR((float)sum/BATT_CMODS) ) + 1;
     // this is too complex for C18, we need to split this up:
     f = ((float) sqrsum / BATT_CMODS) - SQR(m);
-    stddev = sqrt(f) + 1; // +1 against int precision errors (may need multiplication)
+    stddev = sqrt(f) + 0.5;
+    if (stddev == 0)
+      stddev = 1; // not enough precision to allow stddev 0
 
+    // check max stddev:
+    if (stddev > twizy_batt[0].cmod_temp_stddev_max)
+    {
+      twizy_batt[0].cmod_temp_stddev_max = stddev;
+
+      // switch to overall stddev alert mode?
+      // (resetting cmod flags to build new alert set)
+      if (stddev >= BATT_STDDEV_TEMP_ALERT)
+        twizy_batt[0].temp_alerts = BATT_STDDEV_TEMP_FLAG;
+      else if (stddev >= BATT_STDDEV_TEMP_WATCH)
+        twizy_batt[0].temp_watches = BATT_STDDEV_TEMP_FLAG;
+    }
+
+    // check cmod deviations:
     for (i = 0; i < BATT_CMODS; i++)
     {
       // deviation:
-      dev = (can_cmod[i].temp_act - m)
-              + ((can_cmod[i].temp_act >= m) ? 0.5 : -0.5);
+      dev = (twizy_cmod[i].temp_act - m)
+              + ((twizy_cmod[i].temp_act >= m) ? 0.5 : -0.5);
       absdev = ABS(dev);
 
       // Set watch/alert flags:
-      if (absdev >= BATT_THRESHOLD_TEMP)
-        can_batt[0].temp_alerts |= (1 << i);
+      // (applying overall thresholds only in stddev alert mode)
+      if ((twizy_batt[0].temp_alerts & BATT_STDDEV_TEMP_FLAG)
+              && (absdev >= BATT_STDDEV_TEMP_ALERT))
+        twizy_batt[0].temp_alerts |= (1 << i);
+      else if (absdev >= BATT_DEV_TEMP_ALERT)
+        twizy_batt[0].temp_alerts |= (1 << i);
+      else if ((twizy_batt[0].temp_watches & BATT_STDDEV_TEMP_FLAG)
+              && (absdev >= BATT_STDDEV_TEMP_WATCH))
+        twizy_batt[0].temp_watches |= (1 << i);
       else if (absdev > stddev)
-        can_batt[0].temp_watches |= (1 << i);
+        twizy_batt[0].temp_watches |= (1 << i);
 
       // Remember max deviation:
-      if (absdev > ABS(can_cmod[i].temp_maxdev))
-        can_cmod[i].temp_maxdev = (INT8) dev;
+      if (absdev > ABS(twizy_cmod[i].temp_maxdev))
+        twizy_cmod[i].temp_maxdev = (INT8) dev;
     }
 
   } // if( i == BATT_CMODS )
@@ -2487,10 +2666,10 @@ void vehicle_twizy_battstatus_collect(void)
   // ********** Voltages: ************
 
   // Battery pack:
-  if ((can_batt[0].volt_min == 0) || (can_batt[0].volt_act < can_batt[0].volt_min))
-    can_batt[0].volt_min = can_batt[0].volt_act;
-  if ((can_batt[0].volt_max == 0) || (can_batt[0].volt_act > can_batt[0].volt_max))
-    can_batt[0].volt_max = can_batt[0].volt_act;
+  if ((twizy_batt[0].volt_min == 0) || (twizy_batt[0].volt_act < twizy_batt[0].volt_min))
+    twizy_batt[0].volt_min = twizy_batt[0].volt_act;
+  if ((twizy_batt[0].volt_max == 0) || (twizy_batt[0].volt_act > twizy_batt[0].volt_max))
+    twizy_batt[0].volt_max = twizy_batt[0].volt_act;
 
   // Cells: build mean value & standard deviation:
   sum = 0;
@@ -2499,20 +2678,20 @@ void vehicle_twizy_battstatus_collect(void)
   for (i = 0; i < BATT_CELLS; i++)
   {
     // Validate:
-    if ((can_cell[i].volt_act == 0) || (can_cell[i].volt_act >= 0x0f00))
+    if ((twizy_cell[i].volt_act == 0) || (twizy_cell[i].volt_act >= 0x0f00))
       break;
 
     // Remember min:
-    if ((can_cell[i].volt_min == 0) || (can_cell[i].volt_act < can_cell[i].volt_min))
-      can_cell[i].volt_min = can_cell[i].volt_act;
+    if ((twizy_cell[i].volt_min == 0) || (twizy_cell[i].volt_act < twizy_cell[i].volt_min))
+      twizy_cell[i].volt_min = twizy_cell[i].volt_act;
 
     // Remember max:
-    if ((can_cell[i].volt_max == 0) || (can_cell[i].volt_act > can_cell[i].volt_max))
-      can_cell[i].volt_max = can_cell[i].volt_act;
+    if ((twizy_cell[i].volt_max == 0) || (twizy_cell[i].volt_act > twizy_cell[i].volt_max))
+      twizy_cell[i].volt_max = twizy_cell[i].volt_act;
 
     // build sums:
-    sum += can_cell[i].volt_act;
-    sqrsum += SQR((UINT32) can_cell[i].volt_act);
+    sum += twizy_cell[i].volt_act;
+    sqrsum += SQR((UINT32) twizy_cell[i].volt_act);
   }
 
   if (i == BATT_CELLS)
@@ -2524,39 +2703,62 @@ void vehicle_twizy_battstatus_collect(void)
     //stddev = (unsigned int) sqrt( ((float)sqrsum/BATT_CELLS) - SQR((float)sum/BATT_CELLS) ) + 1;
     // this is too complex for C18, we need to split this up:
     f = ((float) sqrsum / BATT_CELLS) - SQR(m);
-    stddev = sqrt(f) + 1; // +1 against int precision errors (may need multiplication)
+    stddev = sqrt(f) + 0.5;
+    if (stddev == 0)
+      stddev = 1; // not enough precision to allow stddev 0
 
+    // check max stddev:
+    if (stddev > twizy_batt[0].cell_volt_stddev_max)
+    {
+      twizy_batt[0].cell_volt_stddev_max = stddev;
+
+      // switch to overall stddev alert mode?
+      // (resetting cell flags to build new alert set)
+      if (stddev >= BATT_STDDEV_VOLT_ALERT)
+        twizy_batt[0].volt_alerts = BATT_STDDEV_VOLT_FLAG;
+      else if (stddev >= BATT_STDDEV_VOLT_WATCH)
+        twizy_batt[0].volt_watches = BATT_STDDEV_VOLT_FLAG;
+    }
+
+    // check cell deviations:
     for (i = 0; i < BATT_CELLS; i++)
     {
       // deviation:
-      dev = (can_cell[i].volt_act - m)
-              + ((can_cell[i].volt_act >= m) ? 0.5 : -0.5);
+      dev = (twizy_cell[i].volt_act - m)
+              + ((twizy_cell[i].volt_act >= m) ? 0.5 : -0.5);
       absdev = ABS(dev);
 
       // Set watch/alert flags:
-      if (absdev >= BATT_THRESHOLD_VOLT)
-        can_batt[0].volt_alerts |= (1 << i);
+      // (applying overall thresholds only in stddev alert mode)
+      if ((twizy_batt[0].volt_alerts & BATT_STDDEV_VOLT_FLAG)
+              && (absdev >= BATT_STDDEV_VOLT_ALERT))
+        twizy_batt[0].volt_alerts |= (1L << i);
+      else if (absdev >= BATT_DEV_VOLT_ALERT)
+        twizy_batt[0].volt_alerts |= (1L << i);
+      else if ((twizy_batt[0].volt_watches & BATT_STDDEV_VOLT_FLAG)
+              && (absdev >= BATT_STDDEV_VOLT_WATCH))
+        twizy_batt[0].volt_watches |= (1L << i);
       else if (absdev > stddev)
-        can_batt[0].volt_watches |= (1 << i);
+        twizy_batt[0].volt_watches |= (1L << i);
 
       // Remember max deviation:
-      if (absdev > ABS(can_cell[i].volt_maxdev))
-        can_cell[i].volt_maxdev = (INT) dev;
+      if (absdev > ABS(twizy_cell[i].volt_maxdev))
+        twizy_cell[i].volt_maxdev = (INT) dev;
     }
 
   } // if( i == BATT_CELLS )
 
 
   // Battery monitor update/alert:
-  if ((can_batt[0].volt_alerts != can_batt[0].last_volt_alerts)
-          || (can_batt[0].temp_alerts != can_batt[0].last_temp_alerts))
+  if ((twizy_batt[0].volt_alerts != twizy_batt[0].last_volt_alerts)
+          || (twizy_batt[0].temp_alerts != twizy_batt[0].last_temp_alerts))
   {
     twizy_notify |= (SEND_BatteryAlert | SEND_BatteryStats);
   }
 
 
   // OK, sensors have been processed, start next fetch cycle:
-  can_batt_sensors_state = BATT_SENSORS_START;
+  twizy_batt_sensors_state = BATT_SENSORS_START;
 
 }
 
@@ -2564,16 +2766,28 @@ void vehicle_twizy_battstatus_collect(void)
 
 // Prep battery[p] alert message text for SMS/MSG in net_scratchpad:
 
-void vehicle_twizy_battstatus_prepalert(int p)
+void vehicle_twizy_battstatus_prepalert(int p, int smsmode)
 {
-  int c, val;
+  int c, val, maxlen;
   char *s;
+
+  maxlen = (smsmode) ? 160 : 199;
 
   s = strchr(net_scratchpad, 0); // append to net_scratchpad
 
   // Voltage deviations:
   s = stp_rom(s, "Volts: ");
-  if ((can_batt[p].volt_alerts == 0) && (can_batt[p].volt_watches == 0))
+
+  // standard deviation:
+  val = CONV_CellVolt(twizy_batt[p].cell_volt_stddev_max);
+  if (twizy_batt[p].volt_alerts & BATT_STDDEV_VOLT_FLAG)
+    s = stp_rom(s, "!");
+  else if (twizy_batt[p].volt_watches & BATT_STDDEV_VOLT_FLAG)
+    s = stp_rom(s, "?");
+  s = stp_i(s, "SD:", val);
+  s = stp_rom(s, "mV ");
+
+  if ((twizy_batt[p].volt_alerts == 0) && (twizy_batt[p].volt_watches == 0))
   {
     s = stp_rom(s, "OK ");
   }
@@ -2581,15 +2795,22 @@ void vehicle_twizy_battstatus_prepalert(int p)
   {
     for (c = 0; c < BATT_CELLS; c++)
     {
-      // Alert?
-      if (can_batt[p].volt_alerts & (1 << c))
+      // check length:
+      if ((s-net_scratchpad) >= (maxlen-12))
+      {
+        s = stp_rom(s, "...");
+        return;
+      }
+
+      // Alert / Watch?
+      if (twizy_batt[p].volt_alerts & (1L << c))
         s = stp_rom(s, "!");
-      else if (can_batt[p].volt_watches & (1 << c))
+      else if (twizy_batt[p].volt_watches & (1L << c))
         s = stp_rom(s, "?");
       else
         continue;
 
-      val = CONV_CellVoltS(can_cell[c].volt_maxdev);
+      val = CONV_CellVoltS(twizy_cell[c].volt_maxdev);
 
       s = stp_i(s, "C", c + 1);
       if (val >= 0)
@@ -2600,9 +2821,26 @@ void vehicle_twizy_battstatus_prepalert(int p)
     }
   }
 
+  // check length:
+  if ((s-net_scratchpad) >= (maxlen-20))
+  {
+    s = stp_rom(s, "...");
+    return;
+  }
+
   // Temperature deviations:
   s = stp_rom(s, "Temps: ");
-  if ((can_batt[p].temp_alerts == 0) && (can_batt[p].temp_watches == 0))
+
+  // standard deviation:
+  val = twizy_batt[p].cmod_temp_stddev_max;
+  if (twizy_batt[p].temp_alerts & BATT_STDDEV_TEMP_FLAG)
+    s = stp_rom(s, "!");
+  else if (twizy_batt[p].temp_watches & BATT_STDDEV_TEMP_FLAG)
+    s = stp_rom(s, "?");
+  s = stp_i(s, "SD:", val);
+  s = stp_rom(s, "C ");
+  
+  if ((twizy_batt[p].temp_alerts == 0) && (twizy_batt[p].temp_watches == 0))
   {
     s = stp_rom(s, "OK ");
   }
@@ -2610,15 +2848,22 @@ void vehicle_twizy_battstatus_prepalert(int p)
   {
     for (c = 0; c < BATT_CMODS; c++)
     {
-      // Alert?
-      if (can_batt[p].temp_alerts & (1 << c))
+      // check length:
+      if ((s-net_scratchpad) >= (maxlen-8))
+      {
+        s = stp_rom(s, "...");
+        return;
+      }
+
+      // Alert / Watch?
+      if (twizy_batt[p].temp_alerts & (1 << c))
         s = stp_rom(s, "!");
-      else if (can_batt[p].temp_watches & (1 << c))
+      else if (twizy_batt[p].temp_watches & (1 << c))
         s = stp_rom(s, "?");
       else
         continue;
 
-      val = can_cmod[c].temp_maxdev;
+      val = twizy_cmod[c].temp_maxdev;
 
       s = stp_i(s, "M", c + 1);
       if (val >= 0)
@@ -2660,10 +2905,10 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
     for (p = 0; p < BATT_PACKS; p++)
     {
       // Output pack ALERT:
-      if (can_batt[p].volt_alerts || can_batt[p].temp_alerts)
+      if (twizy_batt[p].volt_alerts || twizy_batt[p].temp_alerts)
       {
         strcpypgm2ram(net_scratchpad, "MP-0 PA");
-        vehicle_twizy_battstatus_prepalert(p);
+        vehicle_twizy_battstatus_prepalert(p, 0);
         stat = net_msg_encode_statputs(stat, &crc_alert[p]);
       }
       else
@@ -2685,11 +2930,11 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
     tact = 0;
     for (c = 0; c < BATT_CMODS; c++)
     {
-      tact += can_cmod[c].temp_act;
-      if (can_cmod[c].temp_min < tmin)
-        tmin = can_cmod[c].temp_min;
-      if (can_cmod[c].temp_max > tmax)
-        tmax = can_cmod[c].temp_max;
+      tact += twizy_cmod[c].temp_act;
+      if (twizy_cmod[c].temp_min < tmin)
+        tmin = twizy_cmod[c].temp_min;
+      if (twizy_cmod[c].temp_max > tmax)
+        tmax = twizy_cmod[c].temp_max;
     }
 
     tact = (float) tact / BATT_CMODS + 0.5;
@@ -2697,16 +2942,16 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
     // Output battery packs (just one for Twizy up to now):
     for (p = 0; p < BATT_PACKS; p++)
     {
-      if (can_batt[p].volt_alerts)
+      if (twizy_batt[p].volt_alerts)
         volt_alert = 3;
-      else if (can_batt[p].volt_watches)
+      else if (twizy_batt[p].volt_watches)
         volt_alert = 2;
       else
         volt_alert = 1;
 
-      if (can_batt[p].temp_alerts)
+      if (twizy_batt[p].temp_alerts)
         temp_alert = 3;
-      else if (can_batt[p].temp_watches)
+      else if (twizy_batt[p].temp_watches)
         temp_alert = 2;
       else
         temp_alert = 1;
@@ -2720,6 +2965,7 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
       //  ,<volt_min>,<volt_min_cellnom>
       //  ,<volt_max>,<volt_max_cellnom>
       //  ,<temp_act>,<temp_min>,<temp_max>
+      //  ,<cell_volt_stddev_max>,<cmod_temp_stddev_max>
 
       s = stp_rom(net_scratchpad, "MP-0 H");
       s = stp_i(s, "RT-PWR-BattPack,", p + 1);
@@ -2727,34 +2973,36 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
       s = stp_i(s, ",", 1);
       s = stp_i(s, ",", volt_alert);
       s = stp_i(s, ",", temp_alert);
-      s = stp_i(s, ",", can_soc);
-      s = stp_i(s, ",", can_soc_min);
-      s = stp_i(s, ",", can_soc_max);
-      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_act));
-      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_act) / BATT_CELLS);
-      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_min));
-      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_min) / BATT_CELLS);
-      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_max));
-      s = stp_i(s, ",", CONV_PackVolt(can_batt[p].volt_max) / BATT_CELLS);
+      s = stp_i(s, ",", twizy_soc);
+      s = stp_i(s, ",", twizy_soc_min);
+      s = stp_i(s, ",", twizy_soc_max);
+      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_act));
+      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_act) / BATT_CELLS);
+      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_min));
+      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_min) / BATT_CELLS);
+      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_max));
+      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_max) / BATT_CELLS);
       s = stp_i(s, ",", CONV_Temp(tact));
       s = stp_i(s, ",", CONV_Temp(tmin));
       s = stp_i(s, ",", CONV_Temp(tmax));
+      s = stp_i(s, ",", CONV_CellVolt(twizy_batt[p].cell_volt_stddev_max));
+      s = stp_i(s, ",", twizy_batt[p].cmod_temp_stddev_max);
 
       stat = net_msg_encode_statputs(stat, &crc_pack[p]);
 
       // Output cell status:
       for (c = 0; c < BATT_CELLS; c++)
       {
-        if (can_batt[p].volt_alerts & (1 << c))
+        if (twizy_batt[p].volt_alerts & (1L << c))
           volt_alert = 3;
-        else if (can_batt[p].volt_watches & (1 << c))
+        else if (twizy_batt[p].volt_watches & (1L << c))
           volt_alert = 2;
         else
           volt_alert = 1;
 
-        if (can_batt[p].temp_alerts & (1 << (c >> 1)))
+        if (twizy_batt[p].temp_alerts & (1 << (c >> 1)))
           temp_alert = 3;
-        else if (can_batt[p].temp_watches & (1 << (c >> 1)))
+        else if (twizy_batt[p].temp_watches & (1 << (c >> 1)))
           temp_alert = 2;
         else
           temp_alert = 1;
@@ -2770,14 +3018,14 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
         s = stp_i(s, ",86400,", p + 1);
         s = stp_i(s, ",", volt_alert);
         s = stp_i(s, ",", temp_alert);
-        s = stp_i(s, ",", CONV_CellVolt(can_cell[c].volt_act));
-        s = stp_i(s, ",", CONV_CellVolt(can_cell[c].volt_min));
-        s = stp_i(s, ",", CONV_CellVolt(can_cell[c].volt_max));
-        s = stp_i(s, ",", CONV_CellVoltS(can_cell[c].volt_maxdev));
-        s = stp_i(s, ",", CONV_Temp(can_cmod[c >> 1].temp_act));
-        s = stp_i(s, ",", CONV_Temp(can_cmod[c >> 1].temp_min));
-        s = stp_i(s, ",", CONV_Temp(can_cmod[c >> 1].temp_max));
-        s = stp_i(s, ",", can_cmod[c >> 1].temp_maxdev);
+        s = stp_i(s, ",", CONV_CellVolt(twizy_cell[c].volt_act));
+        s = stp_i(s, ",", CONV_CellVolt(twizy_cell[c].volt_min));
+        s = stp_i(s, ",", CONV_CellVolt(twizy_cell[c].volt_max));
+        s = stp_i(s, ",", CONV_CellVoltS(twizy_cell[c].volt_maxdev));
+        s = stp_i(s, ",", CONV_Temp(twizy_cmod[c >> 1].temp_act));
+        s = stp_i(s, ",", CONV_Temp(twizy_cmod[c >> 1].temp_min));
+        s = stp_i(s, ",", CONV_Temp(twizy_cmod[c >> 1].temp_max));
+        s = stp_i(s, ",", twizy_cmod[c >> 1].temp_maxdev);
 
         stat = net_msg_encode_statputs(stat, &crc_cell[c]);
       }
@@ -2859,42 +3107,55 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
     tact = 0;
     for (c = 0; c < BATT_CMODS; c++)
     {
-      tact += can_cmod[c].temp_act;
-      if (can_cmod[c].temp_min < tmin)
-        tmin = can_cmod[c].temp_min;
-      if (can_cmod[c].temp_max > tmax)
-        tmax = can_cmod[c].temp_max;
+      tact += twizy_cmod[c].temp_act;
+      if (twizy_cmod[c].temp_min < tmin)
+        tmin = twizy_cmod[c].temp_min;
+      if (twizy_cmod[c].temp_max > tmax)
+        tmax = twizy_cmod[c].temp_max;
     }
     tact = (float) tact / BATT_CMODS + 0.5;
 
     // Output pack status:
     s = net_scratchpad;
-    s = stp_i(s, "P:", CONV_Temp(tact));
-    s = stp_i(s, "C (", CONV_Temp(tmin));
-    s = stp_i(s, "C..", CONV_Temp(tmax));
-    s = stp_rom(s, "C) ");
+
+    if (argc2 == 'd') // deviations
+    {
+      if (twizy_batt[0].temp_alerts & BATT_STDDEV_TEMP_FLAG)
+        s = stp_rom(s, "!");
+      else if (twizy_batt[0].temp_watches & BATT_STDDEV_TEMP_FLAG)
+        s = stp_rom(s, "?");
+      s = stp_i(s, "SD:", twizy_batt[0].cmod_temp_stddev_max);
+      s = stp_rom(s, "C ");
+    }
+    else
+    {
+      s = stp_i(s, "P:", CONV_Temp(tact));
+      s = stp_i(s, "C (", CONV_Temp(tmin));
+      s = stp_i(s, "C..", CONV_Temp(tmax));
+      s = stp_rom(s, "C) ");
+    }
 
     // Output cmod status:
     for (c = 0; c < BATT_CMODS; c++)
     {
       // Alert?
-      if (can_batt[0].temp_alerts & (1 << c))
+      if (twizy_batt[0].temp_alerts & (1 << c))
         s = stp_rom(s, "!");
-      else if (can_batt[0].temp_watches & (1 << c))
+      else if (twizy_batt[0].temp_watches & (1 << c))
         s = stp_rom(s, "?");
 
       s = stp_i(s, NULL, c + 1);
       if (argc2 == 'd') // deviations
       {
-        if (can_cmod[c].temp_maxdev >= 0)
-          s = stp_i(s, ":+", can_cmod[c].temp_maxdev);
+        if (twizy_cmod[c].temp_maxdev >= 0)
+          s = stp_i(s, ":+", twizy_cmod[c].temp_maxdev);
         else
-          s = stp_i(s, ":", can_cmod[c].temp_maxdev);
+          s = stp_i(s, ":", twizy_cmod[c].temp_maxdev);
         s = stp_rom(s, "C ");
       }
       else // current values
       {
-        s = stp_i(s, ":", CONV_Temp(can_cmod[c].temp_act));
+        s = stp_i(s, ":", CONV_Temp(twizy_cmod[c].temp_act));
         s = stp_rom(s, "C ");
       }
     }
@@ -2913,8 +3174,20 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
     {
       // Output pack status:
 
-      s = stp_l2f(s, "P:", CONV_PackVolt(can_batt[p].volt_act), 2);
-      s = stp_rom(s, "V ");
+      if (argc2 == 'd') // deviations
+      {
+        if (twizy_batt[p].volt_alerts & BATT_STDDEV_VOLT_FLAG)
+          s = stp_rom(s, "!");
+        else if (twizy_batt[p].volt_watches & BATT_STDDEV_VOLT_FLAG)
+          s = stp_rom(s, "?");
+        s = stp_i(s, "SD:", CONV_CellVolt(twizy_batt[p].cell_volt_stddev_max));
+        s = stp_rom(s, "mV ");
+      }
+      else
+      {
+        s = stp_l2f(s, "P:", CONV_PackVolt(twizy_batt[p].volt_act), 2);
+        s = stp_rom(s, "V ");
+      }
 
       // Output cell status:
       for (c = 0; c < BATT_CELLS; c++)
@@ -2930,23 +3203,23 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
         }
 
         // Alert?
-        if (can_batt[p].volt_alerts & (1 << c))
+        if (twizy_batt[p].volt_alerts & (1L << c))
           s = stp_rom(s, "!");
-        else if (can_batt[p].volt_watches & (1 << c))
+        else if (twizy_batt[p].volt_watches & (1L << c))
           s = stp_rom(s, "?");
 
         s = stp_i(s, NULL, c + 1);
         if (argc2 == 'd') // deviations
         {
-          if (can_cell[c].volt_maxdev >= 0)
-            s = stp_i(s, ":+", CONV_CellVoltS(can_cell[c].volt_maxdev));
+          if (twizy_cell[c].volt_maxdev >= 0)
+            s = stp_i(s, ":+", CONV_CellVoltS(twizy_cell[c].volt_maxdev));
           else
-            s = stp_i(s, ":", CONV_CellVoltS(can_cell[c].volt_maxdev));
+            s = stp_i(s, ":", CONV_CellVoltS(twizy_cell[c].volt_maxdev));
           s = stp_rom(s, "mV ");
         }
         else
         {
-          s = stp_l2f(s, ":", CONV_CellVolt(can_cell[c].volt_act), 3);
+          s = stp_l2f(s, ":", CONV_CellVolt(twizy_cell[c].volt_act), 3);
           s = stp_rom(s, "V ");
         }
       }
@@ -2961,13 +3234,13 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
     // Battery alert status:
 
     net_scratchpad[0] = 0;
-    vehicle_twizy_battstatus_prepalert(0);
+    vehicle_twizy_battstatus_prepalert(0, 1);
     cr2lf(net_scratchpad);
     net_puts_ram(net_scratchpad);
 
     // Remember last alert state notified:
-    can_batt[0].last_volt_alerts = can_batt[0].volt_alerts;
-    can_batt[0].last_temp_alerts = can_batt[0].temp_alerts;
+    twizy_batt[0].last_volt_alerts = twizy_batt[0].volt_alerts;
+    twizy_batt[0].last_temp_alerts = twizy_batt[0].temp_alerts;
 
     break;
 
@@ -3181,58 +3454,60 @@ BOOL vehicle_twizy_initialise(void)
     car_linevoltage = 230; // fix
     car_chargecurrent = 10; // fix
 
-    can_status = CAN_STATUS_OFFLINE;
+    twizy_status = CAN_STATUS_OFFLINE;
 
-    can_soc = 5000;
-    can_soc_min = 10000;
-    can_soc_max = 0;
+    twizy_soc = 5000;
+    twizy_soc_min = 10000;
+    twizy_soc_max = 0;
 
     car_SOC = 50;
-    can_last_SOC = 0;
+    twizy_last_SOC = 0;
 
-    can_range = 50;
-    can_soc_min_range = 100;
-    can_last_idealrange = 0;
+    twizy_range = 50;
+    twizy_soc_min_range = 100;
+    twizy_last_idealrange = 0;
 
-    can_speed = 0;
-    can_power = 0;
-    can_odometer = 0;
+    twizy_speed = 0;
+    twizy_power = 0;
+    twizy_odometer = 0;
+    twizy_dist = 0;
 
 #ifdef OVMS_TWIZY_BATTMON
 
     // Init battery monitor:
-    memset(can_batt, 0, sizeof can_batt);
-    can_batt[0].volt_min = 1000; // 100 V
-    memset(can_cmod, 0, sizeof can_cmod);
+    memset(twizy_batt, 0, sizeof twizy_batt);
+    twizy_batt[0].volt_min = 1000; // 100 V
+    memset(twizy_cmod, 0, sizeof twizy_cmod);
     for (i = 0; i < BATT_CMODS; i++)
     {
-      can_cmod[i].temp_act = 40;
-      can_cmod[i].temp_min = 240;
+      twizy_cmod[i].temp_act = 40;
+      twizy_cmod[i].temp_min = 240;
     }
-    memset(can_cell, 0, sizeof can_cell);
+    memset(twizy_cell, 0, sizeof twizy_cell);
     for (i = 0; i < BATT_CELLS; i++)
     {
-      can_cell[i].volt_min = 2000; // 10 V
+      twizy_cell[i].volt_min = 2000; // 10 V
     }
 
 #endif // OVMS_TWIZY_BATTMON
 
 
     // init power statistics:
-    memset(can_speedpwr, 0, sizeof can_speedpwr);
-    can_speed_state = CAN_SPEED_CONST;
+    memset(twizy_speedpwr, 0, sizeof twizy_speedpwr);
+    twizy_speed_state = CAN_SPEED_CONST;
+    twizy_speed_distref = 0;
 
-    memset(can_levelpwr, 0, sizeof can_levelpwr);
-    can_level_odo = 0;
-    can_level_alt = 0;
-    can_level_use = 0;
-    can_level_rec = 0;
+    memset(twizy_levelpwr, 0, sizeof twizy_levelpwr);
+    twizy_level_odo = 0;
+    twizy_level_alt = 0;
+    twizy_level_use = 0;
+    twizy_level_rec = 0;
     
     twizy_notify = 0;
   }
 
 #ifdef OVMS_TWIZY_BATTMON
-  can_batt_sensors_state = BATT_SENSORS_START;
+  twizy_batt_sensors_state = BATT_SENSORS_START;
 #endif // OVMS_TWIZY_BATTMON
 
 
