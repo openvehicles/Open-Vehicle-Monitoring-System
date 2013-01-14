@@ -117,11 +117,9 @@ unsigned char net_sq = 0; // GSM Network Signal Quality
 unsigned int car_12vline = 0; // 12V line level
 unsigned char car_gsmcops[9] = ""; // GSM provider
 
-#ifdef OVMS_DIAGMODULE
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 UINT8 debug_crashreason;        // last saved reset reason (bit set)
 UINT8 debug_checkpoint;         // number of last checkpoint before crash
-#endif // OVMS_DIAGMODULE
 
 void main(void)
 {
