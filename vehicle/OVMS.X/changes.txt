@@ -28,6 +28,21 @@
 ; THE SOFTWARE.
 */
 
+2013-01-11 2.2.2       Firmware 2.2.2
+                       #94 v2 firmware re-work for multiple vehicle support
+                       #95 Valet Mode - Tesla Roadster - Trunk open is working off bonnet
+                       #96 Server: Support for historical data messages
+                       #97 CAN overflow (lockups)
+                       #99 Update vehicle/Car Module/VoltAmpera/voltampera_canbusnotes.txt
+                       #72 #72 Add GPS support for cars without it
+                       ### v2.x firmware, first release
+                           Internal GPS integration
+                           Basic support for Renault Twizy
+                           Volt/Ampera work-in-progress
+                           Framework sprintf rework
+                           First draft of OVMS Development document
+                           Twizy user guide v1.0.1
+
 2012-10-12 1.5.1       Firmware 1.5.1
                        #93 Car: Notify server/app when charge has completed
 

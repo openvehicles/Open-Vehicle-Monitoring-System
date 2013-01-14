@@ -40,6 +40,21 @@ void reset_cpu(void)
   _asm reset _endasm
   }
 
+void delay5b(void)
+  {
+  unsigned char count = 0;
+
+  T2CON=0b01111100;
+  TMR2=0;
+  PR2=255;
+  while (count<6)
+    {
+    while (!PIR1bits.TMR2IF);
+    PIR1bits.TMR2IF=0;
+    count++;
+    }
+  }
+
 void delay100b(void)
   {
   unsigned char count = 0;

@@ -44,6 +44,7 @@
 #define ABS(n) (((n) < 0) ? -(n) : (n))
 
 void reset_cpu(void);              // Reset the cpu
+void delay5b(void);                // Delay 5ms
 void delay100b(void);              // Delay 100ms
 void delay100(unsigned char n);    // Delay in 100ms increments
 void led_net(unsigned char led);   // Change NET led

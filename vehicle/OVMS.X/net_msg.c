@@ -398,6 +398,7 @@ char net_msgp_firmware(char stat)
   s = stp_i(net_scratchpad, "MP-0 F", ovms_firmware[0]);
   s = stp_i(s, ".", ovms_firmware[1]);
   s = stp_i(s, ".", ovms_firmware[2]);
+  s = stp_s(s, "/", par_get(PARAM_VEHICLETYPE));
   s = stp_i(s, "/V", hwv);
   s = stp_s(s, ",", car_vin);
   s = stp_i(s, ",", net_sq);
