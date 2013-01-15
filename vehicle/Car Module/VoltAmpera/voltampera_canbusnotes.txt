@@ -213,3 +213,37 @@ Service 0x22 explanation by Burro:
 
   (answer as before is Temp (now in in Byte 4) where 0x30 => 8°C (unit 1 °C offset 40) )
 
+From WopOnTour:
+
+The Volt has 27 primary electronic control modules all networked on the GM-LAN (CAN) networks which include:
+
+-Auxillary (14V) Power Module
+-Battery Charger Control Module
+-Battery Energy Control Module
+-Coolant Heater Control Module
+-Drive Motor 1 Control Module
+-Drive Motor 2 Control Module
+-Electric A/C Compressor Control Module
+-Engine Control Module
+-Fuel Pump Control Module
+-Hybrid Powertrain Control Module A
+-Hybrid Powertrain Control Module B
+-Transmission Control Module
+-Park Brake Control Module
+-Multi-Axis Acceleration Sensor Module
+-Electronic Brake Control Module
+-Variable Power Steering Control Module
+-Steering Wheel Angle Sensor Module
+-Body Control Module
+-Instrument Panel Cluster
+-Inflatable Restraints Sensing Diagnostic Module
+-Passenger Presence System Module
+-Radio Control Module
+-Telematics Communication Interface Module
+-Remote Heater and Air Conditioning Control Module
+-Front Seat Heating Control Module
+-Keyless Entry Control Module
+-Parking Assist Control Module
+
+Additionally there a few additional "master-slave" modules operating on Local Interconnect Networks (LIN) dedicated to some primary functions (such as power windows).
+
