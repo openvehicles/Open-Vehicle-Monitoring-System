@@ -29,6 +29,7 @@
 #include <string.h>
 #include "ovms.h"
 #include "params.h"
+#include "net_msg.h"
 
 // Volt/Ampera state variables
 
@@ -39,6 +40,11 @@ BOOL bus_is_active;           // Indicates recent activity on the bus
 unsigned char charge_timer;   // A per-second charge timer
 unsigned long charge_wm;      // A per-minute watt accumulator
 unsigned char candata_timer;  // A per-second timer for CAN bus data
+
+unsigned int obd_expect_id;   // ODBII expected ID
+unsigned int obd_expect_pid;  // OBDII expected PID
+BOOL obd_expect_waiting;      // OBDII expected waiting for response
+char obd_expect_buf[64];      // Space for a response
 
 #pragma udata
 
@@ -155,6 +161,18 @@ BOOL vehicle_voltampera_ticker1(void)
     }
 
   ////////////////////////////////////////////////////////////////////////
+  // OBDII extended pid request from net_msg
+  ////////////////////////////////////////////////////////////////////////
+  if (obd_expect_waiting)
+    {
+    delay100(1);
+    net_msg_start();
+    strcpy(net_scratchpad,obd_expect_buf);
+    net_msg_encode_puts();
+    obd_expect_waiting = FALSE;
+    }
+
+  ////////////////////////////////////////////////////////////////////////
   // OBDII extended PID polling
   ////////////////////////////////////////////////////////////////////////
 
@@ -206,6 +224,10 @@ BOOL vehicle_voltampera_poll0(void)
   {
   unsigned int pid;
   unsigned char value;
+  unsigned char k;
+  char *p;
+  unsigned int id = ((unsigned int)RXB0SIDL >>5)
+                  + ((unsigned int)RXB0SIDH <<3);
 
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
@@ -221,11 +243,26 @@ BOOL vehicle_voltampera_poll0(void)
 
   candata_timer = 60;   // Reset the timer
 
-  if (can_databuffer[1] != 0x62) return TRUE; // Check the return code
-
   pid = can_databuffer[3]+((unsigned int) can_databuffer[2] << 8);
   value = can_databuffer[4];
-  
+
+  // First check for net_msg 46 (OBDII extended pid request)
+  if ((pid == obd_expect_pid)&&(id == obd_expect_id)&&(!obd_expect_waiting))
+    {
+    // This is the response we were looking for
+    p = stp_rom(obd_expect_buf, "MP-0 ");
+    p = stp_i(p, "c", 46);
+    p = stp_i(p, ",0,",id);
+    p = stp_i(p, ",", pid);
+    for (k=0;k<8;k++)
+      p = stp_i(p, ",", can_databuffer[k]);
+    obd_expect_waiting = TRUE;
+    obd_expect_id = 0;
+    obd_expect_pid = 0;
+    }
+
+  if (can_databuffer[1] != 0x62) return TRUE; // Check the return code
+
   switch (pid)
     {
     case 0x4369:  // On-board charger current
@@ -309,6 +346,46 @@ BOOL vehicle_voltampera_poll1(void)
   return TRUE;
   }
 
+BOOL vehicle_voltampera_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
+  {
+  switch (cmd)
+    {
+    case 46:
+      // OBDII extended PID request
+      msg = strtokpgmram(msg,",");
+      if (msg == NULL) return FALSE;
+      obd_expect_id = atoi(msg);
+      msg = strtokpgmram(NULL,",");
+      if (msg == NULL) return FALSE;
+      obd_expect_pid = atoi(msg);
+
+      obd_expect_waiting = FALSE;
+
+      delay100b(); // Delay a little... (100ms, approx)
+
+      while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+      TXB0CON = 0;
+      TXB0SIDL = (obd_expect_id & 0x07)<<5;
+      TXB0SIDH = (obd_expect_id >>3);
+      obd_expect_id += 8;   // Get ready for reply
+      TXB0D0 = 0x03;
+      TXB0D1 = 0x22;        // Get extended PID
+      TXB0D2 = obd_expect_pid >> 8;
+      TXB0D3 = obd_expect_pid & 0xff;
+      TXB0D4 = 0x00;
+      TXB0D5 = 0x00;
+      TXB0D6 = 0x00;
+      TXB0D7 = 0x00;
+      TXB0DLC = 0b00001000; // data length (8)
+      TXB0CON = 0b00001000; // mark for transmission
+
+      return TRUE;
+    }
+
+  // not handled
+  return FALSE;
+  }
+
 ////////////////////////////////////////////////////////////////////////
 // vehicle_voltampera_initialise()
 // This function is an entry point from the main() program loop, and
@@ -331,6 +408,9 @@ BOOL vehicle_voltampera_initialise(void)
   charge_timer = 0;
   charge_wm = 0;
   candata_timer = 0;
+  obd_expect_id = 0;
+  obd_expect_pid = 0;
+  obd_expect_waiting = FALSE;
   car_stale_timer = -1; // Timed charging is not supported for OVMS VA
   car_time = 0;
 
@@ -393,6 +473,7 @@ BOOL vehicle_voltampera_initialise(void)
   vehicle_fn_poll0 = &vehicle_voltampera_poll0;
   vehicle_fn_poll1 = &vehicle_voltampera_poll1;
   vehicle_fn_ticker1 = &vehicle_voltampera_ticker1;
+  vehicle_fn_commandhandler = &vehicle_voltampera_fn_commandhandler;
   
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
 
