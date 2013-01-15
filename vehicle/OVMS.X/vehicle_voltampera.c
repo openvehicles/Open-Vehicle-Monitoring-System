@@ -105,7 +105,7 @@ BOOL vehicle_voltampera_ticker1(void)
       car_charge_b4 = 0;      // Not required
       car_chargestate = 1;    // Charging state
       car_chargesubstate = 3; // Charging by request
-      car_chargelimit = 0;    // Unknown charge limit
+      car_chargelimit = 16;   // Hard-code 16A charge limit
       car_chargeduration = 0; // Reset charge duration
       car_chargekwh = 0;      // Reset charge kWh
       charge_timer = 0;       // Reset the per-second charge timer
