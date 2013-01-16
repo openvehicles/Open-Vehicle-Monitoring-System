@@ -418,42 +418,36 @@ BOOL vehicle_voltampera_initialise(void)
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
   // We are now in Configuration Mode
-  RXB0CON = 0b00000000; // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
-
-  RXM0SIDL = 0b10100000;
-  RXM0SIDH = 0b11111111;	// Set Mask0 to 0x7fd
-
-  // Filter 0: Used for ID#0x7E8
-  RXF0SIDL = 0b00000000;
-  RXF0SIDH = 0b11111101;
-
-  // Filter 1: Used for ID#0x7EC
-  RXF1SIDL = 0b10000000;
-  RXF1SIDH = 0b11111101;
-
-  RXB1CON  = 0b00000000;	// RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
-
-  RXM1SIDL = 0b11100000;
-  RXM1SIDH = 0b11111111;	// Set Mask1 to 0x7ff
 
   // Filters: low byte bits 7..5 are the low 3 bits of the filter, and bits 4..0 are all zeros
   //          high byte bits 7..0 are the high 8 bits of the filter
   //          So total is 11 bits
 
-  // N.B. This is a very wasteful use of filters, but good enough for proof-of-concept
-  //      Final implementation will most likely have to use masks to better affect
+  // Buffer 0 (filters 0, 1) for extended PID responses
+  RXB0CON = 0b00000000;
 
-  // Filter 2: Used for ID#0x206 (SOC)
+  RXM0SIDL = 0b00000000;        // Mask   11111111000
+  RXM0SIDH = 0b11111111;
+
+  RXF0SIDL = 0b00000000;        // Filter 11111101000 (0x7e8 .. 0x7ef)
+  RXF0SIDH = 0b11111101;
+
+  // Buffer 1 (filters 2, 3, 4 and 5) for direct can bus messages
+  RXB1CON  = 0b00000000;	// RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
+
+  RXM1SIDL = 0b11100000;
+  RXM1SIDH = 0b11111111;	// Set Mask1 to 0x7ff
+
   RXF2SIDL = 0b11000000;	// Setup Filter2 so that CAN ID 0x206 will be accepted
   RXF2SIDH = 0b01000000;
 
-  // Filter 3: Used for ID#0x4E1
   RXF3SIDL = 0b00100000;	// Setup Filter3 so that CAN ID 0x4E1 will be accepted
   RXF3SIDH = 0b10011100;
 
-  // Filter 4: Used for ID#0x514
   RXF4SIDL = 0b10000000;        // Setup Filter4 so that CAN ID 0x514 will be accepted
   RXF4SIDH = 0b10100010;
+
+  // CAN bus baud rate
 
   BRGCON1 = 0x01; // SET BAUDRATE to 500 Kbps
   BRGCON2 = 0xD2;
