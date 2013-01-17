@@ -61,6 +61,7 @@ rom struct
   =
   {
     { 0x07E0, 10, 0x0046 },
+    { 0x07E0, 10, 0x000D },
     { 0x07E4, 10, 0x4369 },
     { 0x07E4, 10, 0x4368 },
     { 0x07E4, 10, 0x801f },
@@ -263,32 +264,47 @@ BOOL vehicle_voltampera_poll0(void)
 
   if (can_databuffer[1] != 0x62) return TRUE; // Check the return code
 
-  switch (pid)
+  if (id == 0x7ec)
     {
-    case 0x4369:  // On-board charger current
-      car_chargecurrent = (unsigned int)value / 5;
-      break;
-    case 0x4368:  // On-board charger voltage
-      car_linevoltage = (unsigned int)value << 1;
-      break;
-    case 0x801f:  // Outside temperature (filtered)
-      car_stale_temps = 60;
-      break;
-    case 0x801e:  // Outside temperature (raw)
-      car_stale_temps = 60;
-      break;
-    case 0x434f:  // High-voltage Battery temperature
-      car_stale_temps = 60;
-      car_tbattery = (int)value - 0x28;
-      break;
-    case 0x1c43:  // PEM temperature
-      car_stale_temps = 60;
-      car_tpem = (int)value - 0x28;
-      break;
-    case 0x0046:  // Ambient temperature
-      car_stale_ambient = 60;
-      car_ambient_temp = (signed char)((int)value - 0x28);
-      break;
+    switch (pid)
+      {
+      case 0x4369:  // On-board charger current
+        car_chargecurrent = (unsigned int)value / 5;
+        break;
+      case 0x4368:  // On-board charger voltage
+        car_linevoltage = (unsigned int)value << 1;
+        break;
+      case 0x801f:  // Outside temperature (filtered)
+        car_stale_temps = 60;
+        break;
+      case 0x801e:  // Outside temperature (raw)
+        car_stale_temps = 60;
+        break;
+      case 0x434f:  // High-voltage Battery temperature
+        car_stale_temps = 60;
+        car_tbattery = (int)value - 0x28;
+        break;
+      case 0x1c43:  // PEM temperature
+        car_stale_temps = 60;
+        car_tpem = (int)value - 0x28;
+        break;
+      }
+    }
+  else if (id == 0x7e8)
+    {
+    switch (pid)
+      {
+      case 0x000d:  // Vehicle speed
+        if (can_mileskm == 'K')
+          car_speed = value;
+        else
+          car_speed = (unsigned char) ((((unsigned long)value * 1000)+500)/1609);
+        break;
+      case 0x0046:  // Ambient temperature
+        car_stale_ambient = 60;
+        car_ambient_temp = (signed char)((int)value - 0x28);
+        break;
+      }
     }
 
   return TRUE;
@@ -343,6 +359,30 @@ BOOL vehicle_voltampera_poll1(void)
     for (k=0;k<8;k++)
       car_vin[k+1] = can_databuffer[k];
     }
+  else if ((CANctrl & 0x07) == 5)        // Acceptance Filter 5 (RXF5) = CAN ID 135
+    {
+    if (can_databuffer[0] == 0)
+      { // Car is in PARK
+      car_doors1 |= 0x40;     // NOT PARK
+      car_doors1 &= ~0x80;    // CAR OFF
+      if (car_parktime == 0)
+        {
+        car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
+        net_req_notification(NET_NOTIFY_ENV);
+        }
+      }
+    else
+      { // Car is not in PARK
+      car_doors1 &= ~0x40;    // PARK
+      car_doors1 |= 0x80;     // CAR ON
+      if (car_parktime != 0)
+        {
+        car_parktime = 0; // No longer parking
+        net_req_notification(NET_NOTIFY_ENV);
+        }
+      }
+    }
+
   return TRUE;
   }
 
@@ -444,8 +484,11 @@ BOOL vehicle_voltampera_initialise(void)
   RXF3SIDL = 0b00100000;	// Setup Filter3 so that CAN ID 0x4E1 will be accepted
   RXF3SIDH = 0b10011100;
 
-  RXF4SIDL = 0b10000000;        // Setup Filter4 so that CAN ID 0x514 will be accepted
+  RXF4SIDL = 0b10000000;  // Setup Filter4 so that CAN ID 0x514 will be accepted
   RXF4SIDH = 0b10100010;
+
+  RXF5SIDL = 0b10100000;  // Setup Filter5 so that CAN ID 0x135 will be accepted
+  RXF5SIDH = 0b00100110;
 
   // CAN bus baud rate
 
