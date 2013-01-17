@@ -143,7 +143,7 @@ BOOL vehicle_voltampera_ticker1(void)
       car_doors1 &= ~0x0c;    // Clear charge and pilot bits
       car_chargemode = 0;     // Standard charge mode
       car_charge_b4 = 0;      // Not required
-      if (car_SOC > 95)
+      if (car_SOC < 95)
         { // Assume charge was interrupted
         car_chargestate = 21;    // Charge STOPPED
         car_chargesubstate = 14; // Charge INTERRUPTED
