@@ -1,11 +1,10 @@
 
 OVMS Firmware
 
-These links are to the latest version of firmware (not necessarily stable).
+This is the latest released version of firmware.
 
-TR_V1_Experimental.hex          Tesla Roadster, v1 hardware, experimental
-TR_V1_Production.hex            Tesla Roadster, v1 hardware, production
-TR_V2_Experimental.hex          Tesla Roadster, v2 hardware, experimental
-TR_V2_Production.hex            Tesla Roadster, v2 hardware, production
-VA_V2_Experimental.hex          Volt/Ampera, v2 hardware, experimental
+V1_experimental.hex             V1 Hardware Module, experimental firmware
+V1_production.hex               V1 Hardware Module, production firmware
+V2_experimental.hex             V2 Hardware Module, experimental firmware
+V2_production.hex               V2 Hardware Module, production firmware
 
