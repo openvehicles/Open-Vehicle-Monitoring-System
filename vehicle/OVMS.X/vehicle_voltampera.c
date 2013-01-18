@@ -34,17 +34,17 @@
 // Volt/Ampera state variables
 
 #pragma udata overlay vehicle_overlay_data
-unsigned int soc_largest;     // Largest SOC value seen
-unsigned int soc_smallest;    // Smallest SOC value seen
-BOOL bus_is_active;           // Indicates recent activity on the bus
-unsigned char charge_timer;   // A per-second charge timer
-unsigned long charge_wm;      // A per-minute watt accumulator
-unsigned char candata_timer;  // A per-second timer for CAN bus data
+unsigned int va_soc_largest;     // Largest SOC value seen
+unsigned int va_soc_smallest;    // Smallest SOC value seen
+BOOL va_bus_is_active;           // Indicates recent activity on the bus
+unsigned char va_charge_timer;   // A per-second charge timer
+unsigned long va_charge_wm;      // A per-minute watt accumulator
+unsigned char va_candata_timer;  // A per-second timer for CAN bus data
 
-unsigned int obd_expect_id;   // ODBII expected ID
-unsigned int obd_expect_pid;  // OBDII expected PID
-BOOL obd_expect_waiting;      // OBDII expected waiting for response
-char obd_expect_buf[64];      // Space for a response
+unsigned int va_obd_expect_id;   // ODBII expected ID
+unsigned int va_obd_expect_pid;  // OBDII expected PID
+BOOL va_obd_expect_waiting;      // OBDII expected waiting for response
+char va_obd_expect_buf[64];      // Space for a response
 
 #pragma udata
 
@@ -86,9 +86,9 @@ BOOL vehicle_voltampera_ticker1(void)
   ////////////////////////////////////////////////////////////////////////
   if (car_stale_ambient>0) car_stale_ambient--;
   if (car_stale_temps>0) car_stale_temps--;
-  if (candata_timer>0)
+  if (va_candata_timer>0)
     {
-    if (--candata_timer == 0)
+    if (--va_candata_timer == 0)
       { // Car has gone to sleep
       car_doors3 &= ~0x01;      // Car is asleep
       }
@@ -115,24 +115,24 @@ BOOL vehicle_voltampera_ticker1(void)
       car_chargelimit = 16;   // Hard-code 16A charge limit
       car_chargeduration = 0; // Reset charge duration
       car_chargekwh = 0;      // Reset charge kWh
-      charge_timer = 0;       // Reset the per-second charge timer
-      charge_wm = 0;          // Reset the per-minute watt accumulator
+      va_charge_timer = 0;       // Reset the per-second charge timer
+      va_charge_wm = 0;          // Reset the per-minute watt accumulator
       net_req_notification(NET_NOTIFY_STAT);
       }
     else
       { // Charge is ongoing
-      charge_timer++;
-      if (charge_timer>=60)
+      va_charge_timer++;
+      if (va_charge_timer>=60)
         { // One minute has passed
-        charge_timer=0;
+        va_charge_timer=0;
 
         car_chargeduration++;
-        charge_wm += (car_chargecurrent*car_linevoltage);
-        if (charge_wm >= 60000L)
+        va_charge_wm += (car_chargecurrent*car_linevoltage);
+        if (va_charge_wm >= 60000L)
           {
           // Let's move 1kWh to the virtual car
           car_chargekwh += 1;
-          charge_wm -= 60000L;
+          va_charge_wm -= 60000L;
           }
         }
       }
@@ -155,8 +155,8 @@ BOOL vehicle_voltampera_ticker1(void)
         car_chargestate = 4;    // Charge DONE
         car_chargesubstate = 3; // Leave it as is
         }
-      charge_timer = 0;       // Reset the per-second charge timer
-      charge_wm = 0;          // Reset the per-minute watt accumulator
+      va_charge_timer = 0;       // Reset the per-second charge timer
+      va_charge_wm = 0;          // Reset the per-minute watt accumulator
       net_req_notification(NET_NOTIFY_STAT);
       }
     }
@@ -164,13 +164,13 @@ BOOL vehicle_voltampera_ticker1(void)
   ////////////////////////////////////////////////////////////////////////
   // OBDII extended pid request from net_msg
   ////////////////////////////////////////////////////////////////////////
-  if (obd_expect_waiting)
+  if (va_obd_expect_waiting)
     {
     delay100(1);
     net_msg_start();
-    strcpy(net_scratchpad,obd_expect_buf);
+    strcpy(net_scratchpad,va_obd_expect_buf);
     net_msg_encode_puts();
-    obd_expect_waiting = FALSE;
+    va_obd_expect_waiting = FALSE;
     }
 
   ////////////////////////////////////////////////////////////////////////
@@ -179,7 +179,7 @@ BOOL vehicle_voltampera_ticker1(void)
 
   // bus_is_active indicates we've recently seen a message on the can bus
   // Quick exit if bus is recently not active
-  if (!bus_is_active) return FALSE;
+  if (!va_bus_is_active) return FALSE;
 
   // Also, we need CAN_WRITE enabled, so return if not
   if (sys_features[FEATURE_CANWRITE]==0) return FALSE;
@@ -212,7 +212,7 @@ BOOL vehicle_voltampera_ticker1(void)
     }
   // Assume the bus is not active, so we won't poll any more until we see
   // activity on the bus
-  bus_is_active = FALSE;
+  va_bus_is_active = FALSE;
   return FALSE;
   }
 
@@ -242,24 +242,24 @@ BOOL vehicle_voltampera_poll0(void)
 
   RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
-  candata_timer = 60;   // Reset the timer
+  va_candata_timer = 60;   // Reset the timer
 
   pid = can_databuffer[3]+((unsigned int) can_databuffer[2] << 8);
   value = can_databuffer[4];
 
   // First check for net_msg 46 (OBDII extended pid request)
-  if ((pid == obd_expect_pid)&&(id == obd_expect_id)&&(!obd_expect_waiting))
+  if ((pid == va_obd_expect_pid)&&(id == va_obd_expect_id)&&(!va_obd_expect_waiting))
     {
     // This is the response we were looking for
-    p = stp_rom(obd_expect_buf, "MP-0 ");
+    p = stp_rom(va_obd_expect_buf, "MP-0 ");
     p = stp_i(p, "c", 46);
     p = stp_i(p, ",0,",id);
     p = stp_i(p, ",", pid);
     for (k=0;k<8;k++)
       p = stp_i(p, ",", can_databuffer[k]);
-    obd_expect_waiting = TRUE;
-    obd_expect_id = 0;
-    obd_expect_pid = 0;
+    va_obd_expect_waiting = TRUE;
+    va_obd_expect_id = 0;
+    va_obd_expect_pid = 0;
     }
 
   if (can_databuffer[1] != 0x62) return TRUE; // Check the return code
@@ -328,8 +328,8 @@ BOOL vehicle_voltampera_poll1(void)
   CANctrl=RXB1CON;		// copy CAN RX1 Control register
   RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
 
-  bus_is_active = TRUE; // Activity has been seen on the bus
-  candata_timer = 60;   // Reset the timer
+  va_bus_is_active = TRUE; // Activity has been seen on the bus
+  va_candata_timer = 60;   // Reset the timer
 
   if ((CANctrl & 0x07) == 2)             // Acceptance Filter 2 (RXF2) = CAN ID 0x206
     {
@@ -337,9 +337,9 @@ BOOL vehicle_voltampera_poll1(void)
     // For the SOC, each 4,000 is 1kWh. Assuming a 16.1kWh battery, 1% SOC is 644 decimal bytes
     // The SOC itself is d1<<8 + d2
     unsigned int v = (can_databuffer[1]+((unsigned int) can_databuffer[0] << 8));
-    if ((v<soc_smallest)&&(v>0)) v=soc_smallest;
-    if (v>soc_largest) v=soc_largest;
-    car_SOC = (char)((v-soc_smallest)/((soc_largest-soc_smallest)/100));
+    if ((v<va_soc_smallest)&&(v>0)) v=va_soc_smallest;
+    if (v>va_soc_largest) v=va_soc_largest;
+    car_SOC = (char)((v-va_soc_smallest)/((va_soc_largest-va_soc_smallest)/100));
     car_idealrange = ((unsigned int)car_SOC * (unsigned int)37)/100;  // Kludgy, but ok for the moment
     car_estrange = car_idealrange;                              // Very kludgy, but ok ...
     }
@@ -394,24 +394,24 @@ BOOL vehicle_voltampera_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
       // OBDII extended PID request
       msg = strtokpgmram(msg,",");
       if (msg == NULL) return FALSE;
-      obd_expect_id = atoi(msg);
+      va_obd_expect_id = atoi(msg);
       msg = strtokpgmram(NULL,",");
       if (msg == NULL) return FALSE;
-      obd_expect_pid = atoi(msg);
+      va_obd_expect_pid = atoi(msg);
 
-      obd_expect_waiting = FALSE;
+      va_obd_expect_waiting = FALSE;
 
       delay100b(); // Delay a little... (100ms, approx)
 
       while (TXB0CONbits.TXREQ) {} // Loop until TX is done
       TXB0CON = 0;
-      TXB0SIDL = (obd_expect_id & 0x07)<<5;
-      TXB0SIDH = (obd_expect_id >>3);
-      obd_expect_id += 8;   // Get ready for reply
+      TXB0SIDL = (va_obd_expect_id & 0x07)<<5;
+      TXB0SIDH = (va_obd_expect_id >>3);
+      va_obd_expect_id += 8;   // Get ready for reply
       TXB0D0 = 0x03;
       TXB0D1 = 0x22;        // Get extended PID
-      TXB0D2 = obd_expect_pid >> 8;
-      TXB0D3 = obd_expect_pid & 0xff;
+      TXB0D2 = va_obd_expect_pid >> 8;
+      TXB0D3 = va_obd_expect_pid & 0xff;
       TXB0D4 = 0x00;
       TXB0D5 = 0x00;
       TXB0D6 = 0x00;
@@ -442,15 +442,15 @@ BOOL vehicle_voltampera_initialise(void)
   car_type[4] = 0;
 
   // Vehicle specific data initialisation
-  soc_largest  = 56028;
-  soc_smallest = 13524;
-  bus_is_active = FALSE;       // Indicates recent activity on the bus
-  charge_timer = 0;
-  charge_wm = 0;
-  candata_timer = 0;
-  obd_expect_id = 0;
-  obd_expect_pid = 0;
-  obd_expect_waiting = FALSE;
+  va_soc_largest  = 56028;
+  va_soc_smallest = 13524;
+  va_bus_is_active = FALSE;       // Indicates recent activity on the bus
+  va_charge_timer = 0;
+  va_charge_wm = 0;
+  va_candata_timer = 0;
+  va_obd_expect_id = 0;
+  va_obd_expect_pid = 0;
+  va_obd_expect_waiting = FALSE;
   car_stale_timer = -1; // Timed charging is not supported for OVMS VA
   car_time = 0;
 
