@@ -274,7 +274,7 @@ BOOL vehicle_voltampera_poll0(void)
         car_linevoltage = (unsigned int)value << 1;
         break;
       case 0x801f:  // Outside temperature (filtered) (aka ambient temperature)
-        car_stale_temps = 60;
+        car_stale_ambient = 60;
         car_ambient_temp = (signed char)((int)value/2 - 0x28);
         break;
       case 0x801e:  // Outside temperature (raw)
