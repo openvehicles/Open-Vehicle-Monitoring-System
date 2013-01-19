@@ -96,5 +96,6 @@ void net_msg_alert(void);
 void net_msg_valettrunk(void);
 void net_msg_alarm(void);
 void net_msg_socalert(void);
+void net_msg_12v_alert(void);
 
 #endif // #ifndef __OVMS_MSG_H

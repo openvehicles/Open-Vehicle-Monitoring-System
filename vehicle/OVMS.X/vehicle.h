@@ -44,7 +44,10 @@ extern unsigned char  can_databuffer[8];
 // please note: MPLAB C18 does not optimize CAN_NIB(loopvar)
 //   as good as CAN_NIBL/H used separately
 
-extern unsigned char  can_minSOCnotified;        // minSOC notified flag
+extern unsigned char  can_minSOCnotified;        // minSOC notified flags
+#define CAN_MINSOC_ALERT_MAIN    1               // minSOC notify flag for main battery
+#define CAN_MINSOC_ALERT_12V     2               // minSOC notify flag for 12V battery
+
 extern unsigned char  can_mileskm;               // Miles of Kilometers
 
 extern rom unsigned char* vehicle_version;       // Vehicle module version

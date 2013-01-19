@@ -161,6 +161,21 @@ void net_sms_socalert(char* number)
   delay100(5);
   }
 
+void net_sms_12v_alert(char* number)
+  {
+  char *s;
+
+  delay100(10);
+  net_send_sms_start(number);
+
+  s = stp_l2f(net_scratchpad, "MP-0 PAALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
+  s = stp_rom(s, "V)");
+  net_puts_ram(net_scratchpad);
+
+  net_send_sms_finish();
+  delay100(5);
+  }
+
 // SMS Command Handlers
 //
 // All the net_sms_handle_* functions are command handlers for SMS commands

@@ -225,15 +225,15 @@ void vehicle_ticker(void)
 
     // check minSOC
     minSOC = sys_features[FEATURE_MINSOC];
-    if ((can_minSOCnotified == 0) && (car_SOC < minSOC))
+    if (!(can_minSOCnotified & CAN_MINSOC_ALERT_MAIN) && (car_SOC < minSOC))
       {
       net_req_notification(NET_NOTIFY_STAT);
-      can_minSOCnotified = 1;
+      can_minSOCnotified |= CAN_MINSOC_ALERT_MAIN;
       }
-    else if ((can_minSOCnotified == 1) && (car_SOC > minSOC + 2))
+    else if ((can_minSOCnotified & CAN_MINSOC_ALERT_MAIN) && (car_SOC > minSOC + 2))
       {
       // reset the alert sent flag when SOC is 2% point higher than threshold
-      can_minSOCnotified = 0;
+      can_minSOCnotified &= ~CAN_MINSOC_ALERT_MAIN;
       }
     if (vehicle_fn_ticker60 != NULL) vehicle_fn_ticker60();
     }

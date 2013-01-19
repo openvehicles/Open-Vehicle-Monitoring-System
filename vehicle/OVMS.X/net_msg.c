@@ -1041,3 +1041,13 @@ void net_msg_socalert(void)
   s = stp_rom(s, "% SOC)");
   net_msg_encode_puts();
   }
+
+void net_msg_12v_alert(void)
+  {
+  char *s;
+
+  s = stp_l2f(net_scratchpad, "MP-0 PAALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
+  s = stp_rom(s, "V)");
+  net_msg_encode_puts();
+  }
+

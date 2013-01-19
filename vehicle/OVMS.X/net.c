@@ -1161,6 +1161,12 @@ void net_state_ticker1(void)
               }
             return;
             }
+          else if ((net_notify & NET_NOTIFY_NET_12VLOW)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_NET_12VLOW); // Clear notification flag
+            net_msg_12v_alert();
+            return;
+            }
           else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_TRUNK); // Clear notification flag
@@ -1211,6 +1217,12 @@ void net_state_ticker1(void)
                 strcpypgm2ram(cmd, "STAT");
                 net_sms_in(p, cmd, 4);
               }
+            return;
+            }
+          else if ((net_notify & NET_NOTIFY_SMS_12VLOW)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_SMS_12VLOW); // Clear notification flag
+            net_sms_12v_alert(p);
             return;
             }
           else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
@@ -1299,9 +1311,23 @@ void net_state_ticker60(void)
   char stat;
   char *p;
 
-  #ifdef OVMS_HW_V2
+#ifdef OVMS_HW_V2
+
   car_12vline = inputs_voltage()*10;
-  #endif
+
+  // Trigger 12V alert if voltage drops below 11.5 V,
+  //  reset alert if voltage raises above 11.9 V:
+  if (!(can_minSOCnotified & CAN_MINSOC_ALERT_12V) && (car_12vline < 115))
+  {
+    net_req_notification(NET_NOTIFY_12VLOW);
+    can_minSOCnotified |= CAN_MINSOC_ALERT_12V;
+  }
+  else if ((can_minSOCnotified & CAN_MINSOC_ALERT_12V) && (car_12vline > 119))
+  {
+    can_minSOCnotified &= ~CAN_MINSOC_ALERT_12V;
+  }
+
+#endif
 
   switch (net_state)
     {
