@@ -111,6 +111,22 @@ void diag_ticker(void)
 
     canwrite_state = (canwrite_state+1)%DATA_COUNT;
     }
+
+  if (net_notify & (NET_NOTIFY_NET_CHARGE|NET_NOTIFY_SMS_CHARGE))
+    {
+    net_puts_rom("\r\n# NOTIFY CHARGE ALERT\r\n");
+    net_notify &= ~(NET_NOTIFY_NET_CHARGE|NET_NOTIFY_SMS_CHARGE);
+    }
+  if (net_notify & (NET_NOTIFY_NET_TRUNK|NET_NOTIFY_SMS_TRUNK))
+    {
+    net_puts_rom("\r\n# NOTIFY TRUNK ALERT\r\n");
+    net_notify &= ~(NET_NOTIFY_NET_TRUNK|NET_NOTIFY_SMS_TRUNK);
+    }
+  if (net_notify & (NET_NOTIFY_NET_ALARM|NET_NOTIFY_SMS_ALARM))
+    {
+    net_puts_rom("\r\n# NOTIFY ALARM ALERT\r\n");
+    net_notify &= ~(NET_NOTIFY_NET_ALARM|NET_NOTIFY_SMS_ALARM);
+    }
   }
 
 // These are the diagnostic command handlers

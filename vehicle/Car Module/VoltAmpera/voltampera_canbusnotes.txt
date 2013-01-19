@@ -213,3 +213,73 @@ Service 0x22 explanation by Burro:
 
   (answer as before is Temp (now in in Byte 4) where 0x30 => 8°C (unit 1 °C offset 40) )
 
+From WopOnTour:
+
+The Volt has 27 primary electronic control modules all networked on the GM-LAN (CAN) networks which include:
+
+  ????? Auxillary (14V) Power Module
+  ????? Battery Charger Control Module
+  ????? Battery Energy Control Module
+  ????? Coolant Heater Control Module
+  ????? Drive Motor 1 Control Module
+  ????? Drive Motor 2 Control Module
+  ????? Electric A/C Compressor Control Module
+  0x7e0 Engine Control Module
+  ????? Fuel Pump Control Module
+  ????? Hybrid Powertrain Control Module A
+  0x7e4 Hybrid Powertrain Control Module B
+  ????? Transmission Control Module
+  ????? Park Brake Control Module
+  ????? Multi-Axis Acceleration Sensor Module
+  ????? Electronic Brake Control Module
+  ????? Variable Power Steering Control Module
+  ????? Steering Wheel Angle Sensor Module
+  ????? Body Control Module
+  ????? Instrument Panel Cluster
+  ????? Inflatable Restraints Sensing Diagnostic Module
+  ????? Passenger Presence System Module
+  ????? Radio Control Module
+  ????? Telematics Communication Interface Module
+  ????? Remote Heater and Air Conditioning Control Module
+  ????? Front Seat Heating Control Module
+  ????? Keyless Entry Control Module
+  ????? Parking Assist Control Module
+
+Additionally there a few additional "master-slave" modules operating on Local Interconnect Networks (LIN) dedicated to some primary functions (such as power windows).
+
+Notes the Burro:
+
+
+  0x7e0:
+
+  Name	                          ShortName	 Mode-PID #	 Equation 	Units	# of Bytes
+  Ambient Air Temp                     AAT	  22-0046	   X-40          °C	      1
+  Control Module Voltage	     VPWR         22-0042	  X*.001          V           2
+  Engine Coolant Temp	             ECT          22-0005	   X-40          °C	      1
+  Intake Manifold Absolute Pressure  MAP          22-000B	   X+0           kPa	      1
+  Engine RPM	                     RPM          22-000C         X*.25          rpm          2
+  Vehicle Speed Sensor	             VSS          22-000D          X+0           kph          1
+  Ignition Timing Advance
+  for #1 Cylinder	          SPARKADV        22-000E   	(X*.5)-64	 BTDC         1
+  Intake Air Temperature             IAT          22-000F          X-40          °C           1
+  Commanded Throttle
+  Actuator Control	             TAC          22-004C	X*(100/255)	  %	      1
+  Hybrid/EV Battery Pack
+  Remaining Charge	           BAT_PWR        22-005B	X*(100/255)	  %	      1
+
+  Name				Mode-PID#	Scaling		Units
+  Fuel System Status		22-1131	        X+0		State Encoded
+  AC High Side Pressure		22-1564	        Unknown	        kPa
+  Short Term Fuel Trim Bank 1	22-1570	        X*(100/255)      %
+  Short Term Fuel Trim Bank 2	22-1571	        X*(100/255)      %
+  Long Term Fuel Trim Bank 1	22-1572	        X*(100/255)      %
+  Long Term Fuel Trim Bank 2	22-1573         X*(100/255)	 %
+  Torque Delivered Signal		22-1A2D	        Unknown          NM
+
+  0x7e4:
+
+  Name				Mode-PID#	Scaling			Units
+  Output Shaft Speed		22-1942	        X*(1/4) or (1/8)	RPM
+  Gear Ratio			22-19A1	        Might be X*(4/256)	
+  Trans Fluid Temp		22-1940	        X-40		        °C
+  Transmission ISS		22-1941	        Might be X*(8192/65536) RPM

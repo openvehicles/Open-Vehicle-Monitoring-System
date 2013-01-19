@@ -560,14 +560,14 @@ void net_msg_server_welcome(char *msg)
 
   /* DEBUG / QA stats: Send crash counter and last reason:
    *
-   * MP-0 H*-OVM-DebugCrash,0,86400
+   * MP-0 H*-OVM-DebugCrash,0,2592000
    *  ,<firmware_version>/<vehicle_type><vehicle_version>/V<hardware_version>
    *  ,<crashcnt>,<crashreason>,<checkpoint>
    */
 
   debug_crashreason &= ~0x80; // clear checkpoint hold bit
 
-  s = stp_i(net_scratchpad, "MP-0 H*-OVM-DebugCrash,0,86400,", ovms_firmware[0]);
+  s = stp_i(net_scratchpad, "MP-0 H*-OVM-DebugCrash,0,2592000,", ovms_firmware[0]);
   s = stp_i(s, ".", ovms_firmware[1]);
   s = stp_i(s, ".", ovms_firmware[2]);
   s = stp_s(s, "/", par_get(PARAM_VEHICLETYPE));
