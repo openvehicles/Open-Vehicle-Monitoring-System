@@ -1315,16 +1315,27 @@ void net_state_ticker60(void)
 
   car_12vline = inputs_voltage()*10;
 
-  // Trigger 12V alert if voltage drops below 11.5 V,
-  //  reset alert if voltage raises above 11.9 V:
-  if (!(can_minSOCnotified & CAN_MINSOC_ALERT_12V) && (car_12vline < 115))
+  // Calibration: ref = max reading while car is off and not charging:
+  if (!(car_doors1 & 0x90) && (car_12vline > car_12vline_ref))
   {
-    net_req_notification(NET_NOTIFY_12VLOW);
-    can_minSOCnotified |= CAN_MINSOC_ALERT_12V;
+    car_12vline_ref = car_12vline;
   }
-  else if ((can_minSOCnotified & CAN_MINSOC_ALERT_12V) && (car_12vline > 119))
+
+  if (car_12vline_ref > 13)
   {
-    can_minSOCnotified &= ~CAN_MINSOC_ALERT_12V;
+    // Trigger 12V alert if voltage at/below 11.4 V = ref - 1.3:
+    if (!(can_minSOCnotified & CAN_MINSOC_ALERT_12V)
+            && (car_12vline <= (car_12vline_ref - 13)))
+    {
+      net_req_notification(NET_NOTIFY_12VLOW);
+      can_minSOCnotified |= CAN_MINSOC_ALERT_12V;
+    }
+      // reset alert if voltage raises to/above 12.0 V = ref - 0.7:
+    else if ((can_minSOCnotified & CAN_MINSOC_ALERT_12V)
+            && (car_12vline >= (car_12vline_ref - 7)))
+    {
+      can_minSOCnotified &= ~CAN_MINSOC_ALERT_12V;
+    }
   }
 
 #endif

@@ -169,6 +169,7 @@ void net_sms_12v_alert(char* number)
   net_send_sms_start(number);
 
   s = stp_l2f(net_scratchpad, "MP-0 PAALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
+  s = stp_l2f(s, "V, ref=", car_12vline_ref, 1);
   s = stp_rom(s, "V)");
   net_puts_ram(net_scratchpad);
 
@@ -603,7 +604,10 @@ BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
   s = stp_x(s, "\n NET State:0x", net_state);
 
   if (car_12vline > 0)
+  {
     s = stp_l2f(s, "\n 12V Line:", car_12vline, 1);
+    s = stp_l2f(s, " ref=", car_12vline_ref, 1);
+  }
 
   /* DEBUG / QA stats: output crash counter and decode last reason:
    */

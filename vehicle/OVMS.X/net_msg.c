@@ -435,6 +435,7 @@ char net_msgp_environment(char stat)
   s = stp_i(s, ",", car_stale_ambient);
   s = stp_l2f(s, ",", car_12vline, 1);
   s = stp_i(s, ",", car_doors4);
+  s = stp_l2f(s, ",", car_12vline_ref, 1);
 
   return net_msg_encode_statputs(stat, &crc_environment);
 }
@@ -1047,6 +1048,7 @@ void net_msg_12v_alert(void)
   char *s;
 
   s = stp_l2f(net_scratchpad, "MP-0 PAALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
+  s = stp_l2f(s, "V, ref=", car_12vline_ref, 1);
   s = stp_rom(s, "V)");
   net_msg_encode_puts();
   }

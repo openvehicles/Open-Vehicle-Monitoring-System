@@ -120,7 +120,8 @@ extern unsigned char net_iccid[MAX_ICCID]; // ICCID
 extern char net_apps_connected; // Network apps connected
 extern char sys_features[FEATURES_MAX]; // System features
 extern unsigned char net_sq; // GSM Network Signal Quality
-extern unsigned int car_12vline; // 12V line level
+extern unsigned char car_12vline; // 12V line level
+extern unsigned char car_12vline_ref; // 12V line level reference
 extern unsigned char car_gsmcops[9]; // GSM provider
 
 // DEBUG / QA stats:
