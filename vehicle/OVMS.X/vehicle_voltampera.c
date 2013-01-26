@@ -67,6 +67,7 @@ rom struct
     { 0x07E4, 10, 0x801e },
     { 0x07E4, 10, 0x434f },
     { 0x07E4, 10, 0x1c43 },
+    { 0x07E4, 10, 0x8334 },
     { 0x0000, 0,  0x0000 }
   };
 
@@ -178,7 +179,8 @@ BOOL vehicle_voltampera_ticker1(void)
 
   // bus_is_active indicates we've recently seen a message on the can bus
   // Quick exit if bus is recently not active
-  if (!va_bus_is_active) return FALSE;
+  //if (!va_bus_is_active) return FALSE;
+  if (!va_bus_is_active && (car_chargecurrent==0) && (car_linevoltage==0)) return FALSE;
 
   // Also, we need CAN_WRITE enabled, so return if not
   if (sys_features[FEATURE_CANWRITE]==0) return FALSE;
@@ -288,6 +290,12 @@ BOOL vehicle_voltampera_poll0(void)
         car_stale_temps = 60;
         car_tpem = (int)value - 0x28;
         break;
+      case 0x8334:  // SOC
+        car_stale_temps = 60;
+        car_SOC = (char)(((int)value * 39) / 99);
+        car_idealrange = ((unsigned int)car_SOC * (unsigned int)37)/100;  // Kludgy, but ok for the moment
+        car_estrange = car_idealrange;                              // Very kludgy, but ok ...
+        break;
       }
     }
   else if (id == 0x7e8)
@@ -332,12 +340,12 @@ BOOL vehicle_voltampera_poll1(void)
     // SOC
     // For the SOC, each 4,000 is 1kWh. Assuming a 16.1kWh battery, 1% SOC is 644 decimal bytes
     // The SOC itself is d1<<8 + d2
-    unsigned int v = (can_databuffer[1]+((unsigned int) can_databuffer[0] << 8));
-    if ((v<va_soc_smallest)&&(v>0)) v=va_soc_smallest;
-    if (v>va_soc_largest) v=va_soc_largest;
-    car_SOC = (char)((v-va_soc_smallest)/((va_soc_largest-va_soc_smallest)/100));
-    car_idealrange = ((unsigned int)car_SOC * (unsigned int)37)/100;  // Kludgy, but ok for the moment
-    car_estrange = car_idealrange;                              // Very kludgy, but ok ...
+    //unsigned int v = (can_databuffer[1]+((unsigned int) can_databuffer[0] << 8));
+    //if ((v<va_soc_smallest)&&(v>0)) v=va_soc_smallest;
+    //if (v>va_soc_largest) v=va_soc_largest;
+    //car_SOC = (char)((v-va_soc_smallest)/((va_soc_largest-va_soc_smallest)/100));
+    //car_idealrange = ((unsigned int)car_SOC * (unsigned int)37)/100;  // Kludgy, but ok for the moment
+    //car_estrange = car_idealrange;                              // Very kludgy, but ok ...
     }
   else if ((CANctrl & 0x07) == 3)        // Acceptance Filter 3 (RXF3) = CAN ID 4E1
     {
