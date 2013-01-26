@@ -1321,7 +1321,7 @@ void net_state_ticker60(void)
     car_12vline_ref = car_12vline;
   }
 
-  if (car_12vline_ref > 13)
+  if (car_12vline_ref > 130)  // car_12vline is input * 10 
   {
     // Trigger 12V alert if voltage at/below 11.4 V = ref - 1.3:
     if (!(can_minSOCnotified & CAN_MINSOC_ALERT_12V)
