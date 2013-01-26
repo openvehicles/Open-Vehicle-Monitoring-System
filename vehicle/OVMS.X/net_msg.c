@@ -998,6 +998,9 @@ char *net_prep_stat(char *s)
     s = stp_ul(s, "\r ODO: ", MI2KM(car_odometer / 10));
     s = stp_rom(s, " km");
   }
+  
+  s = stp_i(s, "\r 12V: ", car_12vline / 10);
+  s = stp_rom(s, "V");
 
   return s;
 }
