@@ -1315,22 +1315,35 @@ void net_state_ticker60(void)
 
   car_12vline = inputs_voltage()*10;
 
-  // Calibration: ref = max reading while car is off and not charging:
-  if (!(car_doors1 & 0x90) && (car_12vline > car_12vline_ref))
+  // Calibration: ref = max reading while car is off and not plugged in;
+  //  also suppress readings for 10 minutes after plugged out
+  if ((car_linevoltage>0) && (car_chargecurrent>0))
   {
-    car_12vline_ref = car_12vline;
+    car_12vline_ref = 0; // plugged in, reset ref
+    // Note: means ref value 0 is "charging"
+  }
+  else if (car_12vline_ref < 10)
+  {
+    car_12vline_ref++; // wait 10 minutes after plugged out
+    // Note: means ref value 1..10 is a counter, not a voltage
+  }
+  else if (!(car_doors1 & 0x80) && (car_12vline > car_12vline_ref))
+  {
+    car_12vline_ref = car_12vline; // car off, take new ref voltage
   }
 
-  if (car_12vline_ref > 13)
+  // 10 minutes after charge end should give us a ref @ ~13.1 V
+  // healthy discharge depth is down to 11.8 V = 1.3 V lower
+  if (car_12vline_ref > 13) // ensure ref > 1.3 V
   {
-    // Trigger 12V alert if voltage at/below 11.4 V = ref - 1.3:
+    // Trigger 12V alert if voltage <= ref - 1.3 V:
     if (!(can_minSOCnotified & CAN_MINSOC_ALERT_12V)
             && (car_12vline <= (car_12vline_ref - 13)))
     {
       net_req_notification(NET_NOTIFY_12VLOW);
       can_minSOCnotified |= CAN_MINSOC_ALERT_12V;
     }
-      // reset alert if voltage raises to/above 12.0 V = ref - 0.7:
+    // Reset 12V alert if voltage >= ref - 0.7 V:
     else if ((can_minSOCnotified & CAN_MINSOC_ALERT_12V)
             && (car_12vline >= (car_12vline_ref - 7)))
     {

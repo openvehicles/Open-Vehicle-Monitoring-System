@@ -105,6 +105,9 @@
 ;           - Minor bug fixes & changes
 ;           Note: introduced second overlay section "vehicle_overlay_data2"
 ;
+;    2.6.1  28 Jan 2013 (Michael Balzer):
+;           - Power line plug-in detection (for 12V alert system)
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -159,7 +162,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.6";
+rom char vehicle_twizy_version[] = "2.6.1";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -263,6 +266,7 @@ unsigned char twizy_status; // Car + charge status from CAN:
 #define CAN_STATUS_KEYON        0x10        //  bit 4 = 0x10: 1 = Car ON (key turned)
 #define CAN_STATUS_CHARGING     0x20        //  bit 5 = 0x20: 1 = Charging
 #define CAN_STATUS_OFFLINE      0x40        //  bit 6 = 0x40: 1 = Switch-ON/-OFF phase / 0 = normal operation
+#define CAN_STATUS_ONLINE       0x80        //  bit 7 = 0x80: 1 = CAN-Bus online (test flag to detect offline)
 
 
 // MSG notification queue (like net_notify for vehicle specific notifies)
@@ -793,12 +797,24 @@ BOOL vehicle_twizy_poll1(void)
     case 0x07:
 
       // VEHICLE state:
-      //  [0]: 0x00=not charging (?), 0x20=charging (?)
+      //  [0]: 0x20 = power line connected
+      
+      if (CAN_BYTE(0) & 0x20)
+      {
+        car_linevoltage = 230; // fix 230 V
+        car_chargecurrent = 10; // fix 10 A
+      }
+      else
+      {
+        car_linevoltage = 0;
+        car_chargecurrent = 0;
+      }
+
       //  [1] bit 4 = 0x10 CAN_STATUS_KEYON: 1 = Car ON (key switch)
       //  [1] bit 5 = 0x20 CAN_STATUS_CHARGING: 1 = Charging
       //  [1] bit 6 = 0x40 CAN_STATUS_OFFLINE: 1 = Switch-ON/-OFF phase
 
-      twizy_status = can_databuffer[1];
+      twizy_status = CAN_BYTE(1);
       // Translation to car_doors1 done in ticker1()
 
       // PEM temperature:
@@ -1446,6 +1462,33 @@ BOOL vehicle_twizy_state_ticker1(void)
           && ((can_granular_tick % 5) == 0))
   {
     twizy_notify |= SEND_StreamUpdate;
+  }
+
+  return FALSE;
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// twizy_state_ticker10()
+// State Model: 10 second ticker
+// This function is called approximately once every 10 seconds (since state
+// was first entered), and gives the state a timeslice for activity.
+//
+
+BOOL vehicle_twizy_state_ticker10(void)
+{
+  // Check if CAN-Bus has turned offline:
+  if (!(twizy_status & CAN_STATUS_ONLINE))
+  {
+    // yes, offline: implies...
+    twizy_status = CAN_STATUS_OFFLINE;
+    car_linevoltage = 0;
+    car_chargecurrent = 0;
+  }
+  else
+  {
+    // Clear online flag to test for CAN activity:
+    twizy_status &= ~CAN_STATUS_ONLINE;
   }
 
   return FALSE;
@@ -3477,9 +3520,6 @@ BOOL vehicle_twizy_initialise(void)
     car_type[3] = 0;
     car_type[4] = 0;
 
-    car_linevoltage = 230; // fix
-    car_chargecurrent = 10; // fix
-
     twizy_status = CAN_STATUS_OFFLINE;
 
     twizy_soc = 5000;
@@ -3641,6 +3681,7 @@ BOOL vehicle_twizy_initialise(void)
   vehicle_fn_poll1 = &vehicle_twizy_poll1;
   vehicle_fn_idlepoll = &vehicle_twizy_idlepoll;
   vehicle_fn_ticker1 = &vehicle_twizy_state_ticker1;
+  vehicle_fn_ticker10 = &vehicle_twizy_state_ticker10;
   vehicle_fn_ticker60 = &vehicle_twizy_state_ticker60;
   vehicle_fn_smshandler = &vehicle_twizy_fn_smshandler;
   vehicle_fn_smsextensions = &vehicle_twizy_fn_smsextensions;
