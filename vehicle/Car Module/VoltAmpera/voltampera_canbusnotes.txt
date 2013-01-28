@@ -226,9 +226,9 @@ The Volt has 27 primary electronic control modules all networked on the GM-LAN (
   ????? Electric A/C Compressor Control Module
   0x7e0 Engine Control Module
   ????? Fuel Pump Control Module
-  ????? Hybrid Powertrain Control Module A
+  0x7e1 Hybrid Powertrain Control Module A
   0x7e4 Hybrid Powertrain Control Module B
-  ????? Transmission Control Module
+  0x7e2 Transmission Control Module
   ????? Park Brake Control Module
   ????? Multi-Axis Acceleration Sensor Module
   ????? Electronic Brake Control Module
