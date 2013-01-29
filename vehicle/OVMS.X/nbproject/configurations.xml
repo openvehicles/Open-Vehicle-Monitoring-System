@@ -57,6 +57,7 @@
       <itemPath>vehicle_none.c</itemPath>
       <itemPath>vehicle_obdii.c</itemPath>
       <itemPath>vehicle_thinkcity.c</itemPath>
+      <itemPath>vehicle_nissanleaf.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -190,6 +191,8 @@
         </C18-LD>
         <C18LanguageToolchain>
         </C18LanguageToolchain>
+      </item>
+      <item path="vehicle_nissanleaf.c" ex="true" overriding="false">
       </item>
       <item path="vehicle_obdii.c" ex="true" overriding="false">
         <C18>
@@ -359,6 +362,8 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
+      <item path="vehicle_nissanleaf.c" ex="true" overriding="false">
+      </item>
       <item path="vehicle_obdii.c" ex="true" overriding="false">
         <C18>
         </C18>
@@ -450,7 +455,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS"/>
+                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS;OVMS_CAR_NISSANLEAF"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -593,7 +598,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS"/>
+                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS;OVMS_CAR_NISSANLEAF"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -637,7 +642,7 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0xffff"/>
         <property key="memories.programmemory.start" value="0x0"/>
-        <property key="poweroptions.powerenable" value="true"/>
+        <property key="poweroptions.powerenable" value="false"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmspeed" value="2"/>
