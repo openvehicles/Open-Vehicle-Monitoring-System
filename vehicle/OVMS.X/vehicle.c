@@ -126,6 +126,13 @@ void vehicle_initialise(void)
     vehicle_thinkcity_initialise();
     }
 #endif
+#ifdef OVMS_CAR_NISSANLEAF
+  else if (memcmppgm2ram(p, (char const rom far*)"NL", 2) == 0)
+    {
+    void vehicle_nissanleaf_initialise(void);
+    vehicle_nissanleaf_initialise();
+    }
+#endif
 #ifdef OVMS_CAR_NONE
   else
     {
