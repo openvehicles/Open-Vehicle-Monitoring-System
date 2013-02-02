@@ -1317,7 +1317,7 @@ void net_state_ticker60(void)
 
   // Calibration: ref = max reading while car is off and not plugged in;
   //  also suppress readings for 10 minutes after plugged out
-  if ((car_linevoltage>0) && (car_chargecurrent>0))
+  if (car_doors5bits.Charging12V)
   {
     car_12vline_ref = 0; // plugged in, reset ref
     // Note: means ref value 0 is "charging"
@@ -1327,7 +1327,7 @@ void net_state_ticker60(void)
     car_12vline_ref++; // wait 10 minutes after plugged out
     // Note: means ref value 1..10 is a counter, not a voltage
   }
-  else if (!(car_doors1 & 0x80) && (car_12vline > car_12vline_ref))
+  else if (!car_doors1bits.CarON && (car_12vline > car_12vline_ref))
   {
     car_12vline_ref = car_12vline; // car off, take new ref voltage
   }

@@ -81,10 +81,73 @@ extern unsigned char car_chargesubstate;
 extern unsigned char car_chargemode; // 0=standard, 1=storage, 3=range, 4=performance
 extern unsigned char car_charge_b4; // B4 byte of charge state
 extern unsigned char car_chargekwh; // KWh of charge
-extern unsigned char car_doors1; //
-extern unsigned char car_doors2; //
-extern unsigned char car_doors3; //
-extern unsigned char car_doors4; //
+
+extern unsigned char car_doors1;
+typedef struct {
+  unsigned FrontLeftDoor:1;
+  unsigned FrontRightDoor:1;
+  unsigned ChargePort:1;
+  unsigned PilotSignal:1;
+  unsigned Charging:1;
+  unsigned :1;
+  unsigned HandBrake:1;
+  unsigned CarON:1;
+} car_doors1bits_t;
+#define car_doors1bits (*((car_doors1bits_t*)&car_doors1))
+
+extern unsigned char car_doors2;
+typedef struct {
+  unsigned :1;
+  unsigned :1;
+  unsigned :1;
+  unsigned CarLocked:1;
+  unsigned ValetMode:1;
+  unsigned Bonnet:1;
+  unsigned Trunk:1;
+  unsigned :1;
+} car_doors2bits_t;
+#define car_doors2bits (*((car_doors2bits_t*)&car_doors2))
+
+extern unsigned char car_doors3;
+typedef struct {
+  unsigned :1;
+  unsigned CoolingPump:1;
+  unsigned :1;
+  unsigned :1;
+  unsigned :1;
+  unsigned :1;
+  unsigned :1;
+  unsigned :1;
+} car_doors3bits_t;
+#define car_doors3bits (*((car_doors3bits_t*)&car_doors3))
+
+extern unsigned char car_doors4;
+typedef struct {
+  unsigned :1;
+  unsigned :1;
+  unsigned AlarmSounds:1;
+  unsigned :1;
+  unsigned :1;
+  unsigned :1;
+  unsigned :1;
+  unsigned :1;
+} car_doors4bits_t;
+#define car_doors4bits (*((car_doors4bits_t*)&car_doors4))
+
+extern unsigned char car_doors5;
+typedef struct {
+  unsigned RearLeftDoor:1;
+  unsigned RearRightDoor:1;
+  unsigned Frunk:1;
+  unsigned :1;
+  unsigned Charging12V:1;
+  unsigned :1;
+  unsigned :1;
+  unsigned :1;
+} car_doors5bits_t;
+#define car_doors5bits (*((car_doors5bits_t*)&car_doors5))
+
+
 extern unsigned char car_lockstate; // Lock State
 extern unsigned char car_speed; // speed in defined units (mph or kph)
 extern unsigned char car_SOC; // State of Charge in %

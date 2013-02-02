@@ -105,8 +105,10 @@
 ;           - Minor bug fixes & changes
 ;           Note: introduced second overlay section "vehicle_overlay_data2"
 ;
-;    2.6.1  28 Jan 2013 (Michael Balzer):
+;    2.6.2  2 Feb 2013 (Michael Balzer):
 ;           - Power line plug-in detection (for 12V alert system)
+;           - Pilot signal (able to charge) set from power line detection
+;           - Support for car_time & car_parktime
 ;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -162,7 +164,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.6.1";
+rom char vehicle_twizy_version[] = "2.6.2";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -1217,6 +1219,9 @@ BOOL vehicle_twizy_state_ticker1(void)
    * (done here to keep interrupt fn small&fast)
    */
 
+  // Count seconds:
+  car_time++;
+
   // SOC: convert to percent:
   car_SOC = (twizy_soc + 50) / 100;
 
@@ -1233,6 +1238,7 @@ BOOL vehicle_twizy_state_ticker1(void)
   // STATUS: convert Twizy flags to car_doors1:
   // Door state #1
   //	bit2 = 0x04 Charge port (open=1/closed=0)
+  //    bit3 = 0x08 Pilot signal present (able to charge)
   //	bit4 = 0x10 Charging (true=1/false=0)
   //	bit6 = 0x40 Hand brake applied (true=1/false=0)
   //	bit7 = 0x80 Car ON (true=1/false=0)
@@ -1243,19 +1249,38 @@ BOOL vehicle_twizy_state_ticker1(void)
   //  bit 4 = 0x10 CAN_STATUS_KEYON: 1 = Car ON (key switch)
   //  bit 5 = 0x20 CAN_STATUS_CHARGING: 1 = Charging
   //  bit 6 = 0x40 CAN_STATUS_OFFLINE: 1 = Switch-ON/-OFF phase
+  
+  if (car_linevoltage > 0)
+  {
+    car_doors1bits.PilotSignal = 1;
+    car_doors5bits.Charging12V = 1;
+  }
+  else
+  {
+    car_doors1bits.PilotSignal = 0;
+    car_doors5bits.Charging12V = 0;
+  }
 
   if ((twizy_status & 0x60) == 0x20)
-    car_doors1 |= 0x14; // Charging ON, Port OPEN
+  {
+    car_doors1bits.ChargePort = 1;
+    car_doors1bits.Charging = 1;
+  }
   else
-    car_doors1 &= ~0x10; // Charging OFF
+  {
+    car_doors1bits.Charging = 0;
+    // Port will be closed on next use start
+  }
 
   if (twizy_status & CAN_STATUS_KEYON)
   {
-    if ((car_doors1 & 0x80) == 0)
+    if (!car_doors1bits.CarON)
     {
       // CAR has just been turned ON
+      car_doors1bits.CarON = 1;
 
-      car_doors1 |= 0x80; // Car ON
+      car_parktime = 0; // No longer parking
+      net_req_notification(NET_NOTIFY_ENV);
 
 #ifdef OVMS_TWIZY_BATTMON
       // reset battery monitor:
@@ -1268,12 +1293,14 @@ BOOL vehicle_twizy_state_ticker1(void)
   }
   else
   {
-    if ((car_doors1 & 0x80) != 0)
+    if (car_doors1bits.CarON)
     {
       // CAR has just been turned OFF
+      car_doors1bits.CarON = 0;
 
-      car_doors1 &= ~0x80; // Car OFF
-
+      car_parktime = car_time-1; // Record it as 1 second ago, so non zero report
+      net_req_notification(NET_NOTIFY_ENV);
+      
       // send power statistics:
       if (twizy_speedpwr[CAN_SPEED_CONST].use > 22500)
         twizy_notify |= SEND_PowerNotify;
@@ -1303,7 +1330,7 @@ BOOL vehicle_twizy_state_ticker1(void)
    *
    */
 
-  if (car_doors1 & 0x10)
+  if (car_doors1bits.Charging)
   {
     /*******************************************************************
      * CHARGING
@@ -1434,13 +1461,13 @@ BOOL vehicle_twizy_state_ticker1(void)
       // We'll keep the flag until next car use.
     }
 
-    else if ((car_doors1 & 0x94) == 0x84)
+    else if (car_doors1bits.CarON && !car_doors1bits.Charging && car_doors1bits.ChargePort)
     {
       // Car on, not charging, charge port open:
       // beginning the next car usage cycle:
 
       // Close charging port:
-      car_doors1 &= ~0x04;
+      car_doors1bits.ChargePort = 0;
 
       // Set charge state to "done":
       car_chargestate = 4;
@@ -1463,6 +1490,7 @@ BOOL vehicle_twizy_state_ticker1(void)
   {
     twizy_notify |= SEND_StreamUpdate;
   }
+
 
   return FALSE;
 }
@@ -1966,6 +1994,7 @@ char vehicle_twizy_debug_msgp(char stat, int cmd)
   s = stp_i(s, "c", cmd ? cmd : CMD_Debug);
   s = stp_x(s, ",0,", twizy_status);
   s = stp_x(s, ",", car_doors1);
+  s = stp_x(s, ",", car_doors5);
   s = stp_i(s, ",", car_chargestate);
   s = stp_i(s, ",", twizy_speed);
   s = stp_i(s, ",", twizy_power);
@@ -2028,6 +2057,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
   s = net_scratchpad;
   s = stp_x(s, " STS=", twizy_status);
   s = stp_x(s, " DS1=", car_doors1);
+  s = stp_x(s, " DS5=", car_doors5);
   //s = stp_i(s, " CHG=", car_chargestate);
   //s = stp_i(s, " SPD=", twizy_speed);
   //s = stp_i(s, " PWR=", twizy_power);
@@ -2105,7 +2135,7 @@ void vehicle_twizy_stat_prepmsg(void)
   // append to net_scratchpad:
   s = strchr(net_scratchpad, 0);
 
-  if (car_doors1 & 0x04)
+  if (car_doors1bits.ChargePort)
   {
     // Charge port door is open, we are charging
     switch (car_chargestate)
@@ -3570,6 +3600,9 @@ BOOL vehicle_twizy_initialise(void)
     twizy_level_rec = 0;
     
     twizy_notify = 0;
+
+    car_time = 0;
+    car_parktime = 0;
   }
 
 #ifdef OVMS_TWIZY_BATTMON

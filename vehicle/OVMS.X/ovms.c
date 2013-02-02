@@ -79,6 +79,7 @@ unsigned char car_doors1 = 0; //
 unsigned char car_doors2 = 0; //
 unsigned char car_doors3 = 0; //
 unsigned char car_doors4 = 0; //
+unsigned char car_doors5 = 0; //
 unsigned char car_lockstate = 0; // Lock State
 unsigned char car_speed = 0; // speed in defined units (mph or kph)
 unsigned char car_SOC = 0; // State of Charge in %
