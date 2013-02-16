@@ -2006,6 +2006,7 @@ char vehicle_twizy_debug_msgp(char stat, int cmd)
   s = stp_i(s, ",", twizy_soc_min_range);
   s = stp_i(s, ",", car_estrange);
   s = stp_i(s, ",", car_idealrange);
+  s = stp_i(s, ",", can_minSOCnotified);
 
   net_msg_encode_puts();
   return (stat == 2) ? 1 : stat;
@@ -2058,6 +2059,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
   s = stp_x(s, " STS=", twizy_status);
   s = stp_x(s, " DS1=", car_doors1);
   s = stp_x(s, " DS5=", car_doors5);
+  s = stp_i(s, " MSN=", can_minSOCnotified);
   //s = stp_i(s, " CHG=", car_chargestate);
   //s = stp_i(s, " SPD=", twizy_speed);
   //s = stp_i(s, " PWR=", twizy_power);

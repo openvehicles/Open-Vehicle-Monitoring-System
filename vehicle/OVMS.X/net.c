@@ -1420,9 +1420,7 @@ void net_state_ticker600(void)
           {
           if ((net_link==1)&&(net_msg_sendpending==0))
             {
-            net_msg_start();
             net_msg_socalert();
-            net_msg_send();
             net_socalert_msg = 72; // 72x10mins = 12hours
             }
           }

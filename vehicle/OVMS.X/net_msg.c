@@ -1039,18 +1039,24 @@ void net_msg_socalert(void)
   {
   char *s;
 
+  delay100(2);
+  net_msg_start();
   s = stp_i(net_scratchpad, "MP-0 PAALERT!!! CRITICAL SOC LEVEL APPROACHED (", car_SOC); // 95%
   s = stp_rom(s, "% SOC)");
   net_msg_encode_puts();
+  net_msg_send();
   }
 
 void net_msg_12v_alert(void)
   {
   char *s;
 
+  delay100(2);
+  net_msg_start();
   s = stp_l2f(net_scratchpad, "MP-0 PAALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
   s = stp_l2f(s, "V, ref=", car_12vline_ref, 1);
   s = stp_rom(s, "V)");
   net_msg_encode_puts();
+  net_msg_send();
   }
 
