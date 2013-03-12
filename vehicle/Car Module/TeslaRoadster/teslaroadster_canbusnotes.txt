@@ -125,25 +125,6 @@ Tesla Roadster CAN Bus analysis:
                 N.B. Altitude is in metres, and may be negative. Car rounds to nearest 10m and has a floor of 0m.
                      Directions 0 and 360 are the same (North) - seems to be a bug in the car's VMS, so treat 360 as 0.
 
-	Error Notification
-		B1=0x93
-		B2=On, Off, Severity, etc, indication
-		B3=Error code LSB
-		B4=Error code MSB (error code 0xFFFF means no error)
-		B5=Data LSB
-		B6=Data
-		B7=Data
-		B8=Data MSB
-
-		N.B. Regarding B2, we've seen:
-			0x01 = 00000001b = Show Alert
-			0x00 = 00000000b = Cancel Alert
-			0x05 = 00000101b = Show Alert
-			0x04 = 00000100b = Cancel Alert
-			0x15 = 00010101b = Show Message
-			0x14 = 00010100b = End Message
-		     Suggestion is that bit0 is set when alert is raised, and zeroed when alert is cleared.
-
 	UNKNOWN
 		B1=0x86
 			Samples:
@@ -196,6 +177,25 @@ Tesla Roadster CAN Bus analysis:
 		        20.9317 100 8D 00 85 01 C2 00 C1 00    ->VDS (message to VDS 8D)
 		        31.0029 100 8D 00 85 01 C3 00 C0 00    ->VDS (message to VDS 8D)
 		        41.0727 100 8D 00 87 01 EA 00 9B 00    ->VDS (message to VDS 8D)
+
+        Error Notification
+                B1=0x93
+                B2=On, Off, Severity, etc, indication
+                B3=Error code LSB
+                B4=Error code MSB (error code 0xFFFF means no error)
+                B5=Data LSB
+                B6=Data
+                B7=Data
+                B8=Data MSB
+
+                N.B. Regarding B2, we've seen:
+                        0x01 = 00000001b = Show Alert
+                        0x00 = 00000000b = Cancel Alert
+                        0x05 = 00000101b = Show Alert
+                        0x04 = 00000100b = Cancel Alert
+                        0x15 = 00010101b = Show Message
+                        0x14 = 00010100b = End Message
+                     Suggestion is that bit0 is set when alert is raised, and zeroed when alert is cleared.
 
 	UNKNOWN
 		B1=0x94
