@@ -288,6 +288,40 @@ Tesla Roadster CAN Bus analysis:
 		        31.0041 100 9D 00 7C 00 0D 17 01 00    ->VDS (message to VDS 9D)
 		        41.0737 100 9D 00 7C 00 0D 17 01 00    ->VDS (message to VDS 9D)
 
+	ESS SOC DIAG Data
+		This complex message is sent in response to a "102 02" request.
+		Request id#102 06 D0 07 00 00 00 00 40
+		Response
+			100 9E 44 FD 9C 8A 5B 44 46
+			100 9F 00 00 00 00 00 B5 21
+			100 A0 3B 34 00 30 02 11 01
+			100 A1 01 41 0C 40 32 1C 00
+			100 A2 01 4B 00 4C FF 00 00
+			100 A1 02 29 0C 40 12 2D 00
+			100 A2 02 50 00 84 FF 00 00
+			100 A1 03 97 0B 41 35 36 00
+			100 A2 03 55 00 EA FF 00 00
+			100 A1 04 8B 0B 41 13 43 00
+			100 A2 04 53 00 0C 01 00 00
+			100 A1 05 87 0B 3F 07 47 00
+			100 A2 05 49 00 FF FF 00 00
+			100 A1 06 86 0B 3F 09 48 00
+			100 A2 06 49 00 3F FF 00 00
+		Decode
+			SOC LIM: 68% (0x44 single byte hex) - 100 9E (B2)
+			SOC MIN: 68% (0x44 single byte hex) - 100 9E (B7)
+			SOC MAX: 70% (0x46 single byte hex) - 100 9E (B8)
+			CAC: 156.99Ah - 100 9E (B4 . B3/256)
+			AR:91.54Ah - 100 9E (B6 . B5/256)
+			#Ah: 0.0Ah
+			#kWh: 0.00kWh
+			EVC: 3.7V
+			kWhR: 33.71kWh - 100 9F (B8 . B7/256)
+			RR: 123 miles (0x7B 0x00 tesla-style LSB-first, 2 byte hex) - maybe just from 100 80 (standard message)
+			dRMS: 52A (0x34 single byte hex) - 100 A0 (B4-MSB B3-LSB)
+			dAI: 560mO (0x30 0x02 tesla-style LSB-first, 2 byte hex) - 100 A0 (B6-MSB B5-LSB)
+			dWhM: 273Wh/mile (0x11 0x01 tesla-style LSB-first, 2 byte hex) - 100 A0 (B8-MSB B5-LSB)
+
 	Temps
 		B1=0xA3
 		B2=Tpem (celcius)
