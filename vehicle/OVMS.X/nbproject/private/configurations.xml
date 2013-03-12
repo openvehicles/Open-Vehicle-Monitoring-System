@@ -5,7 +5,7 @@
   <confs>
     <conf name="V1_Production" type="2">
       <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=BUR110372223:=x:=en</platformToolSN>
-      <languageToolchainDir></languageToolchainDir>
+      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
         <placeholder2>place holder 2</placeholder2>
@@ -41,7 +41,7 @@
     </conf>
     <conf name="V2_Production" type="2">
       <platformToolSN></platformToolSN>
-      <languageToolchainDir></languageToolchainDir>
+      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
         <placeholder2>place holder 2</placeholder2>

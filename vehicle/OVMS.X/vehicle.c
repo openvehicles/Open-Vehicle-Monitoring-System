@@ -133,6 +133,13 @@ void vehicle_initialise(void)
     vehicle_nissanleaf_initialise();
     }
 #endif
+#ifdef OVMS_CAR_TAZZARI
+  else if (memcmppgm2ram(p, (char const rom far*)"TZ", 2) == 0)
+    {
+    void vehicle_tazzari_initialise(void);
+    vehicle_tazzari_initialise();
+    }
+#endif
 #ifdef OVMS_CAR_NONE
   else
     {
