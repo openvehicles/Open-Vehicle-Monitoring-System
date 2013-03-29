@@ -98,6 +98,7 @@ function openvehicles_register_form($form, &$form_state)
   $o_vehiclename = $query->addField('o', 'vehiclename');
   $o_type = $query->addField('o', 'v_type');
   $o_deleted = $query->addField('o', 'deleted');
+  $o_telephone = $query->addField('o', 'telephone');
   $query->condition($o_type, 'SERVER')
         ->condition($o_deleted, 0);
   $result = $query->execute();

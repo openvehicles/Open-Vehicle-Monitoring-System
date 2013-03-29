@@ -5,16 +5,21 @@ use AnyEvent;
 use AnyEvent::Handle;
 use AnyEvent::Socket;
 use AnyEvent::HTTP;
+use AnyEvent::HTTPD;
 use IO::Handle;
 use AnyEvent::Log;
 use Config::IniFiles;
 use DBI;
 use Digest::MD5;
 use Digest::HMAC;
+use Digest::SHA qw(sha256 sha512);
 use Crypt::RC4::XS;
 use MIME::Base64;
 use JSON::XS;
+use URI;
+use URI::QueryParam;
 use URI::Escape;
+use Data::UUID;
 use HTTP::Parser::XS qw(parse_http_request);
 use Socket qw(SOL_SOCKET SO_KEEPALIVE);
 
@@ -27,15 +32,19 @@ use constant TCP_KEEPCNT => 6;
 
 my $VERSION = "2.1.1-20121216";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
 my $utilisations;
 my %car_conns;
 my %app_conns;
 my $svr_conns;
+my %api_conns;
 my %group_msgs;
 my %group_subs;
 my $db;
 my $config;
+my %http_request_api_noauth;
+my %http_request_api_auth;
 
 # PUSH notifications
 my @apns_queue_sandbox;
@@ -83,6 +92,9 @@ my $utiltim = AnyEvent->timer (after => 60, interval => 60, cb => \&util_tim);
 # Server PUSH tickers
 my $svrtim = AnyEvent->timer (after => 30, interval => 30, cb => \&svr_tim);
 my $svrtim2 = AnyEvent->timer (after => 300, interval => 300, cb => \&svr_tim2);
+
+# Session cleanup tickers
+my $apitim = AnyEvent->timer (after => 10, interval => 10, cb => \&api_tim);
 
 # A server client
 my $svr_handle;
@@ -372,7 +384,9 @@ sub io_login
       &io_terminate($svr_conns{$vehicleid},$conns{$svr_conns{$vehicleid}}{'handle'},$vehicleid, "#$svr_conns{$vehicleid} $vehicleid error - duplicate server login - clearing first connection");
       }
     $svr_conns{$vehicleid} = $fn;
-    $conns{$fn}{'svrupdate'} = $rest;
+    my ($svrupdate_v,$svrupdate_o) = ($1,$2) if ($rest =~ /^(\S+ \S+) (\S+ \S+)/);
+    $conns{$fn}{'svrupdate_v'} = $svrupdate_v;
+    $conns{$fn}{'svrupdate_o'} = $svrupdate_o;
     &svr_push($fn,$vehicleid);
     }
   elsif ($clienttype eq 'C')
@@ -504,19 +518,53 @@ tcp_server undef, 6867, sub
   $conns{$fn}{'handle'} = $handle;
   };
 
-# A TCP listener
-tcp_server undef, 6868, sub
-  {
-  my ($fh, $host, $port) = @_;
-  my $key = "$host:$port";
-  $fh->blocking(0);
-  my $fn = $fh->fileno();
-  AE::log info => "#$fn - new http connection from $host:$port";
-  my $handle; $handle = new AnyEvent::Handle(fh => $fh, on_error => \&http_io_error, on_rtimeout => \&http_io_timeout, on_read => \&http_io_read, keepalive => 1, no_delay => 1, rtimeout => 30);
+# An HTTP server
+my $http_server = AnyEvent::HTTPD->new (port => 6868, request_timeout => 30, allowed_methods => [GET,PUT,POST,DELETE]);
+$http_server->reg_cb (
+                '/group' => \&http_request_in_group,
+                '/api' => \&http_request_in_api,
+                '/file' => \&http_request_in_file,
+                '/electricracekml' => \&http_request_in_electricracekml,
+                '/electricracekmlfull' => \&http_request_in_electricracekmlfull,
+                '/electricrace' => \&http_request_in_electricrace,
+                '' => \&http_request_in_root
+                );
+$http_server->reg_cb (
+                client_connected => sub {
+                  my ($httpd, $host, $port) = @_;
+                    AE::log info => join(' ','http','-','-',$host.':'.$port,'connect');
+                  }
+                );
+$http_server->reg_cb (
+                client_disconnected => sub {
+                  my ($httpd, $host, $port) = @_;
+                    AE::log info => join(' ','http','-','-',$host.':'.$port,'disconnect');
+                  }
+                );
 
-  $conns{$fn}{'fh'} = $fh;
-  $conns{$fn}{'handle'} = $handle;
-  };
+my $https_server;
+if (-e 'ovms_server.pem')
+  {
+  $https_server = AnyEvent::HTTPD->new (port => 6869, request_timeout => 30, ssl  => { cert_file => "ovms_server.pem" }, allowed_methods => [GET,PUT,POST,DELETE]);
+  $https_server->reg_cb (
+                   '/group' => \&http_request_in_group,
+                   '/api' => \&http_request_in_api,
+                   '/file' => \&http_request_in_file,
+                   '' => \&http_request_in_root
+                   );
+  $https_server->reg_cb (
+                   client_connected => sub {
+                     my ($httpd, $host, $port) = @_;
+                       AE::log info => join(' ','http','-','-',$host.':'.$port,'connect(ssl)');
+                      }
+                   );
+  $https_server->reg_cb (
+                   client_disconnected => sub {
+                     my ($httpd, $host, $port) = @_;
+                       AE::log info => join(' ','http','-','-',$host.':'.$port,'disconnect(ssl)');
+                     }
+                  );
+  }
 
 # Main event loop...
 EV::loop();
@@ -544,12 +592,26 @@ sub util_tim
       $u_a_rx += $tx;
       $u_a_tx += $rx;
       }
-    $db->do('INSERT INTO ovms_utilisation (vehicleid,u_date,u_c_rx,u_c_tx,u_a_rx,u_a_tx) '
-          . 'VALUES (?,UTC_DATE(),?,?,?,?) '
-          . 'ON DUPLICATE KEY UPDATE u_c_rx=u_c_rx+?, u_c_tx=u_c_tx+?, u_a_rx=u_a_rx+?, u_a_tx=u_a_tx+?',
+    $db->do('INSERT INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) '
+          . 'VALUES (?,CONCAT(UTC_DATE()," 00:00:00"),"*-OVM-Utilisation",0,?,UTC_TIMESTAMP()+INTERVAL 1 YEAR) '
+          . 'ON DUPLICATE KEY UPDATE h_data=h_data+?',
             undef,
-            $vid, $u_c_rx, $u_c_tx, $u_a_rx, $u_a_tx,
-            $u_c_rx, $u_c_tx, $u_a_rx, $u_a_tx);
+            $vid,$u_c_rx,$u_c_rx);
+    $db->do('INSERT INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) '
+          . 'VALUES (?,CONCAT(UTC_DATE()," 00:00:00"),"*-OVM-Utilisation",1,?,UTC_TIMESTAMP()+INTERVAL 1 YEAR) '
+          . 'ON DUPLICATE KEY UPDATE h_data=h_data+?',
+            undef,
+            $vid,$u_c_tx,$u_c_tx);
+    $db->do('INSERT INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) '
+          . 'VALUES (?,CONCAT(UTC_DATE()," 00:00:00"),"*-OVM-Utilisation",2,?,UTC_TIMESTAMP()+INTERVAL 1 YEAR) '
+          . 'ON DUPLICATE KEY UPDATE h_data=h_data+?',
+            undef,
+            $vid,$u_a_rx,$u_a_rx);
+    $db->do('INSERT INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) '
+          . 'VALUES (?,CONCAT(UTC_DATE()," 00:00:00"),"*-OVM-Utilisation",3,?,UTC_TIMESTAMP()+INTERVAL 1 YEAR) '
+          . 'ON DUPLICATE KEY UPDATE h_data=h_data+?',
+            undef,
+            $vid,$u_a_tx,$u_c_tx);
     }
   %utilisations = ();
   }
@@ -690,15 +752,17 @@ sub io_message
     if (($m_code eq $code)&&($data =~ /^(\d+)(,(.+))?$/)&&($1 == 30))
       {
       # Special case of an app requesting (non-paranoid) the GPRS data
-      my $sth = $db->prepare('SELECT * FROM ovms_utilisation WHERE vehicleid=? ORDER BY u_date DESC LIMIT 90');
+      my $sth = $db->prepare('SELECT vehicleid,left(h_timestamp,10) AS u_date,group_concat(h_data) AS data FROM ovms_historicalmessages '
+                           . 'WHERE vehicleid=? AND h_recordtype="*-OVM-Utilisation" '
+                           . 'GROUP BY vehicleid,u_date,h_recordtype ORDER BY h_timestamp desc,h_recordnumber LIMIT 90');
       $sth->execute($vehicleid);
       my $rows = $sth->rows;
       my $k = 0;
       while (my $row = $sth->fetchrow_hashref())
         {
         $k++;
-        &io_tx($fn, $handle, 'c', sprintf('30,0,%d,%d,%s,%d,%d,%d,%d',$k,$rows,
-               $row->{'u_date'},$row->{'u_c_rx'},$row->{'u_c_tx'},$row->{'u_a_rx'},$row->{'u_a_tx'}));
+        &io_tx($fn, $handle, 'c', sprintf('30,0,%d,%d,%s,%s',$k,$rows,
+               $row->{'u_date'},$row->{'data'}));
         }
       if ($rows == 0)
         {
@@ -857,6 +921,13 @@ sub svr_tim
   {
   return if (scalar keys %svr_conns == 0);
 
+  # Drupal -> ovms_owners maintenance
+  $db->do('INSERT INTO ovms_owners SELECT uid,name,mail,pass,status,0,utc_timestamp() FROM users WHERE users.uid NOT IN (SELECT owner FROM ovms_owners)');
+  $db->do('UPDATE ovms_owners LEFT JOIN users ON users.uid=ovms_owners.owner '
+        . 'SET ovms_owners.pass=users.pass, ovms_owners.status=users.status, ovms_owners.name=users.name, ovms_owners.mail=users.mail, deleted=0, changed=UTC_TIMESTAMP() '
+        . 'WHERE users.pass<>ovms_owners.pass OR users.status<>ovms_owners.status OR users.name<>ovms_owners.name OR users.mail<>ovms_owners.mail');
+  $db->do('UPDATE ovms_owners SET deleted=1,changed=UTC_TIMESTAMP() WHERE deleted=0 AND owner NOT IN (SELECT uid FROM users)');
+
   my %last;
   my $sth = $db->prepare('SELECT v_server,MAX(changed) AS lu FROM ovms_cars WHERE v_type="CAR" GROUP BY v_server');
   $sth->execute();
@@ -865,14 +936,23 @@ sub svr_tim
     $last{$row->{'v_server'}} = $row->{'lu'};
     }
 
+  my $last_o;
+  $sth = $db->prepare('SELECT MAX(changed) as lu FROM ovms_owners');
+  $sth->execute();
+  while (my $row = $sth->fetchrow_hashref())
+    {
+    $last_o = $row->{'lu'};
+    }
+
   foreach (keys %svr_conns)
     {
     my $vehicleid = $_;
     my $fn = $svr_conns{$vehicleid};
-    my $svrupdate = $conns{$fn}{'svrupdate'};
+    my $svrupdate_v = $conns{$fn}{'svrupdate_v'};
+    my $svrupdate_o = $conns{$fn}{'svrupdate_o'};
     my $lw = $last{'*'}; $lw='0000-00-00 00:00:00' if (!defined $lw);
     my $ls = $last{$vehicleid}; $ls='0000-00-00 00:00:00' if (!defined $ls);
-    if (($lw gt $svrupdate)||($ls gt $svrupdate))
+    if (($lw gt $svrupdate_v)||($ls gt $svrupdate_v)||($last_o gt $svrupdate_o))
       {
       &svr_push($fn,$vehicleid);
       }
@@ -895,13 +975,23 @@ sub svr_push
   return if (!defined $svr_conns{$vehicleid}); # Make sure it is a server
 
   my $sth = $db->prepare('SELECT * FROM ovms_cars WHERE v_type="CAR" AND v_server IN ("*",?) AND changed>? ORDER BY changed');
-  $sth->execute($vehicleid,$conns{$fn}{'svrupdate'});
+  $sth->execute($vehicleid,$conns{$fn}{'svrupdate_v'});
   while (my $row = $sth->fetchrow_hashref())
     {
-    &io_tx($fn, $conns{$fn}{'handle'}, 'R', 
+    &io_tx($fn, $conns{$fn}{'handle'}, 'RV', 
             join(',',$row->{'vehicleid'},$row->{'owner'},$row->{'carpass'},
                      $row->{'v_server'},$row->{'deleted'},$row->{'changed'}));
-    $conns{$fn}{'svrupdate'} = $row->{'changed'};
+    $conns{$fn}{'svrupdate_v'} = $row->{'changed'};
+    }
+
+  $sth = $db->prepare('SELECT * FROM ovms_owners WHERE changed>? ORDER BY changed');
+  $sth->execute($conns{$fn}{'svrupdate_o'});
+  while (my $row = $sth->fetchrow_hashref())
+    {
+    &io_tx($fn, $conns{$fn}{'handle'}, 'RO',
+            join(',',$row->{'owner'},$row->{'name'},$row->{'mail'},
+                     $row->{'pass'},$row->{'status'},$row->{'deleted'},$row->{'changed'}));
+    $conns{$fn}{'svrupdate_o'} = $row->{'changed'};
     }
   }
 
@@ -917,7 +1007,12 @@ sub svr_client
     my $sth = $db->prepare('SELECT MAX(changed) AS mc FROM ovms_cars WHERE v_type="CAR"');
     $sth->execute();
     my $row = $sth->fetchrow_hashref();
-    my $last = $row->{'mc'}; $last = '0000-00-00 00:00:00' if (!defined $last);
+    my $last_v = $row->{'mc'}; $last_v = '0000-00-00 00:00:00' if (!defined $last_v);
+
+    $sth = $db->prepare('SELECT MAX(changed) AS mc FROM ovms_owners');
+    $sth->execute();
+    $row = $sth->fetchrow_hashref();
+    my $last_o = $row->{'mc'}; $last_o = '0000-00-00 00:00:00' if (!defined $last_o);
 
     $svr_client_token = '';
     foreach (0 .. 21)
@@ -925,7 +1020,7 @@ sub svr_client
     my $client_hmac = Digest::HMAC->new($svr_pass, "Digest::MD5");
     $client_hmac->add($svr_client_token);
     $svr_client_digest = $client_hmac->b64digest();
-    $svr_handle->push_write("MP-S 0 $svr_client_token $svr_client_digest $svr_vehicle $last\r\n");
+    $svr_handle->push_write("MP-S 0 $svr_client_token $svr_client_digest $svr_vehicle $last_v $last_o\r\n");
     }
   }
 
@@ -976,16 +1071,28 @@ sub svr_line
     {
     $svr_handle->push_write(encode_base64($svr_txcipher->RC4("MP-0 a"),''));
     }
-  elsif ($dline =~ /MP-0 R(.+)/)
+  elsif ($dline =~ /MP-0 RV(.+)/)
     {
     my ($vehicleid,$owner,$carpass,$v_server,$deleted,$changed) = split(/,/,$1);
-    AE::log info => "#$fn - - svr got record update $vehicleid ($changed)";
+    AE::log info => "#$fn - - svr got vehicle record update $vehicleid ($changed)";
 
     $db->do('INSERT INTO ovms_cars (vehicleid,owner,carpass,v_server,deleted,changed,v_lastupdate) '
           . 'VALUES (?,?,?,?,?,?,NOW()) '
           . 'ON DUPLICATE KEY UPDATE owner=?, carpass=?, v_server=?, deleted=?, changed=?',
             undef,
             $vehicleid,$owner,$carpass,$v_server,$deleted,$changed,$owner,$carpass,$v_server,$deleted,$changed);
+    }
+  elsif ($dline =~ /MP-0 RO(.+)/)
+    {
+    my ($owner,$name,$mail,$pass,$status,$deleted,$changed) = split(/,/,$1);
+    AE::log info => "#$fn - - svr got owner record update $owner ($changed)";
+  
+    $db->do('INSERT INTO ovms_owners (owner,name,mail,pass,status,deleted,changed) '
+          . 'VALUES (?,?,?,?,?,?,?) '
+          . 'ON DUPLICATE KEY UPDATE name=?, mail=?, pass=?, status=?, deleted=?, changed=?',
+            undef,
+            $owner,$name,$mail,$pass,$status,$deleted,$changed,
+            $name,$mail,$pass,$status,$deleted,$changed);
     }
   }
 
@@ -1248,89 +1355,754 @@ sub c2dm_tim
     }
   }
 
-sub http_io_error
+sub http_request_in_root
   {
-  my ($hdl, $fatal, $msg) = @_;
+  my ($httpd, $req) = @_;
 
-  my $fn=$hdl->fh->fileno();
-  delete $conns{$fn};
-  AE::log info => "HTTP connection #$fn had error ($fatal, $msg)";
+  AE::log info => join(' ','http','-','-',$req->client_host.':'.$req->client_port,'-',$req->method,$req->url);
+
+  $req->respond ( [404, 'not found', { 'Content-Type' => 'text/plain' }, "not found\n"] );
+  $httpd->stop_request;
   }
 
-sub http_io_timeout
+
+# GET     /api/cookie                             Login and return a session cookie
+INIT { $http_request_api_noauth{'GET:cookie'} = \&http_request_api_cookie_login; }
+sub http_request_api_cookie_login
   {
-  my ($hdl) = @_;
+  my ($httpd,$req,$session,@rest) = @_;
 
-  my $fn=$hdl->fh->fileno();
-  delete $conns{$fn};
-  AE::log info => "HTTP connection #$fn timed out";
-  }
+  my $username = $req->url->query_param('username');
+  my $password = $req->url->query_param('password');
 
-sub http_io_read
-  {
-  my ($hdl) = @_;
-  my $fn = $hdl->fh->fileno();
-
-  my %env;
-  my $ret = parse_http_request($hdl->rbuf,\%env);
-  if ($ret == -2)
+  if ((defined $username)&&(defined $password))
     {
-    AE::log info => "Got ".length($hdl->rbuf)." byte(s), but not complete";
-    return;   # request is incomplete
+    my $sth = $db->prepare('SELECT * FROM ovms_owners WHERE `name`=? and `status`=1 AND deleted="0000-00-00 00:00:00"');
+    $sth->execute($username);
+    my $row = $sth->fetchrow_hashref();
+    if (defined $row)
+      {
+      my $passwordhash = $row->{'pass'};
+      if (&drupal_password_check($passwordhash, $password))
+        {
+        # Password ok
+        my $ug = new Data::UUID;
+        my $sessionid =  $ug->create_str();
+
+        $api_conns{$sessionid}{'username'} = $username;
+        $api_conns{$sessionid}{'owner'} = $row->{'owner'};
+        $api_conns{$sessionid}{'mail'} = $row->{'name'};
+        $api_conns{$sessionid}{'sessionused'} = AnyEvent->now;
+
+        $sth = $db->prepare('SELECT * FROM ovms_cars WHERE owner=? AND deleted=0');
+        $sth->execute($row->{'owner'});
+        while (my $row = $sth->fetchrow_hashref())
+          {
+          $api_conns{$sessionid}{'vehicles'}{$row->{'vehicleid'}} = 0;
+          }
+
+        AE::log info => join(' ','http','-',$sessionid,$req->client_host.':'.$req->client_port,'session created');
+
+        $req->respond (  [200, 'Authentication ok', { 'Content-Type' => 'text/plain', 'Set-Cookie' => "ovmsapisession=$sessionid" }, "Login ok\n"] );
+        $httpd->stop_request;
+        return;
+        }
+      }
     }
-  elsif ($ret == -1)
+
+  $req->respond ( [404, 'Authentication failed', { 'Content-Type' => 'text/plain' }, "Authentication failed\n"] );
+  $httpd->stop_request;
+  }
+
+# DELETE  /api/cookie                             Delete the session cookie and logout
+INIT { $http_request_api_auth{'DELETE:cookie'} = \&http_request_api_cookie_logout; }
+sub http_request_api_cookie_logout
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  delete $api_conns{$session};
+
+  AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'session destroyed (on request)');
+
+  $req->respond ( [200, 'Logout ok', { 'Content-Type' => 'text/plain' }, "Logout ok\n"] );
+  $httpd->stop_request;
+  }
+
+# GET     .api/vehicles                           Return alist of registered vehicles
+INIT { $http_request_api_auth{'GET:vehicles'} = \&http_request_api_vehicles; }
+sub http_request_api_vehicles
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  my @result;
+  foreach (sort keys %{$api_conns{$session}{'vehicles'}})
     {
-    # request is broken
-    delete $conns{$fn};
-    AE::log error => "fatal: bad http request - terminated";
+    my $vehicleid = $_;
+    my $connected = (defined $car_conns{$vehicleid})?1:0;
+    my $appcount = scalar keys %{$app_conns{$vehicleid}};
+
+    my %h = ( 'id'=>$vehicleid, 'v_net_connected'=>$connected, 'v_apps_connected'=>$appcount );
+    push @result, \%h;
+    }
+
+  my $json = JSON::XS->new->utf8->canonical->encode (\@result) . "\n";
+  $req->respond ( [200, 'Logout ok', { 'Content-Type' => 'application/json' }, $json] );
+  $httpd->stop_request;
+  }
+
+
+# GET     /api/protocol/<VEHICLEID>               Return raw protocol records (no vehicle connection)
+INIT { $http_request_api_auth{'GET:protocol'} = \&http_request_api_protocol; }
+sub http_request_api_protocol
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  my ($vehicleid) = @rest;
+
+  if ((!defined $vehicleid)||(!defined $api_conns{$session}{'vehicles'}{$vehicleid}))
+    {
+    AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'Forbidden access',$vehicleid);
+    $req->respond ( [404, 'Forbidden', { 'Content-Type' => 'text/plain' }, "Forbidden\n"] );
+    $httpd->stop_request;
+    return;
+    }
+
+  my @result;
+  my $sth = $db->prepare('SELECT * FROM ovms_carmessages WHERE vehicleid=? and m_valid=1 order by field(m_code,"S","F") DESC,m_code ASC');
+  $sth->execute($vehicleid);
+  while (my $row = $sth->fetchrow_hashref())
+    {
+    my %h;
+    foreach (qw(m_msgtime m_paranoid m_ptoken m_code m_msg))
+      {
+      $h{$_} = $row->{$_};
+      }
+    push @result, \%h;
+    }
+
+  my $json = JSON::XS->new->utf8->canonical->encode (\@result) . "\n";
+  $req->respond ( [200, 'Logout ok', { 'Content-Type' => 'application/json' }, $json] );
+  $httpd->stop_request;
+  }
+
+# GET     /api/vehicle/<VEHICLEID>                Connect to, and return vehicle information
+INIT { $http_request_api_auth{'GET:vehicle'} = \&http_request_api_vehicle_get; }
+sub http_request_api_vehicle_get
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );    
+  $httpd->stop_request;
+  }
+
+# DELETE  /api/vehicle/<VEHICLEID>                Disconnect from vehicle
+INIT { $http_request_api_auth{'DELETE:vehicle'} = \&http_request_api_vehicle_delete; }
+sub http_request_api_vehicle_delete
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );    
+  $httpd->stop_request;
+  }
+
+# GET	/api/status/<VEHICLEID>			Return vehicle status
+INIT { $http_request_api_auth{'GET:status'} = \&http_request_api_status; }
+sub http_request_api_status
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  my ($vehicleid) = @rest;
+
+  if ((!defined $vehicleid)||(!defined $api_conns{$session}{'vehicles'}{$vehicleid}))
+    {
+    AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'Forbidden access',$vehicleid);
+    $req->respond ( [404, 'Forbidden', { 'Content-Type' => 'text/plain' }, "Forbidden\n"] );
+    $httpd->stop_request;
+    return;
+    }
+
+  my $rec = &api_vehiclerecord($vehicleid,'S');
+  my %result;
+  if (defined $rec)
+    {
+    if ($rec->{'m_paranoid'})
+      {
+      $req->respond ( [404, 'Vehicle is paranoid', { 'Content-Type' => 'text/plain' }, "Paranoid vehicles not supported by api\n"] );
+      $httpd->stop_request;
+      return;
+      }
+    my ($soc,$units,$linevoltage,$chargecurrent,$chargestate,$chargemode,$idealrange,$estimatedrange,
+        $chargelimit,$chargeduration,$chargeb4,$chargekwh,$chargesubstate,$chargestateN,$chargemodeN,
+        $chargetimer,$chargestarttime,$chargetimerstale) = split /,/,$rec->{'m_msg'};
+    $result{'soc'} = $soc;
+    $result{'units'} = $units;
+    $result{'idealrange'} = $idealrange;
+    $result{'estimatedrange'} = $estimatedrange,
+    $result{'mode'} = $chargemode;
+    }
+  $rec= &api_vehiclerecord($vehicleid,'D');
+  if (defined $rec)
+    {
+    if (! $rec->{'m_paranoid'})
+      {
+      my ($doors1,$doors2,$lockunlock,$tpem,$tmotor,$tbattery,$trip,$odometer,$speed,$parktimer,$ambient,
+          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4) = split /,/,$rec->{'m_msg'};
+      $result{'fl_dooropen'} =   $doors1 & 0b00000001;
+      $result{'fr_dooropen'} =   $doors1 & 0b00000010;
+      $result{'cp_dooropen'} =   $doors1 & 0b00000100;
+      $result{'pilotpresent'} =  $doors1 & 0b00001000;
+      $result{'charging'} =      $doors1 & 0b00010000;
+      $result{'handbrake'} =     $doors1 & 0b01000000;
+      $result{'caron'} =         $doors1 & 0b10000000;
+      $result{'carlocked'} =     $doors2 & 0b00001000;
+      $result{'valetmode'} =     $doors2 & 0b00010000;
+      $result{'bt_open'} =       $doors2 & 0b01000000;
+      $result{'tr_open'} =       $doors2 & 0b10000000;
+      $result{'temperature_pem'} = $tpem;
+      $result{'temperature_motor'} = $tmotor;
+      $result{'temperature_battery'} = $tbattery;
+      $result{'tripmeter'} = $trip;
+      $result{'odometer'} = $odometer;
+      $result{'speed'} = $speed;
+      $result{'parkingtimer'} = $parktimer;
+      $result{'temperature_ambient'} = $ambient;
+      $result{'carawake'} =      $doors3 & 0b00000010;
+      $result{'staletemps'} = $staletemps;
+      $result{'staleambient'} = $staleambient;
+      $result{'vehicle12v'} = $vehicle12v;
+      $result{'alarmsounding'} = $doors4 & 0b00000100;
+      }
+    }
+
+  my $json = JSON::XS->new->utf8->canonical->encode (\%result) . "\n";
+  $req->respond ( [200, 'Vehicle Status', { 'Content-Type' => 'application/json' }, $json] );
+  $httpd->stop_request;
+  }
+
+# GET	/api/tpms/<VEHICLEID>			Return tpms status
+INIT { $http_request_api_auth{'GET:tpms'} = \&http_request_api_tpms; }
+sub http_request_api_tpms
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  my ($vehicleid) = @rest;
+
+  if ((!defined $vehicleid)||(!defined $api_conns{$session}{'vehicles'}{$vehicleid}))
+    {
+    AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'Forbidden access',$vehicleid);
+    $req->respond ( [404, 'Forbidden', { 'Content-Type' => 'text/plain' }, "Forbidden\n"] );
+    $httpd->stop_request;
+    return;
+    }
+
+  my $rec = &api_vehiclerecord($vehicleid,'W');
+  my %result;
+  if (defined $rec)
+    {
+    if ($rec->{'m_paranoid'})
+      {
+      $req->respond ( [404, 'Vehicle is paranoid', { 'Content-Type' => 'text/plain' }, "Paranoid vehicles not supported by api\n"] );
+      $httpd->stop_request;
+      return;
+      }
+    my ($fr_pressure,$fr_temp,$rr_pressure,$rr_temp,$fl_pressure,$fl_temp,$rl_pressure,$rl_temp,$staletpms) = split /,/,$rec->{'m_msg'};
+    $result{'fr_pressure'} = $fr_pressure;
+    $result{'fr_temperature'} = $fr_temp;
+    $result{'rr_pressure'} = $rr_pressure;
+    $result{'rr_temperature'} = $rr_temperature;
+    $result{'fl_pressure'} = $fl_pressure;
+    $result{'fl_temperature'} = $fl_temperature;
+    $result{'rl_pressure'} = $rl_pressure;
+    $result{'rl_temperature'} = $rl_temperature;
+    $result{'staletpms'} = $staletpms;
+    }
+
+  my $json = JSON::XS->new->utf8->canonical->encode (\%result) . "\n";
+  $req->respond ( [200, 'TPMS', { 'Content-Type' => 'application/json' }, $json] );
+  $httpd->stop_request;
+  }
+
+# GET	/api/location/<VEHICLEID>		Return vehicle location
+INIT { $http_request_api_auth{'GET:location'} = \&http_request_api_location; }
+sub http_request_api_location
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  my ($vehicleid) = @rest;
+
+  if ((!defined $vehicleid)||(!defined $api_conns{$session}{'vehicles'}{$vehicleid}))
+    {
+    AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'Forbidden access',$vehicleid);
+    $req->respond ( [404, 'Forbidden', { 'Content-Type' => 'text/plain' }, "Forbidden\n"] );
+    $httpd->stop_request;
+    return;
+    }
+
+  my $rec = &api_vehiclerecord($vehicleid,'L');
+  my %result;
+  if (defined $rec)
+    {
+    if ($rec->{'m_paranoid'})
+      {
+      $req->respond ( [404, 'Vehicle is paranoid', { 'Content-Type' => 'text/plain' }, "Paranoid vehicles not supported by api\n"] );
+      $httpd->stop_request;
+      return;
+      }
+    my ($latitude,$longitude,$direction,$altitude,$gpslock,$stalegps) = split /,/,$rec->{'m_msg'};
+    $result{'latitude'} = $latitude;
+    $result{'longitude'} = $longitude;
+    $result{'direction'} = $direction;
+    $result{'altitude'} = $altitude;
+    $result{'gpslock'} = $gpslock;
+    $result{'stalegps'} = $stalegps;
+    }
+
+  my $json = JSON::XS->new->utf8->canonical->encode (\%result) . "\n";
+  $req->respond ( [200, 'Location', { 'Content-Type' => 'application/json' }, $json] );
+  $httpd->stop_request;
+  }
+
+# GET	/api/charge/<VEHICLEID>			Return vehicle charge status
+INIT { $http_request_api_auth{'GET:charge'} = \&http_request_api_charge_get; }
+sub http_request_api_charge_get
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  my ($vehicleid) = @rest;
+
+  if ((!defined $vehicleid)||(!defined $api_conns{$session}{'vehicles'}{$vehicleid}))
+    {
+    AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'Forbidden access',$vehicleid);
+    $req->respond ( [404, 'Forbidden', { 'Content-Type' => 'text/plain' }, "Forbidden\n"] );
+    $httpd->stop_request;
+    return;
+    }
+  
+  my $rec = &api_vehiclerecord($vehicleid,'S');
+  my %result;
+  if (defined $rec)
+    {
+    if ($rec->{'m_paranoid'})
+      {
+      $req->respond ( [404, 'Vehicle is paranoid', { 'Content-Type' => 'text/plain' }, "Paranoid vehicles not supported by api\n"] );
+      $httpd->stop_request;
+      return;
+      }
+    my ($soc,$units,$linevoltage,$chargecurrent,$chargestate,$chargemode,$idealrange,$estimatedrange,
+        $chargelimit,$chargeduration,$chargeb4,$chargekwh,$chargesubstate,$chargestateN,$chargemodeN,
+        $chargetimer,$chargestarttime,$chargetimerstale) = split /,/,$rec->{'m_msg'};
+    $result{'linevoltage'} = $linevoltage;
+    $result{'chargecurrent'} = $chargecurrent;
+    $result{'chargestate'} = $chargestate;
+    $result{'soc'} = $soc;
+    $result{'units'} = $units;
+    $result{'idealrange'} = $idealrange;
+    $result{'estimatedrange'} = $estimatedrange,
+    $result{'mode'} = $chargemode;
+    $result{'chargelimit'} = $chargelimit;
+    $result{'chargeduration'} = $chargeduration;
+    $result{'chargekwh'} = $chargekwh;
+    $result{'chargetimermode'} = $chargetimer;
+    $result{'chargestarttime'} = $chargestarttime;
+    $result{'chargetimerstale'} = $chargetimerstale;
+    }
+  $rec= &api_vehiclerecord($vehicleid,'D');
+  if (defined $rec)
+    {
+    if (! $rec->{'m_paranoid'})
+      {
+      my ($doors1,$doors2,$lockunlock,$tpem,$tmotor,$tbattery,$trip,$odometer,$speed,$parktimer,$ambient,
+          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4) = split /,/,$rec->{'m_msg'};
+      $result{'cp_dooropen'} =   $doors1 & 0b00000100;
+      $result{'pilotpresent'} =  $doors1 & 0b00001000;
+      $result{'charging'} =      $doors1 & 0b00010000;
+      $result{'caron'} =         $doors1 & 0b10000000;
+      $result{'temperature_pem'} = $tpem;
+      $result{'temperature_motor'} = $tmotor;
+      $result{'temperature_battery'} = $tbattery;
+      $result{'temperature_ambient'} = $ambient;
+      $result{'carawake'} =      $doors3 & 0b00000010;
+      $result{'staletemps'} = $staletemps;
+      $result{'staleambient'} = $staleambient;
+      }
+    }
+
+  my $json = JSON::XS->new->utf8->canonical->encode (\%result) . "\n";
+  $req->respond ( [200, 'Location', { 'Content-Type' => 'application/json' }, $json] );
+  $httpd->stop_request;
+  }
+
+# PUT	/api/charge/<VEHICLEID>			Set vehicle charge status
+INIT { $http_request_api_auth{'PUT:charge'} = \&http_request_api_charge_put; }
+sub http_request_api_charge_put
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# DELETE	/api/charge/<VEHICLEID>			Abort a vehicle charge
+INIT { $http_request_api_auth{'DELETE:charge'} = \&http_request_api_charge_delete; }
+sub http_request_api_charge_delete
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# GET	/api/lock/<VEHICLEID>			Return vehicle lock status
+INIT { $http_request_api_auth{'GET:lock'} = \&http_request_api_lock_get; }
+sub http_request_api_locK_get
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# PUT	/api/lock/<VEHICLEID>			Lock a vehicle
+INIT { $http_request_api_auth{'PUT:lock'} = \&http_request_api_lock_put; }
+sub http_request_api_lock_put
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# DELETE	/api/lock/<VEHICLEID>			Unlock a vehicle
+INIT { $http_request_api_auth{'DELETE:lock'} = \&http_request_api_lock_delete; }
+sub http_request_api_lock_delete
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# GET	/api/valet/<VEHICLEID>			Return valet status
+INIT { $http_request_api_auth{'GET:valet'} = \&http_request_api_valet_get; }
+sub http_request_api_valet_get
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# PUT	/api/valet/<VEHICLEID>			Enable valet mode
+INIT { $http_request_api_auth{'PUT:valet'} = \&http_request_api_valet_put; }
+sub http_request_api_valet_put
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# DELETE	/api/valet/<VEHICLEID>			Disable valet mode
+INIT { $http_request_api_auth{'DELETE:valet'} = \&http_request_api_valet_delete; }
+sub http_request_api_valet_delete
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# GET	/api/features/<VEHICLEID>		Return vehicle features
+INIT { $http_request_api_auth{'GET:features'} = \&http_request_api_features_get; }
+sub http_request_api_features_get
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# PUT	/api/feature/<VEHICLEID>		Set a vehicle feature
+INIT { $http_request_api_auth{'PUT:features'} = \&http_request_api_features_put; }
+sub http_request_api_features_put
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# GET	/api/parameters/<VEHICLEID>		Return vehicle parameters
+INIT { $http_request_api_auth{'GET:parameters'} = \&http_request_api_parameters_get; }
+sub http_request_api_parameters_get
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# PUT	/api/parameter/<VEHICLEID>		Set a vehicle parameter
+INIT { $http_request_api_auth{'PUT:parameters'} = \&http_request_api_parameters_put; }
+sub http_request_api_parameters_put
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+
+# PUT	/api/reset/<VEHICLEID>			Reset the module in a particular vehicle
+INIT { $http_request_api_auth{'PUT:reset'} = \&http_request_api_reset; }
+sub http_request_api_reset
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# PUT	/api/homelink/<VEHICLEID>		Activate home link
+INIT { $http_request_api_auth{'PUT:homelink'} = \&http_request_api_homelink; }
+sub http_request_api_homelink
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  $req->respond ( [404, 'Not yet implemented', { 'Content-Type' => 'text/plain' }, "Not yet implemented\n"] );
+  $httpd->stop_request;
+  }
+
+# GET	/api/historical/<VEHICLEID>		Request historical data summary
+# GET     /api/historical/<VEHICLEID>/<DATATYPE>  Request historical data records
+INIT { $http_request_api_auth{'GET:historical'} = \&http_request_api_historical; }
+sub http_request_api_historical
+  {
+  my ($httpd,$req,$session,@rest) = @_;
+
+  my ($vehicleid,$datatype) = @rest;
+
+  if ((!defined $vehicleid)||(!defined $api_conns{$session}{'vehicles'}{$vehicleid}))
+    {
+    AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'Forbidden access',$vehicleid);
+    $req->respond ( [404, 'Forbidden', { 'Content-Type' => 'text/plain' }, "Forbidden\n"] );
+    $httpd->stop_request;
+    return;
+    }
+
+  my @result;
+  if (!defined $datatype)
+    {
+    # A Request for the historical data summary
+    my $sth = $db->prepare('SELECT h_recordtype,COUNT(DISTINCT h_recordnumber) AS distinctrecs, COUNT(*) AS totalrecs,SUM(LENGTH(h_recordtype)+LENGTH(h_data)+LENGTH(vehicleid)+20) AS totalsize, MIN(h_timestamp) AS first, MAX(h_timestamp) AS last '
+                         . 'FROM ovms_historicalmessages WHERE vehicleid=? GROUP BY h_recordtype ORDER BY h_recordtype;');
+    $sth->execute($vehicleid);
+    my $rows = $sth->rows;
+    while (my $row = $sth->fetchrow_hashref())
+      {
+      my %h;
+      foreach (qw(h_recordtype distinctrecs totalrecs totalsize first last))
+        {
+        $h{$_} = $row->{$_};
+        }
+      push @result, \%h;      
+      }
     }
   else
     {
-    # $ret includes the size of the request, %env now contains a PSGI
-    # request, if it is a POST / PUT request, read request content by
-    # yourself
-    AE::log info => "Got HTTP request";
-    foreach (sort keys %env)
+    # A request for a specific type of historical data
+    my $sth = $db->prepare('SELECT * FROM ovms_historicalmessages WHERE vehicleid=? AND h_recordtype=? ORDER BY h_timestamp,h_recordnumber');
+    $sth->execute($vehicleid,$datatype);
+    while (my $row = $sth->fetchrow_hashref())
       {
-      AE::log info => "  $_: ".$env{$_};
+      my %h;
+      foreach (qw(h_timestamp h_recordnumber h_data))
+        {
+        $h{$_} = $row->{$_};
+        }
+      push @result, \%h;
       }
-    my $path = $env{'PATH_INFO'};
-    my %params;
-    foreach (split /\&/,$env{'QUERY_STRING'})
+    }
+
+  my $json = JSON::XS->new->utf8->canonical->encode (\@result) . "\n";
+  $req->respond ( [200, 'Historical Data', { 'Content-Type' => 'application/json' }, $json] );
+  $httpd->stop_request;
+  }
+
+sub http_request_in_api
+  {
+  my ($httpd, $req) = @_;
+
+  my $method = $req->method;
+  my $path = $req->url->path;
+  my @paths = $req->url->path_segments;
+  my $headers = $req->headers;
+
+  my $cookie = $headers->{'cookie'};
+  my $session = '-';
+  $session = $1 if ($cookie =~ /^ovmsapisession=(.+)/);
+
+  if ($paths[0] eq '')
+    {
+    shift @paths; # Skip '' root
+    shift @paths; # Skip 'api'
+    my $fn = shift @paths;
+    my $fnc = $http_request_api_noauth{uc($method) . ':' . $fn};
+    if (defined $fnc)
       {
-      $params{$1}=$2 if (/^([^=]+)\=(.+)/);
+      AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'ok',$req->method,join('/',$req->url->path_segments));
+      &$fnc($httpd, $req, undef, @paths);
+      return;
       }
-    AE::log info => "Request: $path";
-    foreach (sort keys %params)
+    if ((defined $session)&&($session ne '-')&&(defined $api_conns{$session}))
       {
-      AE::log info => "  $_: ".$params{$_};
+      $api_conns{$session}{'sessionused'} = AnyEvent->now;
+      my $fnc = $http_request_api_auth{uc($method) . ':' . $fn};
+      if (defined $fnc)
+        {
+        AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'ok',$req->method,join('/',$req->url->path_segments));
+        &$fnc($httpd, $req, $session, @paths);
+        return;
+        }
       }
-    if ($path eq '/group')
+    else
       {
-      &http_group($hdl,$fn,$params{'id'},$params{'format'});
+      AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'authfail',$req->method,join('/',$req->url->path_segments));
+      $req->respond ( [404, 'Authentication failed', { 'Content-Type' => 'text/plain' }, "Authentication failed\n"] );
+      $httpd->stop_request;
+      return;
       }
-    $hdl->on_drain(\&http_io_drain);
+    }
+
+  AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'noapi',$req->method,join('/',$req->url->path_segments));
+  $req->respond ( [404, 'Unrecongised API call', { 'Content-Type' => 'text/plain' }, "Unrecognised API call\n"] );
+  $httpd->stop_request;
+  }
+
+sub api_tim
+  {
+  foreach my $session (keys %api_conns)
+    {
+    my $lastused = $api_conns{$session}{'sessionused'};
+    my $expire = AnyEvent->now - 120;
+
+    if ($lastused < $expire)
+      {
+      delete $api_conns{$session};
+      AE::log info => join(' ','http','-',$session,'-','session timeout');
+      }
     }
   }
 
-sub http_io_drain
+sub api_vehiclerecord
   {
-  my ($hdl) = @_;
-  my $fn=$hdl->fh->fileno();
-  delete $conns{$fn};
-  AE::log info => "HTTP connection #$fn done";
+  my ($vehicleid,$code) = @_;
+
+  my $sth = $db->prepare('SELECT * FROM ovms_carmessages WHERE vehicleid=? and m_valid=1 and m_code=?');
+  $sth->execute($vehicleid,$code);
+  my $row = $sth->fetchrow_hashref();
+  return $row;
   }
 
-sub http_group
+sub http_request_in_electricracekml
   {
-  my ($hdl,$fn,$id,$format) = @_;
+  my ($httpd, $req) = @_;
+
+  AE::log info => join(' ','http','-','-',$req->client_host.':'.$req->client_port,'-',$req->method,$req->url);
+
+  open my $er, 'electricrace/electricrace.kml'
+    or $req->respond (
+                     [404, 'not found', { 'Content-Type' => 'text/plain' }, 'not found']
+                     );
+
+  $req->respond ({ content => ['application/vnd.google-earth.kml+xml', do { local $/; <$er> }] });
+
+  $httpd->stop_request;
+  }
+
+sub http_request_in_electricracekmlfull
+  {
+  my ($httpd, $req) = @_;
+
+  AE::log info => join(' ','http','-','-',$req->client_host.':'.$req->client_port,'-',$req->method,$req->url);
+
+  open my $er, 'electricrace/electricrace.kmlfull'
+    or $req->respond (
+                     [404, 'not found', { 'Content-Type' => 'text/plain' }, 'not found']
+                     );
+
+  $req->respond ({ content => ['application/vnd.google-earth.kml+xml', do { local $/; <$er> }] });
+
+  $httpd->stop_request;
+  }
+
+sub http_request_in_electricrace
+  {
+  my ($httpd, $req) = @_;
+
+  AE::log info => join(' ','http','-','-',$req->client_host.':'.$req->client_port,'-',$req->method,$req->url);
+
+  open my $er, 'electricrace/electricrace.html'
+    or $req->respond (
+                     [404, 'not found', { 'Content-Type' => 'text/plain' }, 'not found']
+                     );
+
+  $req->respond ({ content => ['text/html', do { local $/; <$er> }] });
+
+  $httpd->stop_request;
+  }
+
+sub http_request_in_file
+  {
+  my ($httpd, $req) = @_;
+
+  AE::log info => join(' ','http','-','-',$req->client_host.':'.$req->client_port,'-',$req->method,$req->url);
+
+  my $filepath = $1 if ($req->url =~ /^\/file\/([a-zA-Z0-9\-\_\.]+)$/);
+
+  if ((defined $filepath)&&(-f "httpfiles/$filepath"))
+    {
+    open my $fp,'<',"httpfiles/$filepath";
+    $_ = <$fp>; chop;
+    my $contenttype = $_;
+    AE::log info => join(' ','http','-','-',$req->client_host.':'.$req->client_port,'-','start file transfer');
+    $req->respond ({ content => [$contenttype, sub {
+      my ($data_cb) = @_;
+
+      if (!defined $data_cb)
+        {
+        AE::log info => join(' ','http','-','-',$req->client_host.':'.$req->client_port,'-','finished file transfer');
+        close $fp;
+        return;
+        }
+      else
+        {
+        my $buf;
+        read $fp,$buf,16384;
+        AE::log info => join(' ','http','-','-',$req->client_host.':'.$req->client_port,'-','file transfer blob: ',length($buf),'bytes');
+        &$data_cb($buf);
+        }
+      } ]});
+    }
+  else
+    {
+    $req->respond (
+                    [404, 'not found', { 'Content-Type' => 'text/plain' }, "not found\n"]
+                 );
+    }
+
+  $httpd->stop_request;
+  }
+
+sub http_request_in_group
+  {
+  my ($httpd, $req) = @_;
+
+  AE::log info => join(' ','http','-','-',$req->client_host.':'.$req->client_port,'-',$req->method,$req->url);
+
+  my $id = $req->parm('id');
 
   my @result;
-
-  push @result,"HTTP/1.0 200 OK";
-  push @result,"Expires: -1";
-  push @result,"Content-Type: application/vnd.google-earth.kml+xml";
-  push @result,"";
 
   push @result,<<"EOT";
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1346,12 +2118,14 @@ sub http_group
   </Style>
 EOT
 
-foreach (sort keys %{$group_msgs{$id}})
+if (defined $group_msgs{$id})
   {
-  my ($vehicleid,$groupmsg) = ($_,$group_msgs{$id}{$_});
-  my ($soc,$speed,$direction,$altitude,$gpslock,$stalegps,$latitude,$longitude) = split(/,/,$groupmsg);
+  foreach (sort keys %{$group_msgs{$id}})
+    {
+    my ($vehicleid,$groupmsg) = ($_,$group_msgs{$id}{$_});
+    my ($soc,$speed,$direction,$altitude,$gpslock,$stalegps,$latitude,$longitude) = split(/,/,$groupmsg);
 
-  push @result,<<"EOT";
+    push @result,<<"EOT";
   <Placemark>
     <name>$vehicleid</name>
     <description>$vehicleid</description>
@@ -1361,6 +2135,7 @@ foreach (sort keys %{$group_msgs{$id}})
     </Point>
   </Placemark>
 EOT
+    }
   }
 
   push @result,<<"EOT";
@@ -1368,6 +2143,62 @@ EOT
 </kml>
 EOT
 
-  $hdl->push_write(join("\n",@result));
+  $req->respond([
+      200, 'OK', {
+        'Content-Type'  => 'Content-Type: application/vnd.google-earth.kml+xml'
+      },
+      join("\n",@result)
+   ]);
+  $httpd->stop_request;
+  }
+
+sub drupal_password_check
+  {
+  my ($ph,$password) = @_;
+
+  my $iter_log2 = index($itoa64,substr($ph,3,1));
+  my $iter_count = 1 << $iter_log2;
+
+  my $phash = substr($ph,0,12);
+  my $salt = substr($ph,4,8);
+
+  my $hash = sha512($salt.$password);
+  do
+    {
+    $hash = sha512($hash.$password);
+    $iter_count--;
+    } while ($iter_count > 0);
+
+  my $encoded = substr($phash . &drupal_password_base64_encode($hash,length($hash)),0,55);
+
+  return ($encoded eq $ph);
+  }
+
+sub drupal_password_base64_encode
+  {
+  my ($input, $count) = @_;
+  my $output = '';
+  my $i = 0;
+  do {
+    my $value = ord(substr($input,$i++,1));
+    $output .= substr($itoa64,$value & 0x3f,1);
+    if ($i < $count) {
+      $value |= ord(substr($input,$i,1)) << 8;
+    }
+    $output .= substr($itoa64,($value >> 6) & 0x3f,1);
+    if ($i++ >= $count) {
+      break;
+    }
+    if ($i < $count) {
+      $value |= ord(substr($input,$i,1)) << 16;
+    }
+    $output .= substr($itoa64,($value >> 12) & 0x3f,1);
+    if ($i++ >= $count) {
+      break;
+    }
+    $output .= substr($itoa64,($value >> 18) & 0x3f,1);
+  } while ($i < $count);
+
+  return $output;
   }
 
