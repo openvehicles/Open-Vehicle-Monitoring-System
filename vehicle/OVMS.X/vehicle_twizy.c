@@ -110,6 +110,9 @@
 ;           - Pilot signal (able to charge) set from power line detection
 ;           - Support for car_time & car_parktime
 ;
+;    2.6.3  29 Mar 2013 (Michael Balzer):
+;           - Bug fix and acceleration of battery monitor sensor fetching
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -164,7 +167,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.6.2";
+rom char vehicle_twizy_version[] = "2.6.3";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -366,12 +369,15 @@ battery_cell twizy_cell[BATT_CELLS]; // size: 14 *  8 = 112 bytes
 //  ticker1() will not process the data until BATT_SENSORS_READY
 //  has been reached, after processing it will reset state to _START.
 volatile UINT8 twizy_batt_sensors_state;
-#define BATT_SENSORS_START          0
-#define BATT_SENSORS_GOT554         1
-#define BATT_SENSORS_GOT556         2
-#define BATT_SENSORS_GOT557         3
-#define BATT_SENSORS_GOT55E         4
-#define BATT_SENSORS_READY          5
+#define BATT_SENSORS_START          0   // start group fetch
+#define BATT_SENSORS_GOT556         3   // mask: lowest 2 bits (state)
+#define BATT_SENSORS_GOT554         4   // bit
+#define BATT_SENSORS_GOT557         8   // bit
+#define BATT_SENSORS_GOT55E         16  // bit
+#define BATT_SENSORS_GOT55F         32  // bit
+#define BATT_SENSORS_GOTALL         61  // threshold: data complete
+#define BATT_SENSORS_READY          63  // value: group complete
+
 
 // -------------------------------------------------
 // TOTAL RAM USAGE FOR BATTERY MONITOR: 159 bytes
@@ -916,109 +922,163 @@ BOOL vehicle_twizy_poll1(void)
 #ifdef OVMS_TWIZY_BATTMON
   else if (CANfilter == 4)
   {
+    UINT8 i, state;
+
     // Filter 4 = CAN ID GROUP 0x55_: battery sensors.
     //
     // This group really needs to be processed as fast as possible;
     // though only delivered once per second (except 556), the complete
-    // group comes at once an needs to be processed together to get
+    // group comes at once and needs to be processed together to get
     // a consistent sensor state.
 
-    if (CAN_BYTE(0) != 0x0ff) // common msg validation
-      switch (CANsid)
+    // NEW INFO: group msgs can come in arbitrary order!
+    //  => using faster (100ms) 0x556 msgs as examination window
+    //    to detect mid-group fetch start
+
+    // volatile optimization:
+    state = twizy_batt_sensors_state;
+
+    switch (CANsid)
+    {
+    case 0x06:
+      // CAN ID 0x556: Battery cell voltages 1-5
+      // 100 ms = 10 per second
+      //  => used to clock examination window
+      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
       {
-      case 0x04:
-        // CAN ID 0x554: Battery cell module temperatures
-        // (1000 ms = 1 per second)
-        if (twizy_batt_sensors_state != BATT_SENSORS_READY)
+        // store values:
+        twizy_cell[0].volt_act = ((UINT) CAN_BYTE(0) << 4)
+                | ((UINT) CAN_NIBH(1));
+        twizy_cell[1].volt_act = ((UINT) CAN_NIBL(1) << 8)
+                | ((UINT) CAN_BYTE(2));
+        twizy_cell[2].volt_act = ((UINT) CAN_BYTE(3) << 4)
+                | ((UINT) CAN_NIBH(4));
+        twizy_cell[3].volt_act = ((UINT) CAN_NIBL(4) << 8)
+                | ((UINT) CAN_BYTE(5));
+        twizy_cell[4].volt_act = ((UINT) CAN_BYTE(6) << 4)
+                | ((UINT) CAN_NIBH(7));
+
+        // detect fetch completion/failure:
+        if ((state & ~BATT_SENSORS_GOT556)
+                == (BATT_SENSORS_READY & ~BATT_SENSORS_GOT556))
         {
-          UINT8 i;
-
-          for (i = 0; i < BATT_CMODS; i++)
-            twizy_cmod[i].temp_act = CAN_BYTE(i);
-
-          twizy_batt_sensors_state = BATT_SENSORS_GOT554;
-        }
-        break;
-
-      case 0x06:
-        // CAN ID 0x556: Battery cell voltages 1-5
-        // (100 ms = 10 per second, for no apparent reason...)
-        if (twizy_batt_sensors_state == BATT_SENSORS_GOT554)
-        {
-          twizy_cell[0].volt_act = ((UINT) CAN_BYTE(0) << 4)
-                  | ((UINT) CAN_NIBH(1));
-          twizy_cell[1].volt_act = ((UINT) CAN_NIBL(1) << 8)
-                  | ((UINT) CAN_BYTE(2));
-          twizy_cell[2].volt_act = ((UINT) CAN_BYTE(3) << 4)
-                  | ((UINT) CAN_NIBH(4));
-          twizy_cell[3].volt_act = ((UINT) CAN_NIBL(4) << 8)
-                  | ((UINT) CAN_BYTE(5));
-          twizy_cell[4].volt_act = ((UINT) CAN_BYTE(6) << 4)
-                  | ((UINT) CAN_NIBH(7));
-
-          twizy_batt_sensors_state = BATT_SENSORS_GOT556;
-        }
-        break;
-
-      case 0x07:
-        // CAN ID 0x557: Battery cell voltages 6-10
-        // (1000 ms = 1 per second)
-        if (twizy_batt_sensors_state == BATT_SENSORS_GOT556)
-        {
-          twizy_cell[5].volt_act = ((UINT) CAN_BYTE(0) << 4)
-                  | ((UINT) CAN_NIBH(1));
-          twizy_cell[6].volt_act = ((UINT) CAN_NIBL(1) << 8)
-                  | ((UINT) CAN_BYTE(2));
-          twizy_cell[7].volt_act = ((UINT) CAN_BYTE(3) << 4)
-                  | ((UINT) CAN_NIBH(4));
-          twizy_cell[8].volt_act = ((UINT) CAN_NIBL(4) << 8)
-                  | ((UINT) CAN_BYTE(5));
-          twizy_cell[9].volt_act = ((UINT) CAN_BYTE(6) << 4)
-                  | ((UINT) CAN_NIBH(7));
-
-          twizy_batt_sensors_state = BATT_SENSORS_GOT557;
-        }
-        break;
-
-      case 0x0E:
-        // CAN ID 0x55E: Battery cell voltages 11-14
-        // (1000 ms = 1 per second)
-        if (twizy_batt_sensors_state == BATT_SENSORS_GOT557)
-        {
-          twizy_cell[10].volt_act = ((UINT) CAN_BYTE(0) << 4)
-                  | ((UINT) CAN_NIBH(1));
-          twizy_cell[11].volt_act = ((UINT) CAN_NIBL(1) << 8)
-                  | ((UINT) CAN_BYTE(2));
-          twizy_cell[12].volt_act = ((UINT) CAN_BYTE(3) << 4)
-                  | ((UINT) CAN_NIBH(4));
-          twizy_cell[13].volt_act = ((UINT) CAN_NIBL(4) << 8)
-                  | ((UINT) CAN_BYTE(5));
-
-          twizy_batt_sensors_state = BATT_SENSORS_GOT55E;
-        }
-        break;
-
-      case 0x0F:
-        // CAN ID 0x55F: Battery pack voltages
-        // (1000 ms = 1 per second)
-        if (twizy_batt_sensors_state == BATT_SENSORS_GOT55E)
-        {
-          // we still don't know why there are two pack voltages
-          // best guess: take avg
-          UINT v1, v2;
-
-          v1 = ((UINT) CAN_BYTE(5) << 4)
-                  | ((UINT) CAN_NIBH(6));
-          v2 = ((UINT) CAN_NIBL(6) << 8)
-                  | ((UINT) CAN_BYTE(7));
-
-          twizy_batt[0].volt_act = (v1 + v2) >> 1;
-
+          // read all sensor data: group complete
           twizy_batt_sensors_state = BATT_SENSORS_READY;
         }
-        break;
+        else if ((state & ~BATT_SENSORS_GOT556))
+        {
+          // read some sensor data: count 0x556 cycles
+          i = (state & BATT_SENSORS_GOT556) + 1;
+
+          if (i == 3)
+            // not complete in 2 0x556s cycles: drop window (wait for next group)
+            state = BATT_SENSORS_START;
+          else
+            // store new fetch window state:
+            state = (state & ~BATT_SENSORS_GOT556) | i;
+
+          twizy_batt_sensors_state = state;
+        }
 
       }
+
+      break;
+
+    case 0x04:
+      // CAN ID 0x554: Battery cell module temperatures
+      // (1000 ms = 1 per second)
+      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
+      {
+        for (i = 0; i < BATT_CMODS; i++)
+          twizy_cmod[i].temp_act = CAN_BYTE(i);
+
+        state |= BATT_SENSORS_GOT554;
+
+        // detect fetch completion:
+        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+          state = BATT_SENSORS_READY;
+
+        twizy_batt_sensors_state = state;
+      }
+      break;
+
+    case 0x07:
+      // CAN ID 0x557: Battery cell voltages 6-10
+      // (1000 ms = 1 per second)
+      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
+      {
+        twizy_cell[5].volt_act = ((UINT) CAN_BYTE(0) << 4)
+                | ((UINT) CAN_NIBH(1));
+        twizy_cell[6].volt_act = ((UINT) CAN_NIBL(1) << 8)
+                | ((UINT) CAN_BYTE(2));
+        twizy_cell[7].volt_act = ((UINT) CAN_BYTE(3) << 4)
+                | ((UINT) CAN_NIBH(4));
+        twizy_cell[8].volt_act = ((UINT) CAN_NIBL(4) << 8)
+                | ((UINT) CAN_BYTE(5));
+        twizy_cell[9].volt_act = ((UINT) CAN_BYTE(6) << 4)
+                | ((UINT) CAN_NIBH(7));
+
+        state |= BATT_SENSORS_GOT557;
+
+        // detect fetch completion:
+        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+          state = BATT_SENSORS_READY;
+
+        twizy_batt_sensors_state = state;
+      }
+      break;
+
+    case 0x0E:
+      // CAN ID 0x55E: Battery cell voltages 11-14
+      // (1000 ms = 1 per second)
+      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
+      {
+        twizy_cell[10].volt_act = ((UINT) CAN_BYTE(0) << 4)
+                | ((UINT) CAN_NIBH(1));
+        twizy_cell[11].volt_act = ((UINT) CAN_NIBL(1) << 8)
+                | ((UINT) CAN_BYTE(2));
+        twizy_cell[12].volt_act = ((UINT) CAN_BYTE(3) << 4)
+                | ((UINT) CAN_NIBH(4));
+        twizy_cell[13].volt_act = ((UINT) CAN_NIBL(4) << 8)
+                | ((UINT) CAN_BYTE(5));
+
+        state |= BATT_SENSORS_GOT55E;
+
+        // detect fetch completion:
+        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+          state = BATT_SENSORS_READY;
+
+        twizy_batt_sensors_state = state;
+      }
+      break;
+
+    case 0x0F:
+      // CAN ID 0x55F: Battery pack voltages
+      // (1000 ms = 1 per second)
+      if ((CAN_BYTE(5) != 0x0ff) && (state != BATT_SENSORS_READY))
+      {
+        // we still don't know why there are two pack voltages
+        // best guess: take avg
+        UINT v1, v2;
+
+        v1 = ((UINT) CAN_BYTE(5) << 4)
+                | ((UINT) CAN_NIBH(6));
+        v2 = ((UINT) CAN_NIBL(6) << 8)
+                | ((UINT) CAN_BYTE(7));
+
+        twizy_batt[0].volt_act = (v1 + v2) >> 1;
+
+        state |= BATT_SENSORS_GOT55F;
+
+        // detect fetch completion:
+        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+          state = BATT_SENSORS_READY;
+
+        twizy_batt_sensors_state = state;
+      }
+      break;
+
+    } // switch (CANsid)
   }
 #endif // OVMS_TWIZY_BATTMON
 
@@ -2102,7 +2162,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
   s = stp_x(s, " tw=", twizy_batt[0].temp_watches);
   s = stp_x(s, " ta=", twizy_batt[0].temp_alerts);
   s = stp_x(s, " lta=", twizy_batt[0].last_temp_alerts);
-  s = stp_i(s, " ss=", twizy_batt_sensors_state);
+  s = stp_x(s, " ss=", twizy_batt_sensors_state);
   net_puts_ram(net_scratchpad);
 #endif // OVMS_TWIZY_BATTMON
 
@@ -2614,7 +2674,7 @@ BOOL vehicle_twizy_battstatus_wait4sensors(void)
   for (n = 11; (twizy_batt_sensors_state != BATT_SENSORS_READY) && (n > 0); n--)
     delay100(1);
 
-  return ( twizy_batt_sensors_state == BATT_SENSORS_READY);
+  return (twizy_batt_sensors_state == BATT_SENSORS_READY);
 }
 
 

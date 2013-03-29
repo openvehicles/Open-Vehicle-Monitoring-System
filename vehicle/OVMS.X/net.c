@@ -1313,41 +1313,60 @@ void net_state_ticker60(void)
 
 #ifdef OVMS_HW_V2
 
-  car_12vline = inputs_voltage()*10;
+#define BATT_12V_CALMDOWN_TIME 15  // calm down time in minutes after charge end
 
-  // Calibration: ref = max reading while car is off and not plugged in;
-  //  also suppress readings for 10 minutes after plugged out
+  // Take 12v reading:
+  if (car_12vline == 0)
+  {
+    // first reading:
+    car_12vline = inputs_voltage()*10;
+    car_12vline_ref = car_12vline;
+  }
+  else
+  {
+    // filter peaks/misreadings:
+    car_12vline = ((int)car_12vline + (int)(inputs_voltage()*10) + 1) / 2;
+  }
+
+  // Calibration: take reference voltage after charging
+  //    Note: ref value 0 is "charging"
+  //          ref value 1..CALMDOWN_TIME is calmdown counter
   if (car_doors5bits.Charging12V)
   {
-    car_12vline_ref = 0; // plugged in, reset ref
-    // Note: means ref value 0 is "charging"
+    // charging now, reset ref:
+    car_12vline_ref = 0;
   }
-  else if (car_12vline_ref < 10)
+  else if (car_12vline_ref < BATT_12V_CALMDOWN_TIME)
   {
-    car_12vline_ref++; // wait 10 minutes after plugged out
-    // Note: means ref value 1..10 is a counter, not a voltage
+    // wait CALMDOWN_TIME minutes after end of charge:
+    car_12vline_ref++;
   }
-  else if (!car_doors1bits.CarON && (car_12vline > car_12vline_ref))
+  else if ((car_12vline_ref == BATT_12V_CALMDOWN_TIME) && !car_doors1bits.CarON)
   {
-    car_12vline_ref = car_12vline; // car off, take new ref voltage
+    // calmdown done & car off: take new ref voltage & reset alert:
+    car_12vline_ref = car_12vline;
+    can_minSOCnotified &= ~CAN_MINSOC_ALERT_12V;
   }
 
-  // 10 minutes after charge end should give us a ref @ ~13.1 V
-  // healthy discharge depth is down to 11.8 V = 1.3 V lower
-  if (car_12vline_ref > 13) // ensure ref > 1.3 V
+  // Check voltage if ref is valid and car is off:
+  if ((car_12vline_ref > BATT_12V_CALMDOWN_TIME) && !car_doors1bits.CarON)
   {
+    // Info: healthy lead/acid discharge depth is 1.3 V
+
     // Trigger 12V alert if voltage <= ref - 1.3 V:
     if (!(can_minSOCnotified & CAN_MINSOC_ALERT_12V)
             && (car_12vline <= (car_12vline_ref - 13)))
     {
-      net_req_notification(NET_NOTIFY_12VLOW);
       can_minSOCnotified |= CAN_MINSOC_ALERT_12V;
+      net_req_notification(NET_NOTIFY_12VLOW);
     }
+
     // Reset 12V alert if voltage >= ref - 0.7 V:
     else if ((can_minSOCnotified & CAN_MINSOC_ALERT_12V)
             && (car_12vline >= (car_12vline_ref - 7)))
     {
       can_minSOCnotified &= ~CAN_MINSOC_ALERT_12V;
+      net_req_notification(NET_NOTIFY_12VLOW);
     }
   }
 
