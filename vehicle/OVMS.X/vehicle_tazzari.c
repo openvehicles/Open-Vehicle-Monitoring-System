@@ -201,6 +201,7 @@ BOOL vehicle_tazzari_poll0(void)
       case 0xF29F:  // Battery temperature
         break;
       case 0xF9A7:  // Battery capacity
+          car_cac100 = value16 * 10;
         break;
       case 0xF6E0:  // Charge status
         switch (value8)
