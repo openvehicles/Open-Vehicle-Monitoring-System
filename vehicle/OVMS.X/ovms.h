@@ -192,6 +192,7 @@ extern unsigned char net_sq; // GSM Network Signal Quality
 extern unsigned char car_12vline; // 12V line level
 extern unsigned char car_12vline_ref; // 12V line level reference
 extern unsigned char car_gsmcops[9]; // GSM provider
+extern unsigned int car_cac100; // CAC (x100)
 
 // DEBUG / QA stats:
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up

@@ -118,6 +118,7 @@ unsigned char net_sq = 0; // GSM Network Signal Quality
 unsigned char car_12vline = 0; // 12V line level
 unsigned char car_12vline_ref = 0; // 12V line level reference
 unsigned char car_gsmcops[9] = ""; // GSM provider
+unsigned int car_cac100 = 0; // CAC (x100)
 
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 UINT8 debug_crashreason;        // last saved reset reason (bit set)

@@ -52,6 +52,7 @@ rom char teslaroadster_capabilities[] = "C10-12,C15-24";
 
 unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
 unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
+BOOL tr_requestcac;                          // Request CAC
 
 #pragma udata
 
@@ -165,6 +166,8 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
             (can_databuffer[2] != car_chargesubstate))
           { // If the state or sub-state has changed, notify it
           net_req_notification(NET_NOTIFY_STAT);
+          if ((can_databuffer[1]==1)&&(sys_features[FEATURE_CANWRITE]>0))
+            tr_requestcac=TRUE; // Request CAC when charge starts
           }
         car_chargestate = can_databuffer[1];
         car_chargesubstate = can_databuffer[2];
@@ -206,6 +209,9 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
           car_parktime = 0;
           net_req_notification(NET_NOTIFY_ENV);
           }
+        break;
+      case 0x9E: // CAC
+        car_cac100 = can_databuffer[2]+((unsigned int)can_databuffer[3] <<8);
         break;
       case 0xA3: // Temperatures
         car_tpem = (signed char)can_databuffer[1]; // Tpem
@@ -395,6 +401,25 @@ BOOL vehicle_teslaroadster_idlepoll(void)
     }
 #endif //#ifdef OVMS_SPEEDO_EXPERIMENT
   can_lastspeedrpt--;
+
+  if (tr_requestcac)
+    {
+    // 102 06 D0 07 00 00 00 00 40
+    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+    TXB0CON = 0;
+    TXB0SIDL = 0b01000000; // Setup 0x102
+    TXB0SIDH = 0b00100000; // Setup 0x102
+    TXB0D0 = 0x06;
+    TXB0D1 = 0xd0;
+    TXB0D2 = 0x07;
+    TXB0D3 = 0x00;
+    TXB0D4 = 0x00;
+    TXB0D5 = 0x00;
+    TXB0D6 = 0x00;
+    TXB0D7 = 0x40;
+    TXB0DLC = 0b00001000; // data length (8)
+    TXB0CON = 0b00001000; // mark for transmission
+    }
 
   return FALSE;
   }
@@ -853,6 +878,7 @@ void vehicle_teslaroadster_initialise(void)
 
   can_lastspeedmsg[0] = 0;
   can_lastspeedrpt = 0;
+  tr_requestcac = FALSE;
 
   // Hook in...
   can_capabilities = teslaroadster_capabilities;

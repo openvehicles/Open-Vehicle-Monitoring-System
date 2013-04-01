@@ -336,7 +336,8 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", car_timermode);
   s = stp_i(s, ",", car_timerstart);
   s = stp_i(s, ",", car_stale_timer);
-
+  s = stp_i(s, ",", car_cac100);
+  
   return net_msg_encode_statputs(stat, &crc_stat);
 }
 
@@ -999,6 +1000,11 @@ char *net_prep_stat(char *s)
     s = stp_ul(s, "\r ODO: ", MI2KM(car_odometer / 10));
     s = stp_rom(s, " km");
   }
+
+  if (car_cac100 != 0)
+    {
+    s = stp_i(s, "\r CAC: ", car_cac100);
+    }
 
   return s;
 }
