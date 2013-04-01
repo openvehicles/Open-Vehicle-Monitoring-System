@@ -1053,7 +1053,10 @@ void net_msg_12v_alert(void)
 
   delay100(2);
   net_msg_start();
-  s = stp_l2f(net_scratchpad, "MP-0 PAALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
+  if (can_minSOCnotified & CAN_MINSOC_ALERT_12V)
+    s = stp_l2f(net_scratchpad, "MP-0 PAALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
+  else
+    s = stp_l2f(net_scratchpad, "MP-0 PA12V BATTERY OK (", car_12vline, 1);
   s = stp_l2f(s, "V, ref=", car_12vline_ref, 1);
   s = stp_rom(s, "V)");
   net_msg_encode_puts();

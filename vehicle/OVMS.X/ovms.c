@@ -116,7 +116,7 @@ char net_apps_connected = 0; // Network apps connected
 char sys_features[FEATURES_MAX]; // System features
 unsigned char net_sq = 0; // GSM Network Signal Quality
 unsigned char car_12vline = 0; // 12V line level
-unsigned char car_12vline_ref = 10; // 12V line level reference
+unsigned char car_12vline_ref = 0; // 12V line level reference
 unsigned char car_gsmcops[9] = ""; // GSM provider
 
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
@@ -206,6 +206,7 @@ void main(void)
 
 #ifdef OVMS_HW_V2
   car_12vline = inputs_voltage()*10;
+  car_12vline_ref = car_12vline;
 #endif
 
   // Proceed to main loop
