@@ -200,18 +200,23 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
             (car_parktime == 0)&&       // Parktime was not previously set
             (car_time != 0))            // We know the car time
           {
+          if (sys_features[FEATURE_CANWRITE]>0)
+            tr_requestcac=TRUE; // Request CAC when car stops
           car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
           net_req_notification(NET_NOTIFY_ENV);
           }
         else if ((car_doors1 & 0x80)&&  // Car is ON
                  (car_parktime != 0))   // Parktime was previously set
           {
+          if (sys_features[FEATURE_CANWRITE]>0)
+            tr_requestcac=TRUE; // Request CAC when car starts
           car_parktime = 0;
           net_req_notification(NET_NOTIFY_ENV);
           }
         break;
       case 0x9E: // CAC
-        car_cac100 = can_databuffer[2]+((unsigned int)can_databuffer[3] <<8);
+        car_cac100 = ((unsigned int)can_databuffer[3]*100)+
+                     ((((unsigned int)can_databuffer[2]*100)+128)/256);
         break;
       case 0xA3: // Temperatures
         car_tpem = (signed char)can_databuffer[1]; // Tpem
@@ -374,6 +379,26 @@ BOOL vehicle_teslaroadster_ticker10th(void)
 //
 BOOL vehicle_teslaroadster_idlepoll(void)
   {
+  if (tr_requestcac)
+    {
+    tr_requestcac = FALSE;
+    // 102 06 D0 07 00 00 00 00 40
+    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+    TXB0CON = 0;
+    TXB0SIDL = 0b01000000; // Setup 0x102
+    TXB0SIDH = 0b00100000; // Setup 0x102
+    TXB0D0 = 0x06;
+    TXB0D1 = 0xd0;
+    TXB0D2 = 0x07;
+    TXB0D3 = 0x00;
+    TXB0D4 = 0x00;
+    TXB0D5 = 0x00;
+    TXB0D6 = 0x00;
+    TXB0D7 = 0x40;
+    TXB0DLC = 0b00001000; // data length (8)
+    TXB0CON = 0b00001000; // mark for transmission
+    }
+
   if (can_lastspeedrpt == 0) return FALSE;
 
 #ifdef OVMS_SPEEDO_EXPERIMENT
@@ -401,25 +426,6 @@ BOOL vehicle_teslaroadster_idlepoll(void)
     }
 #endif //#ifdef OVMS_SPEEDO_EXPERIMENT
   can_lastspeedrpt--;
-
-  if (tr_requestcac)
-    {
-    // 102 06 D0 07 00 00 00 00 40
-    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-    TXB0CON = 0;
-    TXB0SIDL = 0b01000000; // Setup 0x102
-    TXB0SIDH = 0b00100000; // Setup 0x102
-    TXB0D0 = 0x06;
-    TXB0D1 = 0xd0;
-    TXB0D2 = 0x07;
-    TXB0D3 = 0x00;
-    TXB0D4 = 0x00;
-    TXB0D5 = 0x00;
-    TXB0D6 = 0x00;
-    TXB0D7 = 0x40;
-    TXB0DLC = 0b00001000; // data length (8)
-    TXB0CON = 0b00001000; // mark for transmission
-    }
 
   return FALSE;
   }

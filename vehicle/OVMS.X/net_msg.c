@@ -336,7 +336,7 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", car_timermode);
   s = stp_i(s, ",", car_timerstart);
   s = stp_i(s, ",", car_stale_timer);
-  s = stp_i(s, ",", car_cac100);
+  s = stp_ul(s, ",", (unsigned long)car_cac100);
   
   return net_msg_encode_statputs(stat, &crc_stat);
 }
@@ -1003,7 +1003,7 @@ char *net_prep_stat(char *s)
 
   if (car_cac100 != 0)
     {
-    s = stp_i(s, "\r CAC: ", car_cac100);
+    s = stp_ul(s, "\r CAC: ", (unsigned long)car_cac100);
     }
 
   return s;
