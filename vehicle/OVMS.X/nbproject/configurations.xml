@@ -215,6 +215,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="vehicle_tazzari.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="vehicle_thinkcity.c" ex="true" overriding="false">
         <C18>
@@ -396,6 +404,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="vehicle_tazzari.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="vehicle_thinkcity.c" ex="true" overriding="false">
         <C18>
