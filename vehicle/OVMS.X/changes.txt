@@ -28,6 +28,25 @@
 ; THE SOFTWARE.
 */
 
+2013-04-01 2.2.5       Firmware 2.2.5
+                       ### Fixes for charge notification logic on VA
+                       ### Show charge, trunk and alarm notifications in DIAG mode
+                       ### Speed, parking, and general tidy-ups for VA
+                       ### Switch ambient temperature to PID 0x801f for VA
+                       ### Auto-calibration for 12V line reading
+                       ### Twizy version 2.6.1 - power line plug-in detection
+                       ### Add car_doors5 for rear doors, frunk and 12v charging
+                       ### 12v alert by MSG protocol fix
+                       ### Rework of 12V reference logic
+                           - Filters out single peaks / misreadings
+                           - Sends "OK" alerts if voltage level restores w/o charging
+                           - 15 minutes calmdown before taking new ref voltage
+                           - No alerts while car is on
+                       ### ESS SOC DIAG (for TR)
+                       ### Initial support for CAC in TR and TZ modules
+                       ### Experimental Tazzari (TZ) module
+                       ### Experimental Nissan Leaf (NL) module
+
 2013-01-11 2.2.2       Firmware 2.2.2
                        #94 v2 firmware re-work for multiple vehicle support
                        #95 Valet Mode - Tesla Roadster - Trunk open is working off bonnet
