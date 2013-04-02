@@ -28,6 +28,10 @@
 ; THE SOFTWARE.
 */
 
+2013-04-02 2.2.6       Firmware 2.2.6
+                       ## Volt Ampera fixes (from Michael)
+                       ## Support net_fnbits NET_FN_12VMONITOR and NET_FN_SOCMONITOR to allow vehicle module to control what is monitored
+
 2013-04-01 2.2.5       Firmware 2.2.5
                        ### Fixes for charge notification logic on VA
                        ### Show charge, trunk and alarm notifications in DIAG mode
