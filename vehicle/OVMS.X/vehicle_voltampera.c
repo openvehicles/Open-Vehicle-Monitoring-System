@@ -179,8 +179,7 @@ BOOL vehicle_voltampera_ticker1(void)
 
   // bus_is_active indicates we've recently seen a message on the can bus
   // Quick exit if bus is recently not active
-  //if (!va_bus_is_active) return FALSE;
-  if (!va_bus_is_active && (car_chargecurrent==0) && (car_linevoltage==0)) return FALSE;
+  if ((!va_bus_is_active) && (car_chargecurrent==0) && (car_linevoltage==0)) return FALSE;
 
   // Also, we need CAN_WRITE enabled, so return if not
   if (sys_features[FEATURE_CANWRITE]==0) return FALSE;
