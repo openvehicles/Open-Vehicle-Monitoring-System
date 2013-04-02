@@ -1320,7 +1320,7 @@ void net_state_ticker60(void)
   {
     // first reading:
     car_12vline = inputs_voltage()*10;
-    car_12vline_ref = car_12vline;
+    car_12vline_ref = 0;
   }
   else
   {
@@ -1338,8 +1338,17 @@ void net_state_ticker60(void)
   }
   else if (car_12vline_ref < BATT_12V_CALMDOWN_TIME)
   {
-    // wait CALMDOWN_TIME minutes after end of charge:
-    car_12vline_ref++;
+    // calmdown phase:
+    if (car_doors1bits.CarON)
+    {
+      // car has been turned ON during calmdown; reset timer:
+      car_12vline_ref = 0;
+    }
+    else
+    {
+      // wait CALMDOWN_TIME minutes after end of charge:
+      car_12vline_ref++;
+    }
   }
   else if ((car_12vline_ref == BATT_12V_CALMDOWN_TIME) && !car_doors1bits.CarON)
   {

@@ -207,7 +207,7 @@ void main(void)
 
 #ifdef OVMS_HW_V2
   car_12vline = inputs_voltage()*10;
-  car_12vline_ref = car_12vline;
+  car_12vline_ref = 0;
 #endif
 
   // Proceed to main loop
