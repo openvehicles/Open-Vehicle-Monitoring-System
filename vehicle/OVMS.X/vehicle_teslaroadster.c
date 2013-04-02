@@ -886,6 +886,8 @@ void vehicle_teslaroadster_initialise(void)
   can_lastspeedrpt = 0;
   tr_requestcac = FALSE;
 
+  net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
+
   // Hook in...
   can_capabilities = teslaroadster_capabilities;
   vehicle_fn_poll0 = &vehicle_teslaroadster_poll0;

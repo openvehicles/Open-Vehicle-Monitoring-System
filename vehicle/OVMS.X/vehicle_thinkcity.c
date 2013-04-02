@@ -51,6 +51,8 @@ BOOL vehicle_thinkcity_initialise(void)
   car_type[4] = 0;
 
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
+  net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
+  net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
 
   return TRUE;
   }

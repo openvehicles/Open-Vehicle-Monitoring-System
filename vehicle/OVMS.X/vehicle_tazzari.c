@@ -374,6 +374,8 @@ BOOL vehicle_tazzari_initialise(void)
   vehicle_fn_ticker1 = &vehicle_tazzari_ticker1;
 
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
+  net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
+  net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
 
   return TRUE;
   }

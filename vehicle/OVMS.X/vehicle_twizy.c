@@ -3783,6 +3783,8 @@ BOOL vehicle_twizy_initialise(void)
   vehicle_fn_commandhandler = &vehicle_twizy_fn_commandhandler;
 
   net_fnbits |= NET_FN_INTERNALGPS; // Require internal GPS
+  net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
+  net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
 
   return TRUE;
 }

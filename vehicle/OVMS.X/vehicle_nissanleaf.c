@@ -152,6 +152,8 @@ BOOL vehicle_nissanleaf_initialise(void)
   vehicle_fn_poll1 = &vehicle_nissanleaf_poll1;
 
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
+  net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
+  net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
 
   return TRUE;
   }

@@ -1164,7 +1164,7 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_NET_12VLOW)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_12VLOW); // Clear notification flag
-            net_msg_12v_alert();
+            if (net_fnbits & NET_FN_12VMONITOR) net_msg_12v_alert();
             return;
             }
           else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)
@@ -1222,7 +1222,7 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_SMS_12VLOW)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_12VLOW); // Clear notification flag
-            net_sms_12v_alert(p);
+            if (net_fnbits & NET_FN_12VMONITOR) net_sms_12v_alert(p);
             return;
             }
           else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
@@ -1439,7 +1439,7 @@ void net_state_ticker600(void)
           {
           if ((net_link==1)&&(net_msg_sendpending==0))
             {
-            net_msg_socalert();
+            if (net_fnbits & NET_FN_SOCMONITOR) net_msg_socalert();
             net_socalert_msg = 72; // 72x10mins = 12hours
             }
           }
@@ -1448,7 +1448,7 @@ void net_state_ticker600(void)
         if (net_socalert_sms==0)
           {
           p = par_get(PARAM_REGPHONE);
-          net_sms_socalert(p);
+          if (net_fnbits & NET_FN_SOCMONITOR) net_sms_socalert(p);
           net_socalert_sms = 72; // 72x10mins = 12hours
           }
         else

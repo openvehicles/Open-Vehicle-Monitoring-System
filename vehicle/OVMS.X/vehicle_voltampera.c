@@ -516,6 +516,7 @@ BOOL vehicle_voltampera_initialise(void)
   vehicle_fn_commandhandler = &vehicle_voltampera_fn_commandhandler;
   
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
+  net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
 
   return TRUE;
   }
