@@ -463,6 +463,8 @@ void vehicle_teslaroadster_tx_wakeuptemps(void)
 
 void vehicle_teslaroadster_tx_setchargemode(unsigned char mode)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -478,12 +480,12 @@ void vehicle_teslaroadster_tx_setchargemode(unsigned char mode)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_setchargecurrent(unsigned char current)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -499,12 +501,12 @@ void vehicle_teslaroadster_tx_setchargecurrent(unsigned char current)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_startstopcharge(unsigned char start)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -520,8 +522,6 @@ void vehicle_teslaroadster_tx_startstopcharge(unsigned char start)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_lockunlockcar(unsigned char mode, char *pin)
@@ -552,6 +552,8 @@ void vehicle_teslaroadster_tx_lockunlockcar(unsigned char mode, char *pin)
 
 void vehicle_teslaroadster_tx_timermode(unsigned char mode, unsigned int starttime)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -584,12 +586,12 @@ void vehicle_teslaroadster_tx_timermode(unsigned char mode, unsigned int startti
     TXB0CON = 0b00001000; // mark for transmission
     while (TXB0CONbits.TXREQ) {} // Loop until TX is done
     }
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_homelink(unsigned char button)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -600,8 +602,6 @@ void vehicle_teslaroadster_tx_homelink(unsigned char button)
   TXB0DLC = 0b00000011; // data length (3)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
@@ -619,7 +619,6 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
       else
         {
         vehicle_teslaroadster_tx_setchargemode(atoi(msg));
-        vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
         STP_OK(net_scratchpad, code);
         }
       break;
