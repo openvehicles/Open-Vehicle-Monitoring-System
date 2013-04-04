@@ -65,6 +65,8 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
   {
   unsigned char CANsidl = RXB0SIDL & 0b11100000;
   unsigned char k;
+  unsigned int k1;
+  unsigned int k2;
 
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
@@ -152,6 +154,24 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
           car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1609)+500)/1000);     // speed in km/hour
         car_linevoltage = can_databuffer[2]
                           + ((unsigned int) can_databuffer[3] << 8);
+        break;
+      case 0x93: // VDS Vehicle Error
+        k = can_databuffer[1];
+        k1 = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
+        k2 = ((unsigned int)can_databuffer[7]<<8)+(can_databuffer[6]);
+        if (k1 != 0xffff)
+          {
+          if (k & 0x01)
+            {
+            // An error code is being raised
+            net_req_notification_error(k1, k2);
+            }
+          else
+            {
+            // An error code is being cleared
+            net_req_notification_error(0, 0);
+            }
+          }
         break;
       case 0x95: // Charging mode
         if ((can_databuffer[1] != car_chargestate)&&            // Charge state has changed AND
