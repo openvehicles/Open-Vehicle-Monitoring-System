@@ -67,6 +67,8 @@ unsigned char net_socalert_sms = 0;         // SOC Alert (msg) 10min ticks remai
 unsigned char net_socalert_msg = 0;         // SOC Alert (sms) 10min ticks remaining
 #endif //#ifdef OVMS_SOCALERT
 
+unsigned int  net_notify_errorcode = 0;     // An error code to be notified
+unsigned int  net_notify_errordata = 0;     // Ancilliary data
 unsigned int  net_notify = 0;               // Bitmap of notifications outstanding
 unsigned char net_notify_suppresscount = 0; // To suppress STAT notifications (seconds)
 
@@ -334,6 +336,15 @@ void net_putc_ram(const char data)
   {
   // Send one character
   UART_WAIT_PUTC(data)
+  }
+
+////////////////////////////////////////////////////////////////////////
+// net_req_notification_error()
+// Request notification of an error
+void net_req_notification_error(unsigned int errorcode, unsigned int errordata)
+  {
+  net_notify_errorcode = errorcode;
+  net_notify_errordata = errordata;
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1137,6 +1148,15 @@ void net_state_ticker1(void)
         if ((net_msg_cmd_code!=0)&&(net_msg_serverok==1)&&(net_msg_sendpending==0))
           {
           net_msg_cmd_do();
+          return;
+          }
+
+        if ((net_notify_errorcode>0)&&(net_msg_serverok==1))
+          {
+          delay100(10);
+          net_msg_erroralert(net_notify_errorcode, net_notify_errordata);
+          net_notify_errorcode = 0;
+          net_notify_errordata = 0;
           return;
           }
 

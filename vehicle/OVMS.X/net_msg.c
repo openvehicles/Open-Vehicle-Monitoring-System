@@ -1069,3 +1069,15 @@ void net_msg_12v_alert(void)
   net_msg_send();
   }
 
+void net_msg_erroralert(unsigned int errorcode, unsigned int errordata)
+  {
+  char *s;
+
+  delay100(2);
+  net_msg_start();
+  s = stp_s(net_scratchpad, "MP-0 PE", car_type);
+  s = stp_ul(s, ",", (unsigned long)errorcode);
+  s = stp_ul(s, ",", (unsigned long)errordata);
+  net_msg_encode_puts();
+  net_msg_send();
+  }
