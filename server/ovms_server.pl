@@ -65,6 +65,26 @@ $AnyEvent::Log::FILTER->level ("info");
 # Configuration
 $config = Config::IniFiles->new(-file => 'ovms_server.conf');
 
+# Vehicle Error Code Expansion configurations...
+my $vecem = Config::IniFiles->new();
+
+foreach (sort glob 'ovms_server*.vece')
+  {
+  my $vecef = $_;
+  AE::log info => "- - - VECE loading $vecef";
+  my $vece = Config::IniFiles->new(-file => $vecef);
+  foreach ($vece->Sections())
+    {
+    my $s = $_;
+    $vecem->AddSection($s);
+    foreach ($vece->Parameters($s))
+      {
+      my $p = $_;
+      $vecem->newval($s,$p,$vece->val($s,$p));
+      }
+    }
+  }
+
 # Globals
 my $timeout_app      = $config->val('server','timeout_app',60*20);
 my $timeout_car      = $config->val('server','timeout_car',60*16);
@@ -1120,6 +1140,13 @@ sub push_queuenotify
   {
   my ($vehicleid, $alerttype, $alertmsg) = @_;
 
+  if ($alerttype eq 'E')
+    {
+    # VECE expansion...
+    my ($vehicletype,$errorcode,$errordata) = split(/,/,$alertmsg);
+    $alertmsg = &vece_expansion($vehicletype,$errorcode,$errordata);
+    }
+
   my $sth = $db->prepare('SELECT * FROM ovms_notifies WHERE vehicleid=? and active=1');
   $sth->execute($vehicleid);
   CANDIDATE: while (my $row = $sth->fetchrow_hashref())
@@ -1150,6 +1177,25 @@ sub push_queuenotify
       AE::log info => "- - $vehicleid msg queued c2dm notification for $rec{'pushkeytype'}:$rec{'appid'}";
       }
     }
+  }
+
+sub vece_expansion
+  {
+  my ($vehicletype,$errorcode,$errordata) = @_;
+
+  my $car = $vehicletype;
+  while ($car ne '')
+    {
+    my $t = $vecem->val($car,$errorcode);
+    if (defined $t)
+      {
+      my $text = sprintf $t,$errordata;
+      return "Vehicle Error #$errorcode: ".$text;
+      }
+    $car = substr($car,0,-1);
+    }
+
+  return sprintf "Vehicle Error Code: %s/%d (%d)",$vehicletype,$errorcode,$errordata;
   }
 
 sub apns_send
