@@ -34,6 +34,10 @@
 #include "ovms.h"
 #include "utils.h"
 
+// replace these with globals that get set via PARAMS
+#define chDecimal '.'
+#define chSeparator ','
+
 // Reset the cpu
 void reset_cpu(void)
   {
@@ -244,6 +248,46 @@ char *stp_ul(char *dst, const rom char *prefix, unsigned long val)
     dst = stp_rom(dst, prefix);
   ultoa(val, dst);
   while (*dst) dst++;
+  return dst;
+}
+
+// string-print unsigned long as fixed point number with optional string prefix
+
+char *stp_f(char *dst, const rom char *prefix, unsigned long val, int cdecimal)
+{
+  char *start, *end;
+  int cch;
+
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+
+  start = dst;
+  cch = 0;
+  // decompose the number, writing out the digits backwards
+  while (val != 0 || cch <= cdecimal)
+  {
+    // write out the thousands separator when needed
+    if (((cch - cdecimal) % 3) == 0 && cch > cdecimal)
+		*dst++ = chSeparator;
+
+    // peel off the next digit
+    *dst++ = '0' + (val % 10);
+    val /= 10;
+
+    // write out the decimal point when needed
+    if (++cch == cdecimal)
+        *dst++ = chDecimal;
+  }
+  end = dst - 1;
+  // reverse the string in place
+  while (start < end)
+  {
+    char chT = *start;
+    *start++ = *end;
+    *end-- = chT;
+  }
+  // null terminate
+  *dst = 0;
   return dst;
 }
 

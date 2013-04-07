@@ -64,6 +64,7 @@ char *stp_s(char *dst, const rom char *prefix, char *val);
 char *stp_i(char *dst, const rom char *prefix, int val);
 char *stp_l(char *dst, const rom char *prefix, long val);
 char *stp_ul(char *dst, const rom char *prefix, unsigned long val);
+char *stp_f(char *dst, const rom char *prefix, unsigned long val, int cdecimal);
 void itox(unsigned int i, char *s);
 char *stp_x(char *dst, const rom char *prefix, unsigned int val);
 void ltox(unsigned long i, char *s);
