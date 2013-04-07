@@ -239,7 +239,8 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
           }
         break;
       case 0x9E: // CAC
-        tr_requestcac = 3; // Turn off CAC streaming
+        if (tr_requestcac == 1)
+          tr_requestcac = 3; // Turn off CAC streaming
         car_cac100 = ((unsigned int)can_databuffer[3]*100)+
                      ((((unsigned int)can_databuffer[2]*100)+128)/256);
         break;
