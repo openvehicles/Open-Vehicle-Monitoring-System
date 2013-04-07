@@ -161,7 +161,13 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
         k2 = ((unsigned int)can_databuffer[7]<<8)+(can_databuffer[6]);
         if (k1 != 0xffff)
           {
-          if (k & 0x01)
+          if ((k == 0x14)&&(k1 == 25))
+            {
+            // Special case of 100% vehicle logs
+            net_req_notification_error(0, 0);
+            net_req_notification_error(k1, k2); // Notify the 100%
+            }
+          else if (k & 0x01)
             {
             // An error code is being raised
             net_req_notification_error(k1, k2);
