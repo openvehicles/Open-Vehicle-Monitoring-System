@@ -132,6 +132,8 @@ extern unsigned char net_fnbits;               // Net functionality bits
 // The idea is that requesters set these bits, and notifiers clear them.
 extern unsigned int  net_notify_errorcode;     // An error code to be notified
 extern unsigned int  net_notify_errordata;     // Ancilliary data
+extern unsigned int  net_notify_lasterrorcode; // Last error code to be notified
+extern unsigned char net_notify_lastcount;     // A counter used to clear error codes
 extern unsigned int  net_notify;               // Bitmap of notifications outstanding
 extern unsigned char net_notify_suppresscount; // To suppress STAT notifications (seconds)
 
