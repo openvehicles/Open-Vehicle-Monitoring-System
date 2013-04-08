@@ -158,7 +158,7 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
       case 0x93: // VDS Vehicle Error
         k = can_databuffer[1];
         k1 = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
-        k2 = ((unsigned int)can_databuffer[7]<<8)+(can_databuffer[6]);
+        k2 = ((unsigned int)can_databuffer[5]<<8)+(can_databuffer[4]);
         if (k1 != 0xffff)
           {
           if ((k == 0x14)&&(k1 == 25))
