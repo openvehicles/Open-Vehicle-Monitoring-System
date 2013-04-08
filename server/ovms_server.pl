@@ -1190,12 +1190,12 @@ sub vece_expansion
     if (defined $t)
       {
       my $text = sprintf $t,$errordata;
-      return "Vehicle Error #$errorcode: ".$text;
+      return "Vehicle Alert #$errorcode: ".$text;
       }
     $car = substr($car,0,-1);
     }
 
-  return sprintf "Vehicle Error Code: %s/%d (%d)",$vehicletype,$errorcode,$errordata;
+  return sprintf "Vehicle Alert Code: %s/%d (%d)",$vehicletype,$errorcode,$errordata;
   }
 
 sub apns_send
