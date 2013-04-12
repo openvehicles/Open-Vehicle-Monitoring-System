@@ -1134,13 +1134,15 @@ void net_state_ticker1(void)
       if ((net_reg == 0x01)||(net_reg == 0x05))
         {
 
-        if ((net_msg_cmd_code!=0)&&(net_msg_serverok==1)&&(net_msg_sendpending==0))
+        if ((net_msg_cmd_code!=0)
+                && (net_msg_serverok==1) && (net_msg_sendpending==0))
           {
           net_msg_cmd_do();
           return;
           }
 
-        if (((net_notify & NET_NOTIFY_NETPART)>0)&&(net_msg_serverok==1))
+        if (((net_notify & NET_NOTIFY_NETPART)>0)
+                && (net_msg_serverok==1) && (net_msg_sendpending==0))
           {
           delay100(10);
           if ((net_notify & NET_NOTIFY_NET_ALARM)>0)
@@ -1157,7 +1159,7 @@ void net_state_ticker1(void)
               // execute CHARGE ALERT command:
               net_msg_cmd_code = 6;
               net_msg_cmd_msg[0] = 0;
-              if (net_msg_sendpending==0) net_msg_cmd_do();
+              net_msg_cmd_do();
               }
             return;
             }
@@ -1185,7 +1187,7 @@ void net_state_ticker1(void)
             {
             net_notify &= ~(NET_NOTIFY_NET_ENV); // Clear notification flag
             // A bit of a kludge, but only notify environment if an app connected
-            if ((net_apps_connected>0)&&(net_msg_sendpending==0))
+            if ((net_apps_connected>0))
               {
               stat = 2;
               delay100(10);
@@ -1196,7 +1198,7 @@ void net_state_ticker1(void)
               return;
               }
             }
-          }
+          } // if NET_NOTIFY_NETPART
 
         if ((net_notify & NET_NOTIFY_SMSPART)>0)
           {
@@ -1240,7 +1242,7 @@ void net_state_ticker1(void)
             net_notify &= ~(NET_NOTIFY_SMS_ENV); // Clear notification flag
             return;
             }
-          }
+          } // if NET_NOTIFY_SMSPART
 
         if ((car_speed>0)&&
             (sys_features[FEATURE_STREAM]>0)&&
@@ -1263,7 +1265,7 @@ void net_state_ticker1(void)
         }
 #endif
 
-        }
+        } // if ((net_reg == 0x01)||(net_reg == 0x05))
       break;
 #ifdef OVMS_DIAGMODULE
     case NET_STATE_DIAGMODE:
@@ -1325,7 +1327,10 @@ void net_state_ticker60(void)
   else
   {
     // filter peaks/misreadings:
-    car_12vline = ((int)car_12vline + (int)(inputs_voltage()*10) + 1) / 2;
+    //car_12vline = ((int)car_12vline + (int)(inputs_voltage()*10) + 1) / 2;
+
+    // back to direct reading to test A/D converter fix:
+    car_12vline = inputs_voltage()*10;
   }
 
   // Calibration: take reference voltage after charging
@@ -1360,19 +1365,20 @@ void net_state_ticker60(void)
   // Check voltage if ref is valid and car is off:
   if ((car_12vline_ref > BATT_12V_CALMDOWN_TIME) && !car_doors1bits.CarON)
   {
-    // Info: healthy lead/acid discharge depth is 1.3 V
+    // Info: healthy lead/acid discharge depth is ~ nom - 1.0 V
+    //        ref is ~ nom + 0.5 V
 
-    // Trigger 12V alert if voltage <= ref - 1.3 V:
+    // Trigger 12V alert if voltage <= ref - 1.5 V:
     if (!(can_minSOCnotified & CAN_MINSOC_ALERT_12V)
-            && (car_12vline <= (car_12vline_ref - 13)))
+            && (car_12vline <= (car_12vline_ref - 15)))
     {
       can_minSOCnotified |= CAN_MINSOC_ALERT_12V;
       net_req_notification(NET_NOTIFY_12VLOW);
     }
 
-    // Reset 12V alert if voltage >= ref - 0.7 V:
+    // Reset 12V alert if voltage >= ref - 1.3 V:
     else if ((can_minSOCnotified & CAN_MINSOC_ALERT_12V)
-            && (car_12vline >= (car_12vline_ref - 7)))
+            && (car_12vline >= (car_12vline_ref - 13)))
     {
       can_minSOCnotified &= ~CAN_MINSOC_ALERT_12V;
       net_req_notification(NET_NOTIFY_12VLOW);

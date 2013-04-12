@@ -44,9 +44,9 @@ void inputs_initialise(void)
    ADCON1=0b00001110;
    // ADCON2
    //   ADC Result Right Justified.
-   //   Acquisition Time = 2TAD
-   //   Conversion Clock = 32 Tosc
-   ADCON2=0b10001010;
+   //   Conversion Clock = 32 Tosc => TAD = 1.6 us
+   //   Automatic Acquisition Time = 8 TAD = 12.8 us
+   ADCON2=0b10100010;
 #endif // #ifdef OVMS_HW_??
   }
 
@@ -63,7 +63,6 @@ unsigned char inputs_gsmgprs(void)
 
 float inputs_voltage(void)
   {
-  ADCON0=0x00;
   ADCON0=0;   //Select ADC Channel #0
   ADCON0bits.ADON=1;  //switch on the adc module
   ADCON0bits.GO=1;  //Start conversion

@@ -43,7 +43,7 @@
 // Configuration settings
 #pragma	config FCMEN = OFF,      IESO = OFF
 #pragma	config PWRT = ON,        BOREN = OFF,      BORV = 0
-#pragma	config WDTPS = 2048     // WDT timeout set to 8 secs
+#pragma	config WDTPS = 4096     // WDT timeout set to 16 secs
 #if defined(__DEBUG)
   #pragma config MCLRE  = ON
   #pragma config DEBUG = ON
