@@ -52,7 +52,7 @@ rom char teslaroadster_capabilities[] = "C10-12,C15-24";
 
 unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
 unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
-BOOL tr_requestcac;                          // Request CAC
+unsigned char tr_requestcac;                 // Request CAC
 
 #pragma udata
 
@@ -65,6 +65,8 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
   {
   unsigned char CANsidl = RXB0SIDL & 0b11100000;
   unsigned char k;
+  unsigned int k1;
+  unsigned int k2;
 
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
@@ -153,6 +155,30 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
         car_linevoltage = can_databuffer[2]
                           + ((unsigned int) can_databuffer[3] << 8);
         break;
+      case 0x93: // VDS Vehicle Error
+        k = can_databuffer[1];
+        k1 = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
+        k2 = ((unsigned int)can_databuffer[5]<<8)+(can_databuffer[4]);
+        if (k1 != 0xffff)
+          {
+          if ((k == 0x14)&&(k1 == 25))
+            {
+            // Special case of 100% vehicle logs
+            net_req_notification_error(0, 0);
+            net_req_notification_error(k1, k2); // Notify the 100%
+            }
+          else if (k & 0x01)
+            {
+            // An error code is being raised
+            net_req_notification_error(k1, k2);
+            }
+          else
+            {
+            // An error code is being cleared
+            net_req_notification_error(0, 0);
+            }
+          }
+        break;
       case 0x95: // Charging mode
         if ((can_databuffer[1] != car_chargestate)&&            // Charge state has changed AND
             ((car_chargestate<=2)||(car_chargestate==0x0f))&&   // was (Charging or Heating) AND
@@ -166,8 +192,8 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
             (can_databuffer[2] != car_chargesubstate))
           { // If the state or sub-state has changed, notify it
           net_req_notification(NET_NOTIFY_STAT);
-          if ((can_databuffer[1]==1)&&(sys_features[FEATURE_CANWRITE]>0))
-            tr_requestcac=TRUE; // Request CAC when charge starts
+          if (can_databuffer[1]==1)
+            tr_requestcac=2; // Request CAC when charge starts
           }
         car_chargestate = can_databuffer[1];
         car_chargesubstate = can_databuffer[2];
@@ -200,21 +226,21 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
             (car_parktime == 0)&&       // Parktime was not previously set
             (car_time != 0))            // We know the car time
           {
-          if (sys_features[FEATURE_CANWRITE]>0)
-            tr_requestcac=TRUE; // Request CAC when car stops
+          tr_requestcac=2; // Request CAC when car stops
           car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
           net_req_notification(NET_NOTIFY_ENV);
           }
         else if ((car_doors1 & 0x80)&&  // Car is ON
                  (car_parktime != 0))   // Parktime was previously set
           {
-          if (sys_features[FEATURE_CANWRITE]>0)
-            tr_requestcac=TRUE; // Request CAC when car starts
+          tr_requestcac=2; // Request CAC when car starts
           car_parktime = 0;
           net_req_notification(NET_NOTIFY_ENV);
           }
         break;
       case 0x9E: // CAC
+        if (tr_requestcac == 1)
+          tr_requestcac = 3; // Turn off CAC streaming
         car_cac100 = ((unsigned int)can_databuffer[3]*100)+
                      ((((unsigned int)can_databuffer[2]*100)+128)/256);
         break;
@@ -379,24 +405,52 @@ BOOL vehicle_teslaroadster_ticker10th(void)
 //
 BOOL vehicle_teslaroadster_idlepoll(void)
   {
-  if (tr_requestcac)
+  if (tr_requestcac > 1)
     {
-    tr_requestcac = FALSE;
-    // 102 06 D0 07 00 00 00 00 40
-    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-    TXB0CON = 0;
-    TXB0SIDL = 0b01000000; // Setup 0x102
-    TXB0SIDH = 0b00100000; // Setup 0x102
-    TXB0D0 = 0x06;
-    TXB0D1 = 0xd0;
-    TXB0D2 = 0x07;
-    TXB0D3 = 0x00;
-    TXB0D4 = 0x00;
-    TXB0D5 = 0x00;
-    TXB0D6 = 0x00;
-    TXB0D7 = 0x40;
-    TXB0DLC = 0b00001000; // data length (8)
-    TXB0CON = 0b00001000; // mark for transmission
+    if (sys_features[FEATURE_CANWRITE]==0)
+      {
+      tr_requestcac = 0;
+      }
+    else if (tr_requestcac == 2)
+      {
+      // Request CAC streaming...
+      // 102 06 D0 07 00 00 00 00 40
+      tr_requestcac = 1; // Wait for cac, then cancel
+      while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+      TXB0CON = 0;
+      TXB0SIDL = 0b01000000; // Setup 0x102
+      TXB0SIDH = 0b00100000; // Setup 0x102
+      TXB0D0 = 0x06;
+      TXB0D1 = 0xd0;
+      TXB0D2 = 0x07;
+      TXB0D3 = 0x00;
+      TXB0D4 = 0x00;
+      TXB0D5 = 0x00;
+      TXB0D6 = 0x00;
+      TXB0D7 = 0x40;
+      TXB0DLC = 0b00001000; // data length (8)
+      TXB0CON = 0b00001000; // mark for transmission
+      }
+    else if (tr_requestcac == 3)
+      {
+      // Cancel CAC streaming...
+      // 102 06 00 00 00 00 00 00 40
+      tr_requestcac = 0; // CAC done
+      while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+      TXB0CON = 0;
+      TXB0SIDL = 0b01000000; // Setup 0x102
+      TXB0SIDH = 0b00100000; // Setup 0x102
+      TXB0D0 = 0x06;
+      TXB0D1 = 0x00;
+      TXB0D2 = 0x00;
+      TXB0D3 = 0x00;
+      TXB0D4 = 0x00;
+      TXB0D5 = 0x00;
+      TXB0D6 = 0x00;
+      TXB0D7 = 0x40;
+      TXB0DLC = 0b00001000; // data length (8)
+      TXB0CON = 0b00001000; // mark for transmission
+      }
     }
 
   if (can_lastspeedrpt == 0) return FALSE;
@@ -463,6 +517,8 @@ void vehicle_teslaroadster_tx_wakeuptemps(void)
 
 void vehicle_teslaroadster_tx_setchargemode(unsigned char mode)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -478,12 +534,12 @@ void vehicle_teslaroadster_tx_setchargemode(unsigned char mode)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_setchargecurrent(unsigned char current)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -499,12 +555,12 @@ void vehicle_teslaroadster_tx_setchargecurrent(unsigned char current)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_startstopcharge(unsigned char start)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -520,8 +576,6 @@ void vehicle_teslaroadster_tx_startstopcharge(unsigned char start)
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_lockunlockcar(unsigned char mode, char *pin)
@@ -552,6 +606,8 @@ void vehicle_teslaroadster_tx_lockunlockcar(unsigned char mode, char *pin)
 
 void vehicle_teslaroadster_tx_timermode(unsigned char mode, unsigned int starttime)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -584,12 +640,12 @@ void vehicle_teslaroadster_tx_timermode(unsigned char mode, unsigned int startti
     TXB0CON = 0b00001000; // mark for transmission
     while (TXB0CONbits.TXREQ) {} // Loop until TX is done
     }
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 void vehicle_teslaroadster_tx_homelink(unsigned char button)
   {
+  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
+
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
   TXB0SIDL = 0b01000000; // Setup 0x102
@@ -600,8 +656,6 @@ void vehicle_teslaroadster_tx_homelink(unsigned char button)
   TXB0DLC = 0b00000011; // data length (3)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-
-  vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
   }
 
 BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
@@ -619,7 +673,6 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
       else
         {
         vehicle_teslaroadster_tx_setchargemode(atoi(msg));
-        vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
         STP_OK(net_scratchpad, code);
         }
       break;
@@ -884,7 +937,7 @@ void vehicle_teslaroadster_initialise(void)
 
   can_lastspeedmsg[0] = 0;
   can_lastspeedrpt = 0;
-  tr_requestcac = FALSE;
+  tr_requestcac = 0;
 
   net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
 

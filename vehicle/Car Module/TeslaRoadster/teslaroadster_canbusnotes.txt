@@ -321,6 +321,8 @@ Tesla Roadster CAN Bus analysis:
 			dRMS: 52A (0x34 single byte hex) - 100 A0 (B4-MSB B3-LSB)
 			dAI: 560mO (0x30 0x02 tesla-style LSB-first, 2 byte hex) - 100 A0 (B6-MSB B5-LSB)
 			dWhM: 273Wh/mile (0x11 0x01 tesla-style LSB-first, 2 byte hex) - 100 A0 (B8-MSB B5-LSB)
+                The streaming can be cancelled with
+                Request id#102 06 00 00 00 00 00 00 40
 
 	Temps
 		B1=0xA3

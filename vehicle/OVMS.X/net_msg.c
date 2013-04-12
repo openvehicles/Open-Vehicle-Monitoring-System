@@ -931,8 +931,22 @@ void net_msg_reply_ussd(char *buf)
 
 char *net_prep_stat(char *s)
 {
+  // convert distance values as needed
+  unsigned int estrange = car_estrange;
+  unsigned int idealrange = car_idealrange;
+  unsigned long odometer = car_odometer;
+  const rom char *unit = " mi";
+  if (can_mileskm == 'K')
+  {
+    estrange = MI2KM(estrange);
+    idealrange = MI2KM(idealrange);
+    odometer = MI2KM(odometer);
+    unit = " km";
+  }
+
   if (car_doors1bits.ChargePort)
   {
+    char fShowVA = TRUE;
     // Charge port door is open, we are charging
     switch (car_chargemode)
     {
@@ -958,6 +972,7 @@ char *net_prep_stat(char *s)
       break;
     case 0x04:
       s = stp_rom(s, "Charging Done"); // Done
+      fShowVA = FALSE;
       break;
     case 0x0d:
       s = stp_rom(s, "Preparing"); // Preparing
@@ -967,6 +982,14 @@ char *net_prep_stat(char *s)
       break;
     default:
       s = stp_rom(s, "Charging Stopped"); // Stopped
+      fShowVA = FALSE;
+      break;
+    }
+    if (fShowVA)
+    {
+      s = stp_i(s, "\r ", car_linevoltage);
+      s = stp_i(s, "V/", car_chargecurrent);
+      s = stp_rom(s, "A");
     }
   }
   else
@@ -974,36 +997,25 @@ char *net_prep_stat(char *s)
     s = stp_rom(s, "Not charging");
   }
 
-  if (can_mileskm == 'M')
-  {
-    s = stp_i(s, "\r Range: ", car_estrange);
-    s = stp_i(s, " - ", car_idealrange);
-    s = stp_rom(s, " mi");
-  }
-  else
-  {
-    s = stp_i(s, "\r Range: ", MI2KM(car_estrange));
-    s = stp_i(s, " - ", MI2KM(car_idealrange));
-    s = stp_rom(s, " km");
-  }
-
   s = stp_i(s, "\r SOC: ", car_SOC);
   s = stp_rom(s, "%");
 
-  if (can_mileskm == 'M')
-  {
-    s = stp_ul(s, "\r ODO: ", car_odometer / 10);
-    s = stp_rom(s, " mi");
-  }
-  else
-  {
-    s = stp_ul(s, "\r ODO: ", MI2KM(car_odometer / 10));
-    s = stp_rom(s, " km");
-  }
+  if (idealrange != 0)
+    {
+    s = stp_i(s, "\r Ideal Range: ", idealrange);
+    s = stp_rom(s, unit);
+    }
+  if (estrange != 0)
+    {
+    s = stp_i(s, "\r Est. Range: ", estrange);
+    s = stp_rom(s, unit);
+    }
+  s = stp_f(s, "\r ODO: ", car_odometer, 1);
+  s = stp_rom(s, unit);
 
   if (car_cac100 != 0)
     {
-    s = stp_ul(s, "\r CAC: ", (unsigned long)car_cac100);
+    s = stp_f(s, "\r CAC: ", (unsigned long)car_cac100, 2);
     }
 
   return s;
@@ -1069,3 +1081,15 @@ void net_msg_12v_alert(void)
   net_msg_send();
   }
 
+void net_msg_erroralert(unsigned int errorcode, unsigned int errordata)
+  {
+  char *s;
+
+  delay100(2);
+  net_msg_start();
+  s = stp_s(net_scratchpad, "MP-0 PE", car_type);
+  s = stp_ul(s, ",", (unsigned long)errorcode);
+  s = stp_ul(s, ",", (unsigned long)errordata);
+  net_msg_encode_puts();
+  net_msg_send();
+  }

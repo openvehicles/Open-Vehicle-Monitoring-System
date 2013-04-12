@@ -67,6 +67,10 @@ unsigned char net_socalert_sms = 0;         // SOC Alert (msg) 10min ticks remai
 unsigned char net_socalert_msg = 0;         // SOC Alert (sms) 10min ticks remaining
 #endif //#ifdef OVMS_SOCALERT
 
+unsigned int  net_notify_errorcode = 0;     // An error code to be notified
+unsigned int  net_notify_errordata = 0;     // Ancilliary data
+unsigned int  net_notify_lasterrorcode = 0; // Last error code to be notified
+unsigned char net_notify_lastcount = 0;     // A counter used to clear error codes
 unsigned int  net_notify = 0;               // Bitmap of notifications outstanding
 unsigned char net_notify_suppresscount = 0; // To suppress STAT notifications (seconds)
 
@@ -334,6 +338,38 @@ void net_putc_ram(const char data)
   {
   // Send one character
   UART_WAIT_PUTC(data)
+  }
+
+////////////////////////////////////////////////////////////////////////
+// net_req_notification_error()
+// Request notification of an error
+void net_req_notification_error(unsigned int errorcode, unsigned int errordata)
+  {
+  if (errorcode != 0)
+    {
+    // We have an error being set
+    if (errorcode != net_notify_lasterrorcode)
+      {
+      // This is a new error, so set it and time it out after 60 seconds
+      net_notify_errorcode = errorcode;
+      net_notify_errordata = errordata;
+      net_notify_lasterrorcode = errorcode;
+      net_notify_lastcount = 60;
+      }
+    else
+      {
+      // Reset the timer for another 60 seconds
+      net_notify_lastcount = 60;
+      }
+    }
+  else
+    {
+    // Clear the error
+    net_notify_errorcode = 0;
+    net_notify_errordata = 0;
+    net_notify_lasterrorcode = 0;
+    net_notify_lastcount = 0;
+    }
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1060,6 +1096,16 @@ void net_state_ticker1(void)
   char stat;
   char *p;
 
+  // Time out error codes
+  if (net_notify_lastcount>0)
+    {
+    net_notify_lastcount--;
+    if (net_notify_lastcount == 0)
+      {
+      net_notify_lasterrorcode = 0;
+      }
+    }
+
   switch (net_state)
     {
     case NET_STATE_START:
@@ -1138,6 +1184,16 @@ void net_state_ticker1(void)
                 && (net_msg_serverok==1) && (net_msg_sendpending==0))
           {
           net_msg_cmd_do();
+          return;
+          }
+
+        if ((net_notify_errorcode>0)
+                && (net_msg_serverok==1) && (net_msg_sendpending==0))
+          {
+          delay100(10);
+          net_msg_erroralert(net_notify_errorcode, net_notify_errordata);
+          net_notify_errorcode = 0;
+          net_notify_errordata = 0;
           return;
           }
 

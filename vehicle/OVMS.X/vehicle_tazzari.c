@@ -58,6 +58,18 @@ rom struct
     { 0x078A, 60, 0xF9A7 },  // Battery capacity
     { 0x078A, 10, 0xF6E0 },  // Charge status
     { 0x078A, 10, 0xF6D8 },  // Drive mode
+    { 0x078A, 60, 0x4E39 },  // Serial number of the handheld
+    { 0x078A, 60, 0x55F0 },  // EEPROM error check
+    { 0x078A, 60, 0x55F4 },  // SPI comms check
+    { 0x078A, 60, 0x55F2 },  // BMS params check
+    { 0x078A, 60, 0xFD84 },  // BMS error check
+    { 0x078A, 60, 0xF5B5 },  // Total voltage of the pack
+    { 0x078A, 60, 0xF5BF },  // Highest cell voltage
+    { 0x078A, 60, 0xF5C4 },  // Lowest cell voltage
+    { 0x078A, 60, 0xF5B6 },  // Average cell voltage
+    { 0x078A, 60, 0xF5B7 },  // SD of cell voltages
+    { 0x078A, 10, 0xF2A9 },  // Pack current
+    { 0x078A, 10, 0xF9B1 },  // Total Ah in the batteries
     { 0x0000, 0,  0x0000 }
   };
 
@@ -227,6 +239,7 @@ BOOL vehicle_tazzari_poll0(void)
               net_req_notification(NET_NOTIFY_CHARGE);
               }
             break;
+          case 0x00:
           case 0x01:
           case 0x02:
           case 0x03:
