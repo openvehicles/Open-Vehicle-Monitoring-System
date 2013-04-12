@@ -113,6 +113,12 @@
 ;    2.6.3  29 Mar 2013 (Michael Balzer):
 ;           - Bug fix and acceleration of battery monitor sensor fetching
 ;
+;    2.6.4  12 Apr 2013 (Michael Balzer):
+;           - RT-GPS-Log extended by power data
+;           - Fixed a bug with distance measurement (wrong power efficiency)
+;           - Power statistics just show power sums if not driven
+;           - Rounding of car_speed
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -167,7 +173,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.6.3";
+rom char vehicle_twizy_version[] = "2.6.4";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -471,6 +477,22 @@ char vehicle_twizy_gpslog_msgp(char stat)
 {
   static WORD crc;
   char *s;
+  unsigned long pwr_dist, pwr_use, pwr_rec;
+
+  // Read power stats:
+
+  pwr_dist = twizy_speedpwr[CAN_SPEED_CONST].dist
+          + twizy_speedpwr[CAN_SPEED_ACCEL].dist
+          + twizy_speedpwr[CAN_SPEED_DECEL].dist;
+
+  pwr_use = twizy_speedpwr[CAN_SPEED_CONST].use
+          + twizy_speedpwr[CAN_SPEED_ACCEL].use
+          + twizy_speedpwr[CAN_SPEED_DECEL].use;
+
+  pwr_rec = twizy_speedpwr[CAN_SPEED_CONST].rec
+          + twizy_speedpwr[CAN_SPEED_ACCEL].rec
+          + twizy_speedpwr[CAN_SPEED_DECEL].rec;
+
 
   // H type "RT-GPS-Log", recno = odometer, keep for 1 day
   s = stp_ul(net_scratchpad, "MP-0 HRT-GPS-Log,", car_odometer); // in 1/10 mi
@@ -482,6 +504,12 @@ char vehicle_twizy_gpslog_msgp(char stat)
   s = stp_i(s, ",", car_gpslock);
   s = stp_i(s, ",", car_stale_gps);
   s = stp_i(s, ",", net_sq); // GPRS signal quality
+
+  // Twizy specific (standard model candidates):
+  s = stp_l(s, ",", (long) twizy_power * 16);     // current power (W)
+  s = stp_ul(s, ",", (pwr_use + 11250) / 22500);  // power usage sum (Wh)
+  s = stp_ul(s, ",", (pwr_rec + 11250) / 22500);  // recuperation sum (Wh)
+  s = stp_ul(s, ",", (pwr_dist + 5) / 10);        // distance driven (m)
 
   return net_msg_encode_statputs(stat, &crc);
 }
@@ -824,6 +852,10 @@ BOOL vehicle_twizy_poll1(void)
 
       twizy_status = CAN_BYTE(1);
       // Translation to car_doors1 done in ticker1()
+
+      // init cyclic distance counter on switch-on:
+      if ((twizy_status & CAN_STATUS_KEYON) && (!car_doors1bits.CarON))
+        twizy_dist = twizy_speed_distref = 0;
 
       // PEM temperature:
       if (CAN_BYTE(7) > 0 && CAN_BYTE(7) < 0xf0)
@@ -1290,9 +1322,9 @@ BOOL vehicle_twizy_state_ticker1(void)
 
   // SPEED:
   if (can_mileskm == 'M')
-    car_speed = KM2MI(twizy_speed / 100); // miles/hour
+    car_speed = KM2MI((twizy_speed + 50) / 100); // miles/hour
   else
-    car_speed = twizy_speed / 100; // km/hour
+    car_speed = (twizy_speed + 50) / 100; // km/hour
 
 
   // STATUS: convert Twizy flags to car_doors1:
@@ -1661,6 +1693,7 @@ void vehicle_twizy_power_reset(void)
   {
     memset(twizy_speedpwr, 0, sizeof twizy_speedpwr);
     twizy_speed_state = CAN_SPEED_CONST;
+    twizy_speed_distref = twizy_dist;
     twizy_level_use = 0;
     twizy_level_rec = 0;
   }
@@ -1765,9 +1798,6 @@ void vehicle_twizy_power_prepmsg(char mode)
           + twizy_speedpwr[CAN_SPEED_ACCEL].dist
           + twizy_speedpwr[CAN_SPEED_DECEL].dist;
 
-  if (pwr_dist == 0)
-    pwr_dist = 1; // avoid div/0
-
   pwr_use = twizy_speedpwr[CAN_SPEED_CONST].use
           + twizy_speedpwr[CAN_SPEED_ACCEL].use
           + twizy_speedpwr[CAN_SPEED_DECEL].use;
@@ -1777,13 +1807,23 @@ void vehicle_twizy_power_prepmsg(char mode)
           + twizy_speedpwr[CAN_SPEED_DECEL].rec;
 
   // distribution:
-  prc_const = (twizy_speedpwr[CAN_SPEED_CONST].dist * 1000 / pwr_dist + 5) / 10;
-  prc_accel = (twizy_speedpwr[CAN_SPEED_ACCEL].dist * 1000 / pwr_dist + 5) / 10;
-  prc_decel = (twizy_speedpwr[CAN_SPEED_DECEL].dist * 1000 / pwr_dist + 5) / 10;
+  if (pwr_dist > 0)
+  {
+    prc_const = (twizy_speedpwr[CAN_SPEED_CONST].dist * 1000 / pwr_dist + 5) / 10;
+    prc_accel = (twizy_speedpwr[CAN_SPEED_ACCEL].dist * 1000 / pwr_dist + 5) / 10;
+    prc_decel = (twizy_speedpwr[CAN_SPEED_DECEL].dist * 1000 / pwr_dist + 5) / 10;
+  }
 
   s = strchr(net_scratchpad, 0); // append to net_scratchpad
 
-  if (mode == 't')
+  if ((pwr_use == 0) || (pwr_dist <= 10))
+  {
+    // not driven: only output power totals:
+    s = stp_ul(s, "Power -", (pwr_use + 11250) / 22500);
+    s = stp_ul(s, " +", (pwr_rec + 11250) / 22500);
+    s = stp_rom(s, " Wh");
+  }
+  else if (mode == 't')
   {
     // power totals:
     s = stp_ul(s, "Power -", (pwr_use + 11250) / 22500);
@@ -1806,7 +1846,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     s = stp_ul(s, " +", (twizy_levelpwr[CAN_LEVEL_DOWN].rec + 11250) / 22500);
     s = stp_rom(s, " Wh");
   }
-  else
+  else // mode == 'e'
   {
     // power efficiency (default):
     long pwr;
@@ -1816,12 +1856,7 @@ void vehicle_twizy_power_prepmsg(char mode)
 
     dist = pwr_dist;
     pwr = pwr_use - pwr_rec;
-    if ((pwr_use == 0) || (dist == 0))
-    {
-      s = stp_rom(s, "Efficiency unknown, no power/distance data available.");
-      return;
-    }
-    else
+    if ((pwr_use > 0) && (dist > 0))
     {
       s = stp_l(s, "Efficiency ", (pwr / dist * 10000 + 11250) / 22500);
       s = stp_i(s, " Wh/km R=", (pwr_rec * 1000 / pwr_use + 5) / 10);
@@ -2117,13 +2152,15 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
 
   s = net_scratchpad;
   s = stp_x(s, " STS=", twizy_status);
-  s = stp_x(s, " DS1=", car_doors1);
-  s = stp_x(s, " DS5=", car_doors5);
-  s = stp_i(s, " MSN=", can_minSOCnotified);
+  //s = stp_x(s, " DS1=", car_doors1);
+  //s = stp_x(s, " DS5=", car_doors5);
+  //s = stp_i(s, " MSN=", can_minSOCnotified);
   //s = stp_i(s, " CHG=", car_chargestate);
   //s = stp_i(s, " SPD=", twizy_speed);
   //s = stp_i(s, " PWR=", twizy_power);
-  //s = stp_ul(s, " ODO=", twizy_odometer);
+  s = stp_ul(s, " ODO=", twizy_odometer);
+  s = stp_ul(s, " di=", twizy_dist);
+  s = stp_ul(s, " dr=", twizy_speed_distref);
   //s = stp_i(s, " SOC=", twizy_soc);
   //s = stp_i(s, " SMIN=", twizy_soc_min);
   //s = stp_i(s, " SMAX=", twizy_soc_max);
@@ -2132,11 +2169,11 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
   //s = stp_i(s, " ERNG=", car_estrange);
   //s = stp_i(s, " IRNG=", car_idealrange);
   s = stp_i(s, " SQ=", net_sq);
-  s = stp_i(s, " NET=L", net_link);
-  s = stp_i(s, "/S", net_msg_serverok);
-  s = stp_i(s, "/A", net_apps_connected);
-  s = stp_x(s, " NTF=", twizy_notify);
-  s = stp_i(s, " MSP=", net_msg_sendpending);
+  //s = stp_i(s, " NET=L", net_link);
+  //s = stp_i(s, "/S", net_msg_serverok);
+  //s = stp_i(s, "/A", net_apps_connected);
+  //s = stp_x(s, " NTF=", twizy_notify);
+  //s = stp_i(s, " MSP=", net_msg_sendpending);
   net_puts_ram(net_scratchpad);
 
 #ifdef OVMS_DIAGMODULE
