@@ -68,7 +68,7 @@ unsigned char net_socalert_msg = 0;         // SOC Alert (sms) 10min ticks remai
 #endif //#ifdef OVMS_SOCALERT
 
 unsigned int  net_notify_errorcode = 0;     // An error code to be notified
-unsigned int  net_notify_errordata = 0;     // Ancilliary data
+unsigned long net_notify_errordata = 0;     // Ancilliary data
 unsigned int  net_notify_lasterrorcode = 0; // Last error code to be notified
 unsigned char net_notify_lastcount = 0;     // A counter used to clear error codes
 unsigned int  net_notify = 0;               // Bitmap of notifications outstanding
@@ -343,7 +343,7 @@ void net_putc_ram(const char data)
 ////////////////////////////////////////////////////////////////////////
 // net_req_notification_error()
 // Request notification of an error
-void net_req_notification_error(unsigned int errorcode, unsigned int errordata)
+void net_req_notification_error(unsigned int errorcode, unsigned long errordata)
   {
   if (errorcode != 0)
     {
@@ -1191,7 +1191,10 @@ void net_state_ticker1(void)
                 && (net_msg_serverok==1) && (net_msg_sendpending==0))
           {
           delay100(10);
-          net_msg_erroralert(net_notify_errorcode, net_notify_errordata);
+          if (net_notify_errorcode > 0)
+            {
+            net_msg_erroralert(net_notify_errorcode, net_notify_errordata);
+            }
           net_notify_errorcode = 0;
           net_notify_errordata = 0;
           return;
