@@ -336,7 +336,7 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", car_timermode);
   s = stp_i(s, ",", car_timerstart);
   s = stp_i(s, ",", car_stale_timer);
-  s = stp_ul(s, ",", (unsigned long)car_cac100);
+  s = stp_l2f(s, ",", (unsigned long)car_cac100, 2);
   
   return net_msg_encode_statputs(stat, &crc_stat);
 }
@@ -1010,12 +1010,12 @@ char *net_prep_stat(char *s)
     s = stp_i(s, "\r Est. Range: ", estrange);
     s = stp_rom(s, unit);
     }
-  s = stp_f(s, "\r ODO: ", car_odometer, 1);
+  s = stp_l2f_h(s, "\r ODO: ", car_odometer, 1);
   s = stp_rom(s, unit);
 
   if (car_cac100 != 0)
     {
-    s = stp_f(s, "\r CAC: ", (unsigned long)car_cac100, 2);
+    s = stp_l2f_h(s, "\r CAC: ", (unsigned long)car_cac100, 2);
     }
 
   return s;
