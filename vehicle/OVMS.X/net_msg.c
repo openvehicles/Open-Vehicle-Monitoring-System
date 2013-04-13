@@ -1081,7 +1081,7 @@ void net_msg_12v_alert(void)
   net_msg_send();
   }
 
-void net_msg_erroralert(unsigned int errorcode, unsigned int errordata)
+void net_msg_erroralert(unsigned int errorcode, unsigned long errordata)
   {
   char *s;
 

@@ -66,7 +66,7 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
   unsigned char CANsidl = RXB0SIDL & 0b11100000;
   unsigned char k;
   unsigned int k1;
-  unsigned int k2;
+  unsigned long k2;
 
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
@@ -158,7 +158,10 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
       case 0x93: // VDS Vehicle Error
         k = can_databuffer[1];
         k1 = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
-        k2 = ((unsigned int)can_databuffer[5]<<8)+(can_databuffer[4]);
+        k2 = (((unsigned long)can_databuffer[7]<<24) +
+              ((unsigned long)can_databuffer[6]<<16) +
+              ((unsigned long)can_databuffer[5]<<8) +
+              (can_databuffer[4]));
         if (k1 != 0xffff)
           {
           if ((k == 0x14)&&(k1 == 25))
