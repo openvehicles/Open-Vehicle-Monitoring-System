@@ -1191,7 +1191,10 @@ void net_state_ticker1(void)
                 && (net_msg_serverok==1) && (net_msg_sendpending==0))
           {
           delay100(10);
-          net_msg_erroralert(net_notify_errorcode, net_notify_errordata);
+          if (net_notify_errorcode > 0)
+            {
+            net_msg_erroralert(net_notify_errorcode, net_notify_errordata);
+            }
           net_notify_errorcode = 0;
           net_notify_errordata = 0;
           return;
