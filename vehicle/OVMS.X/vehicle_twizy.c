@@ -1604,6 +1604,8 @@ BOOL vehicle_twizy_state_ticker10(void)
     twizy_status = CAN_STATUS_OFFLINE;
     car_linevoltage = 0;
     car_chargecurrent = 0;
+    twizy_speed = 0;
+    twizy_power = 0;
   }
   else
   {
