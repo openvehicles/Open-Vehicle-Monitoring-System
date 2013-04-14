@@ -443,6 +443,39 @@ BOOL net_sms_handle_module(char *caller, char *command, char *arguments)
   return moduleq_result;
   }
 
+BOOL net_sms_handle_vehicleq(char *caller, char *command, char *arguments)
+  {
+  char *s;
+
+  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
+
+  net_send_sms_start(caller);
+
+  s = stp_rom(net_scratchpad, "Vehicle:");
+  s = stp_s(s, "\r\n VehicleType: ", par_get(PARAM_VEHICLETYPE));
+
+  net_puts_ram(net_scratchpad);
+
+  return TRUE;
+  }
+
+// VEHICLE <vehicletype>
+BOOL net_sms_handle_vehicle(char *caller, char *command, char *arguments)
+  {
+  BOOL vehicleq_result;
+
+  if (arguments[0]=='-') arguments[0]=0;
+  par_set(PARAM_VEHICLETYPE, arguments);
+
+  vehicleq_result = net_sms_handle_vehicleq(caller, command, arguments);
+  vehicle_initialise();
+
+  if (net_state != NET_STATE_DIAGMODE)
+    net_state_enter(NET_STATE_DONETINIT);
+
+  return vehicleq_result;
+  }
+
 BOOL net_sms_handle_gprsq(char *caller, char *command, char *arguments)
   {
   char *s;
@@ -833,6 +866,8 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "1AP ",
     "3MODULE?",
     "2MODULE ",
+    "3VEHICLE?",
+    "2VEHICLE ",
     "3GPRS?",
     "2GPRS ",
     "3GSMLOCK?",
@@ -868,6 +903,8 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_ap,
   &net_sms_handle_moduleq,
   &net_sms_handle_module,
+  &net_sms_handle_vehicleq,
+  &net_sms_handle_vehicle,
   &net_sms_handle_gprsq,
   &net_sms_handle_gprs,
   &net_sms_handle_gsmlockq,
