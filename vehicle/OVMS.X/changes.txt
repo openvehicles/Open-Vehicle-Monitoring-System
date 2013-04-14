@@ -28,6 +28,27 @@
 ; THE SOFTWARE.
 */
 
+2013-04-14 2.3.1       Firmware 2.3.1
+                       ## Add VEHICLE and VEHICLE? sms commands
+                       ## errordata unsigned long
+                       ## Twizy minor fix: clear power & speed states when CAN goes offline
+                       ## Vehicle Errors reported as "Alert", as some are just warnings/informational
+                       ## ThinkCity stub
+                       ## Tesla Roadster disable CAC streaming once we have a value
+                       ## Tesla Roadster: special coase notify when usb memory stick transfer reaches 100%
+                       ## tomsax extensions for stp_f and STAT sms
+                       ## Tazzari fixes
+                       ## Vehicle error messages for Tesla Roadster
+                       ## Re-arrange wakeup order for tesla roadster commands
+                       ## Framework for notification of vehicle error codes
+                       ## Twizy V2.6.4
+                       ## - RT-GPS-Log extended by power data
+                       ## - Fixed a bug with distance measurement (wrong power efficiency)
+                       ## - Power statistics just show power sums if not driven
+                       ## - Rounding of car_speed
+                       ## Support VECE (Vehicle Error Code Expansion)
+                       ## Fix for 12V reference init: delays taking first ref until car has been   off for 15 minutes
+
 2013-04-02 2.2.6       Firmware 2.2.6
                        ## Volt Ampera fixes (from Michael)
                        ## Support net_fnbits NET_FN_12VMONITOR and NET_FN_SOCMONITOR to allow vehicle module to control what is monitored
