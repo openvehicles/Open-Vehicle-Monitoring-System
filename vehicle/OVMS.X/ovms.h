@@ -193,6 +193,7 @@ extern unsigned char car_12vline; // 12V line level
 extern unsigned char car_12vline_ref; // 12V line level reference
 extern unsigned char car_gsmcops[9]; // GSM provider
 extern unsigned int car_cac100; // CAC (x100)
+extern signed int car_chargeminsremaining; // Minutes of charge remaining
 
 // DEBUG / QA stats:
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up

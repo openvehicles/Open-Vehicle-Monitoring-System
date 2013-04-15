@@ -72,5 +72,6 @@ char *stp_ulp(char *dst, const rom char *prefix, unsigned long val, int len, cha
 char *stp_l2f(char *dst, const rom char *prefix, long val, int prec);
 char *stp_l2f_h(char *dst, const rom char *prefix, unsigned long val, int cdecimal);
 char *stp_latlon(char *dst, const rom char *prefix, long latlon);
+char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp);
 
 #endif // #ifndef __OVMS_UTILS_H
