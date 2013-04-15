@@ -56,6 +56,8 @@ unsigned char tr_requestcac;                 // Request CAC
 
 #pragma udata
 
+BOOL vehicle_teslaroadster_ticker60(void);
+
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
 // This function is an entry point from the main() program loop, and
@@ -453,6 +455,7 @@ BOOL vehicle_teslaroadster_idlepoll(void)
       TXB0D7 = 0x40;
       TXB0DLC = 0b00001000; // data length (8)
       TXB0CON = 0b00001000; // mark for transmission
+      vehicle_teslaroadster_ticker60(); // To calculate charge mins remaining, now we have CAC
       }
     }
 
@@ -883,6 +886,129 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
   return TRUE;
   }
 
+int MinutesToChargeCAC(
+      unsigned char chgmod,       // charge mode, Standard, Range and Performance are supported
+      int imStart,                // ideal miles at start of charge (caller must convert from ideal km)
+      int imEnd,                  // ideal miles desired at end of charge
+      int cac,                    // the battery pack's ideal mile capacity in this charge mode
+      int wAvail,                 // watts available from the wall
+      signed char degAmbient      // ambient temperature in degrees C
+      )
+  {
+  enum { imTaperBase = 200 }; // ideal miles at which tapering begins in nominal battery pack
+
+  int bIntercept;
+  int mx1000;
+  int whPerIM;
+  int secPerIM;
+  signed long seconds;
+
+  // IM capacity in range mode is about 31.598 + 1.3193 * cac;
+  int imCapacityRange = ((signed long)cac * 199 + 4740 + 75) / 150;
+
+  // IM in standard mode is about 13.504 + 1.1075 * cac;
+  int imCapacityStandard = ((signed long)cac * 166 + 2026 + 75) / 150;
+  int imStdToRng = (imCapacityRange - imCapacityStandard + 1) / 2;
+
+  switch (chgmod)
+    {
+    case 0: // Standard
+      if (imEnd == -1)
+        imEnd = imCapacityStandard;
+      imStart += imStdToRng;
+      imEnd += imStdToRng;
+      break;
+
+    case 4: // Performance
+      imStart += imStdToRng;
+      if (imEnd == -1)
+        imEnd = imCapacityRange;
+      else
+        imEnd += imStdToRng;
+      break;
+
+    case 3: // Range
+      if (imEnd == -1)
+        imEnd = imCapacityRange;
+      break;
+
+    default: // invalid charge mode passed in (Storage mode doesn't make sense)
+      return 0;
+    }
+
+  // check for silly cases
+  if (wAvail <= 0 || imEnd <= imStart)
+    return -1;
+
+  // I don't believe air temperatures above 60 C, and this avoids overflow issues
+  if (degAmbient > 60)
+    degAmbient = 60;
+
+  // normalize the IM values to look like a nominal new pack
+  imStart = imStart - imCapacityRange + 244;
+  imEnd   = imEnd   - imCapacityRange + 244;
+  if (imEnd > 244)
+    imEnd = 244;
+
+  // calculate temperature to charge rate equation
+  bIntercept = (wAvail >= 2300) ? 288 : (signed long)745 - (signed long)199 * wAvail / 1000;
+  mx1000 = (signed long)3588 - (signed long)250 * wAvail / 1000;
+
+  // the data says that 70A gets slightly faster in high heat,
+  // but I think that's an anomoly in the small data set,
+  // so take that out of the model
+  if (mx1000 < 0)
+    mx1000 = 0;
+
+  // calculate seconds per ideal mile
+  whPerIM = bIntercept + mx1000 * degAmbient / 1000;
+  secPerIM = whPerIM * 3600 / wAvail;
+
+  // ready to calculate the charge duration
+  seconds = 0;
+
+  // calculate time spent in the steady charge region
+  if (imStart < imTaperBase)
+    {
+    int imEndSteady = imEnd < imTaperBase ? imEnd : imTaperBase;
+    seconds += secPerIM * (imEndSteady - imStart);
+    }
+
+  // figure out time spent in the tapered charge region
+  if (imEnd > imTaperBase)
+    {
+    int im = imStart > imTaperBase ? imStart : imTaperBase;
+
+    for ( ; im < imEnd; ++im)
+      {
+      int secPerIMTaper = (signed long)3600/(293 - ((signed long)1177*im + 500)/1000);
+      if (secPerIMTaper < secPerIM)
+        secPerIMTaper = secPerIM;
+      seconds += secPerIMTaper;
+      }
+    }
+
+  return (seconds + 30) / 60;
+  }
+
+BOOL vehicle_teslaroadster_ticker60(void)
+  {
+//  if (car_doors1 & 0x10)
+//    {
+//    // Vehicle is charging
+//    car_chargeminsremaining = MinutesToChargeCAC(
+//        car_chargemode,             // charge mode, Standard, Range and Performance are supported
+//        car_idealrange,             // ideal miles at start of charge (caller must convert from ideal km)
+//        -1,                         // ideal miles desired at end of charge
+//        car_cac100,                 // the battery pack's ideal mile capacity in this charge mode
+//        car_linevoltage*car_chargecurrent, // watts available from the wall
+//        car_ambient_temp            // ambient temperature in degrees C
+//        );
+    }
+  
+  return FALSE;
+  }
+
 ////////////////////////////////////////////////////////////////////////
 // vehicle_teslaroadster_initialise()
 // This function is an entry point from the main() program loop, and
@@ -949,6 +1075,7 @@ void vehicle_teslaroadster_initialise(void)
   vehicle_fn_poll0 = &vehicle_teslaroadster_poll0;
   vehicle_fn_poll1 = &vehicle_teslaroadster_poll1;
   vehicle_fn_ticker10th = &vehicle_teslaroadster_ticker10th;
+  vehicle_fn_ticker60 = &vehicle_teslaroadster_ticker60;
   vehicle_fn_idlepoll = &vehicle_teslaroadster_idlepoll;
   vehicle_fn_commandhandler = &vehicle_teslaroadster_commandhandler;
   }
