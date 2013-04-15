@@ -45,8 +45,8 @@ void inputs_initialise(void)
    // ADCON2
    //   ADC Result Right Justified.
    //   Conversion Clock = 32 Tosc => TAD = 1.6 us
-   //   Automatic Acquisition Time = 8 TAD = 12.8 us
-   ADCON2=0b10100010;
+   //   Automatic Acquisition Time = 20 TAD = 32 us
+   ADCON2=0b10111010;
 #endif // #ifdef OVMS_HW_??
   }
 
