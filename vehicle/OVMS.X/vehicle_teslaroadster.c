@@ -345,6 +345,7 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
       TXB0DLC = 0b00001000; // data length (8)
       TXB0CON = 0b00001000; // mark for transmission
       can_lastspeedrpt = sys_features[FEATURE_SPEEDO]; // Force re-transmissions
+      if (can_lastspeedrpt>10) can_lastspeedrpt=10;
       }
 #endif // #ifdef OVMS_SPEEDO_EXPERIMENT
     }
@@ -399,6 +400,7 @@ BOOL vehicle_teslaroadster_ticker10th(void)
   {
 #ifdef OVMS_SPEEDO_EXPERIMENT
   if (can_lastspeedrpt==0) can_lastspeedrpt=sys_features[FEATURE_SPEEDO];
+  if (can_lastspeedrpt>10) can_lastspeedrpt=10;
 #endif // #ifdef OVMS_SPEEDO_EXPERIMENT
   return FALSE;
   }
@@ -1004,7 +1006,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
 //        car_linevoltage*car_chargecurrent, // watts available from the wall
 //        car_ambient_temp            // ambient temperature in degrees C
 //        );
-    }
+//    }
   
   return FALSE;
   }
