@@ -348,7 +348,8 @@ void net_req_notification_error(unsigned int errorcode, unsigned long errordata)
   if (errorcode != 0)
     {
     // We have an error being set
-    if (errorcode != net_notify_lasterrorcode)
+    if ((errorcode != net_notify_lasterrorcode)&&
+        ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SVALERTS)==0))
       {
       // This is a new error, so set it and time it out after 60 seconds
       net_notify_errorcode = errorcode;
