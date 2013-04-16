@@ -1195,7 +1195,7 @@ sub vece_expansion
     $car = substr($car,0,-1);
     }
 
-  return sprintf "Vehicle Alert Code: %s/%d (%d)",$vehicletype,$errorcode,$errordata;
+  return sprintf "Vehicle Alert Code: %s/%d (%08x)",$vehicletype,$errorcode,$errordata;
   }
 
 sub apns_send
