@@ -892,7 +892,7 @@ int MinutesToChargeCAC(
       unsigned char chgmod,       // charge mode, Standard, Range and Performance are supported
       int imStart,                // ideal miles at start of charge (caller must convert from ideal km)
       int imEnd,                  // ideal miles desired at end of charge
-      int cac,                    // the battery pack's ideal mile capacity in this charge mode
+      int cac,                    // the battery pack CAC (160 is a perfect battery)
       int wAvail,                 // watts available from the wall
       signed char degAmbient      // ambient temperature in degrees C
       )
@@ -1002,7 +1002,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
 //        car_chargemode,             // charge mode, Standard, Range and Performance are supported
 //        car_idealrange,             // ideal miles at start of charge (caller must convert from ideal km)
 //        -1,                         // ideal miles desired at end of charge
-//        car_cac100,                 // the battery pack's ideal mile capacity in this charge mode
+//        car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
 //        car_linevoltage*car_chargecurrent, // watts available from the wall
 //        car_ambient_temp            // ambient temperature in degrees C
 //        );
