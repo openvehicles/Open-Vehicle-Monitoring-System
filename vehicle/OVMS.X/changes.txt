@@ -28,6 +28,13 @@
 ; THE SOFTWARE.
 */
 
+2013-04-16 2.3.2       Firmware 2.3.2
+                       ## Add facility to suppress vehicle alerts via carbits feature +16
+                       ## 12V A/D conversion fix (better, but not perfect)
+                       ## Stub for tesla roadster charge-time-remaining
+                       ## Fix SMS STAT odometer for kilometers
+                       ## Limit experimental speedo for Tesla Roadster to maximum 10 repeats
+
 2013-04-14 2.3.1       Firmware 2.3.1
                        ## Add VEHICLE and VEHICLE? sms commands
                        ## errordata unsigned long
