@@ -457,7 +457,8 @@ BOOL vehicle_teslaroadster_idlepoll(void)
       TXB0D7 = 0x40;
       TXB0DLC = 0b00001000; // data length (8)
       TXB0CON = 0b00001000; // mark for transmission
-      vehicle_teslaroadster_ticker60(); // To calculate charge mins remaining, now we have CAC
+      vehicle_teslaroadster_ticker60();      // To calculate charge mins remaining, now we have CAC
+      net_req_notification(NET_NOTIFY_STAT); // Notify it (in particular, the charge time estimate
       }
     }
 
@@ -995,18 +996,18 @@ int MinutesToChargeCAC(
 
 BOOL vehicle_teslaroadster_ticker60(void)
   {
-//  if (car_doors1 & 0x10)
-//    {
-//    // Vehicle is charging
-//    car_chargeminsremaining = MinutesToChargeCAC(
-//        car_chargemode,             // charge mode, Standard, Range and Performance are supported
-//        car_idealrange,             // ideal miles at start of charge (caller must convert from ideal km)
-//        -1,                         // ideal miles desired at end of charge
-//        car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
-//        car_linevoltage*car_chargecurrent, // watts available from the wall
-//        car_ambient_temp            // ambient temperature in degrees C
-//        );
-//    }
+  if (car_doors1 & 0x10)
+    {
+    // Vehicle is charging
+    car_chargeminsremaining = MinutesToChargeCAC(
+        car_chargemode,             // charge mode, Standard, Range and Performance are supported
+        car_idealrange,             // ideal miles at start of charge (caller must convert from ideal km)
+        -1,                         // ideal miles desired at end of charge
+        car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
+        car_linevoltage*car_chargecurrent, // watts available from the wall
+        car_ambient_temp            // ambient temperature in degrees C
+        );
+    }
   
   return FALSE;
   }
