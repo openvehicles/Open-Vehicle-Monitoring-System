@@ -964,7 +964,7 @@ int MinutesToChargeCAC(
 
   // calculate seconds per ideal mile
   whPerIM = bIntercept + mx1000 * degAmbient / 1000;
-  secPerIM = whPerIM * 3600 / wAvail;
+  secPerIM = whPerIM * 3600L / wAvail;
 
   // ready to calculate the charge duration
   seconds = 0;
