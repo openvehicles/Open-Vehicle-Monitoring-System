@@ -1,6 +1,8 @@
 [TR]
 25=Memory Stick transfer in progress (%d%%)
 269=BSM: Negative contactor/economizer stuck low
+283=BSM: Isolation fault
+286=BSM: Isolation fault while contactors closed
 287=Power train Problem Service Required
 409=TPMS: Hardware Error
 428=12V Battery Service Required
