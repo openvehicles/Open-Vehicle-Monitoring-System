@@ -7,6 +7,7 @@
 409=TPMS: Hardware Error
 428=12V Battery Service Required
 604=Battery Low Power Reduced
+611=ESS: Almost empty - Car stops in 1 mile
 882=Before starting, charge port door must be closed
 888=Disarm vehicle with key fob before starting
 936=Charging Problem
