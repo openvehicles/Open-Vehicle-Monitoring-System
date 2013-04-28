@@ -889,7 +889,7 @@ void net_msg_forward_sms(char *caller, char *SMS)
   net_msg_send();
 }
 
-void net_msg_reply_ussd(char *buf)
+void net_msg_reply_ussd(char *buf, unsigned char buflen)
 {
   // called from net_state_activity()
   // buf contains a "+CUSD:" USSD command result
@@ -898,16 +898,18 @@ void net_msg_reply_ussd(char *buf)
 
   // Server not ready? abort
   // TODO: store, resend when server is connected
-  if ((!net_msg_serverok) || (!buf))
+  if ((!net_msg_serverok) || (!buf) || (!buflen))
     return;
 
   // isolate USSD reply text
-  if (t = strchr(buf, '"'))
+  if (t = memchr((void *) buf, '"', buflen))
   {
-    buf = ++t; // start of USSD string
-    while ((*t) && (*t != '"'))
+    ++t;
+    buflen -= (t - buf);
+    buf = t; // start of USSD string
+    while ((*t) && (*t != '"') && ((t - buf) < buflen))
     {
-      if (*t == ',') // replace comma
+      if (*t == ',') // "escape" comma for MP-0
         *t = '.';
       t++;
     }
@@ -922,11 +924,19 @@ void net_msg_reply_ussd(char *buf)
     s = stp_rom(s, ",1,Invalid USSD result");
 
   // send reply:
+
   if (net_msg_sendpending > 0)
-    delay100(20); // HACK... should abort, buffer & retry later...
+  {
+    delay100(20); // HACK... should buffer & retry later... but RAM is precious
+    s = NULL; // flag
+  }
+
   net_msg_start();
   net_msg_encode_puts();
   net_msg_send();
+
+  if (!s)
+    delay100(20); // HACK: give modem additional time if there was sendpending>0
 }
 
 char *net_prep_stat(char *s)
