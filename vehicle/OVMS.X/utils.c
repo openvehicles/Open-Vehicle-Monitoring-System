@@ -404,4 +404,35 @@ char *stp_latlon(char *dst, const rom char *prefix, long latlon)
   return stp_l2f(dst, NULL, res * 1000000, 6);
 }
 
+char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp)
+{
+  char *start, *end;
+  int k;
 
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+
+  start = dst;
+  for (k=0;k<3;++k)
+  {
+    if (k>0)
+      *dst++ = ':';
+    if (k==2)
+      timestamp %= 24;
+    *dst++ = '0' + (timestamp % 10);
+    timestamp /= 10;
+    *dst++ = '0' + (timestamp % 6);
+    timestamp /= 6;
+  }
+  end = dst - 1;
+  // reverse the string in place
+  while (start < end)
+  {
+    char chT = *start;
+    *start++ = *end;
+    *end-- = chT;
+  }
+  // null terminate
+  *dst = 0;
+  return dst;
+}

@@ -272,6 +272,52 @@ void diag_handle_cantxstop(char *command, char *arguments)
   delay100(2);
   }
 
+int MinutesToChargeCAC(
+      unsigned char chgmod,       // charge mode, Standard, Range and Performance are supported
+      int imStart,                // ideal miles at start of charge (caller must convert from ideal km)
+      int imEnd,                  // ideal miles desired at end of charge
+      int cac,                    // the battery pack CAC (160 is a perfect battery)
+      int wAvail,                 // watts available from the wall
+      signed char degAmbient      // ambient temperature in degrees C
+      );
+
+void diag_handle_tr(char *command, char *arguments)
+  {
+  unsigned char chgmod;
+  int imStart;
+  int imEnd;
+  int cac;
+  int wAvail;
+  signed char degAmbient;
+  int mins;
+
+  char *n = strtokpgmram(arguments," ");
+  chgmod = atoi(n);
+  n = strtokpgmram(NULL," ");
+  imStart = atoi(n);
+  n = strtokpgmram(NULL," ");
+  imEnd = atoi(n);
+  n = strtokpgmram(NULL," ");
+  cac = atoi(n);
+  n = strtokpgmram(NULL," ");
+  wAvail = atoi(n);
+  n = strtokpgmram(NULL," ");
+  degAmbient = atoi(n);
+
+  mins = MinutesToChargeCAC(chgmod, imStart, imEnd, cac, wAvail, degAmbient);
+
+  net_puts_rom("\r\n# MinutesToChargeCAC:\r\n");
+  n = stp_i(net_scratchpad, "# chgmod: ", chgmod);
+  n = stp_i(n, "\r\n# imStart: ", imStart);
+  n = stp_i(n, "\r\n# imEnd: ", imEnd);
+  n = stp_i(n, "\r\n# cac: ", cac);
+  n = stp_i(n, "\r\n# wAvail: ", wAvail);
+  n = stp_i(n, "\r\n# degAmbient: ", degAmbient);
+  n = stp_i(n, "\r\n# Result = ", mins);
+  n = stp_rom(n, "\r\n");
+  net_puts_ram(net_scratchpad);
+  }
+
 // This is the DIAG command table
 //
 // We're a bit limited by PIC C syntax (in particular no function pointers
@@ -288,6 +334,7 @@ rom char diag_cmdtable[][27] =
     "+CSQ:",
     "CANTXSTART",
     "CANTXSTOP",
+    "TR",
     "" };
 
 rom void (*diag_hfntable[])(char *command, char *arguments) =
@@ -298,7 +345,8 @@ rom void (*diag_hfntable[])(char *command, char *arguments) =
   &diag_handle_diag,
   &diag_handle_csq,
   &diag_handle_cantxstart,
-  &diag_handle_cantxstop
+  &diag_handle_cantxstop,
+  &diag_handle_tr
   };
 
 // net_sms_in handles reception of an SMS message

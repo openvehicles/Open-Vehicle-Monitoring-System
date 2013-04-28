@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 2,3,1
+#define OVMS_FIRMWARE_VERSION 2,3,3
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -58,6 +58,7 @@
 #define FEATURE_CB_2008      0x01 // Set to 1 to mark the car as 2008/2009
 #define FEATURE_CB_SAD_SMS   0x02 // Set to 1 to suppress "Access Denied" SMS
 #define FEATURE_CB_SOUT_SMS  0x04 // Set to 1 to suppress all outbound SMS
+#define FEATURE_CB_SVALERTS  0x08 // Set to 1 to suppress vehicle alerts
 
 // The FEATURE_CANWRITE feature controls the CAN mode of the OVMS system
 // Leaving it 0 (the default) will put the CAN bus in LISTEN mode. It
@@ -193,6 +194,7 @@ extern unsigned char car_12vline; // 12V line level
 extern unsigned char car_12vline_ref; // 12V line level reference
 extern unsigned char car_gsmcops[9]; // GSM provider
 extern unsigned int car_cac100; // CAC (x100)
+extern signed int car_chargeminsremaining; // Minutes of charge remaining
 
 // DEBUG / QA stats:
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
