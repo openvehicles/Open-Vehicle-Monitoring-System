@@ -39,6 +39,9 @@
 #include "utils.h"
 #include "led.h"
 #include "inputs.h"
+#ifdef OVMS_LOGGINGMODULE
+#include "logging.h"
+#endif
 
 // Configuration settings
 #pragma	config FCMEN = OFF,      IESO = OFF
@@ -215,6 +218,10 @@ void main(void)
   car_12vline_ref = 0;
 #endif
 
+#ifdef OVMS_LOGGINGMODULE
+  logging_initialise();
+#endif
+
   // Proceed to main loop
   y = 0; // Last TMR0H
   while (1) // Main Loop
@@ -243,6 +250,10 @@ void main(void)
       net_ticker();
       CHECKPOINT(5)
       vehicle_ticker();
+#ifdef OVMS_LOGGINGMODULE
+      CHECKPOINT(8)
+      logging_ticker();
+#endif
     }
     else if (TMR0H != y)
     {
