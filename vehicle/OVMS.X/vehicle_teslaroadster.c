@@ -999,7 +999,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
   if (car_doors1 & 0x10)
     {
     // Vehicle is charging
-    car_chargeminsremaining = MinutesToChargeCAC(
+    car_chargefull_minsremaining = MinutesToChargeCAC(
         car_chargemode,             // charge mode, Standard, Range and Performance are supported
         car_idealrange,             // ideal miles at start of charge (caller must convert from ideal km)
         -1,                         // ideal miles desired at end of charge
@@ -1007,6 +1007,9 @@ BOOL vehicle_teslaroadster_ticker60(void)
         car_linevoltage*car_chargecurrent, // watts available from the wall
         car_ambient_temp            // ambient temperature in degrees C
         );
+    car_chargelimit_minsremaining = -1;
+    car_chargelimit_rangelimit = 0;
+    car_chargelimit_soclimit = 0;
     }
   
   return FALSE;

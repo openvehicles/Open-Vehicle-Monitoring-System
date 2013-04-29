@@ -119,7 +119,11 @@ unsigned char car_12vline = 0; // 12V line level
 unsigned char car_12vline_ref = 0; // 12V line level reference
 unsigned char car_gsmcops[9] = ""; // GSM provider
 unsigned int car_cac100 = 0; // CAC (x100)
-signed int car_chargeminsremaining = -1; // Minutes of charge remaining
+signed int car_chargefull_minsremaining = -1;  // Minutes of charge remaining
+signed int car_chargelimit_minsremaining = -1; // Minutes of charge remaining
+unsigned int car_chargelimit_rangelimit = 0;   // Range limit (in vehicle units)
+unsigned char car_chargelimit_soclimit = 0;    // SOC% limit
+
 
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 UINT8 debug_crashreason;        // last saved reset reason (bit set)

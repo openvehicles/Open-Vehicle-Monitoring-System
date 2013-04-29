@@ -337,8 +337,11 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", car_timerstart);
   s = stp_i(s, ",", car_stale_timer);
   s = stp_l2f(s, ",", (unsigned long)car_cac100, 2);
-  s = stp_i(s, ",", car_chargeminsremaining);
-  
+  s = stp_i(s, ",", car_chargefull_minsremaining);
+  s = stp_i(s, ",", car_chargelimit_minsremaining);
+  s = stp_i(s, ",", car_chargelimit_rangelimit);
+  s = stp_i(s, ",", car_chargelimit_soclimit);
+
   return net_msg_encode_statputs(stat, &crc_stat);
 }
 
@@ -1001,9 +1004,22 @@ char *net_prep_stat(char *s)
       s = stp_i(s, "\r ", car_linevoltage);
       s = stp_i(s, "V/", car_chargecurrent);
       s = stp_rom(s, "A");
-      if (car_chargeminsremaining >= 0)
+      if (car_chargefull_minsremaining >= 0)
         {
-        s = stp_i(s,"\r Remain: ",car_chargeminsremaining);
+        s = stp_i(s,"\r Full: ",car_chargefull_minsremaining);
+        s = stp_rom(s," mins");
+        }
+      if (car_chargelimit_soclimit >= 0)
+        {
+        s = stp_i(s, "\r ", car_chargelimit_soclimit);
+        s = stp_i(s,"%: ",car_chargelimit_minsremaining);
+        s = stp_rom(s," mins");
+        }
+      if (car_chargelimit_rangelimit >= 0)
+        {
+        s = stp_i(s, "\r ", car_chargelimit_rangelimit);
+        s = stp_rom(s, unit);
+        s = stp_i(s,": ",car_chargelimit_minsremaining);
         s = stp_rom(s," mins");
         }
     }
