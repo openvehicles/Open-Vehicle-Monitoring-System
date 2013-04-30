@@ -32,4 +32,6 @@
 1166=Release Parking Brake
 1169=Charge port open
 1170=Tow Mode is not available while car is on
+1469=HVAC: Compressor comms timeout
+1471=HVAC: Compressor DTC comms timeout
 2078=There was a problem processing your request
