@@ -34,6 +34,7 @@
 // LOGGING data
 #pragma udata LOGGING
 struct logging_record log_recs[LOG_RECORDSTORE];
+signed char logging_pos = -1;
 
 void logging_initialise(void)        // Logging Initialisation
   {
