@@ -1075,7 +1075,7 @@ void net_state_activity()
       else if (memcmppgm2ram(net_buf, (char const rom far*)"+CUSD:", 6) == 0)
       {
         // reply MMI/USSD command result:
-        net_msg_reply_ussd(net_buf);
+        net_msg_reply_ussd(net_buf, net_buf_pos);
       }
       break;
 #ifdef OVMS_DIAGMODULE
@@ -1314,6 +1314,8 @@ void net_state_ticker1(void)
             net_msg_send();
           }
 
+        } // if ((net_reg == 0x01)||(net_reg == 0x05))
+
 #ifdef OVMS_INTERNALGPS
         // Request internal SIM908 GPS coordinates
         // once per second while car is on,
@@ -1325,8 +1327,8 @@ void net_state_ticker1(void)
         }
 #endif
 
-        } // if ((net_reg == 0x01)||(net_reg == 0x05))
       break;
+
 #ifdef OVMS_DIAGMODULE
     case NET_STATE_DIAGMODE:
       diag_ticker();
@@ -1387,10 +1389,10 @@ void net_state_ticker60(void)
   else
   {
     // filter peaks/misreadings:
-    //car_12vline = ((int)car_12vline + (int)(inputs_voltage()*10) + 1) / 2;
+    car_12vline = ((int)car_12vline + (int)(inputs_voltage()*10) + 1) / 2;
 
-    // back to direct reading to test A/D converter fix:
-    car_12vline = inputs_voltage()*10;
+    // OR direct reading to test A/D converter fix: (failed...)
+    //car_12vline = inputs_voltage()*10;
   }
 
   // Calibration: take reference voltage after charging

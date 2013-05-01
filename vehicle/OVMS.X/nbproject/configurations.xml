@@ -20,6 +20,7 @@
       <itemPath>inputs.h</itemPath>
       <itemPath>diag.h</itemPath>
       <itemPath>vehicle.h</itemPath>
+      <itemPath>logging.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -59,6 +60,8 @@
       <itemPath>vehicle_thinkcity.c</itemPath>
       <itemPath>vehicle_nissanleaf.c</itemPath>
       <itemPath>vehicle_tazzari.c</itemPath>
+      <itemPath>logging.c</itemPath>
+      <itemPath>vehicle_mitsubishi.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -194,6 +197,18 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
+      <item path="logging.h" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
+      </item>
+      <item path="vehicle_mitsubishi.c" ex="true" overriding="false">
+      </item>
       <item path="vehicle_nissanleaf.c" ex="true" overriding="false">
         <C18>
         </C18>
@@ -286,8 +301,8 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C18>
-        <property key="code-model" value="mL"/>
-        <property key="data-model" value="Oa-"/>
+        <property key="code-model" value="ml"/>
+        <property key="data-model" value="oa-"/>
         <property key="default-char-unsigned" value="true"/>
         <property key="enable-all-optimizations" value="true"/>
         <property key="enable-int-promotion" value="false"/>
@@ -306,7 +321,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE;OVMS_CAR_NONE"/>
+                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_CAR_NONE"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -382,6 +397,8 @@
         </C18-LD>
         <C18LanguageToolchain>
         </C18LanguageToolchain>
+      </item>
+      <item path="vehicle_mitsubishi.c" ex="true" overriding="false">
       </item>
       <item path="vehicle_nissanleaf.c" ex="true" overriding="false">
         <C18>
@@ -495,7 +512,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS;OVMS_CAR_NISSANLEAF;OVMS_CAR_TAZZARI"/>
+                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS;OVMS_CAR_NISSANLEAF;OVMS_CAR_TAZZARI;OVMS_CAR_MITSUBISHI"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -558,6 +575,16 @@
         </C18LanguageToolchain>
       </item>
       <item path="diag.h" ex="false" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
+      </item>
+      <item path="logging.h" ex="true" overriding="false">
         <C18>
         </C18>
         <C18-AS>
@@ -639,7 +666,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS;OVMS_CAR_NISSANLEAF;OVMS_CAR_TAZZARI"/>
+                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_INTERNALGPS;OVMS_CAR_NISSANLEAF;OVMS_CAR_TAZZARI;OVMS_CAR_MITSUBISHI"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>

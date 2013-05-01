@@ -58,7 +58,7 @@
       </runprofile>
     </conf>
     <conf name="V2_Experimental" type="2">
-      <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=BUR110372223:=x:=en</platformToolSN>
+      <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
