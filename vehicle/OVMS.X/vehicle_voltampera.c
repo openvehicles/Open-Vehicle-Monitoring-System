@@ -46,6 +46,8 @@ unsigned int va_obd_expect_pid;  // OBDII expected PID
 BOOL va_obd_expect_waiting;      // OBDII expected waiting for response
 char va_obd_expect_buf[64];      // Space for a response
 
+unsigned int va_drive_distance_bat_max; // maximum distance drive on battery
+
 #pragma udata
 
 ////////////////////////////////////////////////////////////////////////
@@ -68,6 +70,7 @@ rom struct
     { 0x07E4, 10, 0x434f },
     { 0x07E4, 10, 0x1c43 },
     { 0x07E4, 10, 0x8334 },
+    { 0x07E1, 100, 0x2487 },
     { 0x0000, 0,  0x0000 }
   };
 
@@ -105,6 +108,7 @@ BOOL vehicle_voltampera_ticker1(void)
 
   if ((car_chargecurrent!=0)&&(car_linevoltage!=0))
     { // CAN says the car is charging
+      car_doors5bits.Charging12V = 1;  //MJ
     if ((car_doors1 & 0x08)==0)
       { // Charge has started
       car_doors1 |= 0x0c;     // Set charge and pilot bits
@@ -121,6 +125,7 @@ BOOL vehicle_voltampera_ticker1(void)
       }
     else
       { // Charge is ongoing
+        car_doors1bits.ChargePort = 1;  //MJ
       va_charge_timer++;
       if (va_charge_timer>=60)
         { // One minute has passed
@@ -142,6 +147,7 @@ BOOL vehicle_voltampera_ticker1(void)
     if (car_doors1 & 0x08)
       { // Charge has completed / stopped
       car_doors1 &= ~0x0c;    // Clear charge and pilot bits
+      car_doors1bits.ChargePort = 1;  //MJ
       car_chargemode = 0;     // Standard charge mode
       car_charge_b4 = 0;      // Not required
       if (car_SOC < 95)
@@ -151,14 +157,16 @@ BOOL vehicle_voltampera_ticker1(void)
         net_req_notification(NET_NOTIFY_CHARGE);
         }
       else
-        { // Assume chrge completed normally
+        { // Assume charge completed normally
         car_chargestate = 4;    // Charge DONE
         car_chargesubstate = 3; // Leave it as is
+        net_req_notification(NET_NOTIFY_CHARGE);  // Charge done Message MJ
         }
       va_charge_timer = 0;       // Reset the per-second charge timer
       va_charge_wm = 0;          // Reset the per-minute watt accumulator
       net_req_notification(NET_NOTIFY_STAT);
       }
+    car_doors5bits.Charging12V = 0;  // MJ
     }
 
   ////////////////////////////////////////////////////////////////////////
@@ -230,6 +238,8 @@ BOOL vehicle_voltampera_poll0(void)
   unsigned int id = ((unsigned int)RXB0SIDL >>5)
                   + ((unsigned int)RXB0SIDH <<3);
 
+   unsigned int edrive_distance = 0;
+
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
   can_databuffer[1] = RXB0D1;
@@ -292,7 +302,8 @@ BOOL vehicle_voltampera_poll0(void)
       case 0x8334:  // SOC
         car_stale_temps = 60;
         car_SOC = (char)(((int)value * 39) / 99);
-        car_idealrange = ((unsigned int)car_SOC * (unsigned int)37)/100;  // Kludgy, but ok for the moment
+        //car_idealrange = ((unsigned int)car_SOC * (unsigned int)37)/100;  // Kludgy, but ok for the moment
+        car_idealrange = ((unsigned int)car_SOC * (unsigned int)va_drive_distance_bat_max) / 100;
         car_estrange = car_idealrange;                              // Very kludgy, but ok ...
         break;
       }
@@ -309,6 +320,17 @@ BOOL vehicle_voltampera_poll0(void)
         break;
       }
     }
+  else if (id == 0x7e9)
+    {
+    switch (pid)
+      {
+      case 0x2487:  //Distance Traveled on Battery Energy This Drive Cycle
+          edrive_distance = KM2MI((can_databuffer[5] + ((unsigned int)can_databuffer[4] << 8)) / 100); // German Volt Report im KM
+          if ((edrive_distance > va_drive_distance_bat_max) && (car_chargestate == 4)) va_drive_distance_bat_max = edrive_distance;
+        break;
+      }
+    }
+
 
   return TRUE;
   }
@@ -366,7 +388,7 @@ BOOL vehicle_voltampera_poll1(void)
     {
     if (can_databuffer[0] == 0)
       { // Car is in PARK
-      car_doors1 |= 0x40;     // NOT PARK
+      car_doors1 |= 0x40;     //  PARK (Handbrake activate) MJ
       car_doors1 &= ~0x80;    // CAR OFF
       if (car_parktime == 0)
         {
@@ -376,7 +398,7 @@ BOOL vehicle_voltampera_poll1(void)
       }
     else
       { // Car is not in PARK
-      car_doors1 &= ~0x40;    // PARK
+      car_doors1 &= ~0x40;     // NOT PARK (Handbrake release) MJ
       car_doors1 |= 0x80;     // CAR ON
       if (car_parktime != 0)
         {
@@ -456,6 +478,8 @@ BOOL vehicle_voltampera_initialise(void)
   va_obd_expect_waiting = FALSE;
   car_stale_timer = -1; // Timed charging is not supported for OVMS VA
   car_time = 0;
+
+  va_drive_distance_bat_max = KM2MI(35);    // initial Battery distance in km
 
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
