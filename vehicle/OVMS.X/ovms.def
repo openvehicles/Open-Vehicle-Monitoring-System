@@ -71,3 +71,7 @@
 // serial port. It is primarily used for QC purposes, but also useful
 // for advanced diagnostics.
 // #define OVMS_DIAGMODULE
+
+// The LOGGING code provides for automated submission of charge and drive
+// logs to the OVMS server.
+// #define OVMS_LOGGINGMODULE
