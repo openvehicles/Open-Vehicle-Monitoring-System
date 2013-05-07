@@ -1304,12 +1304,16 @@ void net_state_ticker1(void)
             }
           } // if NET_NOTIFY_SMSPART
 
-        if ((car_speed>0)&&
-            (sys_features[FEATURE_STREAM]>0)&&
-            (net_msg_sendpending==0)&&
-            (net_apps_connected>0))
-          { // Car moving, and streaming on, apps connected, and not sending
-          delay100(2);
+        // GPS location streaming:
+        if ((car_speed>0) &&
+            (sys_features[FEATURE_STREAM]&1) &&
+            (net_msg_sendpending==0) &&
+            (net_apps_connected>0) &&
+            ( ((net_fnbits & NET_FN_INTERNALGPS) == 0)
+              || ((net_granular_tick % 2) == 0) ))
+          {
+          // Car moving, and streaming on, apps connected, and not sending
+          //delay100(2); // necessary? net_msg_start() delays too
           if (net_msgp_gps(2) != 2)
             net_msg_send();
           }
@@ -1320,10 +1324,12 @@ void net_state_ticker1(void)
         // Request internal SIM908 GPS coordinates
         // once per second while car is on,
         // else once every minute (to trace theft / transportation)
-        if ((((car_doors1 & 0x80) > 0) || ((net_granular_tick % 60) == 0))
+        if ((car_doors1bits.CarON || ((net_granular_tick % 60) == 0))
+                && (net_msg_sendpending==0)
                 && ((net_fnbits & NET_FN_INTERNALGPS) > 0))
         {
           net_puts_rom(NET_REQGPS);
+          delay100(1); // to get modem reply on next net_poll()
         }
 #endif
 

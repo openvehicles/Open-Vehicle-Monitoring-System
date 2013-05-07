@@ -119,6 +119,9 @@
 ;           - Power statistics just show power sums if not driven
 ;           - Rounding of car_speed
 ;
+;    2.6.5  7 May 2013 (Michael Balzer):
+;           - FEATURE_STREAM changed to bit field: 2 = GPS log stream
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -173,7 +176,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.6.4";
+rom char vehicle_twizy_version[] = "2.6.5";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -1577,7 +1580,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 
   // send stream updates (GPS log) while car is moving:
   // (every 5 seconds for debug/test, should be per second if possible...)
-  if ((twizy_speed > 0) && (sys_features[FEATURE_STREAM] > 0)
+  if ((twizy_speed > 0) && (sys_features[FEATURE_STREAM] & 2)
           && ((can_granular_tick % 5) == 0))
   {
     twizy_notify |= SEND_StreamUpdate;

@@ -219,7 +219,8 @@ void main(void)
     if ((vUARTIntStatus.UARTIntRxError) ||
             (vUARTIntStatus.UARTIntRxOverFlow))
       net_reset_async();
-    if (!vUARTIntStatus.UARTIntRxBufferEmpty)
+
+    while (!vUARTIntStatus.UARTIntRxBufferEmpty)
     {
       CHECKPOINT(2)
       net_poll();
