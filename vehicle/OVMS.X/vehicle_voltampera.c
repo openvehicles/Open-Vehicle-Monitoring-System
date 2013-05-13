@@ -325,7 +325,7 @@ BOOL vehicle_voltampera_poll0(void)
     switch (pid)
       {
       case 0x2487:  //Distance Traveled on Battery Energy This Drive Cycle
-          edrive_distance = KM2MI((can_databuffer[5] + ((unsigned int)can_databuffer[4] << 8)) / 100); // German Volt Report im KM
+          edrive_distance = MiFromKm((can_databuffer[5] + ((unsigned int)can_databuffer[4] << 8)) / 100); // German Volt Report im KM
           if ((edrive_distance > va_drive_distance_bat_max) && (car_chargestate == 4)) va_drive_distance_bat_max = edrive_distance;
         break;
       }
@@ -479,7 +479,7 @@ BOOL vehicle_voltampera_initialise(void)
   car_stale_timer = -1; // Timed charging is not supported for OVMS VA
   car_time = 0;
 
-  va_drive_distance_bat_max = KM2MI(35);    // initial Battery distance in km
+  va_drive_distance_bat_max = MiFromKm(35);    // initial Battery distance in km
 
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode

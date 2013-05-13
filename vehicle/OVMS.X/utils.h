@@ -57,6 +57,10 @@ long gps2latlon(char *gpscoord);   // convert GPS coordinate to latlon value
 WORD crc16(char *data, int length);  // Calculate a 16bit CRC and return it
 void cr2lf(char *s);                // replace \r by \n in s (to convert msg text to sms)
 
+// convert miles to kilometers and vice-versa, using factor 1.609344
+unsigned long KmFromMi(unsigned long miles);
+unsigned long MiFromKm(unsigned long km);
+
 // sprintf replacement utils: stp string print
 char *stp_rom(char *dst, const rom char *val);
 char *stp_ram(char *dst, const char *val);

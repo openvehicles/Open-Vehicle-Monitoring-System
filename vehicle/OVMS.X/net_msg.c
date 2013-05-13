@@ -322,8 +322,8 @@ char net_msgp_stat(char stat)
   }
   else
   {
-    s = stp_i(s, ",", MI2KM(car_idealrange));
-    s = stp_i(s, ",", MI2KM(car_estrange));
+    s = stp_i(s, ",", KmFromMi(car_idealrange));
+    s = stp_i(s, ",", KmFromMi(car_estrange));
   }
 
   s = stp_i(s, ",", car_chargelimit);
@@ -952,9 +952,9 @@ char *net_prep_stat(char *s)
   const rom char *unit = " mi";
   if (can_mileskm == 'K')
   {
-    estrange = MI2KM(estrange);
-    idealrange = MI2KM(idealrange);
-    odometer = MI2KM(odometer);
+    estrange = KmFromMi(estrange);
+    idealrange = KmFromMi(idealrange);
+    odometer = KmFromMi(odometer);
     unit = " km";
   }
 
