@@ -33,12 +33,6 @@
 
 #include <GenericTypeDefs.h>
 
-// Integer Miles <-> Kilometer conversions
-// 1 mile = 1.609344 kilometers
-// smalles error approximation: mi = (km * 10 - 5) / 16 + 1
-#define KM2MI(KM)       (((KM) <= 0) ? 0 : ((((KM) * 10 - 5) >> 4) + 1))
-#define MI2KM(MI)       ( ( ( (MI) << 4 ) + 5 ) / 10 )
-
 // Math utils:
 #define SQR(n) ((n)*(n))
 #define ABS(n) (((n) < 0) ? -(n) : (n))
@@ -56,6 +50,10 @@ float myatof(char *s);             // builtin atof() does not work
 long gps2latlon(char *gpscoord);   // convert GPS coordinate to latlon value
 WORD crc16(char *data, int length);  // Calculate a 16bit CRC and return it
 void cr2lf(char *s);                // replace \r by \n in s (to convert msg text to sms)
+
+// convert miles to kilometers and vice-versa, using factor 1.609344
+unsigned long KmFromMi(unsigned long miles);
+unsigned long MiFromKm(unsigned long km);
 
 // sprintf replacement utils: stp string print
 char *stp_rom(char *dst, const rom char *val);

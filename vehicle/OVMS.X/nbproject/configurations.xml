@@ -197,6 +197,8 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
+      <item path="logging.c" ex="true" overriding="false">
+      </item>
       <item path="logging.h" ex="true" overriding="false">
         <C18>
         </C18>
@@ -208,6 +210,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="vehicle_mitsubishi.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="vehicle_nissanleaf.c" ex="true" overriding="false">
         <C18>
@@ -399,6 +409,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="vehicle_mitsubishi.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="vehicle_nissanleaf.c" ex="true" overriding="false">
         <C18>
@@ -583,6 +601,8 @@
         </C18-LD>
         <C18LanguageToolchain>
         </C18LanguageToolchain>
+      </item>
+      <item path="logging.c" ex="true" overriding="false">
       </item>
       <item path="logging.h" ex="true" overriding="false">
         <C18>

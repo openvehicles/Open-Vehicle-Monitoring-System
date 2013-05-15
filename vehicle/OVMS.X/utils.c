@@ -113,6 +113,33 @@ void modem_reboot(void)
   PORTBbits.RB0 = 1;
 }
 
+// convert miles to kilometers by multiplying by ~1.609344
+unsigned long KmFromMi(unsigned long miles)
+{
+ unsigned long high = miles >> 16;
+ unsigned long low = miles & 0xFFFF;
+
+ // approximate 0.609344 with 39934/2^16
+ // do the multiply and divide for the high and low 16 bits to
+ // preserve precision and avoid overflow
+ // this yields six significant digits of accuracy and doesn't
+ // overflow until the results no longer fit in 32 bits
+ return miles + (high * 39934) + ((low * 39934 + 0x7FFF) >> 16);
+}
+
+// convert kilometers to miles by multiplying by ~1/1.609344
+unsigned long MiFromKm(unsigned long km)
+{
+ unsigned long high = km >> 16;
+ unsigned long low = km & 0xFFFF;
+
+ // approximate 1/1.609344 with (40722 + 1/6)/2^16
+ // do the multiply and divide for the high and low 16 bits to
+ // preserve precision and avoid overflow
+ // this yields six significant digits of accuracy and doesn't
+ // overflow for any 32-bit input value.
+ return (high * 40722) + ((low * 40722 + km/6 + 0x7FFF) >> 16);
+}
 
 // builtin atof() does not work... returns strange values
 

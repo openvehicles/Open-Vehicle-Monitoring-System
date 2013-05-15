@@ -119,6 +119,9 @@
 ;           - Power statistics just show power sums if not driven
 ;           - Rounding of car_speed
 ;
+;    2.6.5  7 May 2013 (Michael Balzer):
+;           - FEATURE_STREAM changed to bit field: 2 = GPS log stream
+;
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -173,7 +176,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.6.4";
+rom char vehicle_twizy_version[] = "2.6.5";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -1300,9 +1303,9 @@ BOOL vehicle_twizy_state_ticker1(void)
   {
     // convert user km to miles
     if (suffRange > 0)
-      suffRange = KM2MI(suffRange);
+      suffRange = MiFromKm(suffRange);
     if (maxRange > 0)
-      maxRange = KM2MI(maxRange);
+      maxRange = MiFromKm(maxRange);
   }
 
 
@@ -1318,11 +1321,11 @@ BOOL vehicle_twizy_state_ticker1(void)
   car_SOC = (twizy_soc + 50) / 100;
 
   // ODOMETER: convert to miles/10:
-  car_odometer = KM2MI(twizy_odometer / 10);
+  car_odometer = MiFromKm(twizy_odometer / 10);
 
   // SPEED:
   if (can_mileskm == 'M')
-    car_speed = KM2MI((twizy_speed + 50) / 100); // miles/hour
+    car_speed = MiFromKm((twizy_speed + 50) / 100); // miles/hour
   else
     car_speed = (twizy_speed + 50) / 100; // km/hour
 
@@ -1440,7 +1443,7 @@ BOOL vehicle_twizy_state_ticker1(void)
               (((float) twizy_soc_min_range) / twizy_soc_min) * twizy_soc;
 
       if (twizy_range > 0)
-        car_estrange = KM2MI(twizy_range);
+        car_estrange = MiFromKm(twizy_range);
 
       if (maxRange > 0)
         car_idealrange = (((float) maxRange) * twizy_soc) / 10000;
@@ -1520,7 +1523,7 @@ BOOL vehicle_twizy_state_ticker1(void)
     // Calculate range:
     if (twizy_range > 0)
     {
-      car_estrange = KM2MI(twizy_range);
+      car_estrange = MiFromKm(twizy_range);
 
       if (maxRange > 0)
         car_idealrange = (((float) maxRange) * twizy_soc) / 10000;
@@ -1577,7 +1580,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 
   // send stream updates (GPS log) while car is moving:
   // (every 5 seconds for debug/test, should be per second if possible...)
-  if ((twizy_speed > 0) && (sys_features[FEATURE_STREAM] > 0)
+  if ((twizy_speed > 0) && (sys_features[FEATURE_STREAM] & 2)
           && ((can_granular_tick % 5) == 0))
   {
     twizy_notify |= SEND_StreamUpdate;
@@ -2289,8 +2292,8 @@ void vehicle_twizy_stat_prepmsg(void)
   }
   else
   {
-    s = stp_i(s, "\r Range: ", MI2KM(car_estrange));
-    s = stp_i(s, " - ", MI2KM(car_idealrange));
+    s = stp_i(s, "\r Range: ", KmFromMi(car_estrange));
+    s = stp_i(s, " - ", KmFromMi(car_idealrange));
     s = stp_rom(s, " km");
   }
 
@@ -2309,7 +2312,7 @@ void vehicle_twizy_stat_prepmsg(void)
   }
   else
   {
-    s = stp_ul(s, "\r ODO: ", MI2KM(car_odometer / 10));
+    s = stp_ul(s, "\r ODO: ", KmFromMi(car_odometer / 10));
     s = stp_rom(s, " km");
   }
 
@@ -2492,7 +2495,7 @@ char vehicle_twizy_ca_msgp(char stat, int cmd)
     else
       maxrange = 0;
     if (can_mileskm == 'M')
-      maxrange = KM2MI(maxrange);
+      maxrange = MiFromKm(maxrange);
   }
 
   etr_range = (maxrange) ? vehicle_twizy_chargetime(
@@ -2634,7 +2637,7 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
         else
           maxrange = 0;
         if (can_mileskm == 'M')
-          maxrange = KM2MI(maxrange);
+          maxrange = MiFromKm(maxrange);
       }
 
       etr_range = (maxrange) ? vehicle_twizy_chargetime(
