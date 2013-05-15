@@ -33,12 +33,6 @@
 
 #include <GenericTypeDefs.h>
 
-// Integer Miles <-> Kilometer conversions
-// 1 mile = 1.609344 kilometers
-// smalles error approximation: mi = (km * 10 - 5) / 16 + 1
-#define KM2MI(KM)       (((KM) <= 0) ? 0 : ((((KM) * 10 - 5) >> 4) + 1))
-#define MI2KM(MI)       ( ( ( (MI) << 4 ) + 5 ) / 10 )
-
 // Math utils:
 #define SQR(n) ((n)*(n))
 #define ABS(n) (((n) < 0) ? -(n) : (n))

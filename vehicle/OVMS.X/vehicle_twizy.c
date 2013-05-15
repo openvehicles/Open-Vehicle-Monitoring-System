@@ -1303,9 +1303,9 @@ BOOL vehicle_twizy_state_ticker1(void)
   {
     // convert user km to miles
     if (suffRange > 0)
-      suffRange = KM2MI(suffRange);
+      suffRange = MiFromKm(suffRange);
     if (maxRange > 0)
-      maxRange = KM2MI(maxRange);
+      maxRange = MiFromKm(maxRange);
   }
 
 
@@ -1321,11 +1321,11 @@ BOOL vehicle_twizy_state_ticker1(void)
   car_SOC = (twizy_soc + 50) / 100;
 
   // ODOMETER: convert to miles/10:
-  car_odometer = KM2MI(twizy_odometer / 10);
+  car_odometer = MiFromKm(twizy_odometer / 10);
 
   // SPEED:
   if (can_mileskm == 'M')
-    car_speed = KM2MI((twizy_speed + 50) / 100); // miles/hour
+    car_speed = MiFromKm((twizy_speed + 50) / 100); // miles/hour
   else
     car_speed = (twizy_speed + 50) / 100; // km/hour
 
@@ -1443,7 +1443,7 @@ BOOL vehicle_twizy_state_ticker1(void)
               (((float) twizy_soc_min_range) / twizy_soc_min) * twizy_soc;
 
       if (twizy_range > 0)
-        car_estrange = KM2MI(twizy_range);
+        car_estrange = MiFromKm(twizy_range);
 
       if (maxRange > 0)
         car_idealrange = (((float) maxRange) * twizy_soc) / 10000;
@@ -1523,7 +1523,7 @@ BOOL vehicle_twizy_state_ticker1(void)
     // Calculate range:
     if (twizy_range > 0)
     {
-      car_estrange = KM2MI(twizy_range);
+      car_estrange = MiFromKm(twizy_range);
 
       if (maxRange > 0)
         car_idealrange = (((float) maxRange) * twizy_soc) / 10000;
@@ -2292,8 +2292,8 @@ void vehicle_twizy_stat_prepmsg(void)
   }
   else
   {
-    s = stp_i(s, "\r Range: ", MI2KM(car_estrange));
-    s = stp_i(s, " - ", MI2KM(car_idealrange));
+    s = stp_i(s, "\r Range: ", KmFromMi(car_estrange));
+    s = stp_i(s, " - ", KmFromMi(car_idealrange));
     s = stp_rom(s, " km");
   }
 
@@ -2312,7 +2312,7 @@ void vehicle_twizy_stat_prepmsg(void)
   }
   else
   {
-    s = stp_ul(s, "\r ODO: ", MI2KM(car_odometer / 10));
+    s = stp_ul(s, "\r ODO: ", KmFromMi(car_odometer / 10));
     s = stp_rom(s, " km");
   }
 
@@ -2495,7 +2495,7 @@ char vehicle_twizy_ca_msgp(char stat, int cmd)
     else
       maxrange = 0;
     if (can_mileskm == 'M')
-      maxrange = KM2MI(maxrange);
+      maxrange = MiFromKm(maxrange);
   }
 
   etr_range = (maxrange) ? vehicle_twizy_chargetime(
@@ -2637,7 +2637,7 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
         else
           maxrange = 0;
         if (can_mileskm == 'M')
-          maxrange = KM2MI(maxrange);
+          maxrange = MiFromKm(maxrange);
       }
 
       etr_range = (maxrange) ? vehicle_twizy_chargetime(
