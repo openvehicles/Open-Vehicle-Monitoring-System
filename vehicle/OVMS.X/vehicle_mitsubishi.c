@@ -98,14 +98,21 @@ BOOL vehicle_mitsubishi_poll1(void)
   else if ((CANctrl & 0x07) == 3)        // Acceptance Filter 3 (RXF3) = CAN ID 374
     {
     // SOC
+      car_SOC = (char)(((int)can_databuffer[1] - 10) / 2);
     }
   else if ((CANctrl & 0x07) == 4)        // Acceptance Filter 3 (RXF3) = CAN ID 412
     {
     // Speed & Odo
+      if (can_mileskm == 'K')
+        car_speed = can_databuffer[1];
+      else
+        car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1000)+500)/1609);
     }
   else if ((CANctrl & 0x07) == 5)        // Acceptance Filter 3 (RXF3) = CAN ID 346
     {
     // Range
+      car_estrange = (unsigned int)can_databuffer[7];
+      car_idealrange = car_estrange;
     }
   return TRUE;
   }

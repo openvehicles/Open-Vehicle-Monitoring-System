@@ -14,23 +14,23 @@
 # You can invoke make with the values of the macros:
 # $ makeMP_CC="/opt/microchip/mplabc30/v3.30c/bin/pic30-gcc" ...  
 #
-PATH_TO_IDE_BIN=/Applications/microchip/mplabx/mplab_ide.app/Contents/Resources/mplab_ide/mplab_ide/modules/../../bin/
+PATH_TO_IDE_BIN=/opt/microchip/mplabx/mplab_ide/mplab_ide/modules/../../bin/
 # Adding MPLAB X bin directory to path.
-PATH:=/Applications/microchip/mplabx/mplab_ide.app/Contents/Resources/mplab_ide/mplab_ide/modules/../../bin/:$(PATH)
+PATH:=/opt/microchip/mplabx/mplab_ide/mplab_ide/modules/../../bin/:$(PATH)
 # Path to java used to run MPLAB X when this makefile was created
-MP_JAVA_PATH="/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home/bin/"
+MP_JAVA_PATH="/opt/microchip/mplabx/sys/java/jre1.7.0_17/bin/"
 OS_CURRENT="$(shell uname -s)"
-MP_CC="/Applications/microchip/mplabc18/v3.40/bin/mcc18"
+MP_CC="/opt/microchip/mplabc18/v3.40/bin/mcc18"
 # MP_CPPC is not defined
 # MP_BC is not defined
-MP_AS="/Applications/microchip/mplabc18/v3.40/bin/../mpasm/MPASMWIN"
-MP_LD="/Applications/microchip/mplabc18/v3.40/bin/mplink"
-MP_AR="/Applications/microchip/mplabc18/v3.40/bin/mplib"
-DEP_GEN=${MP_JAVA_PATH}java -jar "/Applications/microchip/mplabx/mplab_ide.app/Contents/Resources/mplab_ide/mplab_ide/modules/../../bin/extractobjectdependencies.jar" 
-MP_CC_DIR="/Applications/microchip/mplabc18/v3.40/bin"
+MP_AS="/opt/microchip/mplabc18/v3.40/bin/../mpasm/MPASMWIN"
+MP_LD="/opt/microchip/mplabc18/v3.40/bin/mplink"
+MP_AR="/opt/microchip/mplabc18/v3.40/bin/mplib"
+DEP_GEN=${MP_JAVA_PATH}java -jar "/opt/microchip/mplabx/mplab_ide/mplab_ide/modules/../../bin/extractobjectdependencies.jar" 
+MP_CC_DIR="/opt/microchip/mplabc18/v3.40/bin"
 # MP_CPPC_DIR is not defined
 # MP_BC_DIR is not defined
-MP_AS_DIR="/Applications/microchip/mplabc18/v3.40/bin/../mpasm"
-MP_LD_DIR="/Applications/microchip/mplabc18/v3.40/bin"
-MP_AR_DIR="/Applications/microchip/mplabc18/v3.40/bin"
+MP_AS_DIR="/opt/microchip/mplabc18/v3.40/bin/../mpasm"
+MP_LD_DIR="/opt/microchip/mplabc18/v3.40/bin"
+MP_AR_DIR="/opt/microchip/mplabc18/v3.40/bin"
 # MP_BC_DIR is not defined
