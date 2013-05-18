@@ -87,8 +87,26 @@ BOOL vehicle_mitsubishi_poll1(void)
   can_databuffer[6] = RXB1D6;
   can_databuffer[7] = RXB1D7;
 
-  RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
+  CANctrl=RXB1CON;              // copy CAN RX1 Control register
+  RXB1CONbits.RXFUL = 0;        // All bytes read, Clear flag
 
+
+  if ((CANctrl & 0x07) == 2)             // Acceptance Filter 2 (RXF2) = CAN ID 373
+    {
+    // BatCurr & BatVolt
+    }
+  else if ((CANctrl & 0x07) == 3)        // Acceptance Filter 3 (RXF3) = CAN ID 374
+    {
+    // SOC
+    }
+  else if ((CANctrl & 0x07) == 4)        // Acceptance Filter 3 (RXF3) = CAN ID 412
+    {
+    // Speed & Odo
+    }
+  else if ((CANctrl & 0x07) == 5)        // Acceptance Filter 3 (RXF3) = CAN ID 346
+    {
+    // Range
+    }
   return TRUE;
   }
 
@@ -129,23 +147,24 @@ BOOL vehicle_mitsubishi_initialise(void)
   RXF0SIDL = 0b00000000;        // Filter 11111101000 (0x7e8 .. 0x7ef)
   RXF0SIDH = 0b11111101;
 
+
   // Buffer 1 (filters 2, 3, 4 and 5) for direct can bus messages
   RXB1CON  = 0b00000000;	// RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
 
   RXM1SIDL = 0b11100000;
   RXM1SIDH = 0b11111111;	// Set Mask1 to 0x7ff
 
-  RXF2SIDL = 0b11000000;	// Setup Filter2 so that CAN ID 0x206 will be accepted
-  RXF2SIDH = 0b01000000;
+  RXF2SIDL = 0b01100000;	// Setup Filter2 so that CAN ID 0x373 will be accepted
+  RXF2SIDH = 0b01101110;
 
-  RXF3SIDL = 0b00100000;	// Setup Filter3 so that CAN ID 0x4E1 will be accepted
-  RXF3SIDH = 0b10011100;
+  RXF3SIDL = 0b10000000;	// Setup Filter3 so that CAN ID 0x374 will be accepted
+  RXF3SIDH = 0b01101110;
 
-  RXF4SIDL = 0b10000000;  // Setup Filter4 so that CAN ID 0x514 will be accepted
-  RXF4SIDH = 0b10100010;
+  RXF4SIDL = 0b01000000;        // Setup Filter4 so that CAN ID 0x412 will be accepted
+  RXF4SIDH = 0b10000010;
 
-  RXF5SIDL = 0b10100000;  // Setup Filter5 so that CAN ID 0x135 will be accepted
-  RXF5SIDH = 0b00100110;
+  RXF5SIDL = 0b11000000;        // Setup Filter5 so that CAN ID 0x346 will be accepted
+  RXF5SIDH = 0b01101000;
 
   // CAN bus baud rate
 
