@@ -108,11 +108,13 @@ BOOL vehicle_mitsubishi_poll1(void)
         car_speed = can_databuffer[1];
       else
         car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1000)+500)/1609);
+
+      car_odometer = MiFromKm((((can_databuffer[2] << 8) + can_databuffer[3]) << 8) + can_databuffer[4]);
     }
   else if ((CANctrl & 0x07) == 5)        // Acceptance Filter 3 (RXF3) = CAN ID 346
     {
     // Range
-      car_estrange = (unsigned int)can_databuffer[7];
+      car_estrange = MiFromKm(unsigned int)can_databuffer[7]);
       car_idealrange = car_estrange;
     }
   return TRUE;
@@ -168,10 +170,10 @@ BOOL vehicle_mitsubishi_initialise(void)
   RXF3SIDL = 0b10000000;	// Setup Filter3 so that CAN ID 0x374 will be accepted
   RXF3SIDH = 0b01101110;
 
-  RXF4SIDL = 0b01000000;        // Setup Filter4 so that CAN ID 0x412 will be accepted
+  RXF4SIDL = 0b01000000;  // Setup Filter4 so that CAN ID 0x412 will be accepted
   RXF4SIDH = 0b10000010;
 
-  RXF5SIDL = 0b11000000;        // Setup Filter5 so that CAN ID 0x346 will be accepted
+  RXF5SIDL = 0b11000000;  // Setup Filter5 so that CAN ID 0x346 will be accepted
   RXF5SIDH = 0b01101000;
 
   // CAN bus baud rate
