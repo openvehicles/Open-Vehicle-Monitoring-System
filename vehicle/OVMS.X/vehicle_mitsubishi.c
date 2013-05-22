@@ -76,6 +76,7 @@ BOOL vehicle_mitsubishi_poll1(void)
   {
   unsigned int id = ((unsigned int)RXB1SIDL >>5)
                   + ((unsigned int)RXB1SIDH <<3);
+  unsigned char CANctrl;
 
   can_datalength = RXB1DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB1D0;
