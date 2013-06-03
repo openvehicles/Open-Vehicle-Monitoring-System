@@ -31,15 +31,31 @@
 #ifndef __OVMS_LOGGING_H
 #define __OVMS_LOGGING_H
 
+// STATES
+#define LOG_STATE_FIRSTRUN   0x00  // First time run
+#define LOG_STATE_WAITDRIVE  0x01  // Wait for drive to end, then discard
+#define LOG_STATE_WAITCHARGE 0x02  // Wait for charge to end, then discard
+#define LOG_STATE_DRIVING    0x10  // Driving
+#define LOG_STATE_CHARGING   0x20  // Charging
+#define LOG_STATE_PARKED     0x30  // Parked
+
+// LOG data
+extern unsigned char log_state;                // The current state
+extern unsigned char log_state_vchar;          //   A per-state CHAR variable
+extern unsigned int  log_state_vint;           //   A per-state INT variable
+extern unsigned char log_timeout_goto;         // State to auto-transition to, after timeout
+extern unsigned int  log_timeout_ticks;        // Number of seconds before timeout auto-transition
+extern unsigned int  log_granular_tick;        // An internal ticker used to generate 1min, 5min, etc, calls
+
 #define LOG_TYPE_CHARGE         'C'     // A charge log record
 #define LOG_TYPE_CHARGING       'c'     // A charging log record
 #define LOG_TYPE_DRIVE          'D'     // A drive log record
 #define LOG_TYPE_DRIVING        'd'     // A driving log record
-#define LOG_TYPE_FREE           'F'     // A free log record
+#define LOG_TYPE_FREE           0       // A free log record
 
-#define LOG_CHARGERESULT_OK     'D'     // Result if charge was ok
-#define LOG_CHARGERESULT_STOP   'S'     // Result if charge was stopped
-#define LOG_CHARGERESULT_FAIL   'F'     // Result if charge failed
+#define LOG_CHARGERESULT_OK     0       // Result if charge was ok
+#define LOG_CHARGERESULT_STOP   1       // Result if charge was stopped
+#define LOG_CHARGERESULT_FAIL   2       // Result if charge failed
 
 #define LOG_RECORDSTORE         4       // Number of records that can be stored
 
@@ -79,6 +95,8 @@ struct logging_record
     } record;
   };
 
+unsigned char logging_haspending(void);  // Pending log messages
+void logging_sendpending(void);       // Send pending log messages
 void logging_initialise(void);        // Logging Initialisation
 void logging_ticker(void);            // Logging Ticker
 
