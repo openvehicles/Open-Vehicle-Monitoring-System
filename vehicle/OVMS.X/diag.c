@@ -39,6 +39,9 @@
 #include "net_msg.h"
 #include "led.h"
 #include "inputs.h"
+#ifdef OVMS_ACCMODULE
+#include "acc.h"
+#endif
 
 // DIAG data
 #pragma udata
@@ -203,12 +206,24 @@ void diag_handle_diag(char *command, char *arguments)
   s = stp_rom(s, "\r\n");
   net_puts_ram(net_scratchpad);
 
+  s = stp_i(net_scratchpad, "#  CRASH:    ", debug_crashcnt);
+  s = stp_i(s, " / ", debug_crashreason );
+  s = stp_i(s, " / ", debug_checkpoint );
+  s = stp_rom(s, "\r\n");
+  net_puts_ram(net_scratchpad);
+
   #ifdef OVMS_HW_V2
   x = inputs_voltage()*10;
   s = stp_l2f(net_scratchpad, "#  12V Line: ", x, 1);
   s = stp_rom(s, " V\r\n");
   net_puts_ram(net_scratchpad);
   #endif // #ifdef OVMS_HW_V2
+
+  #ifdef OVMS_ACCMODULE
+  s = stp_i(net_scratchpad, "#  ACC:      ", acc_state);
+  s = stp_rom(s, "\r\n");
+  net_puts_ram(net_scratchpad);
+  #endif
 
   s = stp_i(net_scratchpad, "#  Signal:   ", net_sq);
   s = stp_rom(s, "\r\n\n");
