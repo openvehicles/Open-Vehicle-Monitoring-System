@@ -123,11 +123,11 @@ void log_state_ticker1(void)
   switch (log_state)
     {
     case LOG_STATE_WAITDRIVE:
-      if (car_doors1bits.CarON == 0)
+      if (!CAR_IS_ON)
         log_state_enter(LOG_STATE_PARKED);
       break;
     case LOG_STATE_WAITCHARGE:
-      if ((car_doors1bits.Charging == 0)||(car_doors1bits.CarON))
+      if ((!CAR_IS_CHARGING)||(CAR_IS_ON))
         log_state_enter(LOG_STATE_PARKED);
       break;
     case LOG_STATE_DRIVING:
@@ -137,7 +137,7 @@ void log_state_ticker1(void)
         log_state_enter(LOG_STATE_WAITDRIVE);
         break;
         }
-      if (car_doors1bits.CarON == 0)
+      if (!CAR_IS_ON)
         {
         // Drive has finished
         rec = &log_recs[logging_pos];
@@ -165,7 +165,7 @@ void log_state_ticker1(void)
         rec->record.charge.charge_voltage = car_linevoltage;
       if (car_chargecurrent > rec->record.charge.charge_current)
         rec->record.charge.charge_current = car_chargecurrent;
-      if ((car_doors1bits.Charging == 0)||(car_doors1bits.CarON))
+      if ((!CAR_IS_CHARGING)||(CAR_IS_ON))
         {
         // Charge has finished
         logging_pos = -1;
@@ -185,9 +185,9 @@ void log_state_ticker1(void)
         }
       break;
     case LOG_STATE_PARKED:
-      if (car_doors1bits.CarON)
+      if (CAR_IS_ON)
         { log_state_enter(LOG_STATE_DRIVING); }
-      else if (car_doors1bits.Charging)
+      else if (CAR_IS_CHARGING)
         { log_state_enter(LOG_STATE_CHARGING); }
       break;
     }

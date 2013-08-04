@@ -21,6 +21,7 @@
       <itemPath>diag.h</itemPath>
       <itemPath>vehicle.h</itemPath>
       <itemPath>logging.h</itemPath>
+      <itemPath>acc.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -62,6 +63,7 @@
       <itemPath>vehicle_tazzari.c</itemPath>
       <itemPath>logging.c</itemPath>
       <itemPath>vehicle_mitsubishi.c</itemPath>
+      <itemPath>acc.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -198,6 +200,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="logging.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="logging.h" ex="true" overriding="false">
         <C18>
@@ -331,7 +341,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_CAR_NONE"/>
+                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_ACCMODULE;OVMS_CAR_NONE"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -603,6 +613,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="logging.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="logging.h" ex="true" overriding="false">
         <C18>
@@ -686,7 +704,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_INTERNALGPS;OVMS_CAR_NISSANLEAF;OVMS_CAR_TAZZARI;OVMS_CAR_MITSUBISHI"/>
+                  value="OVMS_SPEEDO_EXPERIMENT;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_ACCMODULE;OVMS_INTERNALGPS;OVMS_CAR_NISSANLEAF;OVMS_CAR_TAZZARI;OVMS_CAR_MITSUBISHI"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>

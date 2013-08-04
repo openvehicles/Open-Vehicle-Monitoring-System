@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 2,3,6
+#define OVMS_FIRMWARE_VERSION 2,5,1
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -198,6 +198,11 @@ extern signed int car_chargefull_minsremaining;  // Minutes of charge remaining
 extern signed int car_chargelimit_minsremaining; // Minutes of charge remaining
 extern unsigned int car_chargelimit_rangelimit;  // Range limit (in vehicle units)
 extern unsigned char car_chargelimit_soclimit;   // SOC% limit
+
+// Helpers
+
+#define CAR_IS_ON (car_doors1bits.CarON)
+#define CAR_IS_CHARGING ((car_chargestate==0x01)||(car_chargestate==0x02)||(car_chargestate==0x0d)||(car_chargestate==0x0f))
 
 // DEBUG / QA stats:
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up

@@ -42,6 +42,9 @@
 #ifdef OVMS_LOGGINGMODULE
 #include "logging.h"
 #endif
+#ifdef OVMS_ACCMODULE
+#include "acc.h"
+#endif
 
 // Configuration settings
 #pragma	config FCMEN = OFF,      IESO = OFF
@@ -222,6 +225,10 @@ void main(void)
   logging_initialise();
 #endif
 
+#ifdef OVMS_ACCMODULE
+  acc_initialise();
+#endif
+
   // Proceed to main loop
   y = 0; // Last TMR0H
   while (1) // Main Loop
@@ -254,6 +261,10 @@ void main(void)
 #ifdef OVMS_LOGGINGMODULE
       CHECKPOINT(8)
       logging_ticker();
+#endif
+#ifdef OVMS_ACCMODULE
+      CHECKPOINT(9)
+      acc_ticker();
 #endif
     }
     else if (TMR0H != y)

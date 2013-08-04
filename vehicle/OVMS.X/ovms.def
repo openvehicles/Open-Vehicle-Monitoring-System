@@ -72,6 +72,6 @@
 // for advanced diagnostics.
 // #define OVMS_DIAGMODULE
 
-// The LOGGING code provides for automated submission of charge and drive
-// logs to the OVMS server.
-// #define OVMS_LOGGINGMODULE
+// The ACC code provides for advanced charge control - sophisticated charging
+// algorithms.
+// #define OVMS_ACCMODULE
