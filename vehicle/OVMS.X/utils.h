@@ -72,4 +72,7 @@ char *stp_l2f_h(char *dst, const rom char *prefix, unsigned long val, int cdecim
 char *stp_latlon(char *dst, const rom char *prefix, long latlon);
 char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp);
 
+// longitude/latitude math
+int FIsLatLongClose(long lat1, long long1, long lat2, long long2, int meterClose);
+
 #endif // #ifndef __OVMS_UTILS_H

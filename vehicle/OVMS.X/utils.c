@@ -463,3 +463,90 @@ char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp)
   *dst = 0;
   return dst;
 }
+
+#define GPSFromDeg(deg) ((long)((deg)*3600L*2048L))
+#define Rad14FromGPS(gps) ((int)((gps)/25783L))   // gives radians * 2^14
+
+int IntCosine14(int rad);
+
+int FIsLatLongClose(long lat1, long long1, long lat2, long long2, int meterClose)
+{
+  long dlong;
+  int sCosine;
+  long distLong;
+  long dlat = ABS(lat2 - lat1);
+
+  // convert to meters
+  long distLat = dlat / 66;
+
+  // is the latitude separation far enough to fail the test?
+  if (distLat > meterClose)
+    return 0;
+
+  // normalize the longitude separation, a slightly tricky business
+  // since we can't represent angles over 291.27 degrees, so 360 is right out
+  if (long1 > long2)
+  {
+    // swap values so long2 >= long1
+    long longT = long1;
+    long1 = long2;
+    long2 = longT;
+  }
+  if (long2 > 0 && long1 < long2 - GPSFromDeg(180))
+  {
+    // if long2 - long1 > 180, shuffle values to compute
+    // (l1 + 180) - (l2 - 180) = l1 - l2 + 360
+    // while carefully avoiding overflowing 32 bits
+    long longT = long1 + GPSFromDeg(180);
+    long1 = long2 - GPSFromDeg(180);
+    long2 = longT;
+  }
+  dlong = long2 - long1;
+
+  // cosine(77) > 1/5, so here's a quick check to see if dlong is obviously too large
+  if (ABS(lat1) < GPSFromDeg(80) && dlong > 66L * 5L * (long)meterClose)
+    return 0;
+
+  // no easy out, we have to do some math; compute cosine(lat1) * 2^14
+  sCosine = IntCosine14(Rad14FromGPS(lat1));
+
+  // distLong = dlong * cosine(lat1) / 66; done carefully to preserve precision
+  distLong = ((((dlong & 0x3FFF) * sCosine) >> 14) + ((dlong >> 14) * sCosine)) / 66;
+
+  // is the longitude separation large enough to fail the test?
+  if (distLong > meterClose)
+    return 0;
+
+  // we're forced to do the Euclid thing
+  return distLat * distLat + distLong * distLong <= (long)meterClose * meterClose;
+}
+
+// input: radians * 2^14
+// output: cosine * 2^14
+int IntCosine14(int rad)
+{
+ long cos;
+ int cDouble = 0;
+
+ if (rad < 0)
+   rad = -rad;
+
+ cDouble = 0;
+ while (rad > (1L << 12)) // get the angle under a 1/4 radian
+ {
+   rad = (rad + 1) / 2;
+   ++cDouble;
+ }
+
+ // cosine Taylor series: 1 - x^2/2!
+ cos = (1L << 14);
+ cos -= ((long)rad * rad + (1L << 14)) >> 15;
+
+ while (cDouble-- > 0)
+ {
+   // cos(2x) = 2 * cos(x) * cos(x) - 1;
+   cos = (((long)cos * cos + (1L << 12)) >> 13) - (1L << 14);
+ }
+
+ return cos;
+}
