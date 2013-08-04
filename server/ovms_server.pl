@@ -902,6 +902,21 @@ sub io_message
             $vehicleid, $h_recordtype, $h_recordnumber, $h_data, $h_lifetime);
     return;
     }
+  elsif ($m_code eq 'h')
+    {
+    if ($clienttype ne 'C')
+      {
+      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'h' message from non-Car";
+      return;
+      }
+    my ($h_ackcode,$h_timediff,$h_recordtype,$h_recordnumber,$h_lifetime,$h_data) = split /,/,$data,6;
+    $db->do("INSERT IGNORE INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) "
+          . "VALUES (?,UTC_TIMESTAMP()-INTERVAL ? SECOND,?,?,?,UTC_TIMESTAMP()+INTERVAL ? SECOND)",
+            undef,
+            $vehicleid, $h_timediff, $h_recordtype, $h_recordnumber, $h_data, $h_lifetime);
+    &io_tx($fn, $conns{$fn}{'handle'}, 'h', $h_ackcode);
+    return;
+    }
 
   if ($clienttype eq 'C')
     {
