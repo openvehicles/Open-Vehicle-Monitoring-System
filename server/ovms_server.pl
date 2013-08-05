@@ -45,6 +45,7 @@ my $db;
 my $config;
 my %http_request_api_noauth;
 my %http_request_api_auth;
+my %authfail_notified;
 
 # PUSH notifications
 my @apns_queue_sandbox;
@@ -240,8 +241,23 @@ sub io_line
     $serverhmac->add($clienttoken);
     if ($serverhmac->digest() ne $dclientdigest)
       {
+      if (($clienttype eq 'C')&&(!defined $authfail_notified{$vehicleid}))
+        {
+        $authfail_notified{$vehicleid}=1;
+        my $host = $conns{$fn}{'host'};
+        &push_queuenotify($vehicleid, 'A', "Vehicle authentication failed ($host)");
+        }
       &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Incorrect client authentication - aborting connection");
       return;
+      }
+    else
+      {
+      if (($clienttype eq 'C')&&(defined $authfail_notified{$vehicleid}))
+        {
+        delete $authfail_notified{$vehicleid};
+        my $host = $conns{$fn}{'host'};
+        &push_queuenotify($vehicleid, 'A', "Vehicle authentication successful ($host)");
+        }
       }
 
     # Check server permissions
@@ -536,6 +552,8 @@ tcp_server undef, 6867, sub
 
   $conns{$fn}{'fh'} = $fh;
   $conns{$fn}{'handle'} = $handle;
+  $conns{$fn}{'host'} = $host;
+  $conns{$fn}{'port'} = $port;
   };
 
 # An HTTP server
