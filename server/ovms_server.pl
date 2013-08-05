@@ -913,7 +913,7 @@ sub io_message
     $db->do("INSERT IGNORE INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) "
           . "VALUES (?,UTC_TIMESTAMP()-INTERVAL ? SECOND,?,?,?,UTC_TIMESTAMP()+INTERVAL ? SECOND)",
             undef,
-            $vehicleid, $h_timediff, $h_recordtype, $h_recordnumber, $h_data, $h_lifetime);
+            $vehicleid, $h_timediff, $h_recordtype, $h_recordnumber, $h_data, $h_lifetime-$h_timediff);
     &io_tx($fn, $conns{$fn}{'handle'}, 'h', $h_ackcode);
     return;
     }
