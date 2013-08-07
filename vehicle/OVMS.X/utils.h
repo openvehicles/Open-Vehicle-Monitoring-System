@@ -71,6 +71,7 @@ char *stp_l2f(char *dst, const rom char *prefix, long val, int prec);
 char *stp_l2f_h(char *dst, const rom char *prefix, unsigned long val, int cdecimal);
 char *stp_latlon(char *dst, const rom char *prefix, long latlon);
 char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp);
+char *stp_mode(char *dst, const rom char *prefix, unsigned char mode);
 
 // longitude/latitude math
 int FIsLatLongClose(long lat1, long long1, long lat2, long long2, int meterClose);

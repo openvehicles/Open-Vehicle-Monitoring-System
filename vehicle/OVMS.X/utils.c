@@ -464,6 +464,24 @@ char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp)
   return dst;
 }
 
+char *stp_mode(char *dst, const rom char *prefix, unsigned char mode)
+  {
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+
+  switch (mode)
+    {
+    case 0: dst = stp_rom(dst, "standard"); break;
+    case 1: dst = stp_rom(dst, "storage"); break;
+    case 2: dst = stp_rom(dst, "range"); break;
+    case 3: dst = stp_rom(dst, "performance"); break;
+    default: dst = stp_i(dst, "mode ",mode);
+    }
+
+  return dst;
+  }
+
+
 #define GPSFromDeg(deg) ((long)((deg)*3600L*2048L))
 #define Rad14FromGPS(gps) ((int)((gps)/25783L))   // gives radians * 2^14
 
