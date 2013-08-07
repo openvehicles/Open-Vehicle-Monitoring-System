@@ -145,6 +145,10 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
           }
         break;
       case 0x88: // Charging Current / Duration
+        if (can_databuffer[6] != car_chargelimit)
+          { // If the charge limit has changed, notify it
+          net_req_notification(NET_NOTIFY_STAT);
+          }
         car_chargecurrent = can_databuffer[1];
         car_chargelimit = can_databuffer[6];
         car_chargeduration = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
