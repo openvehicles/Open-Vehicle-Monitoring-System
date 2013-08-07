@@ -207,9 +207,14 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
         car_chargestate = can_databuffer[1];
         car_chargesubstate = can_databuffer[2];
         if (sys_features[FEATURE_CARBITS]&FEATURE_CB_2008) // A 2010+ roadster?
-          car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
+          k = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
         else
-          car_chargemode = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
+          k = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
+        if (k != car_chargemode)
+          { // If the charge mode has changed, notify it
+          car_chargemode = k;
+          net_req_notification(NET_NOTIFY_STAT);
+          }
         car_charge_b4 = can_databuffer[3];
         car_chargekwh = can_databuffer[7];
         break;
