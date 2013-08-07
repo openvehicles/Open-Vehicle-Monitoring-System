@@ -48,9 +48,11 @@ extern unsigned int  log_timeout_ticks;        // Number of seconds before timeo
 extern unsigned int  log_granular_tick;        // An internal ticker used to generate 1min, 5min, etc, calls
 
 #define LOG_TYPE_CHARGE         'C'     // A charge log record
-#define LOG_TYPE_CHARGING       'c'     // A charging log record
+#define LOG_TYPE_CHARGE_DEL     'c'     // A charge log record being delivered
+#define LOG_TYPE_CHARGING       'h'     // A charging log record
 #define LOG_TYPE_DRIVE          'D'     // A drive log record
-#define LOG_TYPE_DRIVING        'd'     // A driving log record
+#define LOG_TYPE_DRIVE_DEL      'd'     // A drive log record being delivered
+#define LOG_TYPE_DRIVING        'r'     // A driving log record
 #define LOG_TYPE_FREE           0       // A free log record
 
 #define LOG_CHARGERESULT_OK     0       // Result if charge was ok
@@ -95,9 +97,11 @@ struct logging_record
     } record;
   };
 
-unsigned char logging_haspending(void);  // Pending log messages
-void logging_sendpending(void);       // Send pending log messages
-void logging_initialise(void);        // Logging Initialisation
-void logging_ticker(void);            // Logging Ticker
+unsigned char logging_haspending(void); // Pending log messages
+void logging_sendpending(void);         // Send pending log messages
+void logging_serverconnect(void);       // Indication that server has connected
+void logging_ack(unsigned char ack);    // A server acknowledgement
+void logging_initialise(void);          // Logging Initialisation
+void logging_ticker(void);              // Logging Ticker
 
 #endif // #ifndef __OVMS_LOGGING_H

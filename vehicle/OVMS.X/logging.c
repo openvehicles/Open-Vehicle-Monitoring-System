@@ -216,7 +216,9 @@ void logging_sendpending(void)
     rec = &log_recs[x];
     if (rec->type == LOG_TYPE_DRIVE)
       {
-      s = stp_i(net_scratchpad, "MP-0 HRT-Log-Drive,", dr++);
+      s = stp_i(net_scratchpad, "MP-0 h", x);
+      s = stp_l(s, ",", rec->start_time - car_time);
+      s = stp_i(s, ",RT-Log-Drive,", dr++);
       s = stp_rom(s, ",31536000,");
       s = stp_l(s, ",", rec->start_time);
       s = stp_i(s, ",", rec->duration);
@@ -231,11 +233,13 @@ void logging_sendpending(void)
       s = stp_i(s, ",", rec->record.drive.end_SOC);
       s = stp_i(s, ",", rec->record.drive.end_idealrange);
       net_msg_encode_puts();
-      rec->type = LOG_TYPE_FREE;
+      rec->type = LOG_TYPE_DRIVE_DEL;
       }
     else if (rec->type == LOG_TYPE_CHARGE)
       {
-      s = stp_i(net_scratchpad, "MP-0 HRT-Log-Charge,", cr++);
+      s = stp_i(net_scratchpad, "MP-0 h", x);
+      s = stp_l(s, ",", rec->start_time - car_time);
+      s = stp_i(s, ",RT-Log-Charge,", cr++);
       s = stp_rom(s, ",31536000,");
       s = stp_l(s, ",", rec->start_time);
       s = stp_i(s, ",", rec->duration);
@@ -250,10 +254,52 @@ void logging_sendpending(void)
       s = stp_i(s, ",", rec->record.charge.end_SOC);
       s = stp_i(s, ",", rec->record.charge.end_idealrange);
       net_msg_encode_puts();
-      rec->type = LOG_TYPE_FREE;
+      rec->type = LOG_TYPE_CHARGE_DEL;
       }
     }
   logging_pending = 0;
+  }
+
+void logging_serverconnect(void)
+  {
+  // Indication that server has connected
+  unsigned char x;
+  struct logging_record *rec;
+
+  // We need to reset the pending deliveries
+  // And record the correct number of deliveries pending
+  logging_pending = 0;
+  for (x=0;x<LOG_RECORDSTORE;x++)
+    {
+    rec = &log_recs[x];
+    switch (rec->type)
+      {
+      case LOG_TYPE_CHARGE_DEL:
+        rec->type = LOG_TYPE_CHARGE;
+        logging_pending++;
+        break;
+      case LOG_TYPE_DRIVE_DEL:
+        rec->type = LOG_TYPE_DRIVE;
+        logging_pending++;
+        break;
+      case LOG_TYPE_DRIVE:
+      case LOG_TYPE_CHARGE:
+        logging_pending++;
+        break;
+      }
+    }
+  }
+
+void logging_ack(unsigned char ack)
+  {
+  // A server acknowledgement
+  struct logging_record *rec;
+
+  if ((ack>0)&&(ack<LOG_RECORDSTORE))
+    {
+    rec = &log_recs[ack];
+    rec->type = LOG_TYPE_FREE;
+    }
   }
 
 void log_state_ticker60(void)

@@ -42,6 +42,9 @@
 #include "crypt_hmac.h"
 #include "crypt_rc4.h"
 #include "utils.h"
+#ifdef OVMS_LOGGINGMODULE
+#include "logging.h"
+#endif // #ifdef OVMS_LOGGINGMODULE
 
 // NET_MSG data
 #define TOKEN_SIZE 22
@@ -588,8 +591,11 @@ void net_msg_server_welcome(char *msg)
   delay100(20);
   net_msg_start();
   net_msg_encode_puts();
+#ifdef OVMS_LOGGINGMODULE
+  logging_serverconnect();
+  logging_sendpending();
+#endif // #ifdef OVMS_LOGGINGMODULE
   net_msg_send();
-
 }
 
 // Receive a NET msg from the OVMS server
@@ -674,6 +680,11 @@ void net_msg_in(char* msg)
         {
         net_apps_connected = 0;
         }
+      break;
+    case 'h': // Historical data acknowledgement
+#ifdef OVMS_LOGGINGMODULE
+      logging_ack(atoi(msg+1));
+#endif // #ifdef OVMS_LOGGINGMODULE
       break;
     case 'C': // COMMAND
       net_msg_cmd_in(msg+1);

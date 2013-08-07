@@ -41,9 +41,9 @@
 #ifdef OVMS_DIAGMODULE
 #include "diag.h"
 #endif // #ifdef OVMS_DIAGMODULE
-#ifdef OVMS_LOGMODULE
+#ifdef OVMS_LOGGINGMODULE
 #include "logging.h"
-#endif // #ifdef OVMS_LOGMODULE
+#endif // #ifdef OVMS_LOGGINGMODULE
 
 // NET data
 #pragma udata
@@ -1466,7 +1466,7 @@ void net_state_ticker60(void)
         net_granular_tick -= 5; // Try again in 5 seconds...
         return;
         }
-#ifdef OVMS_LOGMODULE
+#ifdef OVMS_LOGGINGMODULE
       if (logging_haspending() > 0)
         {
         delay100(10);
@@ -1475,7 +1475,7 @@ void net_state_ticker60(void)
         net_msg_send();
         return;
         }
-#endif // #ifdef OVMS_LOGMODULE
+#endif // #ifdef OVMS_LOGGINGMODULE
       if ((net_link==1)&&(net_apps_connected>0))
         {
         delay100(10);
