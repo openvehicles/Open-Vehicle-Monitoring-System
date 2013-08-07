@@ -37,6 +37,9 @@
 #include "net.h"
 #include "net_sms.h"
 #include "net_msg.h"
+#ifdef OVMS_ACCMODULE
+#include "acc.h"
+#endif
 
 #pragma udata
 char *net_sms_argend;
@@ -887,6 +890,9 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "2CHARGESTOP",
     "3VERSION",
     "3RESET",
+#ifdef OVMS_ACCMODULE
+    "2ACC ",
+#endif
     "3HELP",
     "" };
 
@@ -924,6 +930,9 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_chargestop,
   &net_sms_handle_version,
   &net_sms_handle_reset,
+#ifdef OVMS_ACCMODULE
+  &acc_handle_sms,
+#endif
   &net_sms_handle_help
   };
 
@@ -993,6 +1002,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
         if (vehicle_fn_smshandler(TRUE, caller, buf, arguments))
           return;
         }
+
       result = (*sms_hfntable[k])(caller, buf, arguments);
       if (result)
         {
