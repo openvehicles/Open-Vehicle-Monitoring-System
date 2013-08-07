@@ -59,7 +59,7 @@ extern unsigned int  log_granular_tick;        // An internal ticker used to gen
 #define LOG_CHARGERESULT_STOP   1       // Result if charge was stopped
 #define LOG_CHARGERESULT_FAIL   2       // Result if charge failed
 
-#define LOG_RECORDSTORE         4       // Number of records that can be stored
+#define LOG_RECORDSTORE         6       // Number of records that can be stored
 
 struct logging_record
   {
