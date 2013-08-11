@@ -676,6 +676,49 @@ void vehicle_teslaroadster_tx_homelink(unsigned char button)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   }
 
+void vehicle_teslaroadster_cooldown(void)
+  {
+  // We have been requested to cool down the battery pack
+  char *p;
+
+  // Save the old charge mode and limit
+  car_cooldown_chargemode = car_chargemode;
+  car_cooldown_chargelimit = car_chargelimit;
+
+  // Work out new mode and limit
+  p = par_get(PARAM_COOLDOWN);
+  p = strtokpgmram(p,",");
+  if (p != NULL)
+    {
+    car_cooldown_tbattery = atoi(p);
+    p = strtokpgmram(NULL,",");
+    if (p != NULL)
+      {
+      car_cooldown_timelimit = atoi(p);
+      }
+    else
+      {
+      car_cooldown_timelimit = COOLDOWN_DEFAULT_TIMELIMIT;
+      }
+    }
+  else
+    {
+    car_cooldown_tbattery = COOLDOWN_DEFAULT_TEMPLIMIT;
+    car_cooldown_timelimit = COOLDOWN_DEFAULT_TIMELIMIT;
+    }
+
+  if ((car_tbattery > car_cooldown_tbattery)&&  // Car is hot enough
+      (car_doors1bits.CarON == 0)&&            // Car is not ON
+      (car_doors1bits.ChargePort == 1))        // Charge port is open
+    {
+    // We need to start a cooldown
+    car_coolingdown = 1;
+    vehicle_teslaroadster_tx_setchargecurrent(16); // 16A charge
+    vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
+    vehicle_teslaroadster_tx_startstopcharge(1);   // Force START charge
+    }
+  }
+
 BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
   {
   char *p;
@@ -884,6 +927,18 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       break;
 
+    case 25: // Cooldown
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        STP_NOCANWRITE(net_scratchpad, code);
+        }
+      else
+        {
+        vehicle_teslaroadster_cooldown();
+        STP_OK(net_scratchpad, code);
+        }
+      break;
+
     default:
       return FALSE;
     }
@@ -1019,6 +1074,32 @@ BOOL vehicle_teslaroadster_ticker60(void)
     car_chargelimit_minsremaining = -1;
     car_chargelimit_rangelimit = 0;
     car_chargelimit_soclimit = 0;
+
+    if (car_coolingdown)
+      {
+      car_cooldown_timelimit--;
+      if ((car_cooldown_timelimit == 0)||
+          (car_tbattery <= car_cooldown_tbattery))
+        {
+        // Stop the cooldown...
+        net_notify_suppresscount = 30;
+        vehicle_teslaroadster_tx_setchargecurrent(car_cooldown_chargelimit); // Restore charge limit
+        vehicle_teslaroadster_tx_setchargemode(car_cooldown_chargemode);     // Restore charge mode
+        vehicle_teslaroadster_tx_startstopcharge(0);                        // Force START charge
+        car_coolingdown = 0;
+        }
+      }
+    }
+  else
+    {
+    // Vehicle is not charging
+    if (car_coolingdown)
+      {
+      net_notify_suppresscount = 30;
+      vehicle_teslaroadster_tx_setchargecurrent(car_cooldown_chargelimit); // Restore charge limit
+      vehicle_teslaroadster_tx_setchargemode(car_cooldown_chargemode);     // Restore charge mode
+      car_coolingdown = 0;
+      }
     }
   
   return FALSE;
