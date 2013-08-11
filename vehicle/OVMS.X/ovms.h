@@ -70,6 +70,8 @@
 // the vehicle normal operations.
 
 #define MAX_ICCID 24
+#define COOLDOWN_DEFAULT_TEMPLIMIT 31
+#define COOLDOWN_DEFAULT_TIMELIMIT 60
 
 #pragma udata
 extern rom unsigned char ovms_firmware[3]; // Firmware version
@@ -198,6 +200,11 @@ extern signed int car_chargefull_minsremaining;  // Minutes of charge remaining
 extern signed int car_chargelimit_minsremaining; // Minutes of charge remaining
 extern unsigned int car_chargelimit_rangelimit;  // Range limit (in vehicle units)
 extern unsigned char car_chargelimit_soclimit;   // SOC% limit
+extern unsigned char car_coolingdown;            // 1 if car is cooling down
+extern unsigned char car_cooldown_chargemode;        // 0=standard, 1=storage, 3=range, 4=performance
+extern unsigned char car_cooldown_chargelimit;       // Charge Limit (amps)
+extern signed char car_cooldown_tbattery;          // Cooldown temperature limit
+extern unsigned int car_cooldown_timelimit;         // Cooldown time limit (minutes) remaining
 
 // Helpers
 

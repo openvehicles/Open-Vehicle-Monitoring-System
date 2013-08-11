@@ -129,7 +129,11 @@ signed int car_chargefull_minsremaining = -1;  // Minutes of charge remaining
 signed int car_chargelimit_minsremaining = -1; // Minutes of charge remaining
 unsigned int car_chargelimit_rangelimit = 0;   // Range limit (in vehicle units)
 unsigned char car_chargelimit_soclimit = 0;    // SOC% limit
-
+unsigned char car_coolingdown = 0;             // TRUE if car is cooling down
+unsigned char car_cooldown_chargemode = 0;     // 0=standard, 1=storage, 3=range, 4=performance
+unsigned char car_cooldown_chargelimit = 0;    // Charge Limit (amps)
+signed char car_cooldown_tbattery = 0;         // Cooldown temperature limit
+unsigned int car_cooldown_timelimit = 0;       // Cooldown time limit (minutes) remaining
 
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 UINT8 debug_crashreason;        // last saved reset reason (bit set)
