@@ -57,6 +57,7 @@ rom char NET_MSG_UNVALET[] = "Valet mode cancel requested";
 rom char NET_MSG_CHARGEMODE[] = "Charge mode change requested";
 rom char NET_MSG_CHARGESTART[] = "Charge start requested";
 rom char NET_MSG_CHARGESTOP[] = "Charge stop requested";
+rom char NET_MSG_COOLDOWN[] = "Cooldown requested";
 rom char NET_MSG_ALARM[] = "Vehicle alarm is sounding!";
 rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
 //rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
@@ -811,6 +812,15 @@ BOOL net_sms_handle_chargestop(char *caller, char *command, char *arguments)
   return TRUE;
   }
 
+BOOL net_sms_handle_cooldown(char *caller, char *command, char *arguments)
+  {
+  if (vehicle_fn_commandhandler != NULL)
+    vehicle_fn_commandhandler(FALSE, 25, NULL);
+  net_send_sms_start(caller);
+  net_puts_rom(NET_MSG_COOLDOWN);
+  return TRUE;
+  }
+
 BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
   {
   unsigned char hwv = 1;
@@ -888,6 +898,7 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "2CHARGEMODE ",
     "2CHARGESTART",
     "2CHARGESTOP",
+    "2COOLDOWN",
     "3VERSION",
     "3RESET",
 #ifdef OVMS_ACCMODULE
@@ -928,6 +939,7 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_chargemode,
   &net_sms_handle_chargestart,
   &net_sms_handle_chargestop,
+  &net_sms_handle_cooldown,
   &net_sms_handle_version,
   &net_sms_handle_reset,
 #ifdef OVMS_ACCMODULE

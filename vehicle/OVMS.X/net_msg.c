@@ -344,6 +344,9 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", car_chargelimit_minsremaining);
   s = stp_i(s, ",", car_chargelimit_rangelimit);
   s = stp_i(s, ",", car_chargelimit_soclimit);
+  s = stp_i(s, ",", car_coolingdown);
+  s = stp_i(s, ",", car_cooldown_tbattery);
+  s = stp_i(s, ",", car_cooldown_timelimit);
 
   return net_msg_encode_statputs(stat, &crc_stat);
 }
@@ -968,6 +971,11 @@ char *net_prep_stat(char *s)
     odometer = KmFromMi(odometer);
     unit = " km";
   }
+
+  if (car_coolingdown>0)
+    {
+    s = stp_rom(s, "Cooldown "); // Cooling down...
+    }
 
   if (car_doors1bits.ChargePort)
   {
