@@ -596,7 +596,6 @@ void net_msg_server_welcome(char *msg)
   net_msg_encode_puts();
 #ifdef OVMS_LOGGINGMODULE
   logging_serverconnect();
-  logging_sendpending();
 #endif // #ifdef OVMS_LOGGINGMODULE
   net_msg_send();
 }
@@ -621,8 +620,10 @@ void net_msg_in(char* msg)
   // The following is a nasty hack because base64decode doesn't like incoming
   // messages of length divisible by 4, and is really expecting a CRLF
   // terminated string, so we give it one...
+  CHECKPOINT (25)
   strcatpgm2ram(msg,(char const rom far*)"\r\n");
   k = base64decode(msg,net_scratchpad);
+  CHECKPOINT (26)
   RC4_crypt(&rx_crypto1, &rx_crypto2, net_scratchpad, k);
   if (memcmppgm2ram(net_scratchpad, (char const rom far*)"MP-0 ", 5) != 0)
     {
