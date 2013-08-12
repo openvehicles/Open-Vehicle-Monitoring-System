@@ -305,7 +305,7 @@ int MinutesToChargeCAC(
       signed char degAmbient      // ambient temperature in degrees C
       );
 
-void diag_handle_tr(char *command, char *arguments)
+void diag_handle_t1(char *command, char *arguments)
   {
   unsigned char chgmod;
   int imStart;
@@ -342,6 +342,14 @@ void diag_handle_tr(char *command, char *arguments)
   net_puts_ram(net_scratchpad);
   }
 
+void diag_handle_t2(char *command, char *arguments)
+  {
+  }
+
+void diag_handle_t3(char *command, char *arguments)
+  {
+  }
+
 // This is the DIAG command table
 //
 // We're a bit limited by PIC C syntax (in particular no function pointers
@@ -358,7 +366,9 @@ rom char diag_cmdtable[][27] =
     "+CSQ:",
     "CANTXSTART",
     "CANTXSTOP",
-    "TR",
+    "T1",
+    "T2",
+    "T3",
     "" };
 
 rom void (*diag_hfntable[])(char *command, char *arguments) =
@@ -370,7 +380,9 @@ rom void (*diag_hfntable[])(char *command, char *arguments) =
   &diag_handle_csq,
   &diag_handle_cantxstart,
   &diag_handle_cantxstop,
-  &diag_handle_tr
+  &diag_handle_t1,
+  &diag_handle_t2,
+  &diag_handle_t3
   };
 
 // net_sms_in handles reception of an SMS message
