@@ -1467,7 +1467,7 @@ void net_state_ticker60(void)
         return;
         }
 #ifdef OVMS_LOGGINGMODULE
-      if (logging_haspending() > 0)
+      if ((net_link==1)&&(logging_haspending() > 0))
         {
         delay100(10);
         net_msg_start();
