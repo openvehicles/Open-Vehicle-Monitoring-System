@@ -28,6 +28,7 @@
 ; THE SOFTWARE.
 */
 
+#include <string.h>
 #include "ovms.h"
 #include "logging.h"
 #include "net_msg.h"
@@ -219,7 +220,7 @@ void logging_sendpending(void)
       s = stp_i(net_scratchpad, "MP-0 h", x);
       s = stp_l(s, ",", rec->start_time - car_time);
       s = stp_i(s, ",RT-Log-Drive,", dr++);
-      s = stp_rom(s, ",31536000,");
+      s = stp_rom(s, ",31536000");
       s = stp_l(s, ",", rec->start_time);
       s = stp_i(s, ",", rec->duration);
       s = stp_i(s, ",",rec->record.drive.drive_mode);
@@ -240,7 +241,7 @@ void logging_sendpending(void)
       s = stp_i(net_scratchpad, "MP-0 h", x);
       s = stp_l(s, ",", rec->start_time - car_time);
       s = stp_i(s, ",RT-Log-Charge,", cr++);
-      s = stp_rom(s, ",31536000,");
+      s = stp_rom(s, ",31536000");
       s = stp_l(s, ",", rec->start_time);
       s = stp_i(s, ",", rec->duration);
       s = stp_i(s, ",",rec->record.charge.charge_mode);
@@ -298,7 +299,11 @@ void logging_ack(unsigned char ack)
   if ((ack>0)&&(ack<LOG_RECORDSTORE))
     {
     rec = &log_recs[ack];
-    rec->type = LOG_TYPE_FREE;
+    if ((rec->type == LOG_TYPE_DRIVE_DEL)||
+        (rec->type == LOG_TYPE_CHARGE_DEL))
+      {
+      rec->type = LOG_TYPE_FREE;
+      }
     }
   }
 
@@ -312,6 +317,7 @@ void log_state_ticker3600(void)
 
 void logging_initialise(void)        // Logging Initialisation
   {
+  memset((void*)&log_recs,0,sizeof(struct logging_record)*LOG_RECORDSTORE);
   }
 
 void logging_ticker(void)            // Logging Ticker

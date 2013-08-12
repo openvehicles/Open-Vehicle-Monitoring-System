@@ -96,6 +96,8 @@ struct logging_record
       } drive;
     } record;
   };
+  
+extern struct logging_record log_recs[LOG_RECORDSTORE];
 
 unsigned char logging_haspending(void); // Pending log messages
 void logging_sendpending(void);         // Send pending log messages
