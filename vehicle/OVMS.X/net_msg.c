@@ -621,6 +621,12 @@ void net_msg_in(char* msg)
   // messages of length divisible by 4, and is really expecting a CRLF
   // terminated string, so we give it one...
   CHECKPOINT (25)
+  if (((strlen(msg)*4)/3) >= (NET_BUF_MAX-3))
+    {
+    // Quick exit to reset link if incoming message is too big
+    net_state_enter(NET_STATE_DONETINIT);
+    return;
+    }
   strcatpgm2ram(msg,(char const rom far*)"\r\n");
   k = base64decode(msg,net_scratchpad);
   CHECKPOINT (26)
