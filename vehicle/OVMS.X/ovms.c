@@ -159,6 +159,9 @@ void main(void)
   {
     debug_crashreason = 0;
     debug_crashcnt = 0;
+#ifdef OVMS_LOGGINGMODULE
+    logging_initialise();
+#endif
   }
   else
   {
@@ -223,10 +226,6 @@ void main(void)
 #ifdef OVMS_HW_V2
   car_12vline = inputs_voltage()*10;
   car_12vline_ref = 0;
-#endif
-
-#ifdef OVMS_LOGGINGMODULE
-  logging_initialise();
 #endif
 
 #ifdef OVMS_ACCMODULE
