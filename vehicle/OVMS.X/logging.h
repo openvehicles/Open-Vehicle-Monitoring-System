@@ -32,12 +32,12 @@
 #define __OVMS_LOGGING_H
 
 // STATES
-#define LOG_STATE_FIRSTRUN   0x00  // First time run
-#define LOG_STATE_WAITDRIVE  0x01  // Wait for drive to end, then discard
-#define LOG_STATE_WAITCHARGE 0x02  // Wait for charge to end, then discard
-#define LOG_STATE_DRIVING    0x10  // Driving
-#define LOG_STATE_CHARGING   0x20  // Charging
-#define LOG_STATE_PARKED     0x30  // Parked
+#define LOG_STATE_FIRSTRUN        0x00  // First time run
+#define LOG_STATE_WAITDRIVE_DONE  0x01  // Wait for drive to end, then discard
+#define LOG_STATE_WAITCHARGE_DONE 0x02  // Wait for charge to end, then discard
+#define LOG_STATE_DRIVING         0x10  // Driving
+#define LOG_STATE_CHARGING        0x20  // Charging
+#define LOG_STATE_PARKED          0x30  // Parked
 
 // LOG data
 extern unsigned char log_state;                // The current state

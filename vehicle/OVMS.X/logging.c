@@ -68,20 +68,13 @@ void log_state_enter(unsigned char newstate)
 
   switch (log_state)
     {
-    case LOG_STATE_FIRSTRUN:
-      // First time run
-      if (car_doors1bits.CarON)
-        { log_state = LOG_STATE_WAITDRIVE; }
-      else if (car_doors1bits.Charging)
-        { log_state = LOG_STATE_WAITCHARGE; }
-      break;
     case LOG_STATE_DRIVING:
       // A drive has just started...
       logging_pos = log_getfreerecord();
       if (logging_pos < 0)
         {
         // Overflow...
-        log_state = LOG_STATE_WAITDRIVE;
+        log_state = LOG_STATE_WAITDRIVE_DONE;
         return;
         }
       rec = &log_recs[logging_pos];
@@ -100,7 +93,7 @@ void log_state_enter(unsigned char newstate)
       if (logging_pos < 0)
         {
         // Overflow...
-        log_state = LOG_STATE_WAITCHARGE;
+        log_state = LOG_STATE_WAITCHARGE_DONE;
         return;
         }
       rec = &log_recs[logging_pos];
@@ -123,19 +116,25 @@ void log_state_ticker1(void)
 
   switch (log_state)
     {
-    case LOG_STATE_WAITDRIVE:
-      if (!CAR_IS_ON)
-        log_state_enter(LOG_STATE_PARKED);
+    case LOG_STATE_FIRSTRUN:
+      // First time run
+      if (CAR_IS_ON)
+        { log_state_enter(LOG_STATE_WAITDRIVE_DONE); }
+      else if (CAR_IS_CHARGING)
+        { log_state_enter(LOG_STATE_WAITCHARGE_DONE); }
+      else
+        { log_state_enter(LOG_STATE_PARKED); }
       break;
-    case LOG_STATE_WAITCHARGE:
-      if ((!CAR_IS_CHARGING)||(CAR_IS_ON))
+    case LOG_STATE_WAITDRIVE_DONE:
+    case LOG_STATE_WAITCHARGE_DONE:
+      if ((!CAR_IS_CHARGING)||(!CAR_IS_ON))
         log_state_enter(LOG_STATE_PARKED);
       break;
     case LOG_STATE_DRIVING:
       if (logging_pos<0)
         {
         // We shouldn't be here without a log record
-        log_state_enter(LOG_STATE_WAITDRIVE);
+        log_state_enter(LOG_STATE_WAITDRIVE_DONE);
         break;
         }
       if (!CAR_IS_ON)
@@ -158,7 +157,7 @@ void log_state_ticker1(void)
       if (logging_pos<0)
         {
         // We shouldn't be here without a log record
-        log_state_enter(LOG_STATE_WAITCHARGE);
+        log_state_enter(LOG_STATE_WAITCHARGE_DONE);
         break;
         }
       rec = &log_recs[logging_pos];
@@ -171,7 +170,7 @@ void log_state_ticker1(void)
         // Charge has finished
         logging_pos = -1;
         logging_pending++;
-        rec->type = LOG_TYPE_DRIVE;
+        rec->type = LOG_TYPE_CHARGE;
         rec->duration = car_time - rec->start_time;
         rec->record.charge.charge_mode = car_chargemode;
         if (car_chargestate == 4)
@@ -302,6 +301,7 @@ void logging_ack(unsigned char ack)
     if ((rec->type == LOG_TYPE_DRIVE_DEL)||
         (rec->type == LOG_TYPE_CHARGE_DEL))
       {
+      memset((void*)rec,0,sizeof(struct logging_record));
       rec->type = LOG_TYPE_FREE;
       }
     }
@@ -318,6 +318,7 @@ void log_state_ticker3600(void)
 void logging_initialise(void)        // Logging Initialisation
   {
   memset((void*)&log_recs,0,sizeof(struct logging_record)*LOG_RECORDSTORE);
+  log_state_enter(LOG_STATE_FIRSTRUN);
   }
 
 void logging_ticker(void)            // Logging Ticker
