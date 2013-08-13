@@ -340,14 +340,30 @@ void diag_handle_t1(char *command, char *arguments)
   n = stp_i(n, "\r\n# Result = ", mins);
   n = stp_rom(n, "\r\n");
   net_puts_ram(net_scratchpad);
+
+#ifdef OVMS_LOGGINGMODULE
+for (chgmod=0;chgmod<LOG_RECORDSTORE;chgmod++)
+  {
+  n = stp_i(net_scratchpad,"# LOG #",chgmod);
+  n = stp_i(n," ",log_recs[chgmod].type);
+  n = stp_rom(n,"\r\n");
+  net_puts_ram(net_scratchpad);
+  }
+if (logging_haspending() > 0)
+    logging_sendpending();
+#endif
   }
 
 void diag_handle_t2(char *command, char *arguments)
   {
+  car_chargestate = 1;
+  //car_doors1 = 0xFF;
   }
 
 void diag_handle_t3(char *command, char *arguments)
   {
+  car_chargestate = 4;
+  //car_doors1 = 0x00;
   }
 
 // This is the DIAG command table
