@@ -209,7 +209,7 @@ extern unsigned int car_cooldown_timelimit;         // Cooldown time limit (minu
 // Helpers
 
 #define CAR_IS_ON (car_doors1bits.CarON)
-#define CAR_IS_CHARGING ((car_chargestate==0x01)||(car_chargestate==0x02)||(car_chargestate==0x0d)||(car_chargestate==0x0f))
+#define CAR_IS_CHARGING ((car_chargestate==0x01)||(car_chargestate==0x02)||(car_chargestate==0x0f))
 
 // DEBUG / QA stats:
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
