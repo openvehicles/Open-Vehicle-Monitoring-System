@@ -206,10 +206,6 @@ void logging_sendpending(void)
   char *s;
   unsigned char x;
   struct logging_record *rec;
-  unsigned char dr,cr;
-
-  dr=0;
-  cr=0;
 
   for (x=0;x<LOG_RECORDSTORE;x++)
     {
@@ -218,7 +214,7 @@ void logging_sendpending(void)
       {
       s = stp_i(net_scratchpad, "MP-0 h", x);
       s = stp_l(s, ",", rec->start_time - car_time);
-      s = stp_i(s, ",*-Log-Drive,", dr++);
+      s = stp_i(s, ",*-Log-Drive,", 0);
       s = stp_rom(s, ",31536000");
       s = stp_l(s, ",", rec->start_time);
       s = stp_i(s, ",", rec->duration);
@@ -239,7 +235,7 @@ void logging_sendpending(void)
       {
       s = stp_i(net_scratchpad, "MP-0 h", x);
       s = stp_l(s, ",", rec->start_time - car_time);
-      s = stp_i(s, ",*-Log-Charge,", cr++);
+      s = stp_i(s, ",*-Log-Charge,", 0);
       s = stp_rom(s, ",31536000");
       s = stp_l(s, ",", rec->start_time);
       s = stp_i(s, ",", rec->duration);
