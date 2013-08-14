@@ -291,7 +291,7 @@ void logging_ack(unsigned char ack)
   // A server acknowledgement
   struct logging_record *rec;
 
-  if ((ack>0)&&(ack<LOG_RECORDSTORE))
+  if ((ack>=0)&&(ack<LOG_RECORDSTORE))
     {
     rec = &log_recs[ack];
     if ((rec->type == LOG_TYPE_DRIVE_DEL)||
