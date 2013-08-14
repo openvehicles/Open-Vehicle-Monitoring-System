@@ -231,6 +231,8 @@ BOOL acc_cmd_stat(BOOL sms, char* caller)
 
 BOOL acc_cmd(char *caller, char *command, char *arguments, BOOL sms)
   {
+  strupr(arguments); // Convert command to upper case
+  
   if (strcmppgm2ram(arguments,"HERE")==0)
     {
     return acc_cmd_here(sms, caller);
