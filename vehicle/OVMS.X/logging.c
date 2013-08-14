@@ -227,7 +227,7 @@ void logging_sendpending(void)
       s = stp_latlon(s, ",", rec->record.drive.start_longitude);
       s = stp_latlon(s, ",", rec->record.drive.end_latitude);
       s = stp_latlon(s, ",", rec->record.drive.end_longitude);
-      s = stp_l(s, ",", rec->record.drive.distance);
+      s = stp_l2f_h(s, ",", rec->record.drive.distance, 1);
       s = stp_i(s, ",", rec->record.drive.start_SOC);
       s = stp_i(s, ",", rec->record.drive.start_idealrange);
       s = stp_i(s, ",", rec->record.drive.end_SOC);
