@@ -131,9 +131,10 @@ void log_state_ticker1(void)
         log_state_enter(LOG_STATE_PARKED);
       break;
     case LOG_STATE_DRIVING:
-      if (logging_pos<0)
+      if ((logging_pos<0)||
+          ((sys_features[FEATURE_OPTIN]&FEATURE_OI_LOGDRIVES)==0))
         {
-        // We shouldn't be here without a log record
+        // We shouldn't be here without a log record, or logging drives
         log_state_enter(LOG_STATE_WAITDRIVE_DONE);
         break;
         }
@@ -154,9 +155,10 @@ void log_state_ticker1(void)
         }
       break;
     case LOG_STATE_CHARGING:
-      if (logging_pos<0)
+      if ((logging_pos<0)||
+          ((sys_features[FEATURE_OPTIN]&FEATURE_OI_LOGCHARGE)==0))
         {
-        // We shouldn't be here without a log record
+        // We shouldn't be here without a log record, or logging charges
         log_state_enter(LOG_STATE_WAITCHARGE_DONE);
         break;
         }
@@ -210,7 +212,8 @@ void logging_sendpending(void)
   for (x=0;x<LOG_RECORDSTORE;x++)
     {
     rec = &log_recs[x];
-    if (rec->type == LOG_TYPE_DRIVE)
+    if ((rec->type == LOG_TYPE_DRIVE)&&
+        (sys_features[FEATURE_OPTIN]&FEATURE_OI_LOGDRIVES))
       {
       s = stp_i(net_scratchpad, "MP-0 h", x);
       s = stp_l(s, ",", rec->start_time - car_time);
@@ -231,7 +234,8 @@ void logging_sendpending(void)
       net_msg_encode_puts();
       rec->type = LOG_TYPE_DRIVE_DEL;
       }
-    else if (rec->type == LOG_TYPE_CHARGE)
+    else if ((rec->type == LOG_TYPE_CHARGE)&&
+             (sys_features[FEATURE_OPTIN]&FEATURE_OI_LOGCHARGE))
       {
       s = stp_i(net_scratchpad, "MP-0 h", x);
       s = stp_l(s, ",", rec->start_time - car_time);
