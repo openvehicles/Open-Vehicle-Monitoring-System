@@ -45,6 +45,8 @@
 #include "params.h"
 #include "net_msg.h"
 
+#define FEATURE_SPEEDO_REPEATS 5 // Number of times to repeat speedo updates
+
 // Capabilities for Tesla Roadster
 rom char teslaroadster_capabilities[] = "C10-12,C15-24";
 
@@ -323,10 +325,10 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
 
   if ((CANctrl & 0x07) == 4)           // Acceptance Filter 4 (RXF4) = CAN ID 400
     {
-#ifdef OVMS_SPEEDO_EXPERIMENT
-    // Experimental speedometer feature - replace Range->Dash with speed
+    // Speedometer feature - replace Range->Dash with speed
     if ((can_databuffer[0]==0x02)&&         // The SPEEDO AMPS message
-        (sys_features[FEATURE_SPEEDO]>0)&&  // The SPEEDO feature is on
+        (sys_features[FEATURE_OPTIN]&FEATURE_OI_SPEEDO)&& // Digital speedo
+        ((sys_features[FEATURE_CARBITS]&FEATURE_CB_2008)==0)&& // A 2010+ roadster?
         (car_doors1 & 0x80)&&               // The car is on
         (car_speed != can_databuffer[2])&&  // The speed != Amps
         (sys_features[FEATURE_CANWRITE]>0)) // The CAN bus can be written to
@@ -353,10 +355,9 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
       TXB0D7 = can_lastspeedmsg[7];
       TXB0DLC = 0b00001000; // data length (8)
       TXB0CON = 0b00001000; // mark for transmission
-      can_lastspeedrpt = sys_features[FEATURE_SPEEDO]; // Force re-transmissions
+      can_lastspeedrpt = FEATURE_SPEEDO_REPEATS; // Force re-transmissions
       if (can_lastspeedrpt>10) can_lastspeedrpt=10;
       }
-#endif // #ifdef OVMS_SPEEDO_EXPERIMENT
     }
   else if ((CANctrl & 0x07) == 2)    	// Acceptance Filter 2 (RXF2) = CAN ID 344
     {
@@ -407,10 +408,7 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
 //
 BOOL vehicle_teslaroadster_ticker10th(void)
   {
-#ifdef OVMS_SPEEDO_EXPERIMENT
-  if (can_lastspeedrpt==0) can_lastspeedrpt=sys_features[FEATURE_SPEEDO];
-  if (can_lastspeedrpt>10) can_lastspeedrpt=10;
-#endif // #ifdef OVMS_SPEEDO_EXPERIMENT
+  if (can_lastspeedrpt==0) can_lastspeedrpt=FEATURE_SPEEDO_REPEATS;
   return FALSE;
   }
 
@@ -473,10 +471,10 @@ BOOL vehicle_teslaroadster_idlepoll(void)
 
   if (can_lastspeedrpt == 0) return FALSE;
 
-#ifdef OVMS_SPEEDO_EXPERIMENT
-  // Experimental speedometer feature - replace Range->Dash with speed
+  // Speedometer feature - replace Range->Dash with speed
   if ((can_lastspeedmsg[0]==0x02)&&        // It is a valid AMPS message
-      (sys_features[FEATURE_SPEEDO]>0)&&   // The SPEEDO feature is enabled
+      (sys_features[FEATURE_OPTIN]&FEATURE_OI_SPEEDO)&& // Digital speedo
+      ((sys_features[FEATURE_CARBITS]&FEATURE_CB_2008)==0)&& // A 2010+ roadster?
       (car_doors1 & 0x80)&&                // The car is on
       (sys_features[FEATURE_CANWRITE]>0))  // The CAN bus can be written to
     {
@@ -496,7 +494,6 @@ BOOL vehicle_teslaroadster_idlepoll(void)
     TXB0DLC = 0b00001000; // data length (8)
     TXB0CON = 0b00001000; // mark for transmission
     }
-#endif //#ifdef OVMS_SPEEDO_EXPERIMENT
   can_lastspeedrpt--;
 
   return FALSE;

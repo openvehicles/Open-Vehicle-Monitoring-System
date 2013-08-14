@@ -28,19 +28,6 @@
 ; THE SOFTWARE.
 */
 
-// The OVMS_SPEEDO_EXPERIMENT switch is a highly experimental feature to
-// change the dashboard Amps display in the Tesla Roadster to show speed.
-// Please take extreme care with this and consider it extremely experimental -
-// use at your own risk. The feature can transmit a lot of messages on the bus
-// and is spoofing the car message. We can't see any affect (and we've even put
-// an analyser on at the same time to see if any errors come up - they don't),
-// but it is very intrusive to the car. One concern we have is if the car is
-// using that message for anything else (but we can't see how it would as it
-// also contains data for the battery level display, estimated miles, etc -
-// it seems very very specific to that dashboard display).
-// We really don't want anyone breaking their cars with this.
-//#define OVMS_SPEEDO_EXPERIMENT
-
 // The OVMS_SOCALERT switch will enable a feature such that if the SOC falls
 // below 5%, and the car is switched off (ie; not driving), the car will alert
 // (by SMS and net PUSH msg) every twelve hours, until such time as the SOC
