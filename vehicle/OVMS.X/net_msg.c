@@ -578,26 +578,29 @@ void net_msg_server_welcome(char *msg)
    *  ,<crashcnt>,<crashreason>,<checkpoint>
    */
 
-  debug_crashreason &= ~0x80; // clear checkpoint hold bit
+  if (debug_crashreason & 0x80)
+    {
+    debug_crashreason &= ~0x80; // clear checkpoint hold bit
 
-  s = stp_i(net_scratchpad, "MP-0 H*-OVM-DebugCrash,0,2592000,", ovms_firmware[0]);
-  s = stp_i(s, ".", ovms_firmware[1]);
-  s = stp_i(s, ".", ovms_firmware[2]);
-  s = stp_s(s, "/", par_get(PARAM_VEHICLETYPE));
-  if (vehicle_version)
-    s = stp_rom(s, vehicle_version);
-  s = stp_i(s, "/V", hwv);
-  s = stp_i(s, ",", debug_crashcnt);
-  s = stp_x(s, ",", debug_crashreason);
-  s = stp_i(s, ",", debug_checkpoint);
+    s = stp_i(net_scratchpad, "MP-0 H*-OVM-DebugCrash,0,2592000,", ovms_firmware[0]);
+    s = stp_i(s, ".", ovms_firmware[1]);
+    s = stp_i(s, ".", ovms_firmware[2]);
+    s = stp_s(s, "/", par_get(PARAM_VEHICLETYPE));
+    if (vehicle_version)
+       s = stp_rom(s, vehicle_version);
+    s = stp_i(s, "/V", hwv);
+    s = stp_i(s, ",", debug_crashcnt);
+    s = stp_x(s, ",", debug_crashreason);
+    s = stp_i(s, ",", debug_checkpoint);
 
-  delay100(20);
-  net_msg_start();
-  net_msg_encode_puts();
+    delay100(20);
+    net_msg_start();
+    net_msg_encode_puts();
+    net_msg_send();
+    }
 #ifdef OVMS_LOGGINGMODULE
   logging_serverconnect();
 #endif // #ifdef OVMS_LOGGINGMODULE
-  net_msg_send();
 }
 
 // Receive a NET msg from the OVMS server
