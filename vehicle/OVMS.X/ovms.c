@@ -126,6 +126,9 @@ signed int car_chargefull_minsremaining = -1;  // Minutes of charge remaining
 signed int car_chargelimit_minsremaining = -1; // Minutes of charge remaining
 unsigned int car_chargelimit_rangelimit = 0;   // Range limit (in vehicle units)
 unsigned char car_chargelimit_soclimit = 0;    // SOC% limit
+unsigned int tc_pack_temp = 0; // Zebra battery temperature (in celcius)
+unsigned int tc_pack_voltage = 0; // Zebra battery pack voltage
+signed int tc_pack_current = 0;  // Zebra battery pack temp
 
 
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
