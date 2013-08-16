@@ -1061,25 +1061,38 @@ char *net_prep_stat(char *s)
 
   s = stp_i(s, "\r SOC: ", car_SOC);
   s = stp_rom(s, "%");
-
-  if (idealrange != 0)
+  if ((car_type[0] == 'T') && (car_type[1] == 'C'))
     {
-    s = stp_i(s, "\r Ideal Range: ", idealrange);
+    s = stp_i(s, "\r Battery volt: ", tc_pack_voltage);
+    s = stp_rom(s, "V");
+    s = stp_i(s, "\r Battery current: ", tc_pack_current);
+    s = stp_rom(s, "A");
+    s = stp_i(s, "\r Batt temp: ", tc_pack_temp);
+    s = stp_rom(s, " oC");
+    s = stp_i(s, "\r PCU temp: ", car_tpem);
+    s = stp_rom(s, " oC");
+	}
+
+  if ((car_type[0] != 'T') && (car_type[1] != 'C'))
+    {
+    if (idealrange != 0)
+      {
+      s = stp_i(s, "\r Ideal Range: ", idealrange);
+      s = stp_rom(s, unit);
+      }
+    if (estrange != 0)
+      {
+      s = stp_i(s, "\r Est. Range: ", estrange);
+      s = stp_rom(s, unit);
+      }
+    s = stp_l2f_h(s, "\r ODO: ", odometer, 1);
     s = stp_rom(s, unit);
-    }
-  if (estrange != 0)
-    {
-    s = stp_i(s, "\r Est. Range: ", estrange);
-    s = stp_rom(s, unit);
-    }
-  s = stp_l2f_h(s, "\r ODO: ", odometer, 1);
-  s = stp_rom(s, unit);
 
-  if (car_cac100 != 0)
-    {
-    s = stp_l2f_h(s, "\r CAC: ", (unsigned long)car_cac100, 2);
+    if (car_cac100 != 0)
+      {
+      s = stp_l2f_h(s, "\r CAC: ", (unsigned long)car_cac100, 2);
+      }
     }
-
   return s;
 }
 
