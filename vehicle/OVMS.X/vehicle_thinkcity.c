@@ -7,7 +7,7 @@
 ;         - Chargestate detection at EOC improved by testing state of the EOC-flag and if car_linevoltage > 100
 ;           (I have seen that line voltage is slightly above 0V some times, 100V is chosed to be sure)
 ;         - car_tpem in App is fixed by setting car_stale_temps > 0. (PID for car_tmotor is unknown yet and is not implemented)
-;         - Added car_chargelimit, appears in the app during charging. 
+;         - Added car_chargelimit, appears in the app during charging.
 ;           The text is a little hard to read in the app due to color and alignment and should be moved slightly to the left.
 ;
 ;    1.3  14.08.2013 (Haakon)
@@ -33,7 +33,7 @@
 ;    1.1  04.08.2013 (Haakon)
 ;         - Added more global parameters 'car_*'
 ;         - Added filters - RXF2 RXF3 and mask - RXM1 for can receive buffer 1 - RXB1, used in poll1
-;    
+;
 ;    1.0  Initial release
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -61,9 +61,9 @@
 #include "ovms.h"
 #include "params.h"
 
-
-#pragma udata
-
+#pragma udata overlay vehicle_overlay_data
+unsigned int tc_pack_voltage = 0; // Zebra battery pack voltage
+signed int   tc_pack_current = 0;  // Zebra battery pack current
 
 #pragma udata
 
@@ -80,10 +80,6 @@ BOOL vehicle_thinkcity_ticker1(void)
   car_time++;
 
   return FALSE;
-  
-  car_chargelimit_soclimit = -1;  // set to -1 to supress SMS printout in net_msg.c
-  car_chargelimit_rangelimit = -1;  // set to -1 to supress SMS printout in net_msg.c
-
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -95,7 +91,7 @@ BOOL vehicle_thinkcity_poll0(void)
   {
   unsigned int id = ((unsigned int)RXB0SIDL >>5)
                   + ((unsigned int)RXB0SIDH <<3);
-  
+
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
   can_databuffer[1] = RXB0D1;
@@ -108,32 +104,31 @@ BOOL vehicle_thinkcity_poll0(void)
 
   RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
-  	// Check for charging state
-	// car_door1 Bits used: 0-7  
-	// Function net_prep_stat in net_msg.c uses car_doors1bits.ChargePort to determine SMS-printout
-	//
-	// 0x04 Chargeport open, bit 2 set
-	// 0x08 Pilot signal on, bit 3 set
-	// 0x10 Vehicle charging, bit 4 set
-    // 0x0C Chargeport open and pilot signal, bits 2,3 set
-	// 0x1C Bits 2,3,4 set
-    //
+  // Check for charging state
+  // car_door1 Bits used: 0-7
+  // Function net_prep_stat in net_msg.c uses car_doors1bits.ChargePort to determine SMS-printout
+  //
+  // 0x04 Chargeport open, bit 2 set
+  // 0x08 Pilot signal on, bit 3 set
+  // 0x10 Vehicle charging, bit 4 set
+  // 0x0C Chargeport open and pilot signal, bits 2,3 set
+  // 0x1C Bits 2,3,4 set
+
   switch (id)
     {
     case 0x301:
       car_SOC = 100 - ((((unsigned int)can_databuffer[4]<<8) + can_databuffer[5])/10);
       car_idealrange = (111.958773 * car_SOC / 100);
       car_estrange = (93.205678 * car_SOC / 100 );
-      tc_pack_temp = (((unsigned int)can_databuffer[6]<<8) + can_databuffer[7])/10;
+      car_tbattery = (((signed int)can_databuffer[6]<<8) + can_databuffer[7])/10;
       tc_pack_voltage = (((unsigned int) can_databuffer[2] << 8) + can_databuffer[3]) / 10;
       tc_pack_current = (((int) can_databuffer[0] << 8) + can_databuffer[1]) / 10;
       car_stale_temps = 60;
-    break;
+      break;
 
     case 0x304:
-      
       if ((can_databuffer[3] & 0x01) == 1) // Is EOC_bit (bit 0) is set?
-      {
+        {
         car_chargestate = 4; //Done
         car_chargemode = 0;
         if (car_linevoltage > 100)  // Is AC line voltage > 100 ?
@@ -142,32 +137,28 @@ BOOL vehicle_thinkcity_poll0(void)
           }
         else
           car_doors1 = 0x00;  // Charge connector disconnected
-      }
-
-    break;
+        }
+      break;
 	
     case 0x305:
       if ((can_databuffer[3] & 0x01) == 1) // Is charge_enable_bit (bit 0) is set (turns to 0 during 0CV-measuring at 80% SOC)?
-      {
+        {
         car_chargestate = 1; //Charging
         car_chargemode = 0;
         car_doors1 = 0x1C;
-      }
-
+        }
       if ((can_databuffer[3] & 0x02) == 2) // Is ocv_meas_in_progress (bit 1) is  set?
-      {
+        {
         car_chargestate = 2; //Top off
         car_chargemode = 0;
         car_doors1 = 0x0C;
-      }
-
-    break;
+        }
+      break;
 
     case 0x311:
       car_chargelimit =  ((unsigned char) can_databuffer[1]) * 0.2 ;  // Charge limit, controlled by the "power charge button", usually 9 or 15A.
-    break;
+      break;
     }
-
 
   return TRUE;
   }
@@ -176,7 +167,7 @@ BOOL vehicle_thinkcity_poll1(void)
   {
   unsigned int id = ((unsigned int)RXB1SIDL >>5)
                   + ((unsigned int)RXB1SIDH <<3);
-				  
+
   can_datalength = RXB1DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB1D0;
   can_databuffer[1] = RXB1D1;
@@ -189,21 +180,21 @@ BOOL vehicle_thinkcity_poll1(void)
 
   RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
 
-  
   switch (id)
     {
     case 0x263:
+      car_stale_temps = 60;
+      car_tpem = ((signed char) can_databuffer[2]) * 0.5 ; // PCU abmbient temp
       car_chargecurrent =  ((signed int) can_databuffer[0]) * 0.2 ;
       car_linevoltage = (unsigned int) can_databuffer[1] ;
       if (car_linevoltage < 100)  // AC line voltage < 100
         {
-          car_doors1 = 0x00;  // charging connector unplugged
+        car_doors1 = 0x00;  // charging connector unplugged
         }
-      car_tpem = ((signed char) can_databuffer[2]) * 0.5 ; // PCU abmbient temp
-      car_stale_temps = 60;
-    break;
+
+      break;
     }
-	 
+
   return TRUE;
   }
 
@@ -238,43 +229,38 @@ BOOL vehicle_thinkcity_initialise(void)
   // Buffer 0 (filters 0, 1) for extended PID responses
   RXB0CON  = 0b00000000;
   // Mask0 = 0b11111111000 (0x7F8), filterbit 0,1,2 deactivated
-  RXM0SIDL = 0b00000000;        
+  RXM0SIDL = 0b00000000;
   RXM0SIDH = 0b11111100;
-  
+
   // Filter0 0b01100000000 (0x300..0x3E0)
-  RXF0SIDL = 0b00000000;        
+  RXF0SIDL = 0b00000000;
   RXF0SIDH = 0b01100000;
 
-  
   // Buffer 1 (filters 2,3, etc) for direct can bus messages
   RXB1CON  = 0b00000000;	    // RX buffer1 uses Mask RXM1 and filters RXF2. Filters RXF3, RXF4 and RXF5 are not used in this version
 
   // Mask1 = 0b11111110000 (0x7f0), filterbit 0,1,2,3 deactivated for low volume IDs
   RXM1SIDL = 0b00000000;
   RXM1SIDH = 0b11111110;
-  
-  // Filter2 0b01001100000 (0x260..0x26F) = GROUP 0x26_: 
+
+  // Filter2 0b01001100000 (0x260..0x26F) = GROUP 0x26_:
   RXF2SIDL = 0b00000000;
   RXF2SIDH = 0b01001100;
-   
-
-
 
   // CAN bus baud rate
-
   BRGCON1 = 0x01; // SET BAUDRATE to 500 Kbps
   BRGCON2 = 0xD2;
   BRGCON3 = 0x02;
 
   CIOCON = 0b00100000; // CANTX pin will drive VDD when recessive
   if (sys_features[FEATURE_CANWRITE]>0)
-  {
+    {
     CANCON = 0b00000000;  // Normal mode
-  }
+    }
   else
-  {
+    {
     CANCON = 0b01100000; // Listen only mode, Receive bufer 0
-  }
+    }
 
   // Hook in...
   vehicle_fn_poll0 = &vehicle_thinkcity_poll0;
