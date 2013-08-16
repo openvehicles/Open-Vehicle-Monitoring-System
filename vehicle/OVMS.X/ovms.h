@@ -176,7 +176,7 @@ extern unsigned char car_vin[18]; // VIN
 extern unsigned char car_type[5]; // Car Type
 extern signed char car_tpem; // Tpem
 extern unsigned char car_tmotor; // Tmotor
-extern signed char car_tbattery; // Tbattery
+extern signed int car_tbattery; // Tbattery
 extern signed char car_tpms_t[4]; // TPMS temperature
 extern unsigned char car_tpms_p[4]; // TPMS pressure
 extern unsigned int car_trip; // ODO trip in miles /10
@@ -210,7 +210,7 @@ extern unsigned char car_chargelimit_soclimit;   // SOC% limit
 extern unsigned char car_coolingdown;            // 1 if car is cooling down
 extern unsigned char car_cooldown_chargemode;        // 0=standard, 1=storage, 3=range, 4=performance
 extern unsigned char car_cooldown_chargelimit;       // Charge Limit (amps)
-extern signed char car_cooldown_tbattery;          // Cooldown temperature limit
+extern signed int car_cooldown_tbattery;          // Cooldown temperature limit
 extern unsigned int car_cooldown_timelimit;         // Cooldown time limit (minutes) remaining
 
 // Helpers

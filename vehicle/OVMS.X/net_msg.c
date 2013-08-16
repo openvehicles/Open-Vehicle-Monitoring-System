@@ -1072,9 +1072,11 @@ char *net_prep_stat(char *s)
     s = stp_i(s, "\r Est. Range: ", estrange);
     s = stp_rom(s, unit);
     }
-  s = stp_l2f_h(s, "\r ODO: ", odometer, 1);
-  s = stp_rom(s, unit);
-
+  if (odometer != 0)
+    {
+    s = stp_l2f_h(s, "\r ODO: ", odometer, 1);
+    s = stp_rom(s, unit);
+    }
   if (car_cac100 != 0)
     {
     s = stp_l2f_h(s, "\r CAC: ", (unsigned long)car_cac100, 2);

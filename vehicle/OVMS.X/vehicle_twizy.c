@@ -2814,7 +2814,7 @@ void vehicle_twizy_battstatus_collect(void)
 
     m = (float) sum / BATT_CMODS;
 
-    car_tbattery = (signed char) m + 0.5 - 40;
+    car_tbattery = (signed int) m + 0.5 - 40;
     car_stale_temps = 120; // Reset stale indicator
 
     //stddev = (unsigned int) sqrt( ((float)sqrsum/BATT_CMODS) - SQR((float)sum/BATT_CMODS) ) + 1;

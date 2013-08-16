@@ -98,7 +98,7 @@ unsigned char car_vin[18] = "-----------------"; // VIN
 unsigned char car_type[5]; // Car Type, intentionally uninitialised for vehicle init
 signed char car_tpem = 0; // Tpem
 unsigned char car_tmotor = 0; // Tmotor
-signed char car_tbattery = 0; // Tbattery
+signed int car_tbattery = 0; // Tbattery
 signed char car_tpms_t[4] = {0,0,0,0}; // TPMS temperature
 unsigned char car_tpms_p[4] = {0,0,0,0}; // TPMS pressure
 unsigned int car_trip = 0; // ODO trip in miles /10
@@ -132,7 +132,7 @@ unsigned char car_chargelimit_soclimit = 0;    // SOC% limit
 unsigned char car_coolingdown = 0;             // TRUE if car is cooling down
 unsigned char car_cooldown_chargemode = 0;     // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_cooldown_chargelimit = 0;    // Charge Limit (amps)
-signed char car_cooldown_tbattery = 0;         // Cooldown temperature limit
+signed int car_cooldown_tbattery = 0;         // Cooldown temperature limit
 unsigned int car_cooldown_timelimit = 0;       // Cooldown time limit (minutes) remaining
 
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
