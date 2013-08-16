@@ -1,4 +1,3 @@
-
 /*
 ;    Project:       Open Vehicle Monitor System
 ;    Date:          6 May 2012
@@ -81,6 +80,10 @@ BOOL vehicle_thinkcity_ticker1(void)
   car_time++;
 
   return FALSE;
+  
+  car_chargelimit_soclimit = -1;  // set to -1 to supress SMS printout in net_msg.c
+  car_chargelimit_rangelimit = -1;  // set to -1 to supress SMS printout in net_msg.c
+
   }
 
 ////////////////////////////////////////////////////////////////////////
