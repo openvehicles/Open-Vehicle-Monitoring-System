@@ -1039,13 +1039,13 @@ char *net_prep_stat(char *s)
         s = stp_i(s,"\r Full: ",car_chargefull_minsremaining);
         s = stp_rom(s," mins");
         }
-      if (car_chargelimit_soclimit >= 0)
+      if (car_chargelimit_soclimit > 0)
         {
         s = stp_i(s, "\r ", car_chargelimit_soclimit);
         s = stp_i(s,"%: ",car_chargelimit_minsremaining);
         s = stp_rom(s," mins");
         }
-      if (car_chargelimit_rangelimit >= 0)
+      if (car_chargelimit_rangelimit > 0)
         {
         s = stp_i(s, "\r ", car_chargelimit_rangelimit);
         s = stp_rom(s, unit);
