@@ -44,12 +44,18 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 # Distribution Directory
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
+# Source Files Quoted if spaced
+SOURCEFILES_QUOTED_IF_SPACED=UARTIntC.c crypt_base64.c crypt_hmac.c crypt_md5.c crypt_rc4.c led.c net.c net_msg.c net_sms.c ovms.c params.c utils.c inputs.c diag.c vehicle_teslaroadster.c vehicle_twizy.c vehicle_voltampera.c vehicle.c vehicle_none.c vehicle_obdii.c vehicle_thinkcity.c vehicle_nissanleaf.c vehicle_tazzari.c logging.c vehicle_mitsubishi.c acc.c
+
 # Object Files Quoted if spaced
 OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/UARTIntC.o ${OBJECTDIR}/crypt_base64.o ${OBJECTDIR}/crypt_hmac.o ${OBJECTDIR}/crypt_md5.o ${OBJECTDIR}/crypt_rc4.o ${OBJECTDIR}/led.o ${OBJECTDIR}/net.o ${OBJECTDIR}/net_msg.o ${OBJECTDIR}/net_sms.o ${OBJECTDIR}/ovms.o ${OBJECTDIR}/params.o ${OBJECTDIR}/utils.o ${OBJECTDIR}/inputs.o ${OBJECTDIR}/diag.o ${OBJECTDIR}/vehicle_teslaroadster.o ${OBJECTDIR}/vehicle_twizy.o ${OBJECTDIR}/vehicle_voltampera.o ${OBJECTDIR}/vehicle.o ${OBJECTDIR}/vehicle_none.o ${OBJECTDIR}/vehicle_obdii.o ${OBJECTDIR}/vehicle_thinkcity.o ${OBJECTDIR}/vehicle_nissanleaf.o ${OBJECTDIR}/vehicle_tazzari.o ${OBJECTDIR}/logging.o ${OBJECTDIR}/vehicle_mitsubishi.o ${OBJECTDIR}/acc.o
 POSSIBLE_DEPFILES=${OBJECTDIR}/UARTIntC.o.d ${OBJECTDIR}/crypt_base64.o.d ${OBJECTDIR}/crypt_hmac.o.d ${OBJECTDIR}/crypt_md5.o.d ${OBJECTDIR}/crypt_rc4.o.d ${OBJECTDIR}/led.o.d ${OBJECTDIR}/net.o.d ${OBJECTDIR}/net_msg.o.d ${OBJECTDIR}/net_sms.o.d ${OBJECTDIR}/ovms.o.d ${OBJECTDIR}/params.o.d ${OBJECTDIR}/utils.o.d ${OBJECTDIR}/inputs.o.d ${OBJECTDIR}/diag.o.d ${OBJECTDIR}/vehicle_teslaroadster.o.d ${OBJECTDIR}/vehicle_twizy.o.d ${OBJECTDIR}/vehicle_voltampera.o.d ${OBJECTDIR}/vehicle.o.d ${OBJECTDIR}/vehicle_none.o.d ${OBJECTDIR}/vehicle_obdii.o.d ${OBJECTDIR}/vehicle_thinkcity.o.d ${OBJECTDIR}/vehicle_nissanleaf.o.d ${OBJECTDIR}/vehicle_tazzari.o.d ${OBJECTDIR}/logging.o.d ${OBJECTDIR}/vehicle_mitsubishi.o.d ${OBJECTDIR}/acc.o.d
 
 # Object Files
 OBJECTFILES=${OBJECTDIR}/UARTIntC.o ${OBJECTDIR}/crypt_base64.o ${OBJECTDIR}/crypt_hmac.o ${OBJECTDIR}/crypt_md5.o ${OBJECTDIR}/crypt_rc4.o ${OBJECTDIR}/led.o ${OBJECTDIR}/net.o ${OBJECTDIR}/net_msg.o ${OBJECTDIR}/net_sms.o ${OBJECTDIR}/ovms.o ${OBJECTDIR}/params.o ${OBJECTDIR}/utils.o ${OBJECTDIR}/inputs.o ${OBJECTDIR}/diag.o ${OBJECTDIR}/vehicle_teslaroadster.o ${OBJECTDIR}/vehicle_twizy.o ${OBJECTDIR}/vehicle_voltampera.o ${OBJECTDIR}/vehicle.o ${OBJECTDIR}/vehicle_none.o ${OBJECTDIR}/vehicle_obdii.o ${OBJECTDIR}/vehicle_thinkcity.o ${OBJECTDIR}/vehicle_nissanleaf.o ${OBJECTDIR}/vehicle_tazzari.o ${OBJECTDIR}/logging.o ${OBJECTDIR}/vehicle_mitsubishi.o ${OBJECTDIR}/acc.o
+
+# Source Files
+SOURCEFILES=UARTIntC.c crypt_base64.c crypt_hmac.c crypt_md5.c crypt_rc4.c led.c net.c net_msg.c net_sms.c ovms.c params.c utils.c inputs.c diag.c vehicle_teslaroadster.c vehicle_twizy.c vehicle_voltampera.c vehicle.c vehicle_none.c vehicle_obdii.c vehicle_thinkcity.c vehicle_nissanleaf.c vehicle_tazzari.c logging.c vehicle_mitsubishi.c acc.c
 
 
 CFLAGS=
