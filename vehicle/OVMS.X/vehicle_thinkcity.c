@@ -79,8 +79,6 @@ BOOL vehicle_thinkcity_ticker1(void)
 
   car_time++;
 
-  car_chargelimit_soclimit = -1;  // set to -1 to supress SMS printout in net_msg.c
-  car_chargelimit_rangelimit = -1;  // set to -1 to supress SMS printout in net_msg.c
 
   return FALSE;
   }
@@ -186,6 +184,7 @@ BOOL vehicle_thinkcity_poll1(void)
   switch (id)
     {
     case 0x263:
+      car_stale_temps = 60;
       car_chargecurrent =  ((signed int) can_databuffer[0]) * 0.2 ;
       car_linevoltage = (unsigned int) can_databuffer[1] ;
       if (car_linevoltage < 100)  // AC line voltage < 100
@@ -193,7 +192,6 @@ BOOL vehicle_thinkcity_poll1(void)
         car_doors1 = 0x00;  // charging connector unplugged
         }
       car_tpem = ((signed char) can_databuffer[2]) * 0.5 ; // PCU abmbient temp
-      car_stale_temps = 60;
       break;
     }
 
