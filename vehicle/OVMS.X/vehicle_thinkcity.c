@@ -6,7 +6,7 @@
 ;    2.0  19.08.2013 (Haakon)
 ;           Migration of SMS from standard handler to vehicle_thinkcity.c. All functions are based on the vehicle_twizy.c
 ;           - SMS cmd "STAT": Moved specific output to vehicle_thinkcity.c
-;             (SOC, batt temp, PCU temp, aux batt volt, traction batt volt and current)
+;             (SOC, batt temp, PCU temp, aux batt volt, traction batt volt, trac current and AC-line voltage/current during charging)
 ;           - SMS cmd "DEBUG": Output Think City specific flags/variables
 ;             (SOC, Charge Enable, Open Circuit Voltage Measurement, End of Charge, Doors1 status and Charge Status)
 ;           - SMS cmd "HELP": adds commands help. "Help" is currently not working!
@@ -421,45 +421,44 @@ void vehicle_thinkcity_stat_prepmsg(void)
 
   if (car_doors1bits.ChargePort)
   {
+    char fShowVA = TRUE;
     // Charge port door is open, we are charging
     switch (car_chargestate)
     {
     case 0x01:
-      s = stp_rom(s, "Charging");
+      s = stp_rom(s, "Charging"); // Charge State Charging
       break;
     case 0x02:
-      s = stp_rom(s, "Charging, Topping off");
+      s = stp_rom(s, "Charging, Topping off"); // Topping off
       break;
     case 0x04:
-      s = stp_rom(s, "Charging Done");
+      s = stp_rom(s, "Charging Done"); // Done
+      fShowVA = FALSE;
+      break;
+    case 0x0d:
+      s = stp_rom(s, "Preparing"); // Preparing
+      break;
+    case 0x0f:
+      s = stp_rom(s, "Charging, Heating"); // Heating
       break;
     default:
-      s = stp_rom(s, "Charging Stopped");
+      s = stp_rom(s, "Charging Stopped"); // Stopped
+      fShowVA = FALSE;
+      break;
     }
-
+    car_doors1bits.ChargePort = 0; // MJ Close ChargePort, will open next CAN Reading
+    if (fShowVA)
+    {
+      s = stp_i(s, "\r ", car_linevoltage);
+      s = stp_i(s, "V/", car_chargecurrent);
+      s = stp_rom(s, "A");
+    }
   }
   else
   {
     // Charge port door is closed, not charging
     s = stp_rom(s, "Not charging");
   }
-
-/*
-  // Estimated + Ideal Range:
-  if (can_mileskm == 'M')
-  {
-    s = stp_i(s, "\r Range: ", car_estrange);
-    s = stp_i(s, " - ", car_idealrange);
-    s = stp_rom(s, " mi");
-  }
-  else
-  {
-    s = stp_i(s, "\r Range: ", KmFromMi(car_estrange));
-    s = stp_i(s, " - ", KmFromMi(car_idealrange));
-    s = stp_rom(s, " km");
-  }
-
-*/
 
   s = stp_i(s, "\r SOC: ", car_SOC);
   s = stp_rom(s, "%");
