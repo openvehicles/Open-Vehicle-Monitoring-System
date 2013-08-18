@@ -3,6 +3,13 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
+;    2.0  19.08.2013 (Haakon)
+;           Migration of SMS from standard handler to vehicle_thinkcity.c. All functions are based on the vehicle_twizy.c
+;           - SMS cmd "STAT": Moved specific output to vehicle_thinkcity.c
+;             (SOC, batt temp, PCU temp, aux batt volt, traction batt volt and current)
+;           - SMS cmd "DEBUG": Output Think City specific flags/variables
+;             (SOC, Charge Enable, Open Circuit Voltage Measurement, End of Charge, Doors1 status and Charge Status)
+;           - SMS cmd "HELP": adds commands help. "Help" is currently not working!
 ;    1.4  15.08.2013 (Haakon)
 ;         - Chargestate detection at EOC improved by testing state of the EOC-flag and if car_linevoltage > 100
 ;           (I have seen that line voltage is slightly above 0V some times, 100V is chosed to be sure)
@@ -16,9 +23,9 @@
 ;         - Temp meas on Zebra-Think does not work as long as car_tbattery is 'signed char' (8 bits), Zebra operates at 270 deg.C and needs 9 bits.
 ;           E.g. temp of 264C (1 0000 1000) will be presented as 8C (0000 0000)
 ;           Request made to project for chang car_tbattery to ing signed int16.
-;           Temporarily resolved by adding new global variable "unsigned int tc_pack_temp" in ovms.c and ovms.h
+;           Temporarily resolved by adding new global variable "unsigned int thinkcity_pack_temp" in ovms.c and ovms.h
 ;         - Battery current and voltage added to the SMS "STAT?" by adding new global variables
-;           "unsigned int tc_pack_voltage" and signed "int tc_pack_current" to ovms.c and ovms.h files
+;           "unsigned int thinkcity_pack_voltage" and signed "int thinkcity_pack_current" to ovms.c and ovms.h files
 ;
 ;    1.2  13.08.2013 (Haakon)
 ;         - car_idealrange and car_estimatedrange hardcoded by setting 180km (ideal) and 150km (estimated).
@@ -58,12 +65,34 @@
 #include <stdlib.h>
 #include <delays.h>
 #include <string.h>
+#include <stdio.h>
+#include <math.h>
 #include "ovms.h"
 #include "params.h"
+#include "led.h"
+#include "utils.h"
+#include "net_sms.h"
+#include "net_msg.h"
+
+
+
+/***************************************************************
+ * Think City definitions
+ */
+
+// Think City specific features:
+
+
+// Think City specific commands:
+#define CMD_Debug                   200 // ()
+
 
 #pragma udata overlay vehicle_overlay_data
-unsigned int tc_pack_voltage = 0; // Zebra battery pack voltage
-signed int   tc_pack_current = 0;  // Zebra battery pack current
+unsigned int thinkcity_pack_voltage = 0; // Zebra battery pack voltage
+signed int   thinkcity_pack_current = 0;  // Zebra battery pack current
+unsigned int thinkcity_eoc_bit;
+unsigned int thinkcity_chrgen_bit;
+unsigned int thinkcity_ocvmeas_bit;
 
 #pragma udata
 
@@ -122,13 +151,14 @@ BOOL vehicle_thinkcity_poll0(void)
       car_idealrange = (111.958773 * car_SOC / 100);
       car_estrange = (93.205678 * car_SOC / 100 );
       car_tbattery = (((signed int)can_databuffer[6]<<8) + can_databuffer[7])/10;
-      tc_pack_voltage = (((unsigned int) can_databuffer[2] << 8) + can_databuffer[3]) / 10;
-      tc_pack_current = (((int) can_databuffer[0] << 8) + can_databuffer[1]) / 10;
+      thinkcity_pack_voltage = (((unsigned int) can_databuffer[2] << 8) + can_databuffer[3]) / 10;
+      thinkcity_pack_current = (((int) can_databuffer[0] << 8) + can_databuffer[1]) / 10;
       car_stale_temps = 60;
       break;
 
     case 0x304:
-      if ((can_databuffer[3] & 0x01) == 1) // Is EOC_bit (bit 0) is set?
+      thinkcity_eoc_bit = (can_databuffer[3] & 0x01) ;
+      if (thinkcity_eoc_bit == 1) // Is EOC_bit (bit 0) is set?
         {
         car_chargestate = 4; //Done
         car_chargemode = 0;
@@ -142,13 +172,15 @@ BOOL vehicle_thinkcity_poll0(void)
       break;
 	
     case 0x305:
-      if ((can_databuffer[3] & 0x01) == 1) // Is charge_enable_bit (bit 0) is set (turns to 0 during 0CV-measuring at 80% SOC)?
+      thinkcity_chrgen_bit = (can_databuffer[3] & 0x01);
+      if (thinkcity_chrgen_bit == 1) // Is charge_enable_bit (bit 0) is set (turns to 0 during 0CV-measuring at 80% SOC)?
         {
         car_chargestate = 1; //Charging
         car_chargemode = 0;
         car_doors1 = 0x1C;
         }
-      if ((can_databuffer[3] & 0x02) == 2) // Is ocv_meas_in_progress (bit 1) is  set?
+      thinkcity_ocvmeas_bit = (can_databuffer[3] & 0x02);
+      if (thinkcity_ocvmeas_bit == 2) // Is ocv_meas_in_progress (bit 1) is  set?
         {
         car_chargestate = 2; //Top off
         car_chargemode = 0;
@@ -197,6 +229,419 @@ BOOL vehicle_thinkcity_poll1(void)
 
   return TRUE;
   }
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************
+ * COMMAND PLUGIN CLASSES: CODE DESIGN PATTERN
+ *
+ * A command class handles a group of related commands (functions).
+ *
+ * STANDARD METHODS:
+ *
+ *  MSG status output:
+ *      char newstat = _msgp( char stat, int cmd, ... )
+ *      stat: chaining status pushes with optional crc diff checking
+ *
+ *  MSG command handler:
+ *      BOOL handled = _cmd( BOOL msgmode, int cmd, char *arguments )
+ *      msgmode: FALSE=just execute / TRUE=also output reply
+ *      arguments: "," separated (see MSG protocol)
+ *
+ *  SMS command handler:
+ *      BOOL handled = _sms( BOOL premsg, char *caller, char *command, char *arguments )
+ *      premsg: TRUE=replace system handler / FALSE=append to system handler
+ *          (framework will first try TRUE, if not handled fall back to system
+ *          handler and afterwards try again with FALSE)
+ *      arguments: " " separated / free form
+ *
+ * STANDARD BEHAVIOUR:
+ *
+ *  cmd=0 / command=NULL shall map to the default action (push status).
+ *      (if a specific MSG protocol push ID has been assigned,
+ *       _msgp() shall use that for cmd=0)
+ *
+ * PLUGGING IN:
+ *
+ *  - add _cmd() to vehicle fn_commandhandler()
+ *  - add _sms() to vehicle sms_cmdtable[]/sms_hfntable[]
+ *
+ */
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+/***********************************************************************
+ * COMMAND CLASS: DEBUG
+ *
+ *  MSG: CMD_Debug ()
+ *  SMS: DEBUG
+ *      - output internal state dump for debugging
+ *
+ */
+
+char vehicle_thinkcity_debug_msgp(char stat, int cmd)
+{
+  //static WORD crc; // diff crc for push msgs
+  char *s;
+
+  stat = net_msgp_environment(stat);
+
+  s = stp_rom(net_scratchpad, "MP-0 ");
+  s = stp_i(s, "c", cmd ? cmd : CMD_Debug);
+  //s = stp_x(s, ",0,", thinkcity_status);
+  s = stp_x(s, ",", car_doors1);
+  //s = stp_x(s, ",", car_doors5);
+  //s = stp_i(s, ",", car_chargestate);
+  //s = stp_i(s, ",", thinkcity_speed);
+  //s = stp_i(s, ",", thinkcity_power);
+  //s = stp_ul(s, ",", thinkcity_odometer);
+  s = stp_i(s, ",", car_SOC);
+  //s = stp_i(s, ",", thinkcity_soc_min);
+  //s = stp_i(s, ",", thinkcity_soc_max);
+  //s = stp_i(s, ",", thinkcity_range);
+  //s = stp_i(s, ",", thinkcity_soc_min_range);
+  s = stp_i(s, ",", car_estrange);
+  s = stp_i(s, ",", car_idealrange);
+  s = stp_i(s, ",", can_minSOCnotified);
+
+  net_msg_encode_puts();
+  return (stat == 2) ? 1 : stat;
+}
+
+BOOL vehicle_thinkcity_debug_cmd(BOOL msgmode, int cmd, char *arguments)
+{
+#ifdef OVMS_DIAGMODULE
+  if (arguments && *arguments)
+  {
+    // Run simulator:
+    //vehicle_thinkcity_simulator_run(atoi(arguments));
+  }
+#endif // OVMS_DIAGMODULE
+
+  if (msgmode)
+    vehicle_thinkcity_debug_msgp(0, cmd);
+
+  return TRUE;
+}
+
+BOOL vehicle_thinkcity_debug_sms(BOOL premsg, char *caller, char *command, char *arguments)
+{
+  char *s;
+
+#ifdef OVMS_DIAGMODULE
+  if (arguments && *arguments)
+  {
+    // Run simulator:
+    //vehicle_thinkcity_simulator_run(atoi(arguments));
+  }
+#endif // OVMS_DIAGMODULE
+
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+    return FALSE;
+
+  if (!caller || !*caller)
+  {
+    caller = par_get(PARAM_REGPHONE);
+    if (!caller || !*caller)
+      return FALSE;
+  }
+
+  if (premsg)
+    net_send_sms_start(caller);
+
+  // SMS PART:
+
+  s = net_scratchpad;
+  s = stp_rom(s, "Debug:");
+  s = stp_i(s, "\r SOC=", car_SOC);
+  s = stp_i(s, "\r CEN= ", thinkcity_chrgen_bit);  // Charge Enable
+  s = stp_i(s, "\r OCV= ", thinkcity_ocvmeas_bit); // Open Circuit Voltage Meas
+  s = stp_i(s, "\r EOC= ", thinkcity_eoc_bit);  // End of Charge
+  s = stp_x(s, "\r DS1= ", car_doors1); // Car doors1
+  s = stp_i(s, "\r CHS= ", car_chargestate);  // Charge state
+  net_puts_ram(net_scratchpad);
+
+#ifdef OVMS_DIAGMODULE
+  // ...MORE IN DIAG MODE (serial port):
+  if (net_state == NET_STATE_DIAGMODE)
+  {
+    s = net_scratchpad;
+    s = stp_i(s, "\n# FIX=", car_gpslock);
+    s = stp_lx(s, " LAT=", car_latitude);
+    s = stp_lx(s, " LON=", car_longitude);
+    s = stp_i(s, " ALT=", car_altitude);
+    s = stp_i(s, " DIR=", car_direction);
+    net_puts_ram(net_scratchpad);
+  }
+#endif // OVMS_DIAGMODULE
+
+#ifdef OVMS_THINKCITY_BATTMON
+  // battery bit fields:
+  s = net_scratchpad;
+  s = stp_x(s, "\n# vw=", thinkcity_batt[0].volt_watches);
+  s = stp_x(s, " va=", thinkcity_batt[0].volt_alerts);
+  s = stp_x(s, " lva=", thinkcity_batt[0].last_volt_alerts);
+  s = stp_x(s, " tw=", thinkcity_batt[0].temp_watches);
+  s = stp_x(s, " ta=", thinkcity_batt[0].temp_alerts);
+  s = stp_x(s, " lta=", thinkcity_batt[0].last_temp_alerts);
+  s = stp_x(s, " ss=", thinkcity_batt_sensors_state);
+  net_puts_ram(net_scratchpad);
+#endif // OVMS_THINKCITY_BATTMON
+
+
+  return TRUE;
+}
+
+/***********************************************************************
+ * COMMAND CLASS: CHARGE STATUS / ALERT
+ *
+ *  MSG: CMD_Alert()
+ *  SMS: STAT
+ *      - output charge status
+ *
+ */
+
+// prepmsg: Generate STAT message for SMS & MSG mode
+// - Charge state
+// - Temp battery and PCU
+// - Aux battery- and traction battery voltage
+// - Traction battery current
+//
+// => cat to net_scratchpad (to be sent as SMS or MSG)
+//    line breaks: default \r for MSG mode >> cr2lf >> SMS
+
+void vehicle_thinkcity_stat_prepmsg(void)
+{
+  char *s;
+
+  // append to net_scratchpad:
+  s = strchr(net_scratchpad, 0);
+
+  if (car_doors1bits.ChargePort)
+  {
+    // Charge port door is open, we are charging
+    switch (car_chargestate)
+    {
+    case 0x01:
+      s = stp_rom(s, "Charging");
+      break;
+    case 0x02:
+      s = stp_rom(s, "Charging, Topping off");
+      break;
+    case 0x04:
+      s = stp_rom(s, "Charging Done");
+      break;
+    default:
+      s = stp_rom(s, "Charging Stopped");
+    }
+
+  }
+  else
+  {
+    // Charge port door is closed, not charging
+    s = stp_rom(s, "Not charging");
+  }
+
+/*
+  // Estimated + Ideal Range:
+  if (can_mileskm == 'M')
+  {
+    s = stp_i(s, "\r Range: ", car_estrange);
+    s = stp_i(s, " - ", car_idealrange);
+    s = stp_rom(s, " mi");
+  }
+  else
+  {
+    s = stp_i(s, "\r Range: ", KmFromMi(car_estrange));
+    s = stp_i(s, " - ", KmFromMi(car_idealrange));
+    s = stp_rom(s, " km");
+  }
+
+*/
+
+  s = stp_i(s, "\r SOC: ", car_SOC);
+  s = stp_rom(s, "%");
+  s = stp_i(s, "\r Batt temp: ", car_tbattery);
+  s = stp_rom(s, " oC");
+  s = stp_i(s, "\r PCU temp: ", car_tpem);
+  s = stp_rom(s, " oC");
+  s = stp_l2f(s, "\r Aux batt: ", car_12vline, 1);
+  s = stp_rom(s, "V");
+  s = stp_i(s, "\r Batt volt: ", thinkcity_pack_voltage);
+  s = stp_rom(s, "V");
+  s = stp_i(s, "\r Batt curr: ", thinkcity_pack_current);
+  s = stp_rom(s, "A");
+
+
+}
+
+BOOL vehicle_thinkcity_stat_sms(BOOL premsg, char *caller, char *command, char *arguments)
+{
+  // check for replace mode:
+  if (!premsg)
+    return FALSE;
+
+  // check SMS notifies:
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+    return FALSE;
+
+  if (!caller || !*caller)
+  {
+    caller = par_get(PARAM_REGPHONE);
+    if (!caller || !*caller)
+      return FALSE;
+  }
+
+  // prepare message:
+  net_scratchpad[0] = 0;
+  vehicle_thinkcity_stat_prepmsg();
+  cr2lf(net_scratchpad);
+
+  // OK, start SMS:
+  delay100(2);
+  net_send_sms_start(caller);
+  net_puts_ram(net_scratchpad);
+
+  return TRUE; // handled
+}
+
+BOOL vehicle_thinkcity_alert_cmd(BOOL msgmode, int cmd, char *arguments)
+{
+  // prepare message:
+  strcpypgm2ram(net_scratchpad, (char const rom far*)"MP-0 PA");
+  vehicle_thinkcity_stat_prepmsg();
+
+  net_msg_encode_puts();
+
+  return TRUE;
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// This is the Think City SMS command table
+// (for implementation notes see net_sms::sms_cmdtable comment)
+//
+// First char = auth mode of command:
+//   1:     the first argument must be the module password
+//   2:     the caller must be the registered telephone
+//   3:     the caller must be the registered telephone, or first argument the module password
+
+BOOL vehicle_thinkcity_help_sms(BOOL premsg, char *caller, char *command, char *arguments);
+
+rom char vehicle_thinkcity_sms_cmdtable[][NET_SMS_CMDWIDTH] = {
+  "3DEBUG", // Think City: output internal state dump for debug
+  "3STAT", // override standard STAT
+  "3HELP", // extend HELP output
+  // - - "3RANGE", // Think City: set/query max ideal range
+  // - - "3CA", // Think City: set/query charge alerts
+
+#ifdef OVMS_THINKCITY_BATTMON
+  "3BATT", // Think City: battery status
+#endif // OVMS_THINKCITY_BATTMON
+
+  // - - "3POWER", // Think City: power usage statistics
+
+  ""
+};
+
+rom far BOOL(*vehicle_thinkcity_sms_hfntable[])(BOOL premsg, char *caller, char *command, char *arguments) = {
+  &vehicle_thinkcity_debug_sms,
+  &vehicle_thinkcity_stat_sms,
+  &vehicle_thinkcity_help_sms,
+  // - - &vehicle_thinkcity_range_sms,
+  // - - &vehicle_thinkcity_ca_sms,
+
+#ifdef OVMS_THINKCITY_BATTMON
+  &vehicle_thinkcity_battstatus_sms,
+#endif // OVMS_THINKCITY_BATTMON
+
+  //- - - &vehicle_thinkcity_power_sms
+};
+
+// SMS COMMAND DISPATCHER:
+// premsg: TRUE=may replace, FALSE=may extend standard handler
+// returns TRUE if handled
+
+BOOL vehicle_thinkcity_fn_sms(BOOL checkauth, BOOL premsg, char *caller, char *command, char *arguments)
+{
+  int k;
+
+  // Command parsing...
+  for (k = 0; vehicle_thinkcity_sms_cmdtable[k][0] != 0; k++)
+  {
+    if (memcmppgm2ram(command,
+                      (char const rom far*)vehicle_thinkcity_sms_cmdtable[k] + 1,
+                      strlenpgm((char const rom far*)vehicle_thinkcity_sms_cmdtable[k]) - 1) == 0)
+    {
+      BOOL result;
+
+      if (checkauth)
+      {
+        // we need to check the caller authorization:
+        arguments = net_sms_initargs(arguments);
+        if (!net_sms_checkauth(vehicle_thinkcity_sms_cmdtable[k][0], caller, &arguments))
+          return FALSE; // failed
+      }
+
+      // Call sms handler:
+      result = (*vehicle_thinkcity_sms_hfntable[k])(premsg, caller, command, arguments);
+
+      if ((premsg) && (result))
+      {
+        // we're in charge + handled it; finish SMS:
+        net_send_sms_finish();
+      }
+
+      return result;
+    }
+  }
+
+  return FALSE; // no vehicle command
+}
+
+BOOL vehicle_thinkcity_fn_smshandler(BOOL premsg, char *caller, char *command, char *arguments)
+{
+  // called to extend/replace standard command: framework did auth check for us
+  return vehicle_thinkcity_fn_sms(FALSE, premsg, caller, command, arguments);
+}
+
+BOOL vehicle_thinkcity_fn_smsextensions(char *caller, char *command, char *arguments)
+{
+  // called for specific command: we need to do the auth check
+  return vehicle_thinkcity_fn_sms(TRUE, TRUE, caller, command, arguments);
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// Think City specific SMS command output extension: HELP
+// - add Think City commands
+//
+
+BOOL vehicle_thinkcity_help_sms(BOOL premsg, char *caller, char *command, char *arguments)
+{
+  int k;
+
+  if (premsg)
+    return FALSE; // run only in extend mode
+
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+    return FALSE;
+
+  net_puts_rom(" \r\nThink City Commands:");
+
+  for (k = 0; vehicle_thinkcity_sms_cmdtable[k][0] != 0; k++)
+  {
+    net_puts_rom(" ");
+    net_puts_rom(vehicle_thinkcity_sms_cmdtable[k] + 1);
+  }
+
+  return TRUE;
+}
+
+
+
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_thinkcity_initialise()
@@ -266,6 +711,10 @@ BOOL vehicle_thinkcity_initialise(void)
   vehicle_fn_poll0 = &vehicle_thinkcity_poll0;
   vehicle_fn_poll1 = &vehicle_thinkcity_poll1;
   vehicle_fn_ticker1 = &vehicle_thinkcity_ticker1;
+  vehicle_fn_smshandler = &vehicle_thinkcity_fn_smshandler;
+  vehicle_fn_smsextensions = &vehicle_thinkcity_fn_smsextensions;
+
+
 
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
