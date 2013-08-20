@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurationDescriptor version="62">
   <projectmakefile>Makefile</projectmakefile>
-  <defaultConf>3</defaultConf>
+  <defaultConf>2</defaultConf>
   <confs>
     <conf name="V1_Production" type="2">
       <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=BUR110372223:=x:=en</platformToolSN>
@@ -40,7 +40,7 @@
       </runprofile>
     </conf>
     <conf name="V2_Production" type="2">
-      <platformToolSN></platformToolSN>
+      <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=DEFAULT_PK3 :=x:=en</platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>

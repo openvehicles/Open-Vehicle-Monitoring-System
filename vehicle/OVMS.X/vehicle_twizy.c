@@ -3483,7 +3483,8 @@ BOOL vehicle_twizy_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
      * CAR SPECIFIC COMMANDS:
      */
 
-  case CMD_Debug:
+/*
+ */  case CMD_Debug:
     return vehicle_twizy_debug_cmd(msgmode, cmd, msg);
 
   case CMD_QueryRange:

@@ -44,12 +44,18 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 # Distribution Directory
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
+# Source Files Quoted if spaced
+SOURCEFILES_QUOTED_IF_SPACED=UARTIntC.c crypt_base64.c crypt_hmac.c crypt_md5.c crypt_rc4.c led.c net.c net_msg.c net_sms.c ovms.c params.c utils.c inputs.c diag.c vehicle_teslaroadster.c vehicle_twizy.c vehicle_voltampera.c vehicle.c vehicle_none.c vehicle_obdii.c vehicle_thinkcity.c vehicle_nissanleaf.c vehicle_tazzari.c vehicle_mitsubishi.c acc.c
+
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/UARTIntC.o ${OBJECTDIR}/crypt_base64.o ${OBJECTDIR}/crypt_hmac.o ${OBJECTDIR}/crypt_md5.o ${OBJECTDIR}/crypt_rc4.o ${OBJECTDIR}/led.o ${OBJECTDIR}/net.o ${OBJECTDIR}/net_msg.o ${OBJECTDIR}/net_sms.o ${OBJECTDIR}/ovms.o ${OBJECTDIR}/params.o ${OBJECTDIR}/utils.o ${OBJECTDIR}/inputs.o ${OBJECTDIR}/diag.o ${OBJECTDIR}/vehicle_teslaroadster.o ${OBJECTDIR}/vehicle_twizy.o ${OBJECTDIR}/vehicle_voltampera.o ${OBJECTDIR}/vehicle.o ${OBJECTDIR}/vehicle_none.o ${OBJECTDIR}/vehicle_obdii.o ${OBJECTDIR}/vehicle_thinkcity.o ${OBJECTDIR}/vehicle_nissanleaf.o ${OBJECTDIR}/vehicle_tazzari.o ${OBJECTDIR}/vehicle_mitsubishi.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/UARTIntC.o.d ${OBJECTDIR}/crypt_base64.o.d ${OBJECTDIR}/crypt_hmac.o.d ${OBJECTDIR}/crypt_md5.o.d ${OBJECTDIR}/crypt_rc4.o.d ${OBJECTDIR}/led.o.d ${OBJECTDIR}/net.o.d ${OBJECTDIR}/net_msg.o.d ${OBJECTDIR}/net_sms.o.d ${OBJECTDIR}/ovms.o.d ${OBJECTDIR}/params.o.d ${OBJECTDIR}/utils.o.d ${OBJECTDIR}/inputs.o.d ${OBJECTDIR}/diag.o.d ${OBJECTDIR}/vehicle_teslaroadster.o.d ${OBJECTDIR}/vehicle_twizy.o.d ${OBJECTDIR}/vehicle_voltampera.o.d ${OBJECTDIR}/vehicle.o.d ${OBJECTDIR}/vehicle_none.o.d ${OBJECTDIR}/vehicle_obdii.o.d ${OBJECTDIR}/vehicle_thinkcity.o.d ${OBJECTDIR}/vehicle_nissanleaf.o.d ${OBJECTDIR}/vehicle_tazzari.o.d ${OBJECTDIR}/vehicle_mitsubishi.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/UARTIntC.o ${OBJECTDIR}/crypt_base64.o ${OBJECTDIR}/crypt_hmac.o ${OBJECTDIR}/crypt_md5.o ${OBJECTDIR}/crypt_rc4.o ${OBJECTDIR}/led.o ${OBJECTDIR}/net.o ${OBJECTDIR}/net_msg.o ${OBJECTDIR}/net_sms.o ${OBJECTDIR}/ovms.o ${OBJECTDIR}/params.o ${OBJECTDIR}/utils.o ${OBJECTDIR}/inputs.o ${OBJECTDIR}/diag.o ${OBJECTDIR}/vehicle_teslaroadster.o ${OBJECTDIR}/vehicle_twizy.o ${OBJECTDIR}/vehicle_voltampera.o ${OBJECTDIR}/vehicle.o ${OBJECTDIR}/vehicle_none.o ${OBJECTDIR}/vehicle_obdii.o ${OBJECTDIR}/vehicle_thinkcity.o ${OBJECTDIR}/vehicle_nissanleaf.o ${OBJECTDIR}/vehicle_tazzari.o ${OBJECTDIR}/vehicle_mitsubishi.o ${OBJECTDIR}/acc.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/UARTIntC.o.d ${OBJECTDIR}/crypt_base64.o.d ${OBJECTDIR}/crypt_hmac.o.d ${OBJECTDIR}/crypt_md5.o.d ${OBJECTDIR}/crypt_rc4.o.d ${OBJECTDIR}/led.o.d ${OBJECTDIR}/net.o.d ${OBJECTDIR}/net_msg.o.d ${OBJECTDIR}/net_sms.o.d ${OBJECTDIR}/ovms.o.d ${OBJECTDIR}/params.o.d ${OBJECTDIR}/utils.o.d ${OBJECTDIR}/inputs.o.d ${OBJECTDIR}/diag.o.d ${OBJECTDIR}/vehicle_teslaroadster.o.d ${OBJECTDIR}/vehicle_twizy.o.d ${OBJECTDIR}/vehicle_voltampera.o.d ${OBJECTDIR}/vehicle.o.d ${OBJECTDIR}/vehicle_none.o.d ${OBJECTDIR}/vehicle_obdii.o.d ${OBJECTDIR}/vehicle_thinkcity.o.d ${OBJECTDIR}/vehicle_nissanleaf.o.d ${OBJECTDIR}/vehicle_tazzari.o.d ${OBJECTDIR}/vehicle_mitsubishi.o.d ${OBJECTDIR}/acc.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/UARTIntC.o ${OBJECTDIR}/crypt_base64.o ${OBJECTDIR}/crypt_hmac.o ${OBJECTDIR}/crypt_md5.o ${OBJECTDIR}/crypt_rc4.o ${OBJECTDIR}/led.o ${OBJECTDIR}/net.o ${OBJECTDIR}/net_msg.o ${OBJECTDIR}/net_sms.o ${OBJECTDIR}/ovms.o ${OBJECTDIR}/params.o ${OBJECTDIR}/utils.o ${OBJECTDIR}/inputs.o ${OBJECTDIR}/diag.o ${OBJECTDIR}/vehicle_teslaroadster.o ${OBJECTDIR}/vehicle_twizy.o ${OBJECTDIR}/vehicle_voltampera.o ${OBJECTDIR}/vehicle.o ${OBJECTDIR}/vehicle_none.o ${OBJECTDIR}/vehicle_obdii.o ${OBJECTDIR}/vehicle_thinkcity.o ${OBJECTDIR}/vehicle_nissanleaf.o ${OBJECTDIR}/vehicle_tazzari.o ${OBJECTDIR}/vehicle_mitsubishi.o
+OBJECTFILES=${OBJECTDIR}/UARTIntC.o ${OBJECTDIR}/crypt_base64.o ${OBJECTDIR}/crypt_hmac.o ${OBJECTDIR}/crypt_md5.o ${OBJECTDIR}/crypt_rc4.o ${OBJECTDIR}/led.o ${OBJECTDIR}/net.o ${OBJECTDIR}/net_msg.o ${OBJECTDIR}/net_sms.o ${OBJECTDIR}/ovms.o ${OBJECTDIR}/params.o ${OBJECTDIR}/utils.o ${OBJECTDIR}/inputs.o ${OBJECTDIR}/diag.o ${OBJECTDIR}/vehicle_teslaroadster.o ${OBJECTDIR}/vehicle_twizy.o ${OBJECTDIR}/vehicle_voltampera.o ${OBJECTDIR}/vehicle.o ${OBJECTDIR}/vehicle_none.o ${OBJECTDIR}/vehicle_obdii.o ${OBJECTDIR}/vehicle_thinkcity.o ${OBJECTDIR}/vehicle_nissanleaf.o ${OBJECTDIR}/vehicle_tazzari.o ${OBJECTDIR}/vehicle_mitsubishi.o ${OBJECTDIR}/acc.o
+
+# Source Files
+SOURCEFILES=UARTIntC.c crypt_base64.c crypt_hmac.c crypt_md5.c crypt_rc4.c led.c net.c net_msg.c net_sms.c ovms.c params.c utils.c inputs.c diag.c vehicle_teslaroadster.c vehicle_twizy.c vehicle_voltampera.c vehicle.c vehicle_none.c vehicle_obdii.c vehicle_thinkcity.c vehicle_nissanleaf.c vehicle_tazzari.c vehicle_mitsubishi.c acc.c
 
 
 CFLAGS=
@@ -248,6 +254,13 @@ ${OBJECTDIR}/vehicle_mitsubishi.o: vehicle_mitsubishi.c  nbproject/Makefile-${CN
 	@${DEP_GEN} -d ${OBJECTDIR}/vehicle_mitsubishi.o 
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_mitsubishi.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
+${OBJECTDIR}/acc.o: acc.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/acc.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_BASE -DOVMS_CAR_TESLAROADSTER -DOVMS_CAR_VOLTAMPERA -DOVMS_CAR_RENAULTTWIZY -DOVMS_CAR_OBDII -DOVMS_CAR_THINKCITY -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_INTERNALGPS -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/acc.o   acc.c 
+	@${DEP_GEN} -d ${OBJECTDIR}/acc.o 
+	@${FIXDEPS} "${OBJECTDIR}/acc.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
+	
 else
 ${OBJECTDIR}/UARTIntC.o: UARTIntC.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
@@ -416,6 +429,13 @@ ${OBJECTDIR}/vehicle_mitsubishi.o: vehicle_mitsubishi.c  nbproject/Makefile-${CN
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_BASE -DOVMS_CAR_TESLAROADSTER -DOVMS_CAR_VOLTAMPERA -DOVMS_CAR_RENAULTTWIZY -DOVMS_CAR_OBDII -DOVMS_CAR_THINKCITY -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_INTERNALGPS -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_mitsubishi.o   vehicle_mitsubishi.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/vehicle_mitsubishi.o 
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_mitsubishi.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
+	
+${OBJECTDIR}/acc.o: acc.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/acc.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_BASE -DOVMS_CAR_TESLAROADSTER -DOVMS_CAR_VOLTAMPERA -DOVMS_CAR_RENAULTTWIZY -DOVMS_CAR_OBDII -DOVMS_CAR_THINKCITY -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_INTERNALGPS -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/acc.o   acc.c 
+	@${DEP_GEN} -d ${OBJECTDIR}/acc.o 
+	@${FIXDEPS} "${OBJECTDIR}/acc.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 endif
 
