@@ -710,10 +710,10 @@ void vehicle_teslaroadster_cooldown(void)
       (car_doors1bits.ChargePort == 1))        // Charge port is open
     {
     // We need to start a cooldown
-    car_coolingdown = 1;
     vehicle_teslaroadster_tx_setchargecurrent(16); // 16A charge
     vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
     vehicle_teslaroadster_tx_startstopcharge(1);   // Force START charge
+    car_coolingdown = 1;
     }
   }
 

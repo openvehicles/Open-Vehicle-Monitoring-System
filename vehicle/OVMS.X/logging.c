@@ -45,6 +45,7 @@ unsigned int  log_granular_tick = 0;        // An internal ticker used to genera
 struct logging_record log_recs[LOG_RECORDSTORE];
 signed char logging_pos = -1;
 signed char logging_pending = 0;
+unsigned char logging_coolingdown = 0;
 
 signed char log_getfreerecord(void)
   {
@@ -106,6 +107,7 @@ void log_state_enter(unsigned char newstate)
       rec->record.charge.charge_current = car_chargecurrent;
       rec->record.charge.start_SOC = car_SOC;
       rec->record.charge.start_idealrange = car_idealrange;
+      logging_coolingdown = car_coolingdown;
       break;
     }
   }
@@ -167,9 +169,11 @@ void log_state_ticker1(void)
         rec->record.charge.charge_voltage = car_linevoltage;
       if (car_chargecurrent > rec->record.charge.charge_current)
         rec->record.charge.charge_current = car_chargecurrent;
-      if ((!CAR_IS_CHARGING)||(CAR_IS_ON))
+      if ((!CAR_IS_CHARGING)||
+          (CAR_IS_ON)||
+          ((car_coolingdown != logging_coolingdown)&&(logging_coolingdown)))
         {
-        // Charge has finished
+        // Charge/Cooldown has finished
         logging_pos = -1;
         logging_pending++;
         rec->type = LOG_TYPE_CHARGE;
@@ -185,6 +189,7 @@ void log_state_ticker1(void)
         rec->record.charge.end_idealrange = car_idealrange;
         log_state_enter(LOG_STATE_PARKED);
         }
+      logging_coolingdown = car_coolingdown;
       break;
     case LOG_STATE_PARKED:
       if (CAR_IS_ON)
