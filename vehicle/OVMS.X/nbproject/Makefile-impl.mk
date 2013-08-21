@@ -31,7 +31,7 @@ DEFAULTCONF=V1_Production
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=V1_Production V1_Experimental V2_Production V2_Experimental 
+ALLCONFS=V1_Production V1_Experimental V2_Production V2_Experimental V2_TeslaRoadster V2_RenaultTwizy 
 
 
 # build
@@ -49,6 +49,8 @@ ALLCONFS=V1_Production V1_Experimental V2_Production V2_Experimental
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Experimental clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TeslaRoadster clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RenaultTwizy clean
 
 
 
@@ -58,6 +60,8 @@ ALLCONFS=V1_Production V1_Experimental V2_Production V2_Experimental
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Experimental build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TeslaRoadster build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RenaultTwizy build
 
 
 

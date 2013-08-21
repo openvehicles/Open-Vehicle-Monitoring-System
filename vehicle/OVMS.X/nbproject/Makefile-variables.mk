@@ -32,3 +32,17 @@ CND_ARTIFACT_PATH_V2_Experimental=dist/V2_Experimental/production/OVMS.X.product
 CND_PACKAGE_DIR_V2_Experimental=${CND_DISTDIR}/V2_Experimental/package
 CND_PACKAGE_NAME_V2_Experimental=ovms.x.tar
 CND_PACKAGE_PATH_V2_Experimental=${CND_DISTDIR}/V2_Experimental/package/ovms.x.tar
+# V2_TeslaRoadster configuration
+CND_ARTIFACT_DIR_V2_TeslaRoadster=dist/V2_TeslaRoadster/production
+CND_ARTIFACT_NAME_V2_TeslaRoadster=OVMS.X.production.hex
+CND_ARTIFACT_PATH_V2_TeslaRoadster=dist/V2_TeslaRoadster/production/OVMS.X.production.hex
+CND_PACKAGE_DIR_V2_TeslaRoadster=${CND_DISTDIR}/V2_TeslaRoadster/package
+CND_PACKAGE_NAME_V2_TeslaRoadster=ovms.x.tar
+CND_PACKAGE_PATH_V2_TeslaRoadster=${CND_DISTDIR}/V2_TeslaRoadster/package/ovms.x.tar
+# V2_RenaultTwizy configuration
+CND_ARTIFACT_DIR_V2_RenaultTwizy=dist/V2_RenaultTwizy/production
+CND_ARTIFACT_NAME_V2_RenaultTwizy=OVMS.X.production.hex
+CND_ARTIFACT_PATH_V2_RenaultTwizy=dist/V2_RenaultTwizy/production/OVMS.X.production.hex
+CND_PACKAGE_DIR_V2_RenaultTwizy=${CND_DISTDIR}/V2_RenaultTwizy/package
+CND_PACKAGE_NAME_V2_RenaultTwizy=ovms.x.tar
+CND_PACKAGE_PATH_V2_RenaultTwizy=${CND_DISTDIR}/V2_RenaultTwizy/package/ovms.x.tar
