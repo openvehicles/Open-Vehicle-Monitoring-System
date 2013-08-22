@@ -147,6 +147,13 @@ void vehicle_initialise(void)
     vehicle_mitsubishi_initialise();
     }
 #endif
+#ifdef OVMS_CAR_TRACK
+  else if (memcmppgm2ram(p, (char const rom far*)"XX", 2) == 0)
+    {
+    void vehicle_track_initialise(void);
+    vehicle_track_initialise();
+    }
+#endif
 #ifdef OVMS_CAR_NONE
   else
     {
