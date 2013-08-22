@@ -44,6 +44,8 @@ void delay100(unsigned char n);    // Delay in 100ms increments
 void led_net(unsigned char led);   // Change NET led
 void led_act(unsigned char led);   // Change ACT led
 void modem_reboot(void);           // Reboot modem
+unsigned char string_to_mode(char *mode); // Convert a string to a mode number
+
 //void format_latlon(long latlon, char* dest);  // Format latitude/longitude string
 #define format_latlon(latlon,dest) stp_latlon(dest,NULL,latlon)
 float myatof(char *s);             // builtin atof() does not work

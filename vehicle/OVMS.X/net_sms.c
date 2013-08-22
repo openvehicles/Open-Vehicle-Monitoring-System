@@ -766,21 +766,15 @@ BOOL net_sms_handle_unvalet(char *caller, char *command, char *arguments)
 // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance) and optional current limit
 BOOL net_sms_handle_chargemode(char *caller, char *command, char *arguments)
   {
+  char mode[2];
   if (arguments == NULL) return FALSE;
 
   strupr(arguments);
   if (vehicle_fn_commandhandler != NULL)
     {
-    if (memcmppgm2ram(arguments, (char const rom far*)"STA", 3) == 0)
-      vehicle_fn_commandhandler(FALSE, 10, (char*)"0");
-    else if (memcmppgm2ram(arguments, (char const rom far*)"STO", 3) == 0)
-      vehicle_fn_commandhandler(FALSE, 10, (char*)"1");
-    else if (memcmppgm2ram(arguments, (char const rom far*)"RAN", 3) == 0)
-      vehicle_fn_commandhandler(FALSE, 10, (char*)"3");
-    else if (memcmppgm2ram(arguments, (char const rom far*)"PER", 3) == 0)
-      vehicle_fn_commandhandler(FALSE, 10, (char*)"4");
-    else
-      return FALSE;
+    mode[0] = '0' + string_to_mode(arguments);
+    mode[1] = 0;
+    vehicle_fn_commandhandler(FALSE, 10, mode);
 
     arguments = net_sms_nextarg(arguments);
     if (arguments != NULL)

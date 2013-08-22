@@ -113,6 +113,21 @@ void modem_reboot(void)
   PORTBbits.RB0 = 1;
 }
 
+unsigned char string_to_mode(char *mode)
+  {
+  // Convert a string to a mode number
+  if (memcmppgm2ram(mode, (char const rom far*)"STA", 3) == 0)
+    return 0;
+  else if (memcmppgm2ram(mode, (char const rom far*)"STO", 3) == 0)
+    return 1;
+  else if (memcmppgm2ram(mode, (char const rom far*)"RAN", 3) == 0)
+    return 3;
+  else if (memcmppgm2ram(mode, (char const rom far*)"PER", 3) == 0)
+    return 4;
+  else
+    return 0;
+  }
+
 // convert miles to kilometers by multiplying by ~1.609344
 unsigned long KmFromMi(unsigned long miles)
 {
