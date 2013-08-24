@@ -10,6 +10,7 @@
 611=ESS: Almost empty - Car stops in 1 mile
 882=Before starting, charge port door must be closed
 888=Disarm vehicle with key fob before starting
+934=DMC FW: Line OverCurrent Peak Fault
 936=Charging Problem
 937=Charge Problem Extension Cord Detected
 945=System too hot - Vehicle shutting down
@@ -32,7 +33,10 @@
 1166=Release Parking Brake
 1169=Charge port open
 1170=Tow Mode is not available while car is on
+1174=Fasten Seatbelt
 1416=Low Power System Service Required
+1463=HVAC: Compressor OverTemp
+1465=HVAC: Low current pump fault
 1469=HVAC: Compressor comms timeout
 1471=HVAC: Compressor DTC comms timeout
 2078=There was a problem processing your request
