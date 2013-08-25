@@ -154,6 +154,13 @@ void vehicle_initialise(void)
     vehicle_track_initialise();
     }
 #endif
+#ifdef OVMS_CAR_KYBURZ
+  else if (memcmppgm2ram(p, (char const rom far*)"KD", 2) == 0)
+    {
+    void vehicle_kyburz_initialise(void);
+    vehicle_kyburz_initialise();
+    }
+#endif
 #ifdef OVMS_CAR_NONE
   else
     {

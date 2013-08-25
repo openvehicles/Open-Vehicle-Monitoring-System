@@ -46,6 +46,10 @@
 //#define OVMS_CAR_OBDII
 //#define OVMS_CAR_THINKCITY
 //#define OVMS_CAR_NISSANLEAF
+//#define OVMS_CAR_TAZZARI
+//#define OVMS_CAR_MITSUBISHI
+//#define OVMS_CAR_TRACK
+//#define OVMS_CAR_KYBURZ
 
 // August 2012 saw the introduction of a new hardware platform (v2), with
 // support for SIM908 GPS, voltage sampling, a new processor, and a few other
