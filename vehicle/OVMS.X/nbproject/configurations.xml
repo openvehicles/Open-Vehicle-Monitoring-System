@@ -180,6 +180,8 @@
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="voltagevalue" value="5.0"/>
       </PICkit3PlatformTool>
+      <item path="acc.c" ex="true" overriding="false">
+      </item>
       <item path="diag.c" ex="false" overriding="false">
         <C18>
         </C18>
@@ -271,6 +273,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="vehicle_track.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="vehicle_twizy.c" ex="true" overriding="false">
         <C18>
@@ -344,7 +354,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_ACCMODULE;OVMS_CAR_NONE"/>
+                  value="OVMS_CAR_TESLAROADSTER;OVMS_HW_V1;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_CAR_NONE"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -401,6 +411,8 @@
         <property key="programoptions.uselvpprogramming" value="false"/>
         <property key="voltagevalue" value="5.0"/>
       </PICkit3PlatformTool>
+      <item path="acc.c" ex="true" overriding="false">
+      </item>
       <item path="diag.c" ex="false" overriding="false">
         <C18>
         </C18>
@@ -472,6 +484,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="vehicle_track.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="vehicle_twizy.c" ex="true" overriding="false">
         <C18>
@@ -545,7 +565,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_OBDII;OVMS_CAR_THINKCITY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS;OVMS_CAR_NISSANLEAF;OVMS_CAR_TAZZARI;OVMS_CAR_MITSUBISHI;OVMS_CAR_TRACK"/>
+                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -657,6 +677,18 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
+      <item path="vehicle_mitsubishi.c" ex="true" overriding="false">
+      </item>
+      <item path="vehicle_nissanleaf.c" ex="true" overriding="false">
+      </item>
+      <item path="vehicle_obdii.c" ex="true" overriding="false">
+      </item>
+      <item path="vehicle_tazzari.c" ex="true" overriding="false">
+      </item>
+      <item path="vehicle_thinkcity.c" ex="true" overriding="false">
+      </item>
+      <item path="vehicle_track.c" ex="true" overriding="false">
+      </item>
       <item path="vehicle_twizy.c" ex="false" overriding="false">
         <C18>
         </C18>
@@ -758,34 +790,8 @@
         <property key="stack-analysis-mcc18" value="false"/>
         <property key="stack-analysis-mplink" value="false"/>
       </C18LanguageToolchain>
-      <PICkit3PlatformTool>
-        <property key="AutoSelectMemRanges" value="auto"/>
-        <property key="Freeze Peripherals" value="true"/>
-        <property key="SecureSegment.SegmentProgramming" value="FullChipProgramming"/>
-        <property key="ToolFirmwareFilePath"
-                  value="Press to browse for a specific firmware version"/>
-        <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
-        <property key="hwtoolclock.frcindebug" value="false"/>
-        <property key="memories.aux" value="false"/>
-        <property key="memories.eeprom" value="false"/>
-        <property key="memories.flashdata" value="true"/>
-        <property key="memories.id" value="true"/>
-        <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.end" value="0xffff"/>
-        <property key="memories.programmemory.start" value="0x0"/>
-        <property key="poweroptions.powerenable" value="false"/>
-        <property key="programmertogo.imagename" value=""/>
-        <property key="programoptions.eraseb4program" value="true"/>
-        <property key="programoptions.pgmspeed" value="2"/>
-        <property key="programoptions.preserveeeprom" value="true"/>
-        <property key="programoptions.preserveprogramrange" value="false"/>
-        <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
-        <property key="programoptions.preserveprogramrange.start" value="0x0"/>
-        <property key="programoptions.preserveuserid" value="false"/>
-        <property key="programoptions.usehighvoltageonmclr" value="false"/>
-        <property key="programoptions.uselvpprogramming" value="false"/>
-        <property key="voltagevalue" value="5.0"/>
-      </PICkit3PlatformTool>
+      <RealICEPlatformTool>
+      </RealICEPlatformTool>
       <item path="acc.c" ex="true" overriding="false">
         <C18>
         </C18>
@@ -986,6 +992,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="vehicle_track.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="vehicle_twizy.c" ex="true" overriding="false">
         <C18>
@@ -1197,6 +1211,14 @@
         </C18LanguageToolchain>
       </item>
       <item path="vehicle_track.c" ex="true" overriding="false">
+        <C18>
+        </C18>
+        <C18-AS>
+        </C18-AS>
+        <C18-LD>
+        </C18-LD>
+        <C18LanguageToolchain>
+        </C18LanguageToolchain>
       </item>
       <item path="vehicle_twizy.c" ex="false" overriding="false">
         <C18>
