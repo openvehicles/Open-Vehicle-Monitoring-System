@@ -52,6 +52,7 @@ rom char teslaroadster_capabilities[] = "C10-12,C15-24";
 
 #pragma udata overlay vehicle_overlay_data
 unsigned char tr_cooldown_wascharging;       // TRUE if car was charging when cooldown started
+signed char tr_cooldown_recycle;             // Ticker counter for cooldown recycle
 unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
 unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
 unsigned char tr_requestcac;                 // Request CAC
@@ -144,6 +145,25 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
         else
           {
           car_stale_gps = 0; // Reset stale indicator
+          }
+        break;
+      case 0x87: // HVAC#1 message
+        k1 = ((unsigned int)can_databuffer[7]<<8)+(can_databuffer[6]);
+        if (k1 > 0)
+          {
+          car_doors5bits.HVAC = 1;
+          tr_cooldown_recycle = -1;  // Stop the recycle attempts
+          }
+        else
+          {
+          if ((car_coolingdown>=0)&&(car_doors5bits.HVAC))
+            {
+            // Car is cooling down, and HVAC has just gone off - end of a cycle
+            car_coolingdown++;
+            tr_cooldown_recycle = 60;  // Try to recycle cooling in 60 seconds
+            net_req_notification(NET_NOTIFY_STAT);
+            }
+          car_doors5bits.HVAC = 0;
           }
         break;
       case 0x88: // Charging Current / Duration
@@ -530,6 +550,25 @@ void vehicle_teslaroadster_tx_wakeuptemps(void)
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   }
 
+void vehicle_teslaroadster_tx_wakeuphvac(void)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x06;
+  TXB0D1 = 0xd0;
+  TXB0D2 = 0x07;
+  TXB0D3 = 0x00;
+  TXB0D4 = 0x00;
+  TXB0D5 = 0x80;
+  TXB0D6 = 0x00;
+  TXB0D7 = 0x08;
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
 void vehicle_teslaroadster_tx_setchargemode(unsigned char mode)
   {
   vehicle_teslaroadster_tx_wakeup(); // Also, wakeup the car if necessary
@@ -685,7 +724,7 @@ void vehicle_teslaroadster_cooldown(void)
 
   // Work out new mode and limit
   p = par_get(PARAM_COOLDOWN);
-  p = strtokpgmram(p,",");
+  p = strtokpgmram(p,":");
   if (p != NULL)
     {
     car_cooldown_tbattery = atoi(p);
@@ -705,7 +744,7 @@ void vehicle_teslaroadster_cooldown(void)
     car_cooldown_timelimit = COOLDOWN_DEFAULT_TIMELIMIT;
     }
 
-  if ((car_tbattery > car_cooldown_tbattery)&&  // Car is hot enough
+  if ((car_tbattery > car_cooldown_tbattery)&& // Car is hot enough
       (car_doors1bits.CarON == 0)&&            // Car is not ON
       (car_doors1bits.ChargePort == 1))        // Charge port is open
     {
@@ -713,7 +752,9 @@ void vehicle_teslaroadster_cooldown(void)
     vehicle_teslaroadster_tx_setchargecurrent(16); // 16A charge
     vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
     vehicle_teslaroadster_tx_startstopcharge(1);   // Force START charge
-    car_coolingdown = 1;
+    vehicle_teslaroadster_tx_wakeuphvac();         // Start HVAC data
+    car_coolingdown = 0;
+    tr_cooldown_recycle = -1;
     }
   }
 
@@ -1056,6 +1097,27 @@ int MinutesToChargeCAC(
   return (seconds + 30) / 60;
   }
 
+BOOL vehicle_teslaroadster_ticker1(void)
+  {
+  if (tr_cooldown_recycle > 0)
+    {
+    tr_cooldown_recycle--;
+    if (tr_cooldown_recycle == 10)
+      {
+      // Switch to PERFORMANCE mode for ten seconds
+      vehicle_teslaroadster_tx_setchargemode(4);     // Switch to PERFORMANCE mode
+      }
+    else if (tr_cooldown_recycle == 0)
+      {
+      // Switch back to RANGE mode, and reset cycle
+      vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
+      tr_cooldown_recycle = 60;
+      }
+    }
+
+  return FALSE;
+  }
+
 BOOL vehicle_teslaroadster_ticker60(void)
   {
   if (car_doors1 & 0x10)
@@ -1073,7 +1135,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
     car_chargelimit_rangelimit = 0;
     car_chargelimit_soclimit = 0;
 
-    if (car_coolingdown)
+    if (car_coolingdown>=0)
       {
       car_cooldown_timelimit--;
       if ((car_cooldown_timelimit == 0)||
@@ -1087,19 +1149,21 @@ BOOL vehicle_teslaroadster_ticker60(void)
           {
           vehicle_teslaroadster_tx_startstopcharge(0);                        // Force START charge
           }
-        car_coolingdown = 0;
+        car_coolingdown = -1;
+        tr_cooldown_recycle = -1;
         }
       }
     }
   else
     {
     // Vehicle is not charging
-    if (car_coolingdown)
+    if (car_coolingdown>0)
       {
       net_notify_suppresscount = 30;
       vehicle_teslaroadster_tx_setchargecurrent(car_cooldown_chargelimit); // Restore charge limit
       vehicle_teslaroadster_tx_setchargemode(car_cooldown_chargemode);     // Restore charge mode
-      car_coolingdown = 0;
+      car_coolingdown = -1;
+      tr_cooldown_recycle = -1;
       }
     }
   
@@ -1173,6 +1237,7 @@ void vehicle_teslaroadster_initialise(void)
   vehicle_fn_poll0 = &vehicle_teslaroadster_poll0;
   vehicle_fn_poll1 = &vehicle_teslaroadster_poll1;
   vehicle_fn_ticker10th = &vehicle_teslaroadster_ticker10th;
+  vehicle_fn_ticker1 = &vehicle_teslaroadster_ticker1;
   vehicle_fn_ticker60 = &vehicle_teslaroadster_ticker60;
   vehicle_fn_idlepoll = &vehicle_teslaroadster_idlepoll;
   vehicle_fn_commandhandler = &vehicle_teslaroadster_commandhandler;
