@@ -982,7 +982,7 @@ char *net_prep_stat(char *s)
     unit = " km";
   }
 
-  if (car_coolingdown>0)
+  if (car_coolingdown>=0)
     {
     s = stp_rom(s, "Cooldown "); // Cooling down...
     }
