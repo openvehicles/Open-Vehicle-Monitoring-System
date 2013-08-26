@@ -159,7 +159,7 @@ typedef struct {
   unsigned Charging12V:1;       // 0x10
   unsigned :1;                  // 0x20
   unsigned :1;                  // 0x40
-  unsigned :1;                  // 0x80
+  unsigned HVAC:1;              // 0x80
 } car_doors5bits_t;
 #define car_doors5bits (*((car_doors5bits_t*)&car_doors5))
 
@@ -207,11 +207,11 @@ extern signed int car_chargefull_minsremaining;  // Minutes of charge remaining
 extern signed int car_chargelimit_minsremaining; // Minutes of charge remaining
 extern unsigned int car_chargelimit_rangelimit;  // Range limit (in vehicle units)
 extern unsigned char car_chargelimit_soclimit;   // SOC% limit
-extern unsigned char car_coolingdown;            // 1 if car is cooling down
-extern unsigned char car_cooldown_chargemode;        // 0=standard, 1=storage, 3=range, 4=performance
-extern unsigned char car_cooldown_chargelimit;       // Charge Limit (amps)
-extern signed int car_cooldown_tbattery;          // Cooldown temperature limit
-extern unsigned int car_cooldown_timelimit;         // Cooldown time limit (minutes) remaining
+extern signed char car_coolingdown;              // >=0 if car is cooling down
+extern unsigned char car_cooldown_chargemode;    // 0=standard, 1=storage, 3=range, 4=performance
+extern unsigned char car_cooldown_chargelimit;   // Charge Limit (amps)
+extern signed int car_cooldown_tbattery;         // Cooldown temperature limit
+extern unsigned int car_cooldown_timelimit;      // Cooldown time limit (minutes) remaining
 
 // Helpers
 
