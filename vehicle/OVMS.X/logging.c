@@ -45,7 +45,7 @@ unsigned int  log_granular_tick = 0;        // An internal ticker used to genera
 struct logging_record log_recs[LOG_RECORDSTORE];
 signed char logging_pos = -1;
 signed char logging_pending = 0;
-unsigned char logging_coolingdown = 0;
+signed char logging_coolingdown = -1;
 
 signed char log_getfreerecord(void)
   {
@@ -171,7 +171,7 @@ void log_state_ticker1(void)
         rec->record.charge.charge_current = car_chargecurrent;
       if ((!CAR_IS_CHARGING)||
           (CAR_IS_ON)||
-          ((car_coolingdown != logging_coolingdown)&&(logging_coolingdown)))
+          ((car_coolingdown != logging_coolingdown)&&(logging_coolingdown>=0)))
         {
         // Charge/Cooldown has finished
         logging_pos = -1;
