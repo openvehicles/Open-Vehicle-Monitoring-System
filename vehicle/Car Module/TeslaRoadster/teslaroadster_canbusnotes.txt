@@ -134,15 +134,6 @@ Tesla Roadster CAN Bus analysis:
 		        31.0019 100 86 06 85 01 1F EE FF FF    ->VDS (message to VDS 86)
 		        41.0719 100 86 01 87 01 AE FD FF FF    ->VDS (message to VDS 86)
 
-	UNKNOWN
-		B1=0x87
-			Samples:
-		         0.8122 100 87 81 FF FF 00 00 00 00    ->VDS (message to VDS 87)
-		        10.8911 100 87 83 C3 02 40 1D F7 03    ->VDS (message to VDS 87)
-		        20.9312 100 87 83 91 07 5F 26 DE 0F    ->VDS (message to VDS 87)
-		        31.0022 100 87 83 73 06 1C 24 0F C1    ->VDS (message to VDS 87)
-		        41.0722 100 87 83 63 01 F0 08 DE 0F    ->VDS (message to VDS 87)
-
 	Charger settings
 		B1=0x88
 		B2=Charging current
