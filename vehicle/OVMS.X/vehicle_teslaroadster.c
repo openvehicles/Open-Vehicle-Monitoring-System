@@ -1132,8 +1132,6 @@ BOOL vehicle_teslaroadster_ticker60(void)
         car_ambient_temp            // ambient temperature in degrees C
         );
     car_chargelimit_minsremaining = -1;
-    car_chargelimit_rangelimit = 0;
-    car_chargelimit_soclimit = 0;
 
     if (car_coolingdown>=0)
       {
