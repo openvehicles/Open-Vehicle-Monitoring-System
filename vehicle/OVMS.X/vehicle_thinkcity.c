@@ -3,6 +3,15 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
+;    2.2  27.08.2013 (Haakon)
+;         - TX to can-bus introdused to request car_tpem, car_tmotor_, car_ambient_temp and tc_charger_temp in k-line style.
+;           TX is located in idlepoll()
+;         - SMS fault printout gives list of active faults only and the count
+;         - SMS code "DEBUG" is renamed to "FLAG" and the result is a list of active flags only
+;         - STAT printout on SMS is rearranged
+;         - Cleanup of Twizy leftovers
+;         - Tested with master v2.5.2
+;
 ;    2.1  19.08.2013 (Haakon)
 ;         - SMS command "HELP"fixed. Function net_send_sms_start(caller) added to the _help_sms part and premsg is ignored
 ;           "HELP" returns "STAT DEBUG FAULT HELP"
@@ -89,12 +98,7 @@
  * Think City definitions
  */
 
-// Think City specific features:
-
-
 // Think City specific commands:
-#define CMD_Debug                   200 // ()
-
 
 #pragma udata overlay vehicle_overlay_data
 unsigned int tc_pack_voltage;
@@ -108,6 +112,8 @@ unsigned int tc_pack_batteriesavail;
 unsigned int tc_pack_rednumbatteries;
 unsigned int tc_pack_mindchgvolt;
 signed int   tc_pack_maxdchgamps;
+signed int   tc_charger_temp = 0;
+signed int   tc_slibatt_temp = 0;
 unsigned int tc_charger_pwm;
 unsigned int tc_vehicle_speed;
 unsigned int tc_sys_voltmaxgen;
@@ -127,7 +133,6 @@ unsigned int tc_bit_acheatswitchstat;
 unsigned int tc_bit_regenbrkenbl;
 unsigned int tc_bit_dcdcenbl;
 unsigned int tc_bit_fanactive;
-
 
 //Errors:
 unsigned int tc_bit_epoemerg;
@@ -178,6 +183,8 @@ BOOL vehicle_thinkcity_state_ticker1(void)
 
 BOOL vehicle_thinkcity_state_ticker10(void)
   {
+
+
 // Check for charging state
 // car_door1 Bits used: 0-7
 // Function net_prep_stat in net_msg.c uses car_doors1bits.ChargePort to determine SMS-printout
@@ -226,6 +233,7 @@ BOOL vehicle_thinkcity_state_ticker10(void)
 //
 BOOL vehicle_thinkcity_poll0(void)
   {
+
   unsigned int id = ((unsigned int)RXB0SIDL >>5)
                   + ((unsigned int)RXB0SIDH <<3);
 
@@ -279,7 +287,7 @@ BOOL vehicle_thinkcity_poll0(void)
       tc_bit_socgreater102 = (can_databuffer[6] & 0x40);
       tc_bit_isotestinprog = (can_databuffer[6] & 0x80);
       tc_bit_chgwaittemp = (can_databuffer[7] & 0x01);
-	break;
+    break;
 
     case 0x304:
       tc_sys_voltmaxgen = (((unsigned int) can_databuffer[0] << 8) + can_databuffer[1]) / 10;
@@ -317,8 +325,9 @@ BOOL vehicle_thinkcity_poll0(void)
 
 BOOL vehicle_thinkcity_poll1(void)
   {
-  unsigned int id = ((unsigned int)RXB1SIDL >>5)
-                  + ((unsigned int)RXB1SIDH <<3);
+    unsigned int id = ((unsigned int)RXB1SIDL >>5)
+                    + ((unsigned int)RXB1SIDH <<3);
+
 
   can_datalength = RXB1DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB1D0;
@@ -335,17 +344,100 @@ BOOL vehicle_thinkcity_poll1(void)
   switch (id)
     {
     case 0x263:
-      car_stale_temps = 60;
+      car_stale_ambient = 60;
       car_chargecurrent =  ((signed int) can_databuffer[0]) * 0.2;
       car_linevoltage = (unsigned int) can_databuffer[1];
-      car_tpem = ((signed char) can_databuffer[2]) * 0.5; // PCU abmbient temp
+      car_ambient_temp = ((signed char) can_databuffer[2]) * 0.5; // PCU abmbient temp
       tc_vehicle_speed = ((unsigned int) can_databuffer[5]) / 2;
-      break;
+    break;
+
+    case 0x75B:
+      car_stale_temps = 60;
+      if (can_databuffer[3] == 0x65)
+      {
+        tc_charger_temp = (((signed int) can_databuffer[4] << 8) + can_databuffer[5]) / 100;
+      }
+      else if (can_databuffer[3] == 0x66)
+      {
+        car_tpem = (((signed int) can_databuffer[4] << 8) + can_databuffer[5]) / 100;
+      }
+      else if (can_databuffer[3] == 0x67)
+      {
+        car_tmotor = (((signed int) can_databuffer[4] << 8) + can_databuffer[5]) / 100;
+      }
+      else if (can_databuffer[3] == 0x68)
+      {
+        tc_slibatt_temp = (((signed int) can_databuffer[4] << 8) + can_databuffer[5]) / 100;
+      }
+    break;
     }
 
   return TRUE;
   }
 
+////////////////////////////////////////////////////////////////////////
+// vehicle_thinkcity_idlepoll()
+// This function is an entry point from the main() program loop, and
+// gives the CAN framework a call whenever there is idle time
+//
+BOOL vehicle_thinkcity_idlepoll(void)
+{
+
+  if (sys_features[FEATURE_CANWRITE]>0)
+  {
+    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+    TXB0CON = 0;
+    TXB0SIDL = 0b01100000;
+    TXB0SIDH = 0b11101010;
+    TXB0D0 = 0x03;
+    TXB0D1 = 0x22;
+    TXB0D2 = 0x49;
+    TXB0D3 = 0x65;
+    TXB0DLC = 0b00000100; // data length (4)
+    TXB0CON = 0b00001000; // mark for transmission
+    delay100b(); // Delay a little... (100ms, approx)
+
+    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+    TXB0CON = 0;
+    TXB0SIDL = 0b01100000;
+    TXB0SIDH = 0b11101010;
+    TXB0D0 = 0x03;
+    TXB0D1 = 0x22;
+    TXB0D2 = 0x49;
+    TXB0D3 = 0x66;
+    TXB0DLC = 0b00000100; // data length (4)
+    TXB0CON = 0b00001000; // mark for transmission
+    delay100b(); // Delay a little... (100ms, approx)
+
+    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+    TXB0CON = 0;
+    TXB0SIDL = 0b01100000;
+    TXB0SIDH = 0b11101010;
+    TXB0D0 = 0x03;
+    TXB0D1 = 0x22;
+    TXB0D2 = 0x49;
+    TXB0D3 = 0x67;
+    TXB0DLC = 0b00000100; // data length (4)
+    TXB0CON = 0b00001000; // mark for transmission
+    delay100b(); // Delay a little... (100ms, approx)
+
+    while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+    TXB0CON = 0;
+    TXB0SIDL = 0b01100000;
+    TXB0SIDH = 0b11101010;
+    TXB0D0 = 0x03;
+    TXB0D1 = 0x22;
+    TXB0D2 = 0x49;
+    TXB0D3 = 0x68;
+    TXB0DLC = 0b00000100; // data length (4)
+    TXB0CON = 0b00001000; // mark for transmission
+    delay100b(); // Delay a little... (100ms, approx)
+  }
+
+
+
+return FALSE;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -389,70 +481,17 @@ BOOL vehicle_thinkcity_poll1(void)
 
 
 /***********************************************************************
- * COMMAND CLASS: DEBUG
+ * COMMAND CLASS: FLAG
  *
- *  MSG: CMD_Debug ()
- *  SMS: DEBUG
- *      - output internal state dump for debugging
+ *  SMS: FLAG
+ *      - output internal state flags for debugging
  *
  */
 
-char vehicle_thinkcity_debug_msgp(char stat, int cmd)
-{
-  //static WORD crc; // diff crc for push msgs
-  char *s;
 
-  stat = net_msgp_environment(stat);
-
-  s = stp_rom(net_scratchpad, "MP-0 ");
-  s = stp_i(s, "c", cmd ? cmd : CMD_Debug);
-  //s = stp_x(s, ",0,", tc_status);
-  s = stp_x(s, ",", car_doors1);
-  //s = stp_x(s, ",", car_doors5);
-  //s = stp_i(s, ",", car_chargestate);
-  //s = stp_i(s, ",", tc_speed);
-  //s = stp_i(s, ",", tc_power);
-  //s = stp_ul(s, ",", tc_odometer);
-  s = stp_i(s, ",", car_SOC);
-  //s = stp_i(s, ",", tc_soc_min);
-  //s = stp_i(s, ",", tc_soc_max);
-  //s = stp_i(s, ",", tc_range);
-  //s = stp_i(s, ",", tc_soc_min_range);
-  s = stp_i(s, ",", car_estrange);
-  s = stp_i(s, ",", car_idealrange);
-  s = stp_i(s, ",", can_minSOCnotified);
-
-  net_msg_encode_puts();
-  return (stat == 2) ? 1 : stat;
-}
-
-BOOL vehicle_thinkcity_debug_cmd(BOOL msgmode, int cmd, char *arguments)
-{
-#ifdef OVMS_DIAGMODULE
-  if (arguments && *arguments)
-  {
-    // Run simulator:
-    //vehicle_thinkcity_simulator_run(atoi(arguments));
-  }
-#endif // OVMS_DIAGMODULE
-
-  if (msgmode)
-    vehicle_thinkcity_debug_msgp(0, cmd);
-
-  return TRUE;
-}
-
-BOOL vehicle_thinkcity_debug_sms(BOOL premsg, char *caller, char *command, char *arguments)
+BOOL vehicle_thinkcity_flag_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
   char *s;
-
-#ifdef OVMS_DIAGMODULE
-  if (arguments && *arguments)
-  {
-    // Run simulator:
-    //vehicle_thinkcity_simulator_run(atoi(arguments));
-  }
-#endif // OVMS_DIAGMODULE
 
   if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
     return FALSE;
@@ -470,73 +509,40 @@ BOOL vehicle_thinkcity_debug_sms(BOOL premsg, char *caller, char *command, char 
   // SMS PART:
 
   s = net_scratchpad;
-  s = stp_rom(s, "Debug:");
+  s = stp_rom(s, "Flags:");
   s = stp_i(s, "\r SOC=", car_SOC);
-  s = stp_i(s, "\r 102=", tc_bit_socgreater102);  // SOC > 102
-  s = stp_i(s, "\r CEN=", tc_bit_chrgen);  // Charge Enable
-  s = stp_i(s, "\r OCV=", tc_bit_ocvmeas); // Open Circuit Voltage Meas
-  s = stp_i(s, "\r EOC=", tc_bit_eoc);  // End of Charge
-  s = stp_i(s, "\r ACD=", tc_bit_mainsacdet);  // Mains AC detect
-  s = stp_i(s, "\r SCH=", tc_bit_syschgenbl);  // Sys charge enable
-  s = stp_i(s, "\r FCH=", tc_bit_fastchgenbl);  // Fast charge enable
-  s = stp_i(s, "\r DCH=", tc_bit_dischgenbl);  // ISO test in progress
-  s = stp_i(s, "\r ISO=", tc_bit_isotestinprog);  // ISO test in progress
-  s = stp_i(s, "\r ACR=", tc_bit_acheatrelaystat);  // AC heater relay status
-  s = stp_i(s, "\r ACS=", tc_bit_acheatswitchstat);  // AC heater switch status
-  s = stp_i(s, "\r RBK=", tc_bit_regenbrkenbl);  // Regen break enable
-  s = stp_i(s, "\r DCD=", tc_bit_dcdcenbl);  // DC-DC enable
-  s = stp_i(s, "\r FEN=", tc_bit_fanactive);  // Fans active
-  s = stp_x(s, "\r DS1=", car_doors1); // Car doors1
-  s = stp_i(s, "\r CHS=", car_chargestate);  // Charge state
+  if ( tc_bit_socgreater102 != 0 ) { s = stp_rom(s, "\r SOC>102"); }
+  if ( tc_bit_chrgen != 0 ) { s = stp_rom(s, "\r ChgEnbl"); } // Charge Enable
+  if ( tc_bit_ocvmeas != 0 ) { s = stp_rom(s, "\r OcvMeas"); }// Open Circuit Voltage Meas
+  if ( tc_bit_eoc != 0 ) { s = stp_rom(s, "\r EOC"); } // End of Charge
+  if ( tc_bit_mainsacdet != 0 ) { s = stp_rom(s, "\r MainsAcDetect"); } // Mains AC detect
+  if ( tc_bit_syschgenbl != 0 ) { s = stp_rom(s, "\r SysChgDetect"); } // Sys charge enable
+  if ( tc_bit_fastchgenbl != 0 ) { s = stp_rom(s, "\r FastChgEnbl"); } // Fast charge enable
+  if ( tc_bit_dischgenbl != 0 ) { s = stp_rom(s, "\r DisChgEnbl"); } // Discharge enable
+  if ( tc_bit_isotestinprog != 0 ) { s = stp_rom(s, "\r IsoTestInPrg"); } // ISO test in progress
+  if ( tc_bit_acheatrelaystat != 0 ) { s = stp_rom(s, "\r AcHeatRlyStat"); } // AC heater relay status
+  if ( tc_bit_acheatswitchstat != 0 ) { s = stp_rom(s, "\r AcHeatSwStat"); } // AC heater switch status
+  if ( tc_bit_regenbrkenbl != 0 ) { s = stp_rom(s, "\r RegBrkEnbl"); } // Regen break enable
+  if ( tc_bit_dcdcenbl != 0 ) { s = stp_rom(s, "\r DcDcEnbl"); } // DC-DC enable
+  if ( tc_bit_fanactive != 0 ) { s = stp_rom(s, "\r FansAct"); } // Fans active
+  s = stp_x(s, "\r Door1Stat= ", car_doors1 ); // Car doors1
+  s = stp_i(s, "\r CrgStat= ", car_chargestate);  // Charge state
 
 
   net_puts_ram(net_scratchpad);
-
-#ifdef OVMS_DIAGMODULE
-  // ...MORE IN DIAG MODE (serial port):
-  if (net_state == NET_STATE_DIAGMODE)
-  {
-    s = net_scratchpad;
-    s = stp_i(s, "\n# FIX=", car_gpslock);
-    s = stp_lx(s, " LAT=", car_latitude);
-    s = stp_lx(s, " LON=", car_longitude);
-    s = stp_i(s, " ALT=", car_altitude);
-    s = stp_i(s, " DIR=", car_direction);
-    net_puts_ram(net_scratchpad);
-  }
-#endif // OVMS_DIAGMODULE
-
-#ifdef OVMS_THINKCITY_BATTMON
-  // battery bit fields:
-  s = net_scratchpad;
-  s = stp_x(s, "\n# vw=", tc_batt[0].volt_watches);
-  s = stp_x(s, " va=", tc_batt[0].volt_alerts);
-  s = stp_x(s, " lva=", tc_batt[0].last_volt_alerts);
-  s = stp_x(s, " tw=", tc_batt[0].temp_watches);
-  s = stp_x(s, " ta=", tc_batt[0].temp_alerts);
-  s = stp_x(s, " lta=", tc_batt[0].last_temp_alerts);
-  s = stp_x(s, " ss=", tc_batt_sensors_state);
-  net_puts_ram(net_scratchpad);
-#endif // OVMS_THINKCITY_BATTMON
-
 
   return TRUE;
 }
 
 /***********************************************************************
- * COMMAND CLASS: CHARGE STATUS / ALERT
+ * COMMAND CLASS: CHARGE STATUS
  *
- *  MSG: CMD_Alert()
  *  SMS: STAT
  *      - output charge status
  *
  */
 
-// prepmsg: Generate STAT message for SMS & MSG mode
-// - Charge state
-// - Temp battery and PCU
-// - Aux battery- and traction battery voltage
-// - Traction battery current
+// prepmsg: Generate STAT message for SMS
 //
 // => cat to net_scratchpad (to be sent as SMS or MSG)
 //    line breaks: default \r for MSG mode >> cr2lf >> SMS
@@ -556,24 +562,24 @@ void vehicle_thinkcity_stat_prepmsg(void)
     {
     case 0x01:
       s = stp_rom(s, "Charging"); // Charge State Charging
-      break;
+    break;
     case 0x02:
-      s = stp_rom(s, "Charging, Topping off"); // Topping off
-      break;
+      s = stp_rom(s, "80% OCV-Meas"); // Open Circuit Voltage Measurement
+    break;
     case 0x04:
       s = stp_rom(s, "Charging Done"); // Done
       fShowVA = FALSE;
-      break;
+    break;
     case 0x0d:
       s = stp_rom(s, "Preparing"); // Preparing
-      break;
+    break;
     case 0x0f:
       s = stp_rom(s, "Charging, Heating"); // Heating
-      break;
+    break;
     default:
       s = stp_rom(s, "Charging Stopped"); // Stopped
       fShowVA = FALSE;
-      break;
+    break;
     }
     car_doors1bits.ChargePort = 0; // MJ Close ChargePort, will open next CAN Reading
     if (fShowVA)
@@ -583,31 +589,29 @@ void vehicle_thinkcity_stat_prepmsg(void)
       s = stp_rom(s, "A");
     }
   }
-  else
+  else  // Charge port door is closed, not charging
+
   {
-    // Charge port door is closed, not charging
-    s = stp_rom(s, "Not charging");
+    s = stp_rom(s, "Not Chg");
   }
 
   s = stp_i(s, "\r SOC: ", car_SOC);
   s = stp_rom(s, "%");
-  s = stp_i(s, "\r Batt temp: ", car_tbattery);
-  s = stp_rom(s, " oC");
-  s = stp_i(s, "\r PCU temp: ", car_tpem);
-  s = stp_rom(s, " oC");
-  s = stp_l2f(s, "\r Aux batt: ", car_12vline, 1);
+  s = stp_i(s, "\r PackV: ", tc_pack_voltage);
   s = stp_rom(s, "V");
-  s = stp_i(s, "\r Batt volt: ", tc_pack_voltage);
-  s = stp_rom(s, "V");
-  s = stp_i(s, "\r Batt curr: ", tc_pack_current);
+  s = stp_i(s, "\r PackC: ", tc_pack_current);
   s = stp_rom(s, "A");
+  s = stp_i(s, "\r PackTp: ", car_tbattery);
+  s = stp_rom(s, " oC");
+  s = stp_i(s, "\r ChgTp: ", tc_charger_temp);
+  s = stp_rom(s, " oC");
+  s = stp_i(s, "\r AmbTp: ", tc_slibatt_temp);
+  s = stp_rom(s, " oC");
+  s = stp_l2f(s, "\r AuxBatt: ", car_12vline, 1);
+  s = stp_rom(s, "V");
   s = stp_i(s, "\r PWM: ", tc_charger_pwm);
   s = stp_rom(s, "%");
-  //s = stp_i(s, "\r Speed: ", tc_vehicle_speed);
-  //s = stp_rom(s, "km/h");
-  s = stp_i(s, "\r Max gen volt: ", tc_sys_voltmaxgen);
-  s = stp_rom(s, "V");
-  
+
 
 }
 
@@ -663,30 +667,33 @@ BOOL vehicle_thinkcity_alert_cmd(BOOL msgmode, int cmd, char *arguments)
 void vehicle_thinkcity_fault_prepmsg(void)
 {
   char *s;
+  int errc = 0;
 
   // append to net_scratchpad:
   s = strchr(net_scratchpad, 0);
-  s = stp_rom(s, "Err:");
-  s = stp_i(s, "\rFail cel:", tc_pack_failedcells);
-//s = stp_i(s, "\rMny f cl:", tc_bit_manyfailedcells);
-  s = stp_i(s, "\rCrash  :", tc_bit_crash);
-  s = stp_i(s, "\rGen err:", tc_bit_generalerr);
-  s = stp_i(s, "\rIso err:", tc_bit_isoerr);
-  s = stp_i(s, "\rInt iso:", tc_bit_intisoerr);
-  s = stp_i(s, "\rExt iso:", tc_bit_extisoerr);
-  s = stp_i(s, "\rThm iso:", tc_bit_thermalisoerr);
-//  s = stp_i(s, "\rEmg EPO:", tc_bit_epoemerg);
-//  s = stp_rom(s, "\rNoti:");
-//  s = stp_i(s, "\rChg WTp:", tc_bit_chgwaittemp);
-//  s = stp_i(s, "\rRch EOC:", tc_bit_reacheocplease);
-//  s = stp_i(s, "\rWOk TDC:", tc_bit_waitoktmpdisch);
-//  s = stp_i(s, "\rCWa Tp2:", tc_bit_chgwaitttemp2);
-//  s = stp_rom(s, "\rWarn:");
-//  s = stp_i(s, "\rChg Cur:", tc_bit_chgcurr);
-//  s = stp_i(s, "\rChO Vlt:", tc_bit_chgovervolt);
-//  s = stp_i(s, "\rChO Cur:", tc_bit_chgovercurr);
-
-
+  s = stp_rom(s, "Act err: ");
+  if (tc_pack_failedcells != 0) { s = stp_i(s, "\rFail cells:", tc_pack_failedcells); errc++; }
+  if (tc_bit_manyfailedcells != 0) { s = stp_rom(s, "\rMnyFailCel"); errc++; }
+  if (tc_bit_crash != 0) { s = stp_rom(s, "\rCrash");errc++; }
+  if (tc_bit_generalerr != 0) { s = stp_rom(s, "\rGenErr"); errc++; }
+  if (tc_bit_isoerr != 0) { s = stp_rom(s, "\rIsoErr"); errc++; }
+  if (tc_bit_intisoerr != 0) { s = stp_rom(s, "\rIntIso"); errc++; }
+  if (tc_bit_extisoerr != 0) { s = stp_rom(s, "\rExtIso"); errc++; }
+  if (tc_bit_thermalisoerr != 0) { s = stp_rom(s, "\rThermIso"); errc++; }
+  if (tc_bit_epoemerg != 0) { s = stp_rom(s, "\rEmgEPO"); errc++; }
+  if (tc_bit_chgwaittemp != 0) { s = stp_rom(s, "\rChgWaitTemp"); errc++; }
+  if (tc_bit_reacheocplease != 0) { s = stp_rom(s, "\rReachEOC"); errc++; }
+  if (tc_bit_waitoktmpdisch != 0) { s = stp_rom(s, "\rWaitOkTpDcg"); errc++; }
+  if (tc_bit_chgwaitttemp2 != 0) { s = stp_rom(s, "\rCrgWaitTp2"); errc++; }
+  if (tc_bit_chgcurr != 0) { s = stp_rom(s, "\rNoChgCur"); errc++; }
+  if (tc_bit_chgovervolt != 0) { s = stp_rom(s, "\rChgOverVolt"); errc++; }
+  if (tc_bit_chgovercurr != 0) { s = stp_rom(s, "\rChgOverCur"); errc++; }
+  if (errc == 0)
+  {
+    s = stp_rom(s, "0");
+  }
+  else
+    s = stp_i(s, "\rNo err: ", errc);
 
 }
 
@@ -734,34 +741,18 @@ BOOL vehicle_thinkcity_help_sms(BOOL premsg, char *caller, char *command, char *
 
 rom char vehicle_thinkcity_sms_cmdtable[][NET_SMS_CMDWIDTH] = {
   "3STAT", // override standard STAT
-  "3DEBUG", // Think City: output internal state dump for debug
+  "3FLAG", // Think City: output internal flag state for debug
   "3FAULT", // Think City: output internal errors, warnings and notofications
   "3HELP", // extend HELP output
-  // - - "3RANGE", // Think City: set/query max ideal range
-  // - - "3CA", // Think City: set/query charge alerts
-
-#ifdef OVMS_THINKCITY_BATTMON
-  "3BATT", // Think City: battery status
-#endif // OVMS_THINKCITY_BATTMON
-
-  // - - "3POWER", // Think City: power usage statistics
-
   ""
 };
 
 rom far BOOL(*vehicle_thinkcity_sms_hfntable[])(BOOL premsg, char *caller, char *command, char *arguments) = {
   &vehicle_thinkcity_stat_sms,
-  &vehicle_thinkcity_debug_sms,
+  &vehicle_thinkcity_flag_sms,
   &vehicle_thinkcity_fault_sms,
   &vehicle_thinkcity_help_sms,
-  // - - &vehicle_thinkcity_range_sms,
-  // - - &vehicle_thinkcity_ca_sms,
 
-#ifdef OVMS_THINKCITY_BATTMON
-  &vehicle_thinkcity_battstatus_sms,
-#endif // OVMS_THINKCITY_BATTMON
-
-  //- - - &vehicle_thinkcity_power_sms
 };
 
 // SMS COMMAND DISPATCHER:
@@ -857,7 +848,7 @@ BOOL vehicle_thinkcity_initialise(void)
   {
   char *p;
 
-  car_type[0] = 'T'; // Car is type TCxx (with xx replaced later)
+  car_type[0] = 'T'; // Car is type Think City
   car_type[1] = 'C';
   car_type[2] = 0;
   car_type[3] = 0;
@@ -897,6 +888,11 @@ BOOL vehicle_thinkcity_initialise(void)
   RXF2SIDL = 0b00000000;
   RXF2SIDH = 0b01001100;
 
+  // Filter3 0b11101010000 (0x750..0x75F) = GROUP 0x75_: (motor_temp, heat sink temp)
+  RXF3SIDL = 0b00000000;
+  RXF3SIDH = 0b11101010;
+
+
   // CAN bus baud rate
   BRGCON1 = 0x01; // SET BAUDRATE to 500 Kbps
   BRGCON2 = 0xD2;
@@ -917,6 +913,7 @@ BOOL vehicle_thinkcity_initialise(void)
   vehicle_fn_poll1 = &vehicle_thinkcity_poll1;
   vehicle_fn_ticker1 = &vehicle_thinkcity_state_ticker1;
   vehicle_fn_ticker10 = &vehicle_thinkcity_state_ticker10;
+  vehicle_fn_idlepoll = &vehicle_thinkcity_idlepoll;
 
   vehicle_fn_smshandler = &vehicle_thinkcity_fn_smshandler;
   vehicle_fn_smsextensions = &vehicle_thinkcity_fn_smsextensions;
