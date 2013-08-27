@@ -13,8 +13,8 @@ ifeq "${IGNORE_LOCAL}" "TRUE"
 else
 include Makefile
 # Include makefile containing local settings
-ifeq "$(wildcard nbproject/Makefile-local-V2_TeslaRoadster.mk)" "nbproject/Makefile-local-V2_TeslaRoadster.mk"
-include nbproject/Makefile-local-V2_TeslaRoadster.mk
+ifeq "$(wildcard nbproject/Makefile-local-V2_TR_Production.mk)" "nbproject/Makefile-local-V2_TR_Production.mk"
+include nbproject/Makefile-local-V2_TR_Production.mk
 endif
 endif
 
@@ -25,7 +25,7 @@ MV=mv
 CP=cp 
 
 # Macros
-CND_CONF=V2_TeslaRoadster
+CND_CONF=V2_TR_Production
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 IMAGE_TYPE=debug
 OUTPUT_SUFFIX=cof
@@ -66,7 +66,7 @@ LDLIBSOPTIONS=
 FIXDEPS=fixDeps
 
 .build-conf:  ${BUILD_SUBPROJECTS}
-	${MAKE}  -f nbproject/Makefile-V2_TeslaRoadster.mk dist/${CND_CONF}/${IMAGE_TYPE}/OVMS.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
+	${MAKE}  -f nbproject/Makefile-V2_TR_Production.mk dist/${CND_CONF}/${IMAGE_TYPE}/OVMS.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 
 MP_PROCESSOR_OPTION=18F2685
 MP_PROCESSOR_OPTION_LD=18f2685
@@ -371,8 +371,8 @@ endif
 
 # Clean Targets
 .clean-conf: ${CLEAN_SUBPROJECTS}
-	${RM} -r build/V2_TeslaRoadster
-	${RM} -r dist/V2_TeslaRoadster
+	${RM} -r build/V2_TR_Production
+	${RM} -r dist/V2_TR_Production
 
 # Enable dependency checking
 .dep.inc: .depcheck-impl

@@ -28,6 +28,66 @@
 ; THE SOFTWARE.
 */
 
+2013-08-27 2.5.2       Firmware 2.5.2
+                       ## Updates to vehicle_thinkcity.c (getting to a pretty usable vehicle module)
+                       ## Make car_tbattery signed integer, and integrate thinkcity changes
+                       ## Only report range and soc limits if >0
+                       ## Merge thinkcity changes:   Think City AC-line voltage/current in SMS STAT   SMS migrated from standard handler to vehicle_thinkcity.c
+                       ## Tesla Roadster: Don't stop charge after cooldown, if previously the car was already charging
+                       ## Log cooldown charges that become normal charges as two separate charges
+                       ## Tidy up diag, by removing temp test code T1 T2 T3
+                       ## Create individual configs for TeslaRoadster and RenaultTwizy (to allow all features for these cars)
+                       ## Add TRACK (type XX) vehicle that just tracks GPS
+                       ## string_to_mode utility function
+                       ## Rework vehicle inclusions. Tesla Roadster, Renault Twizy and Volt/Ampera are production. Everything else is experimental
+                       ## Add experimental vehicle Kyburz DXP
+                       ## Add HVAC message details
+                       ## Support HVAC bit in car_doors5, and cooldown cycles
+                       ## Range and charge limits handled by ACC
+                       ## Basic ACC implementation, but without timed charges
+
+2013-08-16 2.5.1       Firmware 2.5.1
+                       ## Framework to build logging module in experimental modes
+                       ## FIsLatLongClose utiliy function (courtesy of Tom Saxton)
+                       ## Twizy: Mi/Km conversions updated to new functions
+                       ## Switch to use macros, for clarity and maintainability
+                       ## ACC integration to build environment
+                       ## Parameter support for base64 encoded parameters
+                       ## utils support for mode display
+                       ## ACC support for net_sms
+                       ## Switch logging system to use new "h" historical data submission, with acknowledgement
+                       ## Go from 4->6 log records, based on free space
+                       ## Tesla Roadster: Notify server if charge limit is changed
+                       ## Tesla Roadster: Notify server if charge mode is changed
+                       ## v2.5.1 protocol guide
+                       ## Add core support for cooldown
+                       ## Tesla Roadster support for cooldown
+                       ## Stub implementation, with basic functionality, for ACC
+                       ## Zero logging records on init, plus other safety checks
+                       ## Only initialise logging on a normal power up
+                       ## Standardise 3 diag tests: T1, T2 and T3
+                       ## Only send logging msgs if link is connected
+                       ## Fix logging prefix and some logging tests
+                       ## Revisions to CAR_IS_CHARGING logic
+                       ## Misc bug-fixes for logging
+                       ## Report distance in miles (rather than 10ths of miles)
+                       ## Remove dr++ and cr++ sequence numbers, as not required
+                       ## Make ACC commands case insensitive
+                       ## Fix bug acknowledging log record #0
+                       ## Move digital speedo feature (Tesla Roadster) from experimental to fully supported, and implement opt-in feature bits
+                       ## Honour opt-in flags for logging
+                       ## Only report debug crash reason if not normal power up, and only report once
+
+2013-04-16 2.3.6       Firmware 2.3.6 (GPS streaming fixes)
+                       ## Tesla Roadster charge-time-remaining work-in-progress
+                       ## Tesla Roadster Charge Time Predictor - bug fix on integer rounding
+                       ## Tesla Roadster - charge time estimate now enabled
+                       ## Major stability improvement for streaming mode with internal GPS
+                       ## Support chargelimits to full and a specified range/soc
+                       ## Logging subsystem work-in-progress
+                       ## Add stub for Mitsubishi iMiev
+                       ## Driven km and Charge done message
+
 2013-04-16 2.3.2       Firmware 2.3.2
                        ## Add facility to suppress vehicle alerts via carbits feature +16
                        ## 12V A/D conversion fix (better, but not perfect)

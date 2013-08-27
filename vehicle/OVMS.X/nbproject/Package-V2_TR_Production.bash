@@ -6,7 +6,7 @@
 
 # Macros
 TOP=`pwd`
-CND_CONF=V2_RenaultTwizy
+CND_CONF=V2_TR_Production
 CND_DISTDIR=dist
 TMPDIR=build/${CND_CONF}/${IMAGE_TYPE}/tmp-packaging
 TMPDIRNAME=tmp-packaging

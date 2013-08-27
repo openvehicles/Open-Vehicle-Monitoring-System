@@ -83,119 +83,119 @@ ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 ${OBJECTDIR}/UARTIntC.o: UARTIntC.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/UARTIntC.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/UARTIntC.o   UARTIntC.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/UARTIntC.o   UARTIntC.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/UARTIntC.o 
 	@${FIXDEPS} "${OBJECTDIR}/UARTIntC.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_base64.o: crypt_base64.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/crypt_base64.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_base64.o   crypt_base64.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_base64.o   crypt_base64.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/crypt_base64.o 
 	@${FIXDEPS} "${OBJECTDIR}/crypt_base64.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_hmac.o: crypt_hmac.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/crypt_hmac.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_hmac.o   crypt_hmac.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_hmac.o   crypt_hmac.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/crypt_hmac.o 
 	@${FIXDEPS} "${OBJECTDIR}/crypt_hmac.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_md5.o: crypt_md5.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/crypt_md5.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_md5.o   crypt_md5.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_md5.o   crypt_md5.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/crypt_md5.o 
 	@${FIXDEPS} "${OBJECTDIR}/crypt_md5.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_rc4.o: crypt_rc4.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/crypt_rc4.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_rc4.o   crypt_rc4.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_rc4.o   crypt_rc4.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/crypt_rc4.o 
 	@${FIXDEPS} "${OBJECTDIR}/crypt_rc4.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/led.o: led.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/led.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/led.o   led.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/led.o   led.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/led.o 
 	@${FIXDEPS} "${OBJECTDIR}/led.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net.o: net.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/net.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net.o   net.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net.o   net.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/net.o 
 	@${FIXDEPS} "${OBJECTDIR}/net.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net_msg.o: net_msg.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/net_msg.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_msg.o   net_msg.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_msg.o   net_msg.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/net_msg.o 
 	@${FIXDEPS} "${OBJECTDIR}/net_msg.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net_sms.o: net_sms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/net_sms.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_sms.o   net_sms.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_sms.o   net_sms.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/net_sms.o 
 	@${FIXDEPS} "${OBJECTDIR}/net_sms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/ovms.o: ovms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/ovms.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/ovms.o   ovms.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/ovms.o   ovms.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/ovms.o 
 	@${FIXDEPS} "${OBJECTDIR}/ovms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/params.o: params.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/params.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/params.o   params.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/params.o   params.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/params.o 
 	@${FIXDEPS} "${OBJECTDIR}/params.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/utils.o: utils.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/utils.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/utils.o   utils.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/utils.o   utils.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/utils.o 
 	@${FIXDEPS} "${OBJECTDIR}/utils.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/inputs.o: inputs.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/inputs.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/inputs.o   inputs.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/inputs.o   inputs.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/inputs.o 
 	@${FIXDEPS} "${OBJECTDIR}/inputs.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/diag.o: diag.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/diag.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/diag.o   diag.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/diag.o   diag.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/diag.o 
 	@${FIXDEPS} "${OBJECTDIR}/diag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_teslaroadster.o: vehicle_teslaroadster.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/vehicle_teslaroadster.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_teslaroadster.o   vehicle_teslaroadster.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_teslaroadster.o   vehicle_teslaroadster.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/vehicle_teslaroadster.o 
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_teslaroadster.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle.o: vehicle.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/vehicle.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle.o   vehicle.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle.o   vehicle.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/vehicle.o 
 	@${FIXDEPS} "${OBJECTDIR}/vehicle.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_none.o: vehicle_none.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/vehicle_none.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_none.o   vehicle_none.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_none.o   vehicle_none.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/vehicle_none.o 
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_none.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
@@ -203,119 +203,119 @@ else
 ${OBJECTDIR}/UARTIntC.o: UARTIntC.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/UARTIntC.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/UARTIntC.o   UARTIntC.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/UARTIntC.o   UARTIntC.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/UARTIntC.o 
 	@${FIXDEPS} "${OBJECTDIR}/UARTIntC.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_base64.o: crypt_base64.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/crypt_base64.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_base64.o   crypt_base64.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_base64.o   crypt_base64.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/crypt_base64.o 
 	@${FIXDEPS} "${OBJECTDIR}/crypt_base64.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_hmac.o: crypt_hmac.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/crypt_hmac.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_hmac.o   crypt_hmac.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_hmac.o   crypt_hmac.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/crypt_hmac.o 
 	@${FIXDEPS} "${OBJECTDIR}/crypt_hmac.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_md5.o: crypt_md5.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/crypt_md5.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_md5.o   crypt_md5.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_md5.o   crypt_md5.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/crypt_md5.o 
 	@${FIXDEPS} "${OBJECTDIR}/crypt_md5.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_rc4.o: crypt_rc4.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/crypt_rc4.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_rc4.o   crypt_rc4.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_rc4.o   crypt_rc4.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/crypt_rc4.o 
 	@${FIXDEPS} "${OBJECTDIR}/crypt_rc4.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/led.o: led.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/led.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/led.o   led.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/led.o   led.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/led.o 
 	@${FIXDEPS} "${OBJECTDIR}/led.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net.o: net.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/net.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net.o   net.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net.o   net.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/net.o 
 	@${FIXDEPS} "${OBJECTDIR}/net.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net_msg.o: net_msg.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/net_msg.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_msg.o   net_msg.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_msg.o   net_msg.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/net_msg.o 
 	@${FIXDEPS} "${OBJECTDIR}/net_msg.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net_sms.o: net_sms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/net_sms.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_sms.o   net_sms.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_sms.o   net_sms.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/net_sms.o 
 	@${FIXDEPS} "${OBJECTDIR}/net_sms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/ovms.o: ovms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/ovms.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/ovms.o   ovms.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/ovms.o   ovms.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/ovms.o 
 	@${FIXDEPS} "${OBJECTDIR}/ovms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/params.o: params.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/params.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/params.o   params.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/params.o   params.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/params.o 
 	@${FIXDEPS} "${OBJECTDIR}/params.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/utils.o: utils.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/utils.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/utils.o   utils.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/utils.o   utils.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/utils.o 
 	@${FIXDEPS} "${OBJECTDIR}/utils.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/inputs.o: inputs.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/inputs.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/inputs.o   inputs.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/inputs.o   inputs.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/inputs.o 
 	@${FIXDEPS} "${OBJECTDIR}/inputs.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/diag.o: diag.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/diag.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/diag.o   diag.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/diag.o   diag.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/diag.o 
 	@${FIXDEPS} "${OBJECTDIR}/diag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_teslaroadster.o: vehicle_teslaroadster.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/vehicle_teslaroadster.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_teslaroadster.o   vehicle_teslaroadster.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_teslaroadster.o   vehicle_teslaroadster.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/vehicle_teslaroadster.o 
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_teslaroadster.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle.o: vehicle.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/vehicle.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle.o   vehicle.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle.o   vehicle.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/vehicle.o 
 	@${FIXDEPS} "${OBJECTDIR}/vehicle.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_none.o: vehicle_none.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/vehicle_none.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_CAR_TESLAROADSTER -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_none.o   vehicle_none.c 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V1 -DOVMS_DIAGMODULE -DOVMS_CAR_NONE -DOVMS_CAR_TESLAROADSTER -ml -oa-  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_none.o   vehicle_none.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/vehicle_none.o 
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_none.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	

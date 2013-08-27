@@ -4,42 +4,6 @@
   <defaultConf>3</defaultConf>
   <confs>
     <conf name="V1_Production" type="2">
-      <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=BUR110372223:=x:=en</platformToolSN>
-      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
-      <mdbdebugger version="1">
-        <placeholder1>place holder 1</placeholder1>
-        <placeholder2>place holder 2</placeholder2>
-      </mdbdebugger>
-      <runprofile version="6">
-        <args></args>
-        <rundir></rundir>
-        <buildfirst>true</buildfirst>
-        <console-type>0</console-type>
-        <terminal-type>0</terminal-type>
-        <remove-instrumentation>0</remove-instrumentation>
-        <environment>
-        </environment>
-      </runprofile>
-    </conf>
-    <conf name="V1_Experimental" type="2">
-      <platformToolSN></platformToolSN>
-      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
-      <mdbdebugger version="1">
-        <placeholder1>place holder 1</placeholder1>
-        <placeholder2>place holder 2</placeholder2>
-      </mdbdebugger>
-      <runprofile version="6">
-        <args></args>
-        <rundir></rundir>
-        <buildfirst>true</buildfirst>
-        <console-type>0</console-type>
-        <terminal-type>0</terminal-type>
-        <remove-instrumentation>0</remove-instrumentation>
-        <environment>
-        </environment>
-      </runprofile>
-    </conf>
-    <conf name="V2_Production" type="2">
       <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
@@ -75,7 +39,7 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="V2_TeslaRoadster" type="2">
+    <conf name="V2_Production" type="2">
       <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
@@ -93,7 +57,25 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="V2_RenaultTwizy" type="2">
+    <conf name="V2_TR_Production" type="2">
+      <platformToolSN></platformToolSN>
+      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
+      <mdbdebugger version="1">
+        <placeholder1>place holder 1</placeholder1>
+        <placeholder2>place holder 2</placeholder2>
+      </mdbdebugger>
+      <runprofile version="6">
+        <args></args>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <console-type>0</console-type>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+    <conf name="V2_RT_Production" type="2">
       <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
