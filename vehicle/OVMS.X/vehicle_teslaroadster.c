@@ -749,7 +749,7 @@ void vehicle_teslaroadster_cooldown(void)
       (car_doors1bits.ChargePort == 1))        // Charge port is open
     {
     // We need to start a cooldown
-    vehicle_teslaroadster_tx_setchargecurrent(16); // 16A charge
+    vehicle_teslaroadster_tx_setchargecurrent(13); // 13A charge
     vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
     vehicle_teslaroadster_tx_startstopcharge(1);   // Force START charge
     vehicle_teslaroadster_tx_wakeuphvac();         // Start HVAC data
@@ -1099,7 +1099,7 @@ int MinutesToChargeCAC(
 
 BOOL vehicle_teslaroadster_ticker1(void)
   {
-  if (tr_cooldown_recycle > 0)
+  if ((tr_cooldown_recycle > 0)&&(CAR_IS_CHARGING))
     {
     tr_cooldown_recycle--;
     if (tr_cooldown_recycle == 10)
@@ -1136,6 +1136,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
     if (car_coolingdown>=0)
       {
       car_cooldown_timelimit--;
+      vehicle_teslaroadster_tx_wakeuphvac();         // Start HVAC data
       if ((car_cooldown_timelimit == 0)||
           (car_tbattery <= car_cooldown_tbattery))
         {
