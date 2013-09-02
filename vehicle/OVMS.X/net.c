@@ -1529,7 +1529,7 @@ void net_state_ticker600(void)
     {
     case NET_STATE_READY:
 #ifdef OVMS_SOCALERT
-      if ((car_SOC<5)&&((car_doors1 & 0x80)==0)) // Car is OFF, and SOC<5%
+      if ((car_SOC<car_SOCalertlimit)&&((car_doors1 & 0x80)==0)) // Car is OFF, and SOC<car_SOCalertlimit
         {
         if (net_socalert_msg==0)
           {

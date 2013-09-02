@@ -132,8 +132,9 @@ unsigned char car_chargelimit_soclimit = 0;    // SOC% limit
 signed char car_coolingdown = -1;              // >=0 if car is cooling down
 unsigned char car_cooldown_chargemode = 0;     // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_cooldown_chargelimit = 0;    // Charge Limit (amps)
-signed int car_cooldown_tbattery = 0;         // Cooldown temperature limit
+signed int car_cooldown_tbattery = 0;          // Cooldown temperature limit
 unsigned int car_cooldown_timelimit = 0;       // Cooldown time limit (minutes) remaining
+unsigned char car_SOCalertlimit = 5;           // Limit of SOC at which alert should be raised
 
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 UINT8 debug_crashreason;        // last saved reset reason (bit set)
