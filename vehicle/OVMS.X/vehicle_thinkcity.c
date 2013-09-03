@@ -2,7 +2,14 @@
 ;    Project:       Open Vehicle Monitor System
 ;    Date:          6 May 2012
 ;
+;
 ;    Changes:
+;    2.3  02.09.2013 (Haakon)
+;         - Bugfix to get GPS streaming (FEATURE 9 = 1) working
+;         - Added correct value to car_speed and set car_doors1bits.CarON = 1 when tc_bit_dischgenbl > 0
+;           (car has to be moving and 'car on' is detected when discharge is allowed)
+;         - Added car_SOCalertlimit = 10 to set a system alert when SOC < 10
+;
 ;    2.2  27.08.2013 (Haakon)
 ;         - TX to can-bus introdused to request car_tpem, car_tmotor_, car_ambient_temp and tc_charger_temp in k-line style.
 ;           TX is located in idlepoll()
@@ -115,7 +122,6 @@ signed int   tc_pack_maxdchgamps;
 signed int   tc_charger_temp = 0;
 signed int   tc_slibatt_temp = 0;
 unsigned int tc_charger_pwm;
-unsigned int tc_vehicle_speed;
 unsigned int tc_sys_voltmaxgen;
 
 //Status flags:
@@ -170,6 +176,7 @@ BOOL vehicle_thinkcity_state_ticker1(void)
 
   car_time++;
   car_chargemode = 0;
+  car_SOCalertlimit = 10;
 
   return FALSE;
   }
@@ -195,32 +202,35 @@ BOOL vehicle_thinkcity_state_ticker10(void)
 // 0x0C Chargeport open and pilot signal, bits 2,3 set
 // 0x1C Bits 2,3,4 set
   if (tc_bit_eoc == 1) // Is EOC_bit (bit 0) is set?
+  {
+    car_chargestate = 4; //Done
+    if (car_linevoltage > 100)  // Is AC line voltage > 100 ?
     {
-     car_chargestate = 4; //Done
-     if (car_linevoltage > 100)  // Is AC line voltage > 100 ?
-       {
-       car_doors1 = 0x0C;  // Charge connector connected
-       }
-     else
-      car_doors1 = 0x00;  // Charge connector disconnected
+      car_doors1 = 0x0C;  // Charge connector connected
     }
+    else
+      car_doors1 = 0x00;  // Charge connector disconnected
+  }
 
   if (tc_bit_chrgen == 1) // Is charge_enable_bit (bit 0) is set (turns to 0 during 0CV-measuring at 80% SOC)?
-    {
+  {
     car_chargestate = 1; //Charging
     car_doors1 = 0x1C;
-    }
+  }
   if (tc_bit_ocvmeas == 2) // Is ocv_meas_in_progress (bit 1) is  set?
-    {
+  {
     car_chargestate = 2; //Top off
     car_doors1 = 0x0C;
-    }
+  }
 
   if (car_linevoltage < 100)  // AC line voltage < 100
-    {
+  {
     car_doors1 = 0x00;  // charging connector unplugged
-    }
-
+  }
+  if (tc_bit_dischgenbl > 0) //Discharge allowed, car is on
+  {
+    car_doors1bits.CarON = 1;  // Car is on
+  }
 
 
   return FALSE;
@@ -348,7 +358,7 @@ BOOL vehicle_thinkcity_poll1(void)
       car_chargecurrent =  ((signed int) can_databuffer[0]) * 0.2;
       car_linevoltage = (unsigned int) can_databuffer[1];
       car_ambient_temp = ((signed char) can_databuffer[2]) * 0.5; // PCU abmbient temp
-      tc_vehicle_speed = ((unsigned int) can_databuffer[5]) / 2;
+      car_speed = ((unsigned char) can_databuffer[5]) / 2;
     break;
 
     case 0x75B:
@@ -589,10 +599,14 @@ void vehicle_thinkcity_stat_prepmsg(void)
       s = stp_rom(s, "A");
     }
   }
-  else  // Charge port door is closed, not charging
-
+  else if (car_speed > 0)
   {
-    s = stp_rom(s, "Not Chg");
+  s = stp_i(s, "Driving @ ", car_speed);
+  s = stp_rom(s, "km/h");
+  }
+  else
+  {
+    s = stp_rom(s, "Not Charging");
   }
 
   s = stp_i(s, "\r SOC: ", car_SOC);
@@ -609,9 +623,11 @@ void vehicle_thinkcity_stat_prepmsg(void)
   s = stp_rom(s, " oC");
   s = stp_l2f(s, "\r AuxBatt: ", car_12vline, 1);
   s = stp_rom(s, "V");
-  s = stp_i(s, "\r PWM: ", tc_charger_pwm);
+  if (tc_charger_pwm > 0)
+  {
+    s = stp_i(s, "\r PWM: ", tc_charger_pwm);
   s = stp_rom(s, "%");
-
+  }
 
 }
 
