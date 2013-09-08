@@ -728,7 +728,7 @@ void vehicle_teslaroadster_cooldown(void)
   if (p != NULL)
     {
     car_cooldown_tbattery = atoi(p);
-    p = strtokpgmram(NULL,",");
+    p = strtokpgmram(NULL,":");
     if (p != NULL)
       {
       car_cooldown_timelimit = atoi(p);
