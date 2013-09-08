@@ -49,7 +49,7 @@ unsigned int  acc_granular_tick = 0;        // An internal ticker used to genera
 
 rom char ACC_NOTHERE[] = "ACC not at this location";
 
-signed char acc_find(struct acc_record* ar, int range)
+signed char acc_find(struct acc_record* ar, int range, BOOL enabledonly)
   {
   int k;
 
@@ -62,6 +62,7 @@ signed char acc_find(struct acc_record* ar, int range)
       if (FIsLatLongClose(ar->acc_latitude, ar->acc_longitude, car_latitude, car_longitude, range)>0)
         {
         // This location matches...
+        if (enabledonly && (!ar->acc_flags.AccEnabled)) return 0;
         return k+1;
         }
       }
@@ -106,7 +107,7 @@ void acc_state_enter(unsigned char newstate)
       if (acc_current_rec.acc_flags.Homelink)
         {
         // We must activate the requested homelink
-        m[0] = acc_current_rec.acc_homelink;
+        m[0] = acc_current_rec.acc_homelink + '0';
         m[1] = 0;
         vehicle_fn_commandhandler(FALSE, 24, m);
         }
@@ -114,37 +115,27 @@ void acc_state_enter(unsigned char newstate)
     case ACC_STATE_PARKEDIN:
       // Parked in a charge store area
       break;
-    case ACC_STATE_CPWAIT:
-      // Charge port has been opened, wait 3 seconds
-      // Logic is to wait 3 seconds, then see what we have to do
-      acc_timeout_ticks = 3;
-      acc_timeout_goto = ACC_STATE_CPDECIDE;
-      break;
     case ACC_STATE_CPDECIDE:
-      // Charge port has been opened, so decide what to do
+      // Charge port has been opened, so decide what to do (in the ticker1)
       break;
     case ACC_STATE_COOLDOWN:
       // Cooldown in a charge store area
-      if (vehicle_fn_commandhandler != NULL)
-        {
-        vehicle_fn_commandhandler(FALSE, 25, NULL); // Cooldown
-        }
+      vehicle_fn_commandhandler(FALSE, 25, NULL); // Cooldown
       break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
+      // Make sure car doesn't charge now...
+      vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop Charge
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
       car_chargelimit_rangelimit = acc_current_rec.acc_stoprange;
       car_chargelimit_soclimit = acc_current_rec.acc_stopsoc;
-      if (vehicle_fn_commandhandler != NULL)
-        {
-        stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
-        vehicle_fn_commandhandler(FALSE, 10, net_scratchpad);
-        stp_i(net_scratchpad, "", acc_current_rec.acc_chargelimit);
-        vehicle_fn_commandhandler(FALSE, 15, net_scratchpad);
-        vehicle_fn_commandhandler(FALSE, 11, NULL); // Start charge
-        }
+      stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
+      vehicle_fn_commandhandler(FALSE, 10, net_scratchpad);
+      stp_i(net_scratchpad, "", acc_current_rec.acc_chargelimit);
+      vehicle_fn_commandhandler(FALSE, 15, net_scratchpad);
+      vehicle_fn_commandhandler(FALSE, 11, NULL); // Start charge
       break;
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
@@ -162,7 +153,7 @@ void acc_state_ticker1(void)
     {
     case ACC_STATE_FIRSTRUN:
       // First time run
-      acc_current_loc = acc_find(&acc_current_rec,ACC_RANGE2);
+      acc_current_loc = acc_find(&acc_current_rec,ACC_RANGE2,TRUE);
       if (acc_current_loc == 0)
         { acc_state_enter(ACC_STATE_FREE); }
       else if (CAR_IS_ON)
@@ -181,10 +172,10 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_PARKEDIN:
       // Parked in a charge store area
-      if (car_doors1bits.ChargePort)
+      if ((car_doors1bits.ChargePort)&&(car_doors1bits.PilotSignal))
         {
-        // The charge port has been opened.
-        acc_state_enter(ACC_STATE_CPWAIT);
+        // The charge port has been opened, and we have pilot signal.
+        acc_state_enter(ACC_STATE_CPDECIDE);
         }
       else if (CAR_IS_ON)
         {
@@ -194,24 +185,26 @@ void acc_state_ticker1(void)
         acc_state = ACC_STATE_DRIVINGIN;
         }
       break;
-    case ACC_STATE_CPWAIT:
-      // Charge port has been opened, wait 4 seconds
-      if (! car_doors1bits.ChargePort)
+    case ACC_STATE_CPDECIDE:
+      // Charge port has been opened, so decide what to do
+      if ((! car_doors1bits.ChargePort)||(! car_doors1bits.PilotSignal))
         {
-        // The charge port has been closed.
+        // The charge port has been closed, or we lost pilot signal.
         acc_timeout_ticks = 0;
         acc_state_enter(ACC_STATE_PARKEDIN);
         }
-      break;
-    case ACC_STATE_CPDECIDE:
-      // Charge port has been opened, so decide what to do
-      if (acc_current_rec.acc_flags.Cooldown)
+      else if (acc_current_rec.acc_flags.Cooldown)
         {
         acc_state_enter(ACC_STATE_COOLDOWN);
         }
       else if (acc_current_rec.acc_flags.ChargeAtPlugin)
         {
         acc_state_enter(ACC_STATE_CHARGINGIN);
+        }
+      else if ((acc_current_rec.acc_flags.ChargeAtTime)||
+               (acc_current_rec.acc_flags.ChargeByTime))
+        {
+        acc_state_enter(ACC_STATE_WAITCHARGE);
         }
       break;
     case ACC_STATE_COOLDOWN:
@@ -220,10 +213,27 @@ void acc_state_ticker1(void)
         {
         // Cooldown has completed
         if ((car_doors1bits.ChargePort)&&
-            (acc_current_rec.acc_flags.ChargeAtPlugin))
+            (car_doors1bits.PilotSignal))
           {
-          // Let's now do a normal charge...
-          acc_state_enter(ACC_STATE_CHARGINGIN);
+          if (acc_current_rec.acc_flags.ChargeAtPlugin)
+            {
+            // Let's now do a normal charge...
+            acc_state_enter(ACC_STATE_CHARGINGIN);
+            }
+          else if ((acc_current_rec.acc_flags.ChargeAtTime)||
+                   (acc_current_rec.acc_flags.ChargeByTime))
+            {
+            // Let's wait or a scheduled charge...
+            acc_state_enter(ACC_STATE_WAITCHARGE);
+            }
+          else
+            {
+            net_state_enter(ACC_STATE_CHARGEDONE);
+            }
+          }
+        else
+          {
+          net_state_enter(ACC_STATE_CHARGEDONE);
           }
         }
       else if (!CAR_IS_CHARGING)
@@ -233,6 +243,12 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
+      if ((! car_doors1bits.ChargePort)||(! car_doors1bits.PilotSignal))
+        {
+        // The charge port has been closed, or we lost pilot signal.
+        acc_timeout_ticks = 0;
+        acc_state_enter(ACC_STATE_PARKEDIN);
+        }
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
@@ -276,7 +292,7 @@ void acc_state_ticker10(void)
       if (CAR_IS_ON)
         {
         // Poll to see if we're entering an ACC location
-        acc_current_loc = acc_find(&acc_current_rec,ACC_RANGE2);
+        acc_current_loc = acc_find(&acc_current_rec,ACC_RANGE2,TRUE);
         if (acc_current_loc > 0)
           {
           acc_state_enter(ACC_STATE_DRIVINGIN);
@@ -286,7 +302,7 @@ void acc_state_ticker10(void)
     case ACC_STATE_DRIVINGIN:
       // Driving in a charge store area
       // Poll to see if we're leaving an ACC location
-      acc_current_loc = acc_find(&acc_current_rec,ACC_RANGE2);
+      acc_current_loc = acc_find(&acc_current_rec,ACC_RANGE2,TRUE);
       if (acc_current_loc == 0)
         {
         acc_state_enter(ACC_STATE_FREE);
@@ -355,7 +371,7 @@ BOOL acc_cmd_here(BOOL sms, char* caller, char* arguments)
 
   net_send_sms_start(caller);
 
-  k = acc_find(&ar,ACC_RANGE1);
+  k = acc_find(&ar,ACC_RANGE1,FALSE);
   if (k > 0)
     {
     // This location matches...
@@ -396,7 +412,7 @@ BOOL acc_cmd_nothere(BOOL sms, char* caller, char *arguments)
 
   s = stp_rom(net_scratchpad, "ACC cleared");
 
-  while ((k=acc_find(&ar,ACC_RANGE1))>0)
+  while ((k=acc_find(&ar,ACC_RANGE1,FALSE))>0)
     {
     // Existing location matches...
     par_set((k+PARAM_ACC_S)-1,NULL);
@@ -451,27 +467,27 @@ BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
     }
   else
     {
-    k = acc_find(&ar,ACC_RANGE1);
+    k = acc_find(&ar,ACC_RANGE1,FALSE);
     }
   
   net_send_sms_start(caller);
   s = stp_i(net_scratchpad,"ACC Status #",k);
-  if (k>0)
+  if ((k>0)&&(ar.acc_recversion == ACC_RECVERSION))
     {
-    s = stp_latlon(s, "\r\n  ", ar.acc_latitude);
+    s = stp_latlon(s, "\r\n ", ar.acc_latitude);
     s = stp_latlon(s, ", ", ar.acc_longitude);
-    s = stp_rom(s, (ar.acc_flags.AccEnabled)?"\r\n  Enabled":"\r\n  Disabled");
+    s = stp_rom(s, (ar.acc_flags.AccEnabled)?"\r\n Enabled":"\r\n Disabled");
     if (ar.acc_flags.Cooldown)
-      s = stp_rom(s, "\r\n  Cooldown");
+      s = stp_rom(s, "\r\n Cooldown");
     if (ar.acc_flags.Homelink)
-      s = stp_i(s, "\r\h  Homelink #",ar.acc_homelink);
+      s = stp_i(s, "\r\n Homelink #",ar.acc_homelink);
     if (ar.acc_flags.ChargeAtPlugin)
       s = stp_rom(s, "\r\n Charge at plugin");
     if (ar.acc_flags.ChargeAtTime)
       s = stp_time(s, "\r\n Charge at time ",(unsigned long)ar.acc_chargetime * 60);
     if (ar.acc_flags.ChargeByTime)
       s = stp_time(s, "\r\n Charge by time ",(unsigned long)ar.acc_chargetime * 60);
-    s = stp_mode(s, "\r\n  Mode: ",ar.acc_chargemode);
+    s = stp_mode(s, "\r\n Mode: ",ar.acc_chargemode);
     s = stp_i(s, " (",ar.acc_chargelimit);
     s = stp_rom(s, "A)");
     if (ar.acc_stopsoc>0)
@@ -516,7 +532,7 @@ BOOL acc_cmd_enable(BOOL sms, char* caller, char *arguments, unsigned char enabl
     }
   else
     {
-    k = acc_find(&ar,ACC_RANGE1);
+    k = acc_find(&ar,ACC_RANGE1,FALSE);
     }
 
   net_send_sms_start(caller);
@@ -527,7 +543,7 @@ BOOL acc_cmd_enable(BOOL sms, char* caller, char *arguments, unsigned char enabl
   else
     {
     ar.acc_flags.AccEnabled = enabled;
-    par_setbase64(k+PARAM_ACC_S,&ar,sizeof(ar));
+    par_setbase64(k+PARAM_ACC_S-1,&ar,sizeof(ar));
     s = stp_rom(net_scratchpad,(enabled)?"ACC enabled":"ACC disabled");
     }
 
@@ -539,11 +555,19 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
   {
   // Set ACC params
   struct acc_record ar;
-  int k;
+  int k = 0;
   char p;
   char *s;
 
-  k = acc_find(&ar,ACC_RANGE1);
+  if (arguments != NULL)
+    {
+    k = acc_get(&ar, arguments);
+    if (k>0)
+      arguments = net_sms_nextarg(arguments);
+    else
+      k = acc_find(&ar,ACC_RANGE1,FALSE);
+    }
+
   net_send_sms_start(caller);
   if (k<0)
     {
@@ -551,18 +575,10 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
     }
   else
     {
-    while ((arguments != NULL)&&(arguments = net_sms_nextarg(arguments)))
+    while (arguments != NULL)
       {
       strupr(arguments);
-      if (strcmppgm2ram(arguments,"1")==0)
-        { k = acc_get(&ar, arguments); }
-      else if (strcmppgm2ram(arguments,"2")==0)
-        { k = acc_get(&ar, arguments); }
-      else if (strcmppgm2ram(arguments,"3")==0)
-        { k = acc_get(&ar, arguments); }
-      else if (strcmppgm2ram(arguments,"4")==0)
-        { k = acc_get(&ar, arguments); }
-      else if (strcmppgm2ram(arguments,"COOLDOWN")==0)
+      if (strcmppgm2ram(arguments,"COOLDOWN")==0)
         { ar.acc_flags.Cooldown = 1; }
       else if (strcmppgm2ram(arguments,"NOCOOLDOWN")==0)
         { ar.acc_flags.Cooldown = 0; }
@@ -629,42 +645,55 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
         if (arguments != NULL)
           { ar.acc_stopsoc = atoi(arguments); }
         }
+      if (arguments != NULL)
+        arguments = net_sms_nextarg(arguments);
       }
+    par_setbase64(k+PARAM_ACC_S-1,&ar,sizeof(ar));
+    net_puts_rom("ACC parameters set");
     }
 
-  net_puts_ram(net_scratchpad);
   return TRUE;
   }
 
 BOOL acc_cmd(char *caller, char *command, char *arguments, BOOL sms)
   {
+  char *p = arguments;
+
+  if (arguments == NULL)
+    {
+    net_send_sms_start(caller);
+    net_puts_rom("ACC command not recognised");
+    return TRUE;
+    }
+
   strupr(arguments); // Convert command to upper case
-  
-  if (strcmppgm2ram(arguments,"HERE")==0)
+  arguments = net_sms_nextarg(arguments);
+
+  if (strcmppgm2ram(p,"HERE")==0)
     {
     return acc_cmd_here(sms, caller, arguments);
     }
-  else if (strcmppgm2ram(arguments,"NOTHERE")==0)
+  else if (strcmppgm2ram(p,"NOTHERE")==0)
     {
     return acc_cmd_nothere(sms, caller, arguments);
     }
-  else if (strcmppgm2ram(arguments,"CLEAR")==0)
+  else if (strcmppgm2ram(p,"CLEAR")==0)
     {
     return acc_cmd_clear(sms, caller, arguments);
     }
-  else if (strcmppgm2ram(arguments,"STAT")==0)
+  else if (strcmppgm2ram(p,"STAT")==0)
     {
     return acc_cmd_stat(sms, caller, arguments);
     }
-  else if (strcmppgm2ram(arguments,"ENABLE")==0)
+  else if (strcmppgm2ram(p,"ENABLE")==0)
     {
     return acc_cmd_enable(sms, caller, arguments, 1);
     }
-  else if (strcmppgm2ram(arguments,"DISABLE")==0)
+  else if (strcmppgm2ram(p,"DISABLE")==0)
     {
     return acc_cmd_enable(sms, caller, arguments, 0);
     }
-  else if (strcmppgm2ram(arguments,"PARAMS")==0)
+  else if (strcmppgm2ram(p,"PARAMS")==0)
     {
     return acc_cmd_params(sms, caller, arguments);
     }
