@@ -247,13 +247,13 @@ Tesla Roadster CAN Bus analysis:
 		B7=Odometer MSB  /
 
 	HVAC
-		HVAC message 0x87 and 0x9A are enabled with:
+		HVAC message 0x8F and 0x9A are enabled with:
 			102 06 D0 07 00 00 80 00 08
 		and disabled with:
 			102 06 10 27 00 10 00 00 00
 
 	HVAC#1
-		B1=0x87
+		B1=0x8F
 		B2=Toutside (outside temperature, celcius)
 		B3=Tmaxbrick (ESS temperature, celcius)
 		B4=Tcoolant (coolant temperature, celcius)
