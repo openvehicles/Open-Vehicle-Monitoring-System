@@ -147,25 +147,6 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
           car_stale_gps = 0; // Reset stale indicator
           }
         break;
-      case 0x87: // HVAC#1 message
-        k1 = ((unsigned int)can_databuffer[7]<<8)+(can_databuffer[6]);
-        if (k1 > 0)
-          {
-          car_doors5bits.HVAC = 1;
-          tr_cooldown_recycle = -1;  // Stop the recycle attempts
-          }
-        else
-          {
-          if ((car_coolingdown>=0)&&(car_doors5bits.HVAC))
-            {
-            // Car is cooling down, and HVAC has just gone off - end of a cycle
-            car_coolingdown++;
-            tr_cooldown_recycle = 60;  // Try to recycle cooling in 60 seconds
-            net_req_notification(NET_NOTIFY_STAT);
-            }
-          car_doors5bits.HVAC = 0;
-          }
-        break;
       case 0x88: // Charging Current / Duration
         if (can_databuffer[6] != car_chargelimit)
           { // If the charge limit has changed, notify it
@@ -208,6 +189,25 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
             // An error code is being cleared
             net_req_notification_error(0, 0);
             }
+          }
+        break;
+      case 0x8F: // HVAC#1 message
+        k1 = ((unsigned int)can_databuffer[7]<<8)+(can_databuffer[6]);
+        if (k1 > 0)
+          {
+          car_doors5bits.HVAC = 1;
+          tr_cooldown_recycle = -1;  // Stop the recycle attempts
+          }
+        else
+          {
+          if ((car_coolingdown>=0)&&(car_doors5bits.HVAC))
+            {
+            // Car is cooling down, and HVAC has just gone off - end of a cycle
+            car_coolingdown++;
+            tr_cooldown_recycle = 60;  // Try to recycle cooling in 60 seconds
+            net_req_notification(NET_NOTIFY_STAT);
+            }
+          car_doors5bits.HVAC = 0;
           }
         break;
       case 0x95: // Charging mode
