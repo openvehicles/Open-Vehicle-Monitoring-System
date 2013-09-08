@@ -70,6 +70,22 @@ signed char acc_find(struct acc_record* ar, int range)
   return 0;
   }
 
+signed char acc_get(struct acc_record* ar, char *location)
+  {
+  int k;
+
+  if (location == NULL) return 0;
+ 
+  k = atoi(location);
+  if ((k>=1)&&(k<=PARAM_ACC_COUNT))
+    {
+    par_getbase64(k+PARAM_ACC_S-1, ar, sizeof(ar));
+    return k;
+    }
+
+  return 0;
+  }
+
 void acc_state_enter(unsigned char newstate)
   {
   char *p;
@@ -330,7 +346,7 @@ void acc_initialise(void)        // ACC Initialisation
   net_state_enter(ACC_STATE_FIRSTRUN);
   }
 
-BOOL acc_cmd_here(BOOL sms, char* caller)
+BOOL acc_cmd_here(BOOL sms, char* caller, char* arguments)
   {
   // Turn on ACC here
   unsigned char k;
@@ -370,7 +386,7 @@ BOOL acc_cmd_here(BOOL sms, char* caller)
   return TRUE;
   }
 
-BOOL acc_cmd_nothere(BOOL sms, char* caller)
+BOOL acc_cmd_nothere(BOOL sms, char* caller, char *arguments)
   {
   // Turn off ACC here
   unsigned char k;
@@ -396,16 +412,24 @@ BOOL acc_cmd_nothere(BOOL sms, char* caller)
   return TRUE;
   }
 
-BOOL acc_cmd_clear(BOOL sms, char* caller)
+BOOL acc_cmd_clear(BOOL sms, char* caller, char *arguments)
   {
   // Clear all ACC data
   unsigned char k;
   struct acc_record ar;
   memset(&ar,0,sizeof(ar));
 
-  for (k=0;k<PARAM_ACC_COUNT;k++)
+  k = acc_get(&ar, arguments);
+  if (k>0)
     {
-    par_set(k+PARAM_ACC_S,NULL);
+    par_set(k+PARAM_ACC_S-1,NULL);
+    }
+  else
+    {
+    for (k=0;k<PARAM_ACC_COUNT;k++)
+      {
+      par_set(k+PARAM_ACC_S,NULL);
+      }
     }
 
   net_send_sms_start(caller);
@@ -413,7 +437,7 @@ BOOL acc_cmd_clear(BOOL sms, char* caller)
   return TRUE;
   }
 
-BOOL acc_cmd_stat(BOOL sms, char* caller)
+BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
   {
   // Return ACC status
   struct acc_record ar;
@@ -421,7 +445,15 @@ BOOL acc_cmd_stat(BOOL sms, char* caller)
   char *s,*p;
   unsigned long r;
 
-  k = acc_find(&ar,ACC_RANGE1);
+  if (arguments != NULL)
+    {
+    k = acc_get(&ar, arguments);
+    }
+  else
+    {
+    k = acc_find(&ar,ACC_RANGE1);
+    }
+  
   net_send_sms_start(caller);
   s = stp_i(net_scratchpad,"ACC Status #",k);
   if (k>0)
@@ -471,14 +503,22 @@ BOOL acc_cmd_stat(BOOL sms, char* caller)
   return TRUE;
   }
 
-BOOL acc_cmd_enable(BOOL sms, char* caller, unsigned char enabled)
+BOOL acc_cmd_enable(BOOL sms, char* caller, char *arguments, unsigned char enabled)
   {
   // Enable/Disable ACC
   struct acc_record ar;
   int k;
   char *s;
 
-  k = acc_find(&ar,ACC_RANGE1);
+  if (arguments != NULL)
+    {
+    k = acc_get(&ar, arguments);
+    }
+  else
+    {
+    k = acc_find(&ar,ACC_RANGE1);
+    }
+
   net_send_sms_start(caller);
   if (k<0)
     {
@@ -514,7 +554,15 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
     while ((arguments != NULL)&&(arguments = net_sms_nextarg(arguments)))
       {
       strupr(arguments);
-      if (strcmppgm2ram(arguments,"COOLDOWN")==0)
+      if (strcmppgm2ram(arguments,"1")==0)
+        { k = acc_get(&ar, arguments); }
+      else if (strcmppgm2ram(arguments,"2")==0)
+        { k = acc_get(&ar, arguments); }
+      else if (strcmppgm2ram(arguments,"3")==0)
+        { k = acc_get(&ar, arguments); }
+      else if (strcmppgm2ram(arguments,"4")==0)
+        { k = acc_get(&ar, arguments); }
+      else if (strcmppgm2ram(arguments,"COOLDOWN")==0)
         { ar.acc_flags.Cooldown = 1; }
       else if (strcmppgm2ram(arguments,"NOCOOLDOWN")==0)
         { ar.acc_flags.Cooldown = 0; }
@@ -594,27 +642,27 @@ BOOL acc_cmd(char *caller, char *command, char *arguments, BOOL sms)
   
   if (strcmppgm2ram(arguments,"HERE")==0)
     {
-    return acc_cmd_here(sms, caller);
+    return acc_cmd_here(sms, caller, arguments);
     }
   else if (strcmppgm2ram(arguments,"NOTHERE")==0)
     {
-    return acc_cmd_nothere(sms, caller);
+    return acc_cmd_nothere(sms, caller, arguments);
     }
   else if (strcmppgm2ram(arguments,"CLEAR")==0)
     {
-    return acc_cmd_clear(sms, caller);
+    return acc_cmd_clear(sms, caller, arguments);
     }
   else if (strcmppgm2ram(arguments,"STAT")==0)
     {
-    return acc_cmd_stat(sms, caller);
+    return acc_cmd_stat(sms, caller, arguments);
     }
   else if (strcmppgm2ram(arguments,"ENABLE")==0)
     {
-    return acc_cmd_enable(sms, caller, 1);
+    return acc_cmd_enable(sms, caller, arguments, 1);
     }
   else if (strcmppgm2ram(arguments,"DISABLE")==0)
     {
-    return acc_cmd_enable(sms, caller, 0);
+    return acc_cmd_enable(sms, caller, arguments, 0);
     }
   else if (strcmppgm2ram(arguments,"PARAMS")==0)
     {
