@@ -72,7 +72,7 @@ void log_state_enter(unsigned char newstate)
     case LOG_STATE_DRIVING:
       // A drive has just started...
       logging_pos = log_getfreerecord();
-      if (logging_pos < 0)
+      if ((logging_pos < 0)||((sys_features[FEATURE_OPTIN]&FEATURE_OI_LOGDRIVES)==0))
         {
         // Overflow...
         log_state = LOG_STATE_WAITDRIVE_DONE;
@@ -91,7 +91,7 @@ void log_state_enter(unsigned char newstate)
     case LOG_STATE_CHARGING:
       // A charge has just started...
       logging_pos = log_getfreerecord();
-      if (logging_pos < 0)
+      if ((logging_pos < 0)||((sys_features[FEATURE_OPTIN]&FEATURE_OI_LOGCHARGE)==0))
         {
         // Overflow...
         log_state = LOG_STATE_WAITCHARGE_DONE;
