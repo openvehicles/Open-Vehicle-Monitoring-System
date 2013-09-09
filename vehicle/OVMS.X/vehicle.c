@@ -246,12 +246,12 @@ void vehicle_ticker(void)
   // And give the vehicle module a chance...
   if (vehicle_fn_ticker1 != NULL)
     {
-    if (vehicle_fn_ticker1()) return;
+    vehicle_fn_ticker1();
     }
 
-  if ((can_granular_tick % 10)==0)
+  if (((can_granular_tick % 10)==0)&&(vehicle_fn_ticker10 != NULL))
     {
-    if (vehicle_fn_ticker10 != NULL) vehicle_fn_ticker10();
+    vehicle_fn_ticker10();
     }
 
   // Check chargelimits
@@ -265,14 +265,14 @@ void vehicle_ticker(void)
       }
     }
 
-
+  // minSOC alerts
   if ((can_granular_tick % 60)==0)
     {
     int minSOC;
 
     // check minSOC
     minSOC = sys_features[FEATURE_MINSOC];
-    if (!(can_minSOCnotified & CAN_MINSOC_ALERT_MAIN) && (car_SOC < minSOC))
+    if ((!(can_minSOCnotified & CAN_MINSOC_ALERT_MAIN)) && (car_SOC < minSOC))
       {
       net_req_notification(NET_NOTIFY_STAT);
       can_minSOCnotified |= CAN_MINSOC_ALERT_MAIN;
@@ -285,9 +285,9 @@ void vehicle_ticker(void)
     if (vehicle_fn_ticker60 != NULL) vehicle_fn_ticker60();
     }
 
-  if ((can_granular_tick % 300)==0)
+  if (((can_granular_tick % 300)==0)&&(vehicle_fn_ticker300 != NULL))
     {
-    if (vehicle_fn_ticker300 != NULL) vehicle_fn_ticker300();
+    vehicle_fn_ticker300();
     }
   
   if ((can_granular_tick % 600)==0)
