@@ -984,7 +984,11 @@ char *net_prep_stat(char *s)
 
   if (car_coolingdown>=0)
     {
-    s = stp_rom(s, "Cooldown "); // Cooling down...
+    s = stp_i(s, "Cooldown: ", car_tbattery);
+    s = stp_i(s, "C/",car_cooldown_tbattery);
+    s = stp_i(s, "C (",car_coolingdown);
+    s = stp_i(s, "cycles, ",car_cooldown_timelimit);
+    s = stp_rom(s, "mins remain)");
     }
 
   if (car_doors1bits.ChargePort)
