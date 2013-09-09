@@ -252,19 +252,7 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
-      if (CAR_IS_CHARGING)
-        {
-        if (((car_chargelimit_rangelimit>0)&&(car_idealrange>car_chargelimit_rangelimit))||
-            ((car_chargelimit_soclimit>0)&&(car_SOC>car_chargelimit_soclimit)))
-          {
-          // Charge has hit the limit, so can be stopped
-          vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
-          }
-        }
-      else
-        {
-        net_state_enter(ACC_STATE_CHARGEDONE);
-        }
+      if (! CAR_IS_CHARGING) net_state_enter(ACC_STATE_CHARGEDONE);
       break;
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area

@@ -254,6 +254,18 @@ void vehicle_ticker(void)
     if (vehicle_fn_ticker10 != NULL) vehicle_fn_ticker10();
     }
 
+  // Check chargelimits
+  if (CAR_IS_CHARGING)
+    {
+    if (((car_chargelimit_rangelimit>0)&&(car_idealrange>car_chargelimit_rangelimit))||
+        ((car_chargelimit_soclimit>0)&&(car_SOC>car_chargelimit_soclimit)))
+      {
+      // Charge has hit the limit, so can be stopped
+      vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
+      }
+    }
+
+
   if ((can_granular_tick % 60)==0)
     {
     int minSOC;
