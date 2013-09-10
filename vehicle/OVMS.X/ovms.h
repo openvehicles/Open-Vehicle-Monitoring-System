@@ -217,7 +217,8 @@ extern unsigned char car_SOCalertlimit;          // Limit of SOC at which alert 
 // Helpers
 
 #define CAR_IS_ON (car_doors1bits.CarON)
-#define CAR_IS_CHARGING ((car_chargestate==0x01)||(car_chargestate==0x02)||(car_chargestate==0x0f))
+#define CAR_IS_CHARGING (car_doors1bits.Charging)
+#define CAR_IS_HEATING (car_chargestate==0x0f)
 
 // DEBUG / QA stats:
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
