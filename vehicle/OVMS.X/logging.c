@@ -238,6 +238,8 @@ void logging_sendpending(void)
       s = stp_i(s, ",", rec->record.drive.end_idealrange);
       net_msg_encode_puts();
       rec->type = LOG_TYPE_DRIVE_DEL;
+      logging_pending = 1;
+      return; // Send one at a time
       }
     else if ((rec->type == LOG_TYPE_CHARGE)&&
              (sys_features[FEATURE_OPTIN]&FEATURE_OI_LOGCHARGE))
@@ -260,6 +262,8 @@ void logging_sendpending(void)
       s = stp_i(s, ",", rec->record.charge.end_idealrange);
       net_msg_encode_puts();
       rec->type = LOG_TYPE_CHARGE_DEL;
+      logging_pending = 1;
+      return; // Send one at a time
       }
     }
   logging_pending = 0;
