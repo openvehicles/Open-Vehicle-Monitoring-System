@@ -994,8 +994,10 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
 
 int MinutesToChargeCAC(
       unsigned char chgmod,       // charge mode, Standard, Range and Performance are supported
-      int imStart,                // ideal miles at start of charge (caller must convert from ideal km)
-      int imEnd,                  // ideal miles desired at end of charge
+      int ixStart,                // ideal mi/km at start of charge (units determined by can_mileskm)
+      int ixEnd,                  // ideal mi/km desired at end of charge (use -1 for full charge)
+      int pctEnd,                 // if ixEnd == -1, specified desired percent SOC, use 100 for full charge
+                                  // pctEnd is ignored if ixEnd != -1
       int cac,                    // the battery pack CAC (160 is a perfect battery)
       int wAvail,                 // watts available from the wall
       signed char degAmbient      // ambient temperature in degrees C
@@ -1008,6 +1010,9 @@ int MinutesToChargeCAC(
   int whPerIM;
   int secPerIM;
   signed long seconds;
+  
+  int imStart = ixStart;
+  int imEnd = ixEnd;
 
   // IM capacity in range mode is about 31.598 + 1.3193 * cac;
   int imCapacityRange = ((signed long)cac * 199 + 4740 + 75) / 150;
@@ -1016,11 +1021,19 @@ int MinutesToChargeCAC(
   int imCapacityStandard = ((signed long)cac * 166 + 2026 + 75) / 150;
   int imStdToRng = (imCapacityRange - imCapacityStandard + 1) / 2;
 
+  // if needed, convert from km to mi
+  if (can_mileskm == 'K')
+  {
+    imStart = MiFromKm(ixStart);
+    if (imEnd != -1)
+	  imEnd = MiFromKm(ixEnd);
+  }
+
   switch (chgmod)
     {
     case 0: // Standard
       if (imEnd == -1)
-        imEnd = imCapacityStandard;
+        imEnd = (imCapacityStandard * pctEnd + 50)/100;
       imStart += imStdToRng;
       imEnd += imStdToRng;
       break;
@@ -1028,14 +1041,13 @@ int MinutesToChargeCAC(
     case 4: // Performance
       imStart += imStdToRng;
       if (imEnd == -1)
-        imEnd = imCapacityRange;
-      else
-        imEnd += imStdToRng;
+        imEnd = ((imCapacityStandard + imStdToRng) * pctEnd + 50)/100;
+      imEnd += imStdToRng;
       break;
 
     case 3: // Range
       if (imEnd == -1)
-        imEnd = imCapacityRange;
+        imEnd = (imCapacityRange * pctEnd + 50)/100;
       break;
 
     default: // invalid charge mode passed in (Storage mode doesn't make sense)
@@ -1125,8 +1137,9 @@ BOOL vehicle_teslaroadster_ticker60(void)
     // Vehicle is charging
     car_chargefull_minsremaining = MinutesToChargeCAC(
         car_chargemode,             // charge mode, Standard, Range and Performance are supported
-        car_idealrange,             // ideal miles at start of charge (caller must convert from ideal km)
-        -1,                         // ideal miles desired at end of charge
+        car_idealrange,             // ideal mi/km at start of charge (units determined by can_mileskm)
+        -1,                         // ideal mi/km desired at end of charge (use -1 for full charge)
+        100,                        // SOC percent desired at end of charge (ignored if ideal mi/km specified)
         car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
         car_linevoltage*car_chargecurrent, // watts available from the wall
         car_ambient_temp            // ambient temperature in degrees C
