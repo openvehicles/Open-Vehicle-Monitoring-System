@@ -994,8 +994,8 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
 
 int MinutesToChargeCAC(
       unsigned char chgmod,       // charge mode, Standard, Range and Performance are supported
-      int ixStart,                // ideal mi/km at start of charge (units determined by can_mileskm)
-      int ixEnd,                  // ideal mi/km desired at end of charge (use -1 for full charge)
+      int ixStart,                // ideal mi at start of charge (units determined by can_mileskm)
+      int ixEnd,                  // ideal mi desired at end of charge (use -1 for full charge)
       int pctEnd,                 // if ixEnd == -1, specified desired percent SOC, use 100 for full charge
                                   // pctEnd is ignored if ixEnd != -1
       int cac,                    // the battery pack CAC (160 is a perfect battery)
@@ -1022,12 +1022,12 @@ int MinutesToChargeCAC(
   int imStdToRng = (imCapacityRange - imCapacityStandard + 1) / 2;
 
   // if needed, convert from km to mi
-  if (can_mileskm == 'K')
-  {
-    imStart = MiFromKm(ixStart);
-    if (imEnd != -1)
-	  imEnd = MiFromKm(ixEnd);
-  }
+  //if (can_mileskm == 'K')
+  //{
+  //  imStart = MiFromKm(ixStart);
+  //  if (imEnd != -1)
+	//  imEnd = MiFromKm(ixEnd);
+  //}
 
   switch (chgmod)
     {
@@ -1132,19 +1132,47 @@ BOOL vehicle_teslaroadster_ticker1(void)
 
 BOOL vehicle_teslaroadster_ticker60(void)
   {
+  int remain;
+
   if (car_doors1 & 0x10)
     {
     // Vehicle is charging
     car_chargefull_minsremaining = MinutesToChargeCAC(
         car_chargemode,             // charge mode, Standard, Range and Performance are supported
-        car_idealrange,             // ideal mi/km at start of charge (units determined by can_mileskm)
-        -1,                         // ideal mi/km desired at end of charge (use -1 for full charge)
-        100,                        // SOC percent desired at end of charge (ignored if ideal mi/km specified)
+        car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
+        -1,                         // ideal mi desired at end of charge (use -1 for full charge)
+        100,                        // SOC percent desired at end of charge (ignored if ideal mi specified)
         car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
         car_linevoltage*car_chargecurrent, // watts available from the wall
         car_ambient_temp            // ambient temperature in degrees C
         );
     car_chargelimit_minsremaining = -1;
+    if (car_chargelimit_rangelimit>0)
+      {
+      car_chargelimit_minsremaining = MinutesToChargeCAC(
+          car_chargemode,             // charge mode, Standard, Range and Performance are supported
+          car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
+          car_chargelimit_rangelimit, // ideal mi desired at end of charge (use -1 for full charge)
+          100,                        // SOC percent desired at end of charge (ignored if ideal mi specified)
+          car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
+          car_linevoltage*car_chargecurrent, // watts available from the wall
+          car_ambient_temp            // ambient temperature in degrees C
+          );
+      }
+    if (car_chargelimit_soclimit>0)
+      {
+      remain = MinutesToChargeCAC(
+          car_chargemode,             // charge mode, Standard, Range and Performance are supported
+          car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
+          -1,                         // ideal mi desired at end of charge (use -1 for full charge)
+          car_chargelimit_soclimit,   // SOC percent desired at end of charge (ignored if ideal mi specified)
+          car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
+          car_linevoltage*car_chargecurrent, // watts available from the wall
+          car_ambient_temp            // ambient temperature in degrees C
+          );
+      if ((remain<car_chargelimit_minsremaining)&&(car_chargelimit_minsremaining>=0))
+        car_chargelimit_minsremaining = remain;
+      }
 
     if (car_coolingdown>=0)
       {

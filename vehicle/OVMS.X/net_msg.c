@@ -1051,7 +1051,7 @@ char *net_prep_stat(char *s)
         }
       if (car_chargelimit_rangelimit > 0)
         {
-        s = stp_i(s, "\r ", car_chargelimit_rangelimit);
+        s = stp_i(s, "\r ", (can_mileskm == 'K')?KmFromMi(car_chargelimit_rangelimit):car_chargelimit_rangelimit);
         s = stp_rom(s, unit);
         s = stp_i(s,": ",car_chargelimit_minsremaining);
         s = stp_rom(s," mins");
