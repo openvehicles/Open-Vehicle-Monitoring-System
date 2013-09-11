@@ -107,7 +107,7 @@ void acc_state_enter(unsigned char newstate)
       if (acc_current_rec.acc_flags.Homelink)
         {
         // We must activate the requested homelink
-        m[0] = acc_current_rec.acc_homelink + '0';
+        m[0] = acc_current_rec.acc_homelink + '0' - 1;
         m[1] = 0;
         vehicle_fn_commandhandler(FALSE, 24, m);
         }
