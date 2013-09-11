@@ -171,14 +171,14 @@ void log_state_ticker1(void)
         rec->record.charge.charge_current = car_chargecurrent;
       if ((!CAR_IS_CHARGING)||
           (CAR_IS_ON)||
-          ((car_coolingdown != logging_coolingdown)&&(logging_coolingdown>=0)))
+          ((car_coolingdown<0)&&(logging_coolingdown>=0)))
         {
         // Charge/Cooldown has finished
         logging_pos = -1;
         logging_pending++;
         rec->type = LOG_TYPE_CHARGE;
         rec->duration = car_time - rec->start_time;
-        rec->record.charge.charge_mode = car_chargemode;
+        rec->record.charge.charge_mode = (logging_coolingdown>=0)?5:car_chargemode;
         if (car_chargestate == 4)
           rec->record.charge.charge_result = LOG_CHARGERESULT_OK;
         else if (car_chargesubstate == 3)
