@@ -80,6 +80,7 @@ struct logging_record
       unsigned int start_idealrange;
       unsigned char end_SOC;
       unsigned int end_idealrange;
+      unsigned int end_cac100;
       } charge;
     struct
       {

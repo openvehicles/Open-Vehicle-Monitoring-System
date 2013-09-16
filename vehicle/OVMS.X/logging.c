@@ -198,6 +198,7 @@ void log_state_ticker1(void)
           rec->record.charge.charge_result = LOG_CHARGERESULT_FAIL;
         rec->record.charge.end_SOC = car_SOC;
         rec->record.charge.end_idealrange = car_idealrange;
+        rec->record.charge.end_cac100 = car_cac100;
         log_state_enter(LOG_STATE_PARKED);
         }
       logging_coolingdown = car_coolingdown;
@@ -272,6 +273,7 @@ void logging_sendpending(void)
       s = stp_i(s, ",", rec->record.charge.start_idealrange);
       s = stp_i(s, ",", rec->record.charge.end_SOC);
       s = stp_i(s, ",", rec->record.charge.end_idealrange);
+      s = stp_l2f(s, ",", (unsigned long)rec->record.charge.end_cac100, 2);
       net_msg_encode_puts();
       rec->type = LOG_TYPE_CHARGE_DEL;
       logging_pending = 1;
