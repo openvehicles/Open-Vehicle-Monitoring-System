@@ -840,7 +840,7 @@ BOOL net_sms_handle_reset(char *caller, char *command, char *arguments)
   {
   char *p;
 
-  net_state_enter(NET_STATE_HARDRESET);
+  net_state_enter(NET_STATE_HARDSTOP);
   return FALSE;
   }
 
