@@ -236,6 +236,8 @@ void acc_state_ticker1(void)
             }
           else
             {
+            // Stop charge...
+            vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
             net_state_enter(ACC_STATE_CHARGEDONE);
             }
           }
