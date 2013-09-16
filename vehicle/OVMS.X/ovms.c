@@ -170,7 +170,7 @@ void main(void)
     debug_crashcnt++;
   }
 
-  CHECKPOINT(0)
+  CHECKPOINT(0x20)
 
   for (x = 0; x < FEATURES_MAP_PARAM; x++)
     sys_features[x] = 0; // Turn off the features
@@ -194,6 +194,8 @@ void main(void)
   par_initialise();
   vehicle_initialise();
   net_initialise();
+
+  CHECKPOINT(0x21)
 
   // Startup sequence...
   // Holding the RED led on, pulse out the firmware version on the GREEN led
@@ -237,18 +239,18 @@ void main(void)
   y = 0; // Last TMR0H
   while (1) // Main Loop
   {
-    CHECKPOINT(1)
+    CHECKPOINT(0x22)
     if ((vUARTIntStatus.UARTIntRxError) ||
             (vUARTIntStatus.UARTIntRxOverFlow))
       net_reset_async();
 
     while (!vUARTIntStatus.UARTIntRxBufferEmpty)
     {
-      CHECKPOINT(2)
+      CHECKPOINT(0x23)
       net_poll();
     }
 
-    CHECKPOINT(3)
+    CHECKPOINT(0x24)
     vehicle_idlepoll();
 
     ClrWdt(); // Clear Watchdog Timer
@@ -258,16 +260,16 @@ void main(void)
     {
       TMR0H = 0;
       TMR0L = 0; // Reset timer
-      CHECKPOINT(4)
+      CHECKPOINT(0x25)
       net_ticker();
-      CHECKPOINT(5)
+      CHECKPOINT(0x26)
       vehicle_ticker();
 #ifdef OVMS_LOGGINGMODULE
-      CHECKPOINT(8)
+      CHECKPOINT(0x27)
       logging_ticker();
 #endif
 #ifdef OVMS_ACCMODULE
-      CHECKPOINT(9)
+      CHECKPOINT(0x28)
       acc_ticker();
 #endif
     }
@@ -275,10 +277,11 @@ void main(void)
     {
       if ((TMR0H % 0x04) == 0)
       {
-        CHECKPOINT(6)
+        CHECKPOINT(0x29)
         net_ticker10th();
-        CHECKPOINT(7)
+        CHECKPOINT(0x2A)
         vehicle_ticker10th();
+        CHECKPOINT(0x2B)
       }
       y = TMR0H;
     }

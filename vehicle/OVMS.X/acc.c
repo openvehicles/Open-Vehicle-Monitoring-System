@@ -92,6 +92,8 @@ void acc_state_enter(unsigned char newstate)
   char *p;
   char m[2];
 
+  CHECKPOINT(0x60)
+
   acc_state = newstate;
 
   switch (acc_state)
@@ -107,6 +109,7 @@ void acc_state_enter(unsigned char newstate)
       if (acc_current_rec.acc_flags.Homelink)
         {
         // We must activate the requested homelink
+        CHECKPOINT(0x61)
         m[0] = acc_current_rec.acc_homelink + '0' - 1;
         m[1] = 0;
         vehicle_fn_commandhandler(FALSE, 24, m);
@@ -120,15 +123,18 @@ void acc_state_enter(unsigned char newstate)
       break;
     case ACC_STATE_COOLDOWN:
       // Cooldown in a charge store area
+      CHECKPOINT(0x67)
       vehicle_fn_commandhandler(FALSE, 25, NULL); // Cooldown
       break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
       // Make sure car doesn't charge now...
+      CHECKPOINT(0x68)
       vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop Charge
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
+      CHECKPOINT(0x62)
       car_chargelimit_rangelimit = acc_current_rec.acc_stoprange;
       car_chargelimit_soclimit = acc_current_rec.acc_stopsoc;
       stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
@@ -148,6 +154,8 @@ void acc_state_enter(unsigned char newstate)
 void acc_state_ticker1(void)
   {
   char *s;
+
+  CHECKPOINT(0x63)
 
   switch (acc_state)
     {
@@ -270,6 +278,8 @@ void acc_state_ticker1(void)
 
 void acc_state_ticker10(void)
   {
+  CHECKPOINT(0x64)
+
   switch (acc_state)
     {
     case ACC_STATE_FIRSTRUN:
@@ -316,6 +326,8 @@ void acc_state_ticker10(void)
 
 void acc_state_ticker60(void)
   {
+  CHECKPOINT(0x65)
+
   switch (acc_state)
     {
     case ACC_STATE_FIRSTRUN:

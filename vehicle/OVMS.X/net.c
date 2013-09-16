@@ -156,6 +156,8 @@ void net_poll(void)
   {
   unsigned char x;
 
+  CHECKPOINT(0x30)
+
   while(UARTIntGetChar(&x))
     {
     if (net_buf_mode==NET_BUF_CRLF)
@@ -173,6 +175,7 @@ void net_poll(void)
           (net_buf[0]=='+')&&(net_buf[1]=='I')&&
           (net_buf[2]=='P')&&(net_buf[3]=='D'))
         {
+        CHECKPOINT(0x31)
         net_buf[net_buf_pos-1] = 0; // Change the ':' to an end
         net_buf_todo = atoi(net_buf+5);
         net_buf_todotimeout = 60; // 60 seconds to receive the rest
@@ -182,6 +185,7 @@ void net_poll(void)
         }
       if (x == 0x0A) // Newline?
         {
+        CHECKPOINT(0x32)
         net_buf_pos--;
         net_buf[net_buf_pos] = 0; // mark end of string for string search functions.
         if ((net_buf_pos>=4)&&
@@ -211,6 +215,7 @@ void net_poll(void)
       }
     else if (net_buf_mode==NET_BUF_SMS)
       { // SMS data mode
+      CHECKPOINT(0x33)
       if ((x==0x0d)||(x==0x0a))
         net_buf[net_buf_pos++] = ' '; // \d, \r => space
       else
@@ -227,7 +232,8 @@ void net_poll(void)
         }
       }
     else
-      { // IP data mode
+      { // IP data modea
+      CHECKPOINT(0x34)
       if (x != 0x0d)
         {
         net_buf[net_buf_pos++] = x; // Swallow CR
@@ -502,6 +508,7 @@ void net_state_enter(unsigned char newstate)
     case NET_STATE_STOP:
       led_set(OVMS_LED_GRN,OVMS_LED_OFF);
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
+      CHECKPOINT(0xF0)
       reset_cpu();
       break;
     case NET_STATE_DOINIT:
@@ -655,6 +662,8 @@ void net_state_activity()
   {
   char *b;
 
+  CHECKPOINT(0x35)
+
   if (net_buf_mode == NET_BUF_SMS)
     {
     // An SMS has arrived, and net_caller has been primed
@@ -664,21 +673,22 @@ void net_state_activity()
       net_reg = 0x05;
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
     }
-    CHECKPOINT(10)
+    CHECKPOINT(0x36)
     net_sms_in(net_caller,net_buf,net_buf_pos);
+    CHECKPOINT(0x35)
     return;
     }
   else if (net_buf_mode != NET_BUF_CRLF)
     {
     // An IP data message has arrived
-    CHECKPOINT(20)
+    CHECKPOINT(0x37)
     net_msg_in(net_buf);
+    CHECKPOINT(0x35)
     // Getting GPRS data from the server means our connection was good
     net_state_vint = NET_GPRS_RETRIES; // Count-down for DONETINIT attempts
     return;
     }
 
-  CHECKPOINT(30)
   switch (net_state)
     {
 #ifdef OVMS_DIAGMODULE
@@ -1100,6 +1110,8 @@ void net_state_ticker1(void)
   char stat;
   char *p;
 
+  CHECKPOINT(0x38)
+
   // Time out error codes
   if (net_notify_lastcount>0)
     {
@@ -1354,6 +1366,8 @@ void net_state_ticker1(void)
 //
 void net_state_ticker30(void)
   {
+  CHECKPOINT(0x39)
+
   switch (net_state)
     {
     case NET_STATE_READY:
@@ -1383,6 +1397,8 @@ void net_state_ticker60(void)
   {
   char stat;
   char *p;
+
+  CHECKPOINT(0x3A)
 
 #ifdef OVMS_HW_V2
 
@@ -1505,6 +1521,8 @@ void net_state_ticker60(void)
 //
 void net_state_ticker300(void)
   {
+  CHECKPOINT(0x3B)
+
   switch (net_state)
     {
     }
@@ -1524,6 +1542,8 @@ void net_state_ticker600(void)
                   (car_chargestate==2)||    // Topping off
                   (car_chargestate==15)||   // Heating
                   ((car_doors1&0x80)>0));   // Car On
+
+  CHECKPOINT(0x3C)
 
   switch (net_state)
     {
@@ -1597,6 +1617,8 @@ void net_state_ticker3600(void)
                   (car_chargestate==15)||   // Heating
                   ((car_doors1&0x80)>0));   // Car On
 
+  CHECKPOINT(0x3D)
+
   switch (net_state)
     {
     case NET_STATE_READY:
@@ -1635,6 +1657,9 @@ void net_state_ticker3600(void)
 void net_ticker(void)
   {
   // This ticker is called once every second
+
+  CHECKPOINT(0x3E)
+
   if (net_notify_suppresscount>0) net_notify_suppresscount--;
   net_granular_tick++;
   if ((net_timeout_goto > 0)&&(net_timeout_ticks-- == 0))
@@ -1666,6 +1691,7 @@ void net_ticker(void)
     sys_features[10] += 1;
     stp_i(net_scratchpad, NULL, sys_features[10]);
     par_set(PARAM_FEATURE10,net_scratchpad);
+    CHECKPOINT(0xF1)
     reset_cpu();
     }
   }

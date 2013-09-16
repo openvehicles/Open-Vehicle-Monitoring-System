@@ -65,12 +65,15 @@ void log_state_enter(unsigned char newstate)
   char *p;
   struct logging_record *rec;
 
+  CHECKPOINT(0x50)
+
   log_state = newstate;
 
   switch (log_state)
     {
     case LOG_STATE_DRIVING:
       // A drive has just started...
+      CHECKPOINT(0x51)
       logging_pos = log_getfreerecord();
       if ((logging_pos < 0)||((sys_features[FEATURE_OPTIN]&FEATURE_OI_LOGDRIVES)==0))
         {
@@ -90,11 +93,13 @@ void log_state_enter(unsigned char newstate)
       break;
     case LOG_STATE_CHARGING:
       // A charge has just started...
+      CHECKPOINT(0x52)
       logging_pos = log_getfreerecord();
       if ((logging_pos < 0)||((sys_features[FEATURE_OPTIN]&FEATURE_OI_LOGCHARGE)==0))
         {
         // Overflow...
         log_state = LOG_STATE_WAITCHARGE_DONE;
+        CHECKPOINT(0x53)
         return;
         }
       rec = &log_recs[logging_pos];
@@ -110,11 +115,15 @@ void log_state_enter(unsigned char newstate)
       logging_coolingdown = car_coolingdown;
       break;
     }
+
+CHECKPOINT(0x50)
   }
 
 void log_state_ticker1(void)
   {
   struct logging_record *rec;
+
+  CHECKPOINT(0x54)
 
   switch (log_state)
     {
@@ -143,6 +152,7 @@ void log_state_ticker1(void)
       if (!CAR_IS_ON)
         {
         // Drive has finished
+        CHECKPOINT(0x55)
         rec = &log_recs[logging_pos];
         logging_pos = -1;
         logging_pending++;
@@ -174,6 +184,7 @@ void log_state_ticker1(void)
           ((car_coolingdown<0)&&(logging_coolingdown>=0)))
         {
         // Charge/Cooldown has finished
+        CHECKPOINT(0x56)
         logging_pos = -1;
         logging_pending++;
         rec->type = LOG_TYPE_CHARGE;
@@ -214,6 +225,7 @@ void logging_sendpending(void)
   unsigned char x;
   struct logging_record *rec;
 
+  CHECKPOINT(0x57)
   for (x=0;x<LOG_RECORDSTORE;x++)
     {
     rec = &log_recs[x];
@@ -275,6 +287,8 @@ void logging_serverconnect(void)
   unsigned char x;
   struct logging_record *rec;
 
+  CHECKPOINT(0x58)
+
   // We need to reset the pending deliveries
   // And record the correct number of deliveries pending
   logging_pending = 0;
@@ -303,6 +317,8 @@ void logging_ack(unsigned char ack)
   {
   // A server acknowledgement
   struct logging_record *rec;
+
+  CHECKPOINT(0x59)
 
   if ((ack>=0)&&(ack<LOG_RECORDSTORE))
     {
