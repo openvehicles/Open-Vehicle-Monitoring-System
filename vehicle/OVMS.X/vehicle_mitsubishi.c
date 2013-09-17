@@ -71,8 +71,8 @@ BOOL vehicle_mitsubishi_ticker10(void)
   
   if ((car_linevoltage > 100) && (car_chargecurrent < 1))
     {
-     car_chargestate = 4; //Done
-     car_doors1 = 0x0C;  // Charge connector connected
+    car_chargestate = 4; //Done
+    car_doors1 = 0x0C;  // Charge connector connected
     }
 
   if ((car_linevoltage > 100) && (car_chargecurrent > 1))
@@ -129,8 +129,8 @@ BOOL vehicle_mitsubishi_poll0(void)
 	  car_SOC = (char)(((int)can_databuffer[1] - 10) / 2); //SOC
 	break;
 	
-    case 0x389:
-      car_linevoltage = (unsigned int)can_databuffer[1];
+        case 0x389:
+          car_linevoltage = (unsigned int)can_databuffer[1];
 	  car_chargecurrent = ((unsigned int)can_databuffer[6] / 10);
 	break;	
 	}
@@ -163,20 +163,20 @@ BOOL vehicle_mitsubishi_poll1(void)
 	case 0x285:
 	  if (can_databuffer[6] == 0x0C) // Car in park
 	    //car_doors1 |= 0x40;     //  PARK
-		car_doors1 &= ~0x80;    // CAR OFF
+	    car_doors1 &= ~0x80;    // CAR OFF
 		
 	  if (can_databuffer[6] == 0x0E) // Car not in park
 	    //car_doors1 &= ~0x40;     //  NOT PARK
-		car_doors1 |= 0x80;     // CAR ON
+	    car_doors1 |= 0x80;     // CAR ON
 	break;
 			
 	case 0x412:
 	  if (can_mileskm == 'K') // Speed & Odo
-        car_speed = can_databuffer[1];
-      else
-        car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1000)+500)/1609);
+            car_speed = can_databuffer[1];
+          else
+            car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1000)+500)/1609);
 
-      car_odometer = MiFromKm((((can_databuffer[2] << 8) + can_databuffer[3]) << 8) + can_databuffer[4]);
+        car_odometer = MiFromKm((((can_databuffer[2] << 8) + can_databuffer[3]) << 8) + can_databuffer[4]);
 	break;
 	}
 	
