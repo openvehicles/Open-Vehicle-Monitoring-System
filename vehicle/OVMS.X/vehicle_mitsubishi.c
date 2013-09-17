@@ -75,7 +75,7 @@ BOOL vehicle_mitsubishi_ticker10(void)
      car_doors1 = 0x0C;  // Charge connector connected
     }
 
-  if ((car_linevoltage > 100) and (car_chargecurrent > 1))
+  if ((car_linevoltage > 100) && (car_chargecurrent > 1))
     {
     car_chargestate = 1; //Charging
     car_doors1 = 0x1C;
@@ -115,8 +115,8 @@ BOOL vehicle_mitsubishi_poll0(void)
   switch (id)
 	{
 	case 0x346:
-	  car_estrange = MiFromKm(unsigned int)can_databuffer[7]); // Range
-      car_idealrange = car_estrange;
+	  car_estrange = MiFromKm((unsigned int)can_databuffer[7]); // Range
+          car_idealrange = car_estrange;
 	break;
 	
 	/*
@@ -129,9 +129,9 @@ BOOL vehicle_mitsubishi_poll0(void)
 	  car_SOC = (char)(((int)can_databuffer[1] - 10) / 2); //SOC
 	break;
 	
-	case 0x389
-	  car_linevoltage = (unsigned int) can_databuffer[1];
-	  car_chargecurrent =  ((unsigned int) can_databuffer[6]) / 10;
+    case 0x389:
+      car_linevoltage = (unsigned int)can_databuffer[1];
+	  car_chargecurrent = ((unsigned int)can_databuffer[6] / 10);
 	break;	
 	}
   
@@ -161,11 +161,11 @@ BOOL vehicle_mitsubishi_poll1(void)
   switch (id)
 	{
 	case 0x285:
-	  if can_databuffer[6] == 0x0C // Car in park
+	  if (can_databuffer[6] == 0x0C) // Car in park
 	    //car_doors1 |= 0x40;     //  PARK
 		car_doors1 &= ~0x80;    // CAR OFF
 		
-	  if can_databuffer[6] == 0x0E // Car not in park
+	  if (can_databuffer[6] == 0x0E) // Car not in park
 	    //car_doors1 &= ~0x40;     //  NOT PARK
 		car_doors1 |= 0x80;     // CAR ON
 	break;
