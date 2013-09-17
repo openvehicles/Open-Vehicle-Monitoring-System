@@ -116,7 +116,7 @@ BOOL vehicle_mitsubishi_poll0(void)
 	{
 	case 0x346:
 	  car_estrange = MiFromKm((unsigned int)can_databuffer[7]); // Range
-          car_idealrange = car_estrange;
+      car_idealrange = car_estrange;
 	break;
 	
 	/*
