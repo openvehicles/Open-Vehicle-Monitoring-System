@@ -129,8 +129,8 @@ BOOL vehicle_mitsubishi_poll0(void)
 	  car_SOC = (char)(((int)can_databuffer[1] - 10) / 2); //SOC
 	break;
 	
-        case 0x389:
-          car_linevoltage = (unsigned int)can_databuffer[1];
+    case 0x389:
+      car_linevoltage = (unsigned int)can_databuffer[1];
 	  car_chargecurrent = ((unsigned int)can_databuffer[6] / 10);
 	break;	
 	}
@@ -172,11 +172,11 @@ BOOL vehicle_mitsubishi_poll1(void)
 			
 	case 0x412:
 	  if (can_mileskm == 'K') // Speed & Odo
-            car_speed = can_databuffer[1];
-          else
-            car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1000)+500)/1609);
+        car_speed = can_databuffer[1];
+      else
+        car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1000)+500)/1609);
 
-        car_odometer = MiFromKm((((can_databuffer[2] << 8) + can_databuffer[3]) << 8) + can_databuffer[4]);
+    car_odometer = MiFromKm((((can_databuffer[2] << 8) + can_databuffer[3]) << 8) + can_databuffer[4]);
 	break;
 	}
 	
@@ -216,10 +216,13 @@ BOOL vehicle_mitsubishi_initialise(void)
   // Buffer 0 (filters 0, 1) for extended PID responses
   RXB0CON = 0b00000000;
   // Mask0 = 0b11111111000 (0x7F8), filterbit 0,1,2 deactivated
+  //RXM0SIDL = 0b00000000;        
+  //RXM0SIDH = 0b11111111;
   RXM0SIDL = 0b00000000;        
-  RXM0SIDH = 0b11111111;
-
-  // Filter0 0b01100000000 (0x300..0x3E0)
+  RXM0SIDH = 0b11111100;
+  
+  
+  // Filter0 0b01100000000 (0x300..0x3F8)
   RXF0SIDL = 0b00000000;
   RXF0SIDH = 0b01100000;
 
