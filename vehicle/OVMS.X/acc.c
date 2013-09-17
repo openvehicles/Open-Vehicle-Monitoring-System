@@ -238,17 +238,17 @@ void acc_state_ticker1(void)
             {
             // Stop charge...
             vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
-            net_state_enter(ACC_STATE_CHARGEDONE);
+            acc_state_enter(ACC_STATE_CHARGEDONE);
             }
           }
         else
           {
-          net_state_enter(ACC_STATE_CHARGEDONE);
+          acc_state_enter(ACC_STATE_CHARGEDONE);
           }
         }
       else if (!CAR_IS_CHARGING)
         {
-        net_state_enter(ACC_STATE_CHARGEDONE);
+        acc_state_enter(ACC_STATE_CHARGEDONE);
         }
       break;
     case ACC_STATE_WAITCHARGE:
@@ -262,17 +262,17 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
-      if (! CAR_IS_CHARGING) net_state_enter(ACC_STATE_CHARGEDONE);
+      if (! CAR_IS_CHARGING) acc_state_enter(ACC_STATE_CHARGEDONE);
       break;
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
       if (CAR_IS_CHARGING)
         {
-        net_state_enter(ACC_STATE_CHARGINGIN);
+        acc_state_enter(ACC_STATE_CHARGINGIN);
         }
       else if (CAR_IS_ON)
         {
-        net_state_enter(ACC_STATE_DRIVINGIN);
+        acc_state_enter(ACC_STATE_DRIVINGIN);
         }
       break;
     }
@@ -361,7 +361,7 @@ void acc_state_ticker60(void)
 
 void acc_initialise(void)        // ACC Initialisation
   {
-  net_state_enter(ACC_STATE_FIRSTRUN);
+  acc_state_enter(ACC_STATE_FIRSTRUN);
   }
 
 BOOL acc_cmd_here(BOOL sms, char* caller, char* arguments)
