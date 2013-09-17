@@ -68,7 +68,7 @@ BOOL vehicle_mitsubishi_ticker10(void)
 // 0x0C Chargeport open and pilot signal, bits 2,3 set
 // 0x1C Bits 2,3,4 set
 
-  
+
   if ((car_linevoltage > 100) && (car_chargecurrent < 1))
     {
     car_chargestate = 4; //Done
@@ -88,8 +88,8 @@ BOOL vehicle_mitsubishi_ticker10(void)
 
   return FALSE;
   }
-  
-    
+
+
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
 // This function is an entry point from the main() program loop, and
@@ -113,28 +113,28 @@ BOOL vehicle_mitsubishi_poll0(void)
   RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
   switch (id)
-	{
-	case 0x346:
-	  car_estrange = MiFromKm((unsigned int)can_databuffer[7]); // Range
+    {
+    case 0x346:
+      car_estrange = MiFromKm((unsigned int)can_databuffer[7]); // Range
       car_idealrange = car_estrange;
-	break;
-	
-	/*
-	case 0x373:
-	  // BatCurr & BatVolt
-	break;
-	*/
-	
-	case 0x374:
-	  car_SOC = (char)(((int)can_databuffer[1] - 10) / 2); //SOC
-	break;
-	
+    break;
+
+    /*
+    case 0x373:
+      // BatCurr & BatVolt
+    break;
+    */
+
+    case 0x374:
+      car_SOC = (char)(((int)can_databuffer[1] - 10) / 2); //SOC
+    break;
+
     case 0x389:
       car_linevoltage = (unsigned int)can_databuffer[1];
-	  car_chargecurrent = ((unsigned int)can_databuffer[6] / 10);
-	break;	
-	}
-  
+      car_chargecurrent = ((unsigned int)can_databuffer[6] / 10);
+    break;
+    }
+
   return TRUE;
   }
 
@@ -159,27 +159,27 @@ BOOL vehicle_mitsubishi_poll1(void)
 
 
   switch (id)
-	{
-	case 0x285:
-	  if (can_databuffer[6] == 0x0C) // Car in park
-	    //car_doors1 |= 0x40;     //  PARK
-	    car_doors1 &= ~0x80;    // CAR OFF
-		
-	  if (can_databuffer[6] == 0x0E) // Car not in park
-	    //car_doors1 &= ~0x40;     //  NOT PARK
-	    car_doors1 |= 0x80;     // CAR ON
-	break;
-			
-	case 0x412:
-	  if (can_mileskm == 'K') // Speed & Odo
+    {
+    case 0x285:
+      if (can_databuffer[6] == 0x0C) // Car in park
+        //car_doors1 |= 0x40;     //  PARK
+        car_doors1 &= ~0x80;    // CAR OFF
+
+      if (can_databuffer[6] == 0x0E) // Car not in park
+        //car_doors1 &= ~0x40;     //  NOT PARK
+        car_doors1 |= 0x80;     // CAR ON
+    break;
+
+    case 0x412:
+      if (can_mileskm == 'K') // Speed & Odo
         car_speed = can_databuffer[1];
       else
         car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1000)+500)/1609);
 
     car_odometer = MiFromKm((((can_databuffer[2] << 8) + can_databuffer[3]) << 8) + can_databuffer[4]);
-	break;
-	}
-	
+    break;
+    }
+
   return TRUE;
   }
 
@@ -216,12 +216,12 @@ BOOL vehicle_mitsubishi_initialise(void)
   // Buffer 0 (filters 0, 1) for extended PID responses
   RXB0CON = 0b00000000;
   // Mask0 = 0b11111111000 (0x7F8), filterbit 0,1,2 deactivated
-  //RXM0SIDL = 0b00000000;        
+  //RXM0SIDL = 0b00000000;
   //RXM0SIDH = 0b11111111;
-  RXM0SIDL = 0b00000000;        
+  RXM0SIDL = 0b00000000;
   RXM0SIDH = 0b11111100;
-  
-  
+
+
   // Filter0 0b01100000000 (0x300..0x3F8)
   RXF0SIDL = 0b00000000;
   RXF0SIDH = 0b01100000;
@@ -232,14 +232,14 @@ BOOL vehicle_mitsubishi_initialise(void)
 
    // Mask1 = 0b11111111111 (0x7FF)
   RXM1SIDL = 0b11100000;
-  RXM1SIDH = 0b11111111;	
+  RXM1SIDH = 0b11111111;
 
-  // Filter2 0b01010000101 (0x285) 
-  RXF2SIDL = 0b10100000;	
+  // Filter2 0b01010000101 (0x285)
+  RXF2SIDL = 0b10100000;
   RXF2SIDH = 0b01010000;
 
   // Filter3 0b10000010010 (0x412)
-  RXF3SIDL = 0b01000000;	
+  RXF3SIDL = 0b01000000;
   RXF3SIDH = 0b10000010;
 
 
