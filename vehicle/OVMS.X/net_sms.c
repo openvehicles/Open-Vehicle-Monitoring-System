@@ -669,6 +669,7 @@ BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
       s = stp_rom(s, " STKFUL"); // Stack overflow
     if (debug_crashreason & 0x40)
       s = stp_rom(s, " STKUNF"); // Stack underflow
+    s = stp_i(s, " - ", debug_checkpoint);
   }
 
   net_puts_ram(net_scratchpad);
