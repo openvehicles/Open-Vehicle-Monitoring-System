@@ -186,11 +186,23 @@ void acc_state_enter(unsigned char newstate)
       delay100(10); // A short delay, to allow the car to wakeup
       car_chargelimit_rangelimit = acc_current_rec.acc_stoprange;
       car_chargelimit_soclimit = acc_current_rec.acc_stopsoc;
-      stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
-      vehicle_fn_commandhandler(FALSE, 10, net_scratchpad);
-      stp_i(net_scratchpad, "", acc_current_rec.acc_chargelimit);
-      vehicle_fn_commandhandler(FALSE, 15, net_scratchpad);
-      vehicle_fn_commandhandler(FALSE, 11, NULL); // Start charge
+      for (k=0;k<2;k++) // Be persistent, do this a few times...
+        {
+        stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
+        vehicle_fn_commandhandler(FALSE, 10, net_scratchpad);
+        delay100(1);
+        stp_i(net_scratchpad, "", acc_current_rec.acc_chargelimit);
+        vehicle_fn_commandhandler(FALSE, 15, net_scratchpad);
+        delay100(1);
+        vehicle_fn_commandhandler(FALSE, 11, NULL); // Start charge
+        delay100(1);
+        }
+      break;
+    case ACC_STATE_WAKEUPCIN:
+      // Wake up car, delay a bit, then goto ACC_STATE_CHARGINGIN
+      acc_timeout_goto = ACC_STATE_CHARGINGIN;
+      acc_timeout_ticks = 10;
+      vehicle_fn_commandhandler(FALSE, 18, NULL); // Wake up car
       break;
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
@@ -275,7 +287,7 @@ void acc_state_ticker1(void)
           if (acc_current_rec.acc_flags.ChargeAtPlugin)
             {
             // Let's now do a normal charge...
-            acc_state_enter(ACC_STATE_CHARGINGIN);
+            acc_state_enter(ACC_STATE_WAKEUPCIN);
             }
           else if ((acc_current_rec.acc_flags.ChargeAtTime)||
                    (acc_current_rec.acc_flags.ChargeByTime))
@@ -374,7 +386,7 @@ void acc_state_ticker10(void)
       if (now == acc_chargeminute)
         {
         // Time to charge!
-        acc_state_enter(ACC_STATE_CHARGINGIN);
+        acc_state_enter(ACC_STATE_WAKEUPCIN);
         }
       break;
     case ACC_STATE_CHARGINGIN:

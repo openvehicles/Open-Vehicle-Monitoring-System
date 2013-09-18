@@ -715,6 +715,7 @@ void vehicle_teslaroadster_cooldown(void)
   {
   // We have been requested to cool down the battery pack
   char *p;
+  int k;
 
   // Save the old charge mode and limit
   car_cooldown_wascharging = (CAR_IS_CHARGING)?1:0;
@@ -748,9 +749,17 @@ void vehicle_teslaroadster_cooldown(void)
       (car_doors1bits.ChargePort == 1))        // Charge port is open
     {
     // We need to start a cooldown
-    vehicle_teslaroadster_tx_setchargecurrent(13); // 13A charge
-    vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
-    vehicle_teslaroadster_tx_startstopcharge(1);   // Force START charge
+    vehicle_teslaroadster_tx_wakeup();
+    delay100(10);
+    for (k=0;k<2;k++) // Be persistent, and do this a few times to make sure
+      {
+      vehicle_teslaroadster_tx_setchargecurrent(13); // 13A charge
+      delay100(1);
+      vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
+      delay100(1);
+      vehicle_teslaroadster_tx_startstopcharge(1);   // Force START charge
+      delay100(1);
+      }
     vehicle_teslaroadster_tx_wakeuphvac();         // Start HVAC data
     car_coolingdown = 0;
     tr_cooldown_recycle = -1;

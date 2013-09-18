@@ -40,6 +40,7 @@
 #define ACC_STATE_COOLDOWN   0x40  // Cooldown in a charge store area
 #define ACC_STATE_WAITCHARGE 0x50  // Waiting for charge time in a charge store area
 #define ACC_STATE_CHARGINGIN 0x51  // Charging in a charge store area
+#define ACC_STATE_WAKEUPCIN  0x52  // Wake up and charge in a charge store area
 #define ACC_STATE_CHARGEDONE 0x60  // Completed charging in a charge store area
 
 // ACC data
