@@ -51,7 +51,6 @@
 rom char teslaroadster_capabilities[] = "C10-12,C15-24";
 
 #pragma udata overlay vehicle_overlay_data
-unsigned char tr_cooldown_wascharging;       // TRUE if car was charging when cooldown started
 signed char tr_cooldown_recycle;             // Ticker counter for cooldown recycle
 unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
 unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
@@ -718,7 +717,7 @@ void vehicle_teslaroadster_cooldown(void)
   char *p;
 
   // Save the old charge mode and limit
-  tr_cooldown_wascharging = (CAR_IS_CHARGING)?1:0;
+  car_cooldown_wascharging = (CAR_IS_CHARGING)?1:0;
   car_cooldown_chargemode = car_chargemode;
   car_cooldown_chargelimit = car_chargelimit;
 
@@ -1198,7 +1197,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
         net_notify_suppresscount = 30;
         vehicle_teslaroadster_tx_setchargecurrent(car_cooldown_chargelimit); // Restore charge limit
         vehicle_teslaroadster_tx_setchargemode(car_cooldown_chargemode);     // Restore charge mode
-        if (tr_cooldown_wascharging == 0)
+        if (car_cooldown_wascharging == 0)
           {
           vehicle_teslaroadster_tx_startstopcharge(0);                        // Force START charge
           }
@@ -1278,7 +1277,7 @@ void vehicle_teslaroadster_initialise(void)
     CANCON = 0b01100000; // Listen only mode, Receive bufer 0
     }
 
-  tr_cooldown_wascharging = 0;
+  car_cooldown_wascharging = 0;
   can_lastspeedmsg[0] = 0;
   can_lastspeedrpt = 0;
   tr_requestcac = 0;

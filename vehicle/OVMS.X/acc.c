@@ -140,6 +140,12 @@ void acc_state_enter(unsigned char newstate)
       // Cooldown in a charge store area
       CHECKPOINT(0x67)
       vehicle_fn_commandhandler(FALSE, 25, NULL); // Cooldown
+      if (acc_current_rec.acc_flags.ChargeAtPlugin)
+        {
+        // Try to trick the car into thinking the charge was ongoing when cooldown
+        // started, so that it will continue the charge.
+        car_cooldown_wascharging = 1;
+        }
       break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area

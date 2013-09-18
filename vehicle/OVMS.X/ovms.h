@@ -212,6 +212,7 @@ extern unsigned char car_cooldown_chargemode;    // 0=standard, 1=storage, 3=ran
 extern unsigned char car_cooldown_chargelimit;   // Charge Limit (amps)
 extern signed int car_cooldown_tbattery;         // Cooldown temperature limit
 extern unsigned int car_cooldown_timelimit;      // Cooldown time limit (minutes) remaining
+extern unsigned char car_cooldown_wascharging;   // TRUE if car was charging when cooldown started
 extern unsigned char car_SOCalertlimit;          // Limit of SOC at which alert should be raised
 
 // Helpers
