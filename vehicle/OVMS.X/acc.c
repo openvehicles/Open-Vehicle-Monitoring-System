@@ -41,6 +41,7 @@
 unsigned char acc_state = 0;                // The current state
 unsigned char acc_current_loc = 0;          // Current ACC location
 struct acc_record acc_current_rec;          // Current ACC record
+unsigned int acc_chargeminute = 0;          // Charge minute to awake and start the charge
 unsigned char acc_timeout_goto = 0;         // State to auto-transition to, after timeout
 unsigned int  acc_timeout_ticks = 0;        // Number of seconds before timeout auto-transition
 unsigned int  acc_granular_tick = 0;        // An internal ticker used to generate 1min, 5min, etc, calls
@@ -50,10 +51,16 @@ rom char ACC_NOTHERE[] = "ACC not at this location";
 int acc_chargetime(char* arg)
   {
   // Take a time string of the format HH:MM (24 hour) and return as number of minutes.
-  return ((arg[0] - '0')*600) +
-         ((arg[1] - '0')*60) +
-         ((arg[3] - '0')*10) +
-          (arg[4] - '0');
+  int sign = 1;
+
+  if (*arg == 0) return 0;
+  if (*arg == '-') { sign = -1; arg++; }
+
+  return sign *
+         (((arg[0] - '0')*600) +
+          ((arg[1] - '0')*60) +
+          ((arg[3] - '0')*10) +
+           (arg[4] - '0'));
   }
 
 signed char acc_find(struct acc_record* ar, int range, BOOL enabledonly)
@@ -98,6 +105,7 @@ void acc_state_enter(unsigned char newstate)
   {
   char *p;
   char m[2];
+  int k;
 
   CHECKPOINT(0x60)
 
@@ -137,11 +145,39 @@ void acc_state_enter(unsigned char newstate)
       // Waiting for charge time in a charge store area
       // Make sure car doesn't charge now...
       CHECKPOINT(0x68)
-      vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop Charge
+      vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop Chargea
+      if (acc_current_rec.acc_flags.ChargeAtTime)
+        {
+        acc_chargeminute = acc_current_rec.acc_chargetime;
+        }
+      else if (acc_current_rec.acc_flags.ChargeByTime)
+        {
+        // TODO: work out when to start the charge
+        if (vehicle_fn_minutestocharge != NULL)
+          {
+          k = vehicle_fn_minutestocharge(acc_current_rec.acc_chargemode,
+                                         acc_current_rec.acc_chargelimit * 220,
+                                         acc_current_rec.acc_stoprange,
+                                         acc_current_rec.acc_stopsoc);
+          if (k<=0)
+            {
+            // Not achievable - start immediately
+            acc_state_enter(ACC_STATE_CHARGINGIN);
+            net_req_notification(NET_NOTIFY_CHARGE); // And notify the user as best we can
+            }
+          else
+            {
+            acc_chargeminute = acc_current_rec.acc_chargetime - (k + 30); // 30 minute safety margin
+            if (acc_chargeminute<0) acc_chargeminute += 1440; // Support wrap to previous day
+            }
+          }
+        }
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
       CHECKPOINT(0x62)
+      vehicle_fn_commandhandler(FALSE, 18, NULL); // Wake up car
+      delay100(10); // A short delay, to allow the car to wakeup
       car_chargelimit_rangelimit = acc_current_rec.acc_stoprange;
       car_chargelimit_soclimit = acc_current_rec.acc_stopsoc;
       stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
@@ -287,6 +323,9 @@ void acc_state_ticker1(void)
 
 void acc_state_ticker10(void)
   {
+  unsigned long now;
+  char *p;
+
   CHECKPOINT(0x64)
 
   switch (acc_state)
@@ -323,6 +362,14 @@ void acc_state_ticker10(void)
       break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
+      p = par_get(PARAM_TIMEZONE);
+      now = car_time + ((long)acc_chargetime(p))*60;  // Date+Time in seconds, local time zone
+      now = (now % 86400) / 60;  // In minutes past the start of the day
+      if (now == acc_chargeminute)
+        {
+        // Time to charge!
+        acc_state_enter(ACC_STATE_CHARGINGIN);
+        }
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
