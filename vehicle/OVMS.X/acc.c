@@ -39,8 +39,6 @@
 // ACC data
 #pragma udata ACC
 unsigned char acc_state = 0;                // The current state
-unsigned char acc_state_vchar = 0;          //   A per-state CHAR variable
-unsigned int  acc_state_vint = 0;           //   A per-state INT variable
 unsigned char acc_current_loc = 0;          // Current ACC location
 struct acc_record acc_current_rec;          // Current ACC record
 unsigned char acc_timeout_goto = 0;         // State to auto-transition to, after timeout
@@ -48,6 +46,15 @@ unsigned int  acc_timeout_ticks = 0;        // Number of seconds before timeout 
 unsigned int  acc_granular_tick = 0;        // An internal ticker used to generate 1min, 5min, etc, calls
 
 rom char ACC_NOTHERE[] = "ACC not at this location";
+
+int acc_chargetime(char* arg)
+  {
+  // Take a time string of the format HH:MM (24 hour) and return as number of minutes.
+  return ((arg[0] - '0')*600) +
+         ((arg[1] - '0')*60) +
+         ((arg[3] - '0')*10) +
+          (arg[4] - '0');
+  }
 
 signed char acc_find(struct acc_record* ar, int range, BOOL enabledonly)
   {
@@ -606,7 +613,7 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
         ar.acc_flags.ChargeByTime = 0;
         arguments = net_sms_nextarg(arguments);
         if (arguments != NULL)
-          { ar.acc_chargetime = atoi(arguments); }
+          { ar.acc_chargetime = acc_chargetime(arguments); }
         }
       else if (strcmppgm2ram(arguments,"CHARGEBY")==0)
         {
@@ -615,7 +622,7 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
         ar.acc_flags.ChargeByTime = 1;
         arguments = net_sms_nextarg(arguments);
         if (arguments != NULL)
-          { ar.acc_chargetime = atoi(arguments); }
+          { ar.acc_chargetime = acc_chargetime(arguments); }
         }
       else if (strcmppgm2ram(arguments,"NOCHARGE")==0)
         {

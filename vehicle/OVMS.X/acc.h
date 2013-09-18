@@ -44,8 +44,6 @@
 
 // ACC data
 extern unsigned char acc_state;                // The current state
-extern unsigned char acc_state_vchar;          //   A per-state CHAR variable
-extern unsigned int  acc_state_vint;           //   A per-state INT variable
 extern unsigned char acc_current_loc;          // Current ACC location
 extern unsigned char acc_timeout_goto;         // State to auto-transition to, after timeout
 extern unsigned int  acc_timeout_ticks;        // Number of seconds before timeout auto-transition
