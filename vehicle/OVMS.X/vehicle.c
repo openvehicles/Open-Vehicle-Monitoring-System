@@ -54,6 +54,7 @@ rom BOOL (*vehicle_fn_idlepoll)(void) = NULL;
 rom BOOL (*vehicle_fn_commandhandler)(BOOL msgmode, int code, char* msg);
 rom BOOL (*vehicle_fn_smshandler)(BOOL premsg, char *caller, char *command, char *arguments);
 rom BOOL (*vehicle_fn_smsextensions)(char *caller, char *command, char *arguments);
+rom int  (*vehicle_fn_minutestocharge)(unsigned char chgmod, int wAvail, int ixEnd, int pctEnd);
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_initialise()
@@ -78,6 +79,7 @@ void vehicle_initialise(void)
   vehicle_fn_commandhandler = NULL;
   vehicle_fn_smshandler = NULL;
   vehicle_fn_smsextensions = NULL;
+  vehicle_fn_minutestocharge = NULL;
 
   // Clear the internal GPS flag, unless specifically requested by the module
   net_fnbits &= ~(NET_FN_INTERNALGPS);

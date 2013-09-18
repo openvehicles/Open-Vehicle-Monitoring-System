@@ -1109,6 +1109,19 @@ int MinutesToChargeCAC(
   return (seconds + 30) / 60;
   }
 
+int vehicle_teslaroadster_minutestocharge(unsigned char chgmod, int wAvail, int ixEnd, int pctEnd)
+  {
+  return MinutesToChargeCAC(
+          chgmod,                     // charge mode, Standard, Range and Performance are supported
+          car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
+          ixEnd,                      // ideal mi desired at end of charge (use -1 for full charge)
+          pctEnd,                     // SOC percent desired at end of charge (ignored if ideal mi specified)
+          car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
+          wAvail,                     // watts available from the wall
+          car_ambient_temp            // ambient temperature in degrees C
+          );
+  }
+
 BOOL vehicle_teslaroadster_ticker1(void)
   {
   if ((tr_cooldown_recycle > 0)&&(CAR_IS_CHARGING))
@@ -1281,4 +1294,5 @@ void vehicle_teslaroadster_initialise(void)
   vehicle_fn_ticker60 = &vehicle_teslaroadster_ticker60;
   vehicle_fn_idlepoll = &vehicle_teslaroadster_idlepoll;
   vehicle_fn_commandhandler = &vehicle_teslaroadster_commandhandler;
+  vehicle_fn_minutestocharge = &vehicle_teslaroadster_minutestocharge;
   }
