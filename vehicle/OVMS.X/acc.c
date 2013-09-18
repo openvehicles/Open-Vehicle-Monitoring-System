@@ -396,6 +396,7 @@ void acc_state_ticker10(void)
       // Completed charging in a charge store area
       break;
     }
+  
   }
 
 void acc_state_ticker60(void)

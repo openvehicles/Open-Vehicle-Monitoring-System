@@ -28,6 +28,34 @@
 ; THE SOFTWARE.
 */
 
+2013-09-18 2.5.3       Firmware 2.5.3
+                       ## Updates to thinkcity
+                       ## Remove DIAG and add ACC to V1_Production build config
+                       ## Remove InternalGPS from V2_TR_Production build config, as not required
+                       ## Cooldown: safety check (only recycle if charging), and revise cooldown current to 13A
+                       ## Support definition of location in SMS commands
+                       ## Tesla Roadster: HVAC#1 should be 0x8F not 0x87
+                       ## Logging: Don't reserve a log slot if the respective logging option is disabled
+                       ## Improve cooldown status reporting on SMS STAT
+                       ## Tidy-up of minSOC
+                       ## Move chargelimit charge stop to common vehicle.c function (not acc)
+                       ## Tesla Roadster: Updates to Tom's charge-time-predictor, with thanks
+                       ## Log cooldown charges as mode=5, and fix excessive-logging-bug related to cooldown cycles
+                       ## Logging: Send log messages one-by-one, to avoid buffer overflows
+                       ## ACC: Number homelinks from 1..3
+                       ## Tesla Roadster: support for chargelimits
+                       ## Make SMS "RESET" reset the module completely
+                       ## Complete rework and expansion of checkpoint numbers
+                       ## Stop charge after cooldown, if no subsequent charge requested
+                       ## Report CAC as part of charge log record
+                       ## Typos in acc for net_state_enter
+                       ## Show debug checkpoint, for DIAG SMS with debugcrash
+                       ## Support vehicle_fn_minutestocharge
+                       ## Add a timezone parameter (-)HH:MM
+                       ## ACC: Support timed charges
+                       ## Move car_cooldown_wascharging to global, and make use of it in ACC
+                       ## Introduce some delays to allow car to wake up
+
 2013-08-27 2.5.2       Firmware 2.5.2
                        ## Updates to vehicle_thinkcity.c (getting to a pretty usable vehicle module)
                        ## Make car_tbattery signed integer, and integrate thinkcity changes
