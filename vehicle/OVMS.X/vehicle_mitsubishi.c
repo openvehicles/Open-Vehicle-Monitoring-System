@@ -3,6 +3,13 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
+;    1.1  21.09.13 (Thomas)
+;         - Fixed ODO
+;         - Fixed filter and mask for poll0 (thanks to Matt Beard)
+;         - Verified ideal range
+;         - Verified SOC
+;         - Verified Charge state
+;         - Added battery temperature reading (thanks to Matt Beard)
 ;    1.0  Initial release
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,6 +41,7 @@
 // Mitsubishi state variables
 
 #pragma udata overlay vehicle_overlay_data
+signed char mi_batttemps[24]; // Temperature buffer, holds first two temps from the 0x6e1 messages (24 of the 64 values)
 
 #pragma udata
 
@@ -113,27 +121,49 @@ BOOL vehicle_mitsubishi_poll0(void)
   RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
   switch (id)
-    {
-    case 0x346:
-      car_estrange = MiFromKm((unsigned int)can_databuffer[7]); // Range
-      car_idealrange = car_estrange;
-    break;
-
+  {
+    case 0x346: //Range
+	{
+	  if (can_mileskm == 'K') 
+	  {
+        car_estrange = (unsigned int)(MiFromKm((unsigned long)can_databuffer[7]));
+	  }
+	  else
+	  {
+	    car_estrange = (unsigned int)can_databuffer[7]; 
+	  }
+      break;
+	}
+    
     /*
     case 0x373:
       // BatCurr & BatVolt
     break;
     */
 
-    case 0x374:
-      car_SOC = (char)(((int)can_databuffer[1] - 10) / 2); //SOC
-    break;
+    case 0x374: //SOC
+	{
+      car_SOC = (unsigned char)(((unsigned int)can_databuffer[1] - 10) / 2); 
+	  
+	  if (can_mileskm == 'K') 
+	  {
+        car_idealrange = ((((unsigned int)car_SOC) * 150) / 100);
+	  }
+	  else
+	  {
+		car_idealrange = ((((unsigned int)car_SOC) * 80) / 100);
+      }
+      break;
+	}
 
-    case 0x389:
-      car_linevoltage = (unsigned int)can_databuffer[1];
-      car_chargecurrent = ((unsigned int)can_databuffer[6] / 10);
-    break;
-    }
+    
+    case 0x389: //charge voltage & current
+	{
+      car_linevoltage = (unsigned char)can_databuffer[1];
+      car_chargecurrent = (unsigned char)((unsigned int)can_databuffer[6] / 10);
+      break;
+	}
+  }
 
   return TRUE;
   }
@@ -142,8 +172,7 @@ BOOL vehicle_mitsubishi_poll1(void)
   {
   unsigned int id = ((unsigned int)RXB1SIDL >>5)
                   + ((unsigned int)RXB1SIDH <<3);
-  unsigned char CANctrl;
-
+  
   can_datalength = RXB1DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB1D0;
   can_databuffer[1] = RXB1D1;
@@ -154,32 +183,78 @@ BOOL vehicle_mitsubishi_poll1(void)
   can_databuffer[6] = RXB1D6;
   can_databuffer[7] = RXB1D7;
 
-  CANctrl=RXB1CON;              // copy CAN RX1 Control register
   RXB1CONbits.RXFUL = 0;        // All bytes read, Clear flag
 
-
   switch (id)
-    {
+  {
+    
     case 0x285:
+	{
       if (can_databuffer[6] == 0x0C) // Car in park
-        //car_doors1 |= 0x40;     //  PARK
+      {
+		//car_doors1 |= 0x40;     //  PARK
         car_doors1 &= ~0x80;    // CAR OFF
-
+      }
       if (can_databuffer[6] == 0x0E) // Car not in park
-        //car_doors1 &= ~0x40;     //  NOT PARK
+      {
+		//car_doors1 &= ~0x40;     //  NOT PARK
         car_doors1 |= 0x80;     // CAR ON
-    break;
-
-    case 0x412:
-      if (can_mileskm == 'K') // Speed & Odo
-        car_speed = can_databuffer[1];
+      }
+      break;
+	}
+    
+    case 0x412: //Speed & Odo
+    {
+	  if (can_databuffer[1] > 200) //Speed
+      {
+        car_speed = (unsigned char)((unsigned int)can_databuffer[1] - 255);
+      }
       else
-        car_speed = (unsigned char) ((((unsigned long)can_databuffer[1] * 1000)+500)/1609);
+      {
+        car_speed = (unsigned char) can_databuffer[1];
+      }
+      
+	  if (can_mileskm == 'K') // Odo
+      {
+	    car_odometer = MiFromKm((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
+      }
+	  else
+	  {
+		car_odometer = ((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
+	  }
+      break;
+	}
+    
+	case 0x6e1: 
+    {
+       // Calculate average battery pack temperature based on 24 of the 64 temperature values
+       // Message 0x6e1 carries two temperatures for each of 12 banks, bank number (1..12) in byte 0,
+       // temperatures in bytes 2 and 3, offset by 50C
+       int idx = can_databuffer[0] - 1;
+       if((idx >= 0) && (idx <= 11))
+       {
+         int i;
+         int tbattery = 0;
+         idx <<= 2;
+         mi_batttemps[idx] = (signed char)(can_databuffer[2] - 50);
+         mi_batttemps[idx + 1] = (signed char)(can_databuffer[3] - 50);
 
-    car_odometer = MiFromKm((((can_databuffer[2] << 8) + can_databuffer[3]) << 8) + can_databuffer[4]);
-    break;
-    }
-
+         car_tpem = 100;     // Min cell temp
+         car_tmotor = 0;     // Max cell temp
+         for(i=0; i<24; i++)
+         {
+           signed char t = mi_batttemps[i];
+           tbattery += t;
+           if(t < car_tpem) car_tpem = t;
+           if(t > car_tmotor) car_tmotor = t;
+         }
+         car_tbattery = tbattery / 24;
+         car_stale_temps = 120; // Reset stale indicator
+       }
+      break;
+	}
+  }
+  
   return TRUE;
   }
 
@@ -193,7 +268,8 @@ BOOL vehicle_mitsubishi_poll1(void)
 BOOL vehicle_mitsubishi_initialise(void)
   {
   char *p;
-
+  int i;
+  
   car_type[0] = 'M'; // Car is type MI - Mitsubishi iMiev
   car_type[1] = 'I';
   car_type[2] = 0;
@@ -203,6 +279,9 @@ BOOL vehicle_mitsubishi_initialise(void)
   // Vehicle specific data initialisation
   car_stale_timer = -1; // Timed charging is not supported for OVMS MI
   car_time = 0;
+  
+   // Clear the battery temperatures
+  for(i=0; i<12; i++) mi_batttemps[i] = 0;
 
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
@@ -215,11 +294,9 @@ BOOL vehicle_mitsubishi_initialise(void)
 
   // Buffer 0 (filters 0, 1) for extended PID responses
   RXB0CON = 0b00000000;
-  // Mask0 = 0b11111111000 (0x7F8), filterbit 0,1,2 deactivated
-  //RXM0SIDL = 0b00000000;
-  //RXM0SIDH = 0b11111111;
+  // Mask0 = 0b11110000000 (0x700), filterbit 0-7 deactivated
   RXM0SIDL = 0b00000000;
-  RXM0SIDH = 0b11111100;
+  RXM0SIDH = 0b11100000;
 
 
   // Filter0 0b01100000000 (0x300..0x3F8)
@@ -242,6 +319,10 @@ BOOL vehicle_mitsubishi_initialise(void)
   RXF3SIDL = 0b01000000;
   RXF3SIDH = 0b10000010;
 
+  // Filter4 0b11011100001 (0x6E1)
+  // Sample the first of the battery values
+  RXF4SIDL = 0b00100000;
+  RXF4SIDH = 0b11011100;
 
   // CAN bus baud rate
 
