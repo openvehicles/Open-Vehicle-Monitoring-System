@@ -144,15 +144,7 @@ BOOL vehicle_mitsubishi_poll0(void)
     case 0x374: //SOC
 	{
       car_SOC = (unsigned char)(((unsigned int)can_databuffer[1] - 10) / 2); 
-	  
-	  if (can_mileskm == 'K') 
-	  {
-        car_idealrange = ((((unsigned int)car_SOC) * 150) / 100);
-	  }
-	  else
-	  {
-		car_idealrange = ((((unsigned int)car_SOC) * 80) / 100);
-      }
+	  car_idealrange = ((((unsigned int)car_SOC) * 93) / 100); //Ideal range: i-Miev - 93 miles (150 Km). C-Zero - 80 miles?
       break;
 	}
 
