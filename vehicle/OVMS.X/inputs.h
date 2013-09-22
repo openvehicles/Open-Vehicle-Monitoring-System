@@ -35,6 +35,16 @@ void inputs_initialise(void);
 unsigned char inputs_gsmgprs(void);
 
 #ifdef OVMS_HW_V2
+unsigned char input_gpi2(void);
+unsigned char input_gpi3(void);
+unsigned char input_gpi4(void);
+unsigned char input_gpi5(void);
+
+unsigned char output_gpo0(unsigned char onoff);
+unsigned char output_gpo1(unsigned char onoff);
+unsigned char output_gpo2(unsigned char onoff);
+unsigned char output_gpo3(unsigned char onoff);
+
 float inputs_voltage(void);
 #endif // #ifdef OVMS_HW_V2
 
