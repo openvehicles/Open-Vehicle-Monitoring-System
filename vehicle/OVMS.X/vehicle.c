@@ -276,7 +276,7 @@ void vehicle_ticker(void)
     minSOC = sys_features[FEATURE_MINSOC];
     if ((!(can_minSOCnotified & CAN_MINSOC_ALERT_MAIN)) && (car_SOC < minSOC))
       {
-      net_req_notification(NET_NOTIFY_STAT);
+      net_req_notification(NET_NOTIFY_CHARGE);
       can_minSOCnotified |= CAN_MINSOC_ALERT_MAIN;
       }
     else if ((can_minSOCnotified & CAN_MINSOC_ALERT_MAIN) && (car_SOC > minSOC + 2))
