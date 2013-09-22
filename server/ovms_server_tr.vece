@@ -1,5 +1,6 @@
 [TR]
 25=Memory Stick transfer in progress (%d%%)
+53=GPS: No data fault
 269=BSM: Negative contactor/economizer stuck low
 283=BSM: Isolation fault
 286=BSM: Isolation fault while contactors closed
@@ -7,6 +8,7 @@
 409=TPMS: Hardware Error
 428=12V Battery Service Required
 604=Battery Low Power Reduced
+606=ESS: Range Mode Remaining charge uncertain
 611=ESS: Almost empty - Car stops in 1 mile
 882=Before starting, charge port door must be closed
 888=Disarm vehicle with key fob before starting
