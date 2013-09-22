@@ -3,10 +3,14 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
+;    1.2  22.09.13 (Thomas)
+;         - Fixed Ideal range
+;         - Added parking timer
+;         - Added detection of car is asleep.
 ;    1.1  21.09.13 (Thomas)
 ;         - Fixed ODO
 ;         - Fixed filter and mask for poll0 (thanks to Matt Beard)
-;         - Verified ideal range
+;         - Verified estimated range
 ;         - Verified SOC
 ;         - Verified Charge state
 ;         - Added battery temperature reading (thanks to Matt Beard)
@@ -41,6 +45,7 @@
 // Mitsubishi state variables
 
 #pragma udata overlay vehicle_overlay_data
+unsigned char mi_candata_timer;  // A per-second timer for CAN bus data
 signed char mi_batttemps[24]; // Temperature buffer, holds first two temps from the 0x6e1 messages (24 of the 64 values)
 
 #pragma udata
@@ -52,6 +57,18 @@ signed char mi_batttemps[24]; // Temperature buffer, holds first two temps from 
 //
 BOOL vehicle_mitsubishi_ticker1(void)
   {
+  if (mi_candata_timer > 0)
+    {
+    if (--mi_candata_timer == 0) 
+	  { // Car has gone to sleep
+	    car_doors3 &= ~0x01;  // Car is asleep
+	  }
+	else
+      {
+       car_doors3 |= 0x01;   // Car is awake
+      }	  
+    }
+  car_time++;
   return FALSE;
   }
 
@@ -80,18 +97,19 @@ BOOL vehicle_mitsubishi_ticker10(void)
   if ((car_linevoltage > 100) && (car_chargecurrent < 1))
     {
     car_chargestate = 4; //Done
-    car_doors1 = 0x0C;  // Charge connector connected
+    car_doors1 |= 0x0C;  // XXXXX11XX: Charge port open, Pilot signal ON
+	car_doors1 &= ~0x10; // XXXX0XXXX: Not charging
     }
 
   if ((car_linevoltage > 100) && (car_chargecurrent > 1))
-    {
+    {  // CAN says the car is charging
     car_chargestate = 1; //Charging
-    car_doors1 = 0x1C;
+    car_doors1 |= 0x1C; // XXXX111XX, Pilot signal ON, charging.
     }
 
   if (car_linevoltage < 100)  // AC line voltage < 100
     {
-    car_doors1 = 0x00;  // charging connector unplugged
+    car_doors1 &= ~0x1C;  // XXXXX00XX, charging connector unplugged
     }
 
   return FALSE;
@@ -120,20 +138,22 @@ BOOL vehicle_mitsubishi_poll0(void)
 
   RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
+  mi_candata_timer = 60;  // Reset the timer
+  
   switch (id)
-  {
+    {
     case 0x346: //Range
-	{
+	  {
 	  if (can_mileskm == 'K') 
-	  {
+	    {
         car_estrange = (unsigned int)(MiFromKm((unsigned long)can_databuffer[7]));
-	  }
+	    }
 	  else
-	  {
+	    {
 	    car_estrange = (unsigned int)can_databuffer[7]; 
-	  }
+	    }
       break;
-	}
+	  }
     
     /*
     case 0x373:
@@ -142,20 +162,20 @@ BOOL vehicle_mitsubishi_poll0(void)
     */
 
     case 0x374: //SOC
-	{
+	  {
       car_SOC = (unsigned char)(((unsigned int)can_databuffer[1] - 10) / 2); 
 	  car_idealrange = ((((unsigned int)car_SOC) * 93) / 100); //Ideal range: i-Miev - 93 miles (150 Km). C-Zero - 80 miles?
       break;
-	}
+	  }
 
     
     case 0x389: //charge voltage & current
-	{
+	  {
       car_linevoltage = (unsigned char)can_databuffer[1];
       car_chargecurrent = (unsigned char)((unsigned int)can_databuffer[6] / 10);
       break;
-	}
-  }
+	  }
+    }
 
   return TRUE;
   }
@@ -177,54 +197,66 @@ BOOL vehicle_mitsubishi_poll1(void)
 
   RXB1CONbits.RXFUL = 0;        // All bytes read, Clear flag
 
+   mi_candata_timer = 60;  // Reset the timer
+  
   switch (id)
-  {
+    {
     
     case 0x285:
-	{
+	  {
       if (can_databuffer[6] == 0x0C) // Car in park
-      {
-		//car_doors1 |= 0x40;     //  PARK
+        {
+		car_doors1 |= 0x40;     //  PARK
         car_doors1 &= ~0x80;    // CAR OFF
-      }
+		if (car_parktime == 0)
+          {
+          car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
+          net_req_notification(NET_NOTIFY_ENV);
+          }
+        }
       if (can_databuffer[6] == 0x0E) // Car not in park
-      {
-		//car_doors1 &= ~0x40;     //  NOT PARK
-        car_doors1 |= 0x80;     // CAR ON
-      }
+        {
+		car_doors1 &= ~0x40;     //  NOT PARK
+        car_doors1 |= 0x80;      // CAR ON
+		if (car_parktime != 0)
+          {
+          car_parktime = 0; // No longer parking
+          net_req_notification(NET_NOTIFY_ENV);
+          }
+        }
       break;
-	}
+	  }
     
     case 0x412: //Speed & Odo
-    {
+      {
 	  if (can_databuffer[1] > 200) //Speed
-      {
+        {
         car_speed = (unsigned char)((unsigned int)can_databuffer[1] - 255);
-      }
+        }
       else
-      {
+        {
         car_speed = (unsigned char) can_databuffer[1];
-      }
+        }
       
 	  if (can_mileskm == 'K') // Odo
-      {
+        {
 	    car_odometer = MiFromKm((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
-      }
+        }
 	  else
-	  {
+	    {
 		car_odometer = ((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
-	  }
+	    }
       break;
-	}
+	  }
     
 	case 0x6e1: 
-    {
+      {
        // Calculate average battery pack temperature based on 24 of the 64 temperature values
        // Message 0x6e1 carries two temperatures for each of 12 banks, bank number (1..12) in byte 0,
        // temperatures in bytes 2 and 3, offset by 50C
        int idx = can_databuffer[0] - 1;
        if((idx >= 0) && (idx <= 11))
-       {
+         {
          int i;
          int tbattery = 0;
          idx <<= 2;
@@ -234,18 +266,18 @@ BOOL vehicle_mitsubishi_poll1(void)
          car_tpem = 100;     // Min cell temp
          car_tmotor = 0;     // Max cell temp
          for(i=0; i<24; i++)
-         {
+           {
            signed char t = mi_batttemps[i];
            tbattery += t;
            if(t < car_tpem) car_tpem = t;
            if(t > car_tmotor) car_tmotor = t;
-         }
+           }
          car_tbattery = tbattery / 24;
          car_stale_temps = 120; // Reset stale indicator
-       }
+         }
       break;
-	}
-  }
+	  }
+    }
   
   return TRUE;
   }
@@ -271,6 +303,7 @@ BOOL vehicle_mitsubishi_initialise(void)
   // Vehicle specific data initialisation
   car_stale_timer = -1; // Timed charging is not supported for OVMS MI
   car_time = 0;
+  mi_candata_timer = 0;
   
    // Clear the battery temperatures
   for(i=0; i<12; i++) mi_batttemps[i] = 0;
