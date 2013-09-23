@@ -3,6 +3,9 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
+;    1.3  23.09.13 (Thomas)
+;         - Fixed charging notification when battery is full, SOC=100%
+;         - TODO: Fix battery temperature reading. 
 ;    1.2  22.09.13 (Thomas)
 ;         - Fixed Ideal range
 ;         - Added parking timer
@@ -45,7 +48,10 @@
 // Mitsubishi state variables
 
 #pragma udata overlay vehicle_overlay_data
+unsigned char mi_charge_timer;   // A per-second charge timer
+unsigned long mi_charge_wm;      // A per-minute watt accumulator
 unsigned char mi_candata_timer;  // A per-second timer for CAN bus data
+
 signed char mi_batttemps[24]; // Temperature buffer, holds first two temps from the 0x6e1 messages (24 of the 64 values)
 
 #pragma udata
@@ -57,6 +63,12 @@ signed char mi_batttemps[24]; // Temperature buffer, holds first two temps from 
 //
 BOOL vehicle_mitsubishi_ticker1(void)
   {
+  
+  ////////////////////////////////////////////////////////////////////////
+  // Stale tickers
+  ////////////////////////////////////////////////////////////////////////
+  
+  if (car_stale_temps>0) car_stale_temps--;
   if (mi_candata_timer > 0)
     {
     if (--mi_candata_timer == 0) 
@@ -69,52 +81,104 @@ BOOL vehicle_mitsubishi_ticker1(void)
       }	  
     }
   car_time++;
-  return FALSE;
-  }
-
+  
+  
+  
   ////////////////////////////////////////////////////////////////////////
-// tc_state_ticker10()
-// State Model: 10 second ticker
-// This function is called approximately once every 10 seconds (since state
-// was first entered), and gives the state a timeslice for activity.
-//
-
-BOOL vehicle_mitsubishi_ticker10(void)
-  {
-
-
-// Check for charging state
-// car_door1 Bits used: 0-7
-// Function net_prep_stat in net_msg.c uses car_doors1bits.ChargePort to determine SMS-printout
-//
-// 0x04 Chargeport open, bit 2 set
-// 0x08 Pilot signal on, bit 3 set
-// 0x10 Vehicle charging, bit 4 set
-// 0x0C Chargeport open and pilot signal, bits 2,3 set
-// 0x1C Bits 2,3,4 set
-
-
-  if ((car_linevoltage > 100) && (car_chargecurrent < 1))
-    {
-    car_chargestate = 4; //Done
-    car_doors1 |= 0x0C;  // XXXXX11XX: Charge port open, Pilot signal ON
-	car_doors1 &= ~0x10; // XXXX0XXXX: Not charging
+  // Charge state determination
+  ////////////////////////////////////////////////////////////////////////
+  // 0x04 Chargeport open, bit 2 set
+  // 0x08 Pilot signal on, bit 3 set
+  // 0x10 Vehicle charging, bit 4 set
+  // 0x0C Chargeport open and pilot signal, bits 2,3 set
+  // 0x1C Bits 2,3,4 set
+  
+  if ((car_chargecurrent!=0)&&(car_linevoltage>100))
+    { // CAN says the car is charging
+    car_doors5bits.Charging12V = 1;  //MJ
+    if ((car_doors1 & 0x08)==0)
+      { // Charge has started
+      car_doors1 |= 0x1c;     // Set charge, door and pilot bits
+	  //car_doors1 |= 0x0c;     // Set charge, and pilot bits
+      car_chargemode = 0;     // Standard charge mode
+      car_chargestate = 1;    // Charging state
+      car_chargesubstate = 3; // Charging by request
+      car_chargelimit = 13;   // Hard-code 13A charge limit
+      car_chargeduration = 0; // Reset charge duration
+      car_chargekwh = 0;      // Reset charge kWh
+      mi_charge_timer = 0;    // Reset the per-second charge timer
+      mi_charge_wm = 0;       // Reset the per-minute watt accumulator
+      net_req_notification(NET_NOTIFY_STAT);
+      }
+    else
+      { // Charge is ongoing
+      car_doors1bits.ChargePort = 1;  //MJ
+      mi_charge_timer++;
+      if (mi_charge_timer>=60)
+        { // One minute has passed
+        mi_charge_timer=0;
+        car_chargeduration++;
+        mi_charge_wm += (car_chargecurrent*car_linevoltage);
+        if (mi_charge_wm >= 60000L)
+          { // Let's move 1kWh to the virtual car
+          car_chargekwh += 1;
+          mi_charge_wm -= 60000L;
+          }
+        }
+      }
     }
-
-  if ((car_linevoltage > 100) && (car_chargecurrent > 1))
-    {  // CAN says the car is charging
-    car_chargestate = 1; //Charging
-    car_doors1 |= 0x1C; // XXXX111XX, Pilot signal ON, charging.
+	
+  else if ((car_chargecurrent==0)&&(car_linevoltage>100))
+    { // CAN says the car is not charging
+    if ((car_doors1 & 0x08)&&(car_SOC==100))
+      { // Charge has completed 
+      car_doors1 &= ~0x18;    // Clear charge and pilot bits
+	  //car_doors1 &= ~0x0c;    // Clear charge and pilot bits
+      car_doors1bits.ChargePort = 1;  //MJ
+      car_chargemode = 0;     // Standard charge mode
+      car_chargestate = 4;    // Charge DONE
+      car_chargesubstate = 3; // Leave it as is
+      net_req_notification(NET_NOTIFY_CHARGE);  // Charge done Message MJ
+      mi_charge_timer = 0;       // Reset the per-second charge timer
+      mi_charge_wm = 0;          // Reset the per-minute watt accumulator
+      net_req_notification(NET_NOTIFY_STAT);
+      }
+    car_doors5bits.Charging12V = 0;  // MJ
+    }	
+		
+  else if ((car_chargecurrent==0)&&(car_linevoltage<100))
+    { // CAN says the car is not charging
+    if (car_doors1 & 0x08)
+      { // Charge has completed / stopped
+      car_doors1 &= ~0x18;    // Clear charge and pilot bits
+	  //car_doors1 &= ~0x0c;    // Clear charge and pilot bits
+      car_doors1bits.ChargePort = 1;  //MJ
+      car_chargemode = 0;     // Standard charge mode
+      if (car_SOC < 95)
+        { // Assume charge was interrupted
+        car_chargestate = 21;    // Charge STOPPED
+        car_chargesubstate = 14; // Charge INTERRUPTED
+        net_req_notification(NET_NOTIFY_CHARGE);
+        }
+      else
+        { // Assume charge completed normally
+        car_chargestate = 4;    // Charge DONE
+        car_chargesubstate = 3; // Leave it as is
+        net_req_notification(NET_NOTIFY_CHARGE);  // Charge done Message MJ
+        }
+      mi_charge_timer = 0;       // Reset the per-second charge timer
+      mi_charge_wm = 0;          // Reset the per-minute watt accumulator
+      net_req_notification(NET_NOTIFY_STAT);
+      }
+    car_doors5bits.Charging12V = 0;  // MJ
+	car_doors1bits.ChargePort = 0;   // Charging cable unplugged, charging door closed.
     }
-
-  if (car_linevoltage < 100)  // AC line voltage < 100
-    {
-    car_doors1 &= ~0x1C;  // XXXXX00XX, charging connector unplugged
-    }
-
+  
+  
   return FALSE;
   }
 
+  
 
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
@@ -197,7 +261,7 @@ BOOL vehicle_mitsubishi_poll1(void)
 
   RXB1CONbits.RXFUL = 0;        // All bytes read, Clear flag
 
-   mi_candata_timer = 60;  // Reset the timer
+  mi_candata_timer = 60;  // Reset the timer
   
   switch (id)
     {
@@ -249,6 +313,7 @@ BOOL vehicle_mitsubishi_poll1(void)
       break;
 	  }
     
+	
 	case 0x6e1: 
       {
        // Calculate average battery pack temperature based on 24 of the 64 temperature values
@@ -281,7 +346,6 @@ BOOL vehicle_mitsubishi_poll1(void)
   
   return TRUE;
   }
-
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -369,7 +433,6 @@ BOOL vehicle_mitsubishi_initialise(void)
   vehicle_fn_poll0 = &vehicle_mitsubishi_poll0;
   vehicle_fn_poll1 = &vehicle_mitsubishi_poll1;
   vehicle_fn_ticker1 = &vehicle_mitsubishi_ticker1;
-  vehicle_fn_ticker10 = &vehicle_mitsubishi_ticker10;
 
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
