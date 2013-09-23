@@ -769,7 +769,6 @@ void vehicle_thinkcity_stat_prepmsg(void)
   s = stp_rom(s, " oC");
   s = stp_i(s, "\r AmbTp: ", tc_slibatt_temp);
   s = stp_rom(s, " oC");
-  s = stp_i(s, "\r Heat_cnt: ", tc_heater_count);
   s = stp_l2f(s, "\r AuxBatt: ", car_12vline, 1);
   s = stp_rom(s, "V");
   if (tc_charger_pwm > 0)
