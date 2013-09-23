@@ -72,13 +72,13 @@ BOOL vehicle_mitsubishi_ticker1(void)
   if (mi_candata_timer > 0)
     {
     if (--mi_candata_timer == 0) 
-	  { // Car has gone to sleep
-	    car_doors3 &= ~0x01;  // Car is asleep
-	  }
-	else
+      { // Car has gone to sleep
+      car_doors3 &= ~0x01;  // Car is asleep
+      }
+    else
       {
-       car_doors3 |= 0x01;   // Car is awake
-      }	  
+      car_doors3 |= 0x01;   // Car is awake
+      }
     }
   car_time++;
   
@@ -99,7 +99,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
     if ((car_doors1 & 0x08)==0)
       { // Charge has started
       car_doors1 |= 0x1c;     // Set charge, door and pilot bits
-	  //car_doors1 |= 0x0c;     // Set charge, and pilot bits
+      //car_doors1 |= 0x0c;     // Set charge, and pilot bits
       car_chargemode = 0;     // Standard charge mode
       car_chargestate = 1;    // Charging state
       car_chargesubstate = 3; // Charging by request
@@ -127,13 +127,13 @@ BOOL vehicle_mitsubishi_ticker1(void)
         }
       }
     }
-	
+
   else if ((car_chargecurrent==0)&&(car_linevoltage>100))
     { // CAN says the car is not charging
     if ((car_doors1 & 0x08)&&(car_SOC==100))
       { // Charge has completed 
       car_doors1 &= ~0x18;    // Clear charge and pilot bits
-	  //car_doors1 &= ~0x0c;    // Clear charge and pilot bits
+      //car_doors1 &= ~0x0c;    // Clear charge and pilot bits
       car_doors1bits.ChargePort = 1;  //MJ
       car_chargemode = 0;     // Standard charge mode
       car_chargestate = 4;    // Charge DONE
@@ -144,14 +144,14 @@ BOOL vehicle_mitsubishi_ticker1(void)
       net_req_notification(NET_NOTIFY_STAT);
       }
     car_doors5bits.Charging12V = 0;  // MJ
-    }	
-		
+    }
+
   else if ((car_chargecurrent==0)&&(car_linevoltage<100))
     { // CAN says the car is not charging
     if (car_doors1 & 0x08)
       { // Charge has completed / stopped
       car_doors1 &= ~0x18;    // Clear charge and pilot bits
-	  //car_doors1 &= ~0x0c;    // Clear charge and pilot bits
+      //car_doors1 &= ~0x0c;    // Clear charge and pilot bits
       car_doors1bits.ChargePort = 1;  //MJ
       car_chargemode = 0;     // Standard charge mode
       if (car_SOC < 95)
@@ -171,14 +171,14 @@ BOOL vehicle_mitsubishi_ticker1(void)
       net_req_notification(NET_NOTIFY_STAT);
       }
     car_doors5bits.Charging12V = 0;  // MJ
-	car_doors1bits.ChargePort = 0;   // Charging cable unplugged, charging door closed.
+    car_doors1bits.ChargePort = 0;   // Charging cable unplugged, charging door closed.
     }
-  
-  
+
+
   return FALSE;
   }
 
-  
+
 
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
@@ -207,17 +207,17 @@ BOOL vehicle_mitsubishi_poll0(void)
   switch (id)
     {
     case 0x346: //Range
-	  {
-	  if (can_mileskm == 'K') 
-	    {
+      {
+      if (can_mileskm == 'K') 
+        {
         car_estrange = (unsigned int)(MiFromKm((unsigned long)can_databuffer[7]));
-	    }
-	  else
-	    {
-	    car_estrange = (unsigned int)can_databuffer[7]; 
-	    }
+        }
+      else
+       {
+       car_estrange = (unsigned int)can_databuffer[7]; 
+       }
       break;
-	  }
+      }
     
     /*
     case 0x373:
@@ -226,19 +226,19 @@ BOOL vehicle_mitsubishi_poll0(void)
     */
 
     case 0x374: //SOC
-	  {
+      {
       car_SOC = (unsigned char)(((unsigned int)can_databuffer[1] - 10) / 2); 
-	  car_idealrange = ((((unsigned int)car_SOC) * 93) / 100); //Ideal range: i-Miev - 93 miles (150 Km). C-Zero - 80 miles?
+      car_idealrange = ((((unsigned int)car_SOC) * 93) / 100); //Ideal range: i-Miev - 93 miles (150 Km). C-Zero - 80 miles?
       break;
-	  }
+      }
 
     
     case 0x389: //charge voltage & current
-	  {
+      {
       car_linevoltage = (unsigned char)can_databuffer[1];
       car_chargecurrent = (unsigned char)((unsigned int)can_databuffer[6] / 10);
       break;
-	  }
+      }
     }
 
   return TRUE;
@@ -267,12 +267,12 @@ BOOL vehicle_mitsubishi_poll1(void)
     {
     
     case 0x285:
-	  {
+      {
       if (can_databuffer[6] == 0x0C) // Car in park
         {
-		car_doors1 |= 0x40;     //  PARK
+        car_doors1 |= 0x40;     //  PARK
         car_doors1 &= ~0x80;    // CAR OFF
-		if (car_parktime == 0)
+        if (car_parktime == 0)
           {
           car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
           net_req_notification(NET_NOTIFY_ENV);
@@ -280,20 +280,20 @@ BOOL vehicle_mitsubishi_poll1(void)
         }
       if (can_databuffer[6] == 0x0E) // Car not in park
         {
-		car_doors1 &= ~0x40;     //  NOT PARK
+        car_doors1 &= ~0x40;     //  NOT PARK
         car_doors1 |= 0x80;      // CAR ON
-		if (car_parktime != 0)
+        if (car_parktime != 0)
           {
           car_parktime = 0; // No longer parking
           net_req_notification(NET_NOTIFY_ENV);
           }
         }
       break;
-	  }
-    
+      }
+
     case 0x412: //Speed & Odo
       {
-	  if (can_databuffer[1] > 200) //Speed
+      if (can_databuffer[1] > 200) //Speed
         {
         car_speed = (unsigned char)((unsigned int)can_databuffer[1] - 255);
         }
@@ -301,20 +301,20 @@ BOOL vehicle_mitsubishi_poll1(void)
         {
         car_speed = (unsigned char) can_databuffer[1];
         }
-      
-	  if (can_mileskm == 'K') // Odo
+
+      if (can_mileskm == 'K') // Odo
         {
-	    car_odometer = MiFromKm((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
+        car_odometer = MiFromKm((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
         }
-	  else
-	    {
-		car_odometer = ((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
-	    }
+      else
+        {
+        car_odometer = ((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
+        }
       break;
-	  }
-    
-	
-	case 0x6e1: 
+      }
+
+
+    case 0x6e1: 
       {
        // Calculate average battery pack temperature based on 24 of the 64 temperature values
        // Message 0x6e1 carries two temperatures for each of 12 banks, bank number (1..12) in byte 0,
@@ -341,7 +341,7 @@ BOOL vehicle_mitsubishi_poll1(void)
          car_stale_temps = 120; // Reset stale indicator
          }
       break;
-	  }
+      }
     }
   
   return TRUE;
