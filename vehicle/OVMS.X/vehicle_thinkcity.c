@@ -4,6 +4,9 @@
 ;
 ;
 ;    Changes:
+;    2.5  24.09.2013 (Haakon)
+;         - Added support for switching on/off external heater/auxilary via Valet Mode button.
+;           RC3 is high for 20 minutes if not "unvalet".
 ;    2.4  22.09.2013 (Haakon)
 ;         - Added central lock/unlock. Assigned pin 4 at 9X2 to RC1 (lock) and pin 6 to RC2 (unlock)
 ;         - Added msg 0x460, SRS status and assigned pin 2 at 9X2 to RC0 (SRS OK).
@@ -129,6 +132,7 @@ signed int    tc_slibatt_temp = 0;
 unsigned int  tc_charger_pwm;
 unsigned int  tc_sys_voltmaxgen;
 unsigned char tc_srs_stat;
+signed int    tc_heater_count = 0;
 
 //Status flags:
 unsigned int tc_bit_eoc;
@@ -168,13 +172,14 @@ unsigned int tc_bit_chgovervolt;
 unsigned int tc_bit_chgovercurr;
 
 
-#pragma udata
 
+#pragma udata
 ////////////////////////////////////////////////////////////////////////
 // vehicle_thinkcity_ticker1()
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework a ticker call approximately once per second
 //
+
 BOOL vehicle_thinkcity_state_ticker1(void)
   {
   if (car_stale_ambient>0) car_stale_ambient--;
@@ -182,10 +187,10 @@ BOOL vehicle_thinkcity_state_ticker1(void)
 
   if (tc_srs_stat == 0)
   {
-    PORTCbits.RC0 = 1; // Set digital out RC0 high, pin2 header 9X2.
+    output_gpo0(1); // Set digital out RC0 high, pin2 header 9X2.
   }
   else
-    PORTCbits.RC0 = 0; // Set digital out RC0 low, pin2 header 9X2.
+    output_gpo0(0); // Set digital out RC0 low, pin2 header 9X2.
 
   car_time++;
   car_chargemode = 0;
@@ -214,7 +219,7 @@ BOOL vehicle_thinkcity_state_ticker10(void)
 // 0x10 Vehicle charging, bit 4 set
 // 0x0C Chargeport open and pilot signal, bits 2,3 set
 // 0x1C Bits 2,3,4 set
-  if (tc_bit_eoc == 1) // Is EOC_bit (bit 0) is set?
+  if (tc_bit_eoc == 1) // Is EOC_bit (bit 0) set?
   {
     car_chargestate = 4; //Done
     if (car_linevoltage > 100)  // Is AC line voltage > 100 ?
@@ -225,12 +230,12 @@ BOOL vehicle_thinkcity_state_ticker10(void)
       car_doors1 = 0x00;  // Charge connector disconnected
   }
 
-  if (tc_bit_chrgen == 1) // Is charge_enable_bit (bit 0) is set (turns to 0 during 0CV-measuring at 80% SOC)?
+  if (tc_bit_chrgen == 1) // Is charge_enable_bit (bit 0) set (turns to 0 during 0CV-measuring at 80% SOC)?
   {
     car_chargestate = 1; //Charging
     car_doors1 = 0x1C;
   }
-  if (tc_bit_ocvmeas == 2) // Is ocv_meas_in_progress (bit 1) is  set?
+  if (tc_bit_ocvmeas == 2) // Is ocv_meas_in_progress (bit 1) set?
   {
     car_chargestate = 2; //Top off
     car_doors1 = 0x0C;
@@ -245,9 +250,21 @@ BOOL vehicle_thinkcity_state_ticker10(void)
     car_doors1bits.CarON = 1;  // Car is on
   }
 
+  if (tc_heater_count == 0)
+  {
+    output_gpo3(0);
+    net_req_notification(NET_NOTIFY_ENV);
+    car_doors2bits.ValetMode = 0;  // Unvalet activated or heater/aux off
+
+  }
+  if (tc_heater_count < 0)
+  {
+    tc_heater_count++;
+  }
 
   return FALSE;
   }
+
 
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
@@ -506,6 +523,28 @@ void vehicle_thinkcity_tx_lockunlockcar(unsigned char mode, char *pin)
     car_doors2bits.CarLocked = 0;  // Car is unlocked
 
   }
+  else if (mode == 0x00) //valet or external heater or auxilary on
+  {
+    if (PORTCbits.RC3 == 0)
+    {
+      PORTCbits.RC3 = 1;
+      tc_heater_count = -120;
+    }
+    net_req_notification(NET_NOTIFY_ENV);
+    car_doors2bits.ValetMode = 1;  // Valet activated or heater/aux on
+
+  }
+  else if (mode == 0x01) //unvalet or external heater or auxilary off
+  {
+    if (PORTCbits.RC3 == 1)
+    {
+      PORTCbits.RC3= 0;
+    }
+    net_req_notification(NET_NOTIFY_ENV);
+    car_doors2bits.ValetMode = 0;  // Unvalet activated or heater/aux off
+
+  }
+
   }
 
 
@@ -526,6 +565,18 @@ BOOL vehicle_thinkcity_commandhandler(BOOL msgmode, int code, char* msg)
 
     case 22: // Unlock car (params pin)
         vehicle_thinkcity_tx_lockunlockcar(3, net_msg_cmd_msg);
+        STP_OK(net_scratchpad, code);
+      sendenv=TRUE;
+      break;
+
+    case 21: // Activate valet mode (params pin)
+        vehicle_thinkcity_tx_lockunlockcar(0, net_msg_cmd_msg);
+        STP_OK(net_scratchpad, code);
+      sendenv=TRUE;
+      break;
+
+    case 23: // Deactivate valet mode (params pin)
+        vehicle_thinkcity_tx_lockunlockcar(1, net_msg_cmd_msg);
         STP_OK(net_scratchpad, code);
       sendenv=TRUE;
       break;
@@ -718,6 +769,7 @@ void vehicle_thinkcity_stat_prepmsg(void)
   s = stp_rom(s, " oC");
   s = stp_i(s, "\r AmbTp: ", tc_slibatt_temp);
   s = stp_rom(s, " oC");
+  s = stp_i(s, "\r Heat_cnt: ", tc_heater_count);
   s = stp_l2f(s, "\r AuxBatt: ", car_12vline, 1);
   s = stp_rom(s, "V");
   if (tc_charger_pwm > 0)
@@ -971,6 +1023,7 @@ BOOL vehicle_thinkcity_initialise(void)
   car_stale_timer = -1; // Timed charging is not supported for OVMS NL
   car_time = 0;
 
+
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
@@ -1025,6 +1078,10 @@ BOOL vehicle_thinkcity_initialise(void)
     CANCON = 0b01100000; // Listen only mode, Receive bufer 0
     }
 
+  PORTCbits.RC0 = 0;
+  PORTCbits.RC1 = 0;
+  PORTCbits.RC2 = 0;
+  PORTCbits.RC3 = 0;
   // Hook in...
   vehicle_fn_poll0 = &vehicle_thinkcity_poll0;
   vehicle_fn_poll1 = &vehicle_thinkcity_poll1;
