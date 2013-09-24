@@ -378,6 +378,12 @@ void acc_state_ticker10(void)
       break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
+      if (CAR_IS_CHARGING)
+        {
+        // Stop charge, but stay in current state
+        vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
+        }
+      // Check if charge is due
       p = par_get(PARAM_TIMEZONE);
       now = car_time + ((long)timestring_to_mins(p))*60;  // Date+Time in seconds, local time zone
       now = (now % 86400) / 60;  // In minutes past the start of the day
