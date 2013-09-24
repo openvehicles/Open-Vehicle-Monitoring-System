@@ -125,7 +125,12 @@ void acc_state_enter(unsigned char newstate)
       // Cooldown in a charge store area
       CHECKPOINT(0x67)
       vehicle_fn_commandhandler(FALSE, 25, NULL); // Cooldown
-      if (acc_current_rec.acc_flags.ChargeAtPlugin)
+      if (car_coolingdown<0)
+        {
+        // Cooldown could not be started...
+        // Just ignore it, as we'll pick it up as an end of cooldown
+        }
+      else if (acc_current_rec.acc_flags.ChargeAtPlugin)
         {
         // Try to trick the car into thinking the charge was ongoing when cooldown
         // started, so that it will continue the charge.
@@ -283,8 +288,16 @@ void acc_state_ticker1(void)
           else
             {
             // Stop charge...
-            vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
-            acc_state_enter(ACC_STATE_CHARGEDONE);
+            if (CAR_IS_CHARGING)
+              {
+              // Stop charge, but stay in current state
+              vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
+              }
+            else
+              {
+              // If charge has stopped, get out of this state
+              acc_state_enter(ACC_STATE_CHARGEDONE);
+              }
             }
           }
         else
