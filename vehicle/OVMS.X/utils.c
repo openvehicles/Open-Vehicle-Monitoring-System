@@ -128,6 +128,21 @@ unsigned char string_to_mode(char *mode)
     return 0;
   }
 
+int timestring_to_mins(char* arg)
+  {
+  // Take a time string of the format HH:MM (24 hour) and return as number of minutes.
+  int sign = 1;
+
+  if (*arg == 0) return 0;
+  if (*arg == '-') { sign = -1; arg++; }
+
+  return sign *
+         (((int)(arg[0] - '0')*600) +
+          ((int)(arg[1] - '0')*60) +
+          ((int)(arg[3] - '0')*10) +
+           (int)(arg[4] - '0'));
+  }
+
 // convert miles to kilometers by multiplying by ~1.609344
 unsigned long KmFromMi(unsigned long miles)
 {

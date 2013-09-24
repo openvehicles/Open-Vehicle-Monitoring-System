@@ -48,21 +48,6 @@ unsigned int  acc_granular_tick = 0;        // An internal ticker used to genera
 
 rom char ACC_NOTHERE[] = "ACC not at this location";
 
-int acc_chargetime(char* arg)
-  {
-  // Take a time string of the format HH:MM (24 hour) and return as number of minutes.
-  int sign = 1;
-
-  if (*arg == 0) return 0;
-  if (*arg == '-') { sign = -1; arg++; }
-
-  return sign *
-         (((arg[0] - '0')*600) +
-          ((arg[1] - '0')*60) +
-          ((arg[3] - '0')*10) +
-           (arg[4] - '0'));
-  }
-
 signed char acc_find(struct acc_record* ar, int range, BOOL enabledonly)
   {
   int k;
@@ -381,7 +366,7 @@ void acc_state_ticker10(void)
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
       p = par_get(PARAM_TIMEZONE);
-      now = car_time + ((long)acc_chargetime(p))*60;  // Date+Time in seconds, local time zone
+      now = car_time + ((long)timestring_to_mins(p))*60;  // Date+Time in seconds, local time zone
       now = (now % 86400) / 60;  // In minutes past the start of the day
       if (now == acc_chargeminute)
         {
@@ -679,7 +664,7 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
         ar.acc_flags.ChargeByTime = 0;
         arguments = net_sms_nextarg(arguments);
         if (arguments != NULL)
-          { ar.acc_chargetime = acc_chargetime(arguments); }
+          { ar.acc_chargetime = timestring_to_mins(arguments); }
         }
       else if (strcmppgm2ram(arguments,"CHARGEBY")==0)
         {
@@ -688,7 +673,7 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
         ar.acc_flags.ChargeByTime = 1;
         arguments = net_sms_nextarg(arguments);
         if (arguments != NULL)
-          { ar.acc_chargetime = acc_chargetime(arguments); }
+          { ar.acc_chargetime = timestring_to_mins(arguments); }
         }
       else if (strcmppgm2ram(arguments,"NOCHARGE")==0)
         {
