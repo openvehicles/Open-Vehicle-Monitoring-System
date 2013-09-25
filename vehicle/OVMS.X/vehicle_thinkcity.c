@@ -4,8 +4,11 @@
 ;
 ;
 ;    Changes:
+;    2.6  25.09.2013 (Haakon)
+;         - Added car_parktime for the app
+;
 ;    2.5  24.09.2013 (Haakon)
-;         - Added support for switching on/off external heater/auxilary via Valet Mode button.
+;         - Added support for switching on/off external fuelheater.Activated via Valet Mode button in the app
 ;           RC3 is high for 20 minutes if not "unvalet".
 ;    2.4  22.09.2013 (Haakon)
 ;         - Added central lock/unlock. Assigned pin 4 at 9X2 to RC1 (lock) and pin 6 to RC2 (unlock)
@@ -193,6 +196,7 @@ BOOL vehicle_thinkcity_state_ticker1(void)
     output_gpo0(0); // Set digital out RC0 low, pin2 header 9X2.
 
   car_time++;
+
   car_chargemode = 0;
   car_SOCalertlimit = 10;
 
@@ -245,11 +249,28 @@ BOOL vehicle_thinkcity_state_ticker10(void)
   {
     car_doors1 = 0x00;  // charging connector unplugged
   }
+
   if (tc_bit_dischgenbl > 0) //Discharge allowed, car is on
   {
-    car_doors1bits.CarON = 1;  // Car is on
+    car_doors1bits.CarON = 1;  // Car is on 0x80
+    if (car_parktime != 0)
+    {
+      car_parktime = 0; // No longer parking
+      net_req_notification(NET_NOTIFY_ENV);
+    }
   }
 
+  if (tc_bit_dischgenbl == 0) //Discharge not allowed, car is off
+  {
+    car_doors1bits.CarON = 0;  // Car off
+    if (car_parktime == 0)
+    {
+      car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
+      net_req_notification(NET_NOTIFY_ENV);
+    }
+  }
+
+  
   if (tc_heater_count == 0)
   {
     output_gpo3(0);
