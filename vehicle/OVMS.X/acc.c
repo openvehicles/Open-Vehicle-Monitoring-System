@@ -544,15 +544,8 @@ BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
   char *s,*p;
   unsigned long r;
 
-  if (arguments != NULL)
-    {
-    k = acc_get(&ar, arguments);
-    }
-  else
-    {
-    k = acc_find(&ar,ACC_RANGE1,FALSE);
-    }
-  
+  k = acc_find(&ar,ACC_RANGE1,FALSE);
+
   net_send_sms_start(caller);
   s = stp_i(net_scratchpad,"ACC Status #",k);
   if ((k>0)&&(ar.acc_recversion == ACC_RECVERSION))
@@ -560,42 +553,62 @@ BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
     s = stp_latlon(s, "\r\n ", ar.acc_latitude);
     s = stp_latlon(s, ", ", ar.acc_longitude);
     s = stp_rom(s, (ar.acc_flags.AccEnabled)?"\r\n Enabled":"\r\n Disabled");
-    if (ar.acc_flags.Cooldown)
-      s = stp_rom(s, "\r\n Cooldown");
-    if (ar.acc_flags.Homelink)
-      s = stp_i(s, "\r\n Homelink #",ar.acc_homelink);
-    if (ar.acc_flags.ChargeAtPlugin)
-      s = stp_rom(s, "\r\n Charge at plugin");
-    if (ar.acc_flags.ChargeAtTime)
-      s = stp_time(s, "\r\n Charge at time ",(unsigned long)ar.acc_chargetime * 60);
-    if (ar.acc_flags.ChargeByTime)
-      s = stp_time(s, "\r\n Charge by time ",(unsigned long)ar.acc_chargetime * 60);
-    s = stp_mode(s, "\r\n Mode: ",ar.acc_chargemode);
-    s = stp_i(s, " (",ar.acc_chargelimit);
-    s = stp_rom(s, "A)");
-    if (ar.acc_stopsoc>0)
-      {
-      s = stp_i(s, "\r\n Stop at SOC ",ar.acc_stopsoc);
-      s = stp_rom(s, "%");
-      }
-    if (ar.acc_stoprange>0)
-      {
-      r = (unsigned long)ar.acc_stoprange;
-      if (can_mileskm=='M')
-        {
-        s = stp_l(s, "\r\n Stop at range ",r);
-        s = stp_rom(s, "miles");
-        }
-      else
-        {
-        s = stp_l(s, "\r\n Stop at range ",KmFromMi(r));
-        s = stp_rom(s, "km");
-        }
-      }
     }
-  else
+
+  s = stp_rom(s, "\r\n State: ");
+  switch (acc_state)
     {
-    s = stp_rom(s," - No ACC defined here");
+    case ACC_STATE_FIRSTRUN:
+      // First time run
+      s = stp_rom(s, "First run");
+      break;
+    case ACC_STATE_FREE:
+      // Outside a charge store area
+      s = stp_rom(s, "Free");
+      if (CAR_IS_ON) s = stp_rom(s, " (driving)");
+      break;
+    case ACC_STATE_DRIVINGIN:
+      // Driving in a charge store area
+      s = stp_rom(s, "Driving In");
+      break;
+    case ACC_STATE_PARKEDIN:
+      // Parked in a charge store area
+      s = stp_rom(s, "Parked In");
+      break;
+    case ACC_STATE_CPDECIDE:
+      // Charge port has been opened, so decide what to do
+      s = stp_rom(s, "ChargePort Open");
+      break;
+    case ACC_STATE_COOLDOWN:
+      // Cooldown in a charge store area
+      s = stp_rom(s, "Cooldown");
+      s = stp_i(s,"\r\n ",car_coolingdown);
+      s = stp_i(s," cycles, ",car_tbattery);
+      s = stp_i(s,"C/",car_cooldown_tbattery);
+      s = stp_i(s,"C, ",car_cooldown_timelimit);
+      s = stp_rom(s,"mins remain");
+      break;
+    case ACC_STATE_WAITCHARGE:
+      // Waiting for charge time in a charge store area
+      s = stp_rom(s, "Wait Charge");
+      s = stp_time(s, "\r\n Wake at: ",(unsigned long)acc_chargeminute * 60);
+      break;
+    case ACC_STATE_CHARGINGIN:
+      // Charging in a charge store area
+      s = stp_rom(s, "Charging In");
+      s = stp_mode(s, "\r\n ",ar.acc_chargemode);
+      s = stp_i(s, " ", car_linevoltage);
+      s = stp_i(s, "V/", car_chargecurrent);
+      s = stp_rom(s,"A");
+      break;
+    case ACC_STATE_WAKEUPCIN:
+      // Wake up and charge in a charge store area
+      s = stp_rom(s, "WakeUp to Charge");
+      break;
+    case ACC_STATE_CHARGEDONE:
+      // Completed charging in a charge store area
+      s = stp_rom(s, "Charge Done");
+      break;
     }
 
   net_puts_ram(net_scratchpad);
@@ -738,6 +751,72 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
   return TRUE;
   }
 
+BOOL acc_cmd_paramsq(BOOL sms, char* caller, char *arguments)
+  {
+  // Return ACC status
+  struct acc_record ar;
+  int k;
+  char *s,*p;
+  unsigned long r;
+
+  if (arguments != NULL)
+    {
+    k = acc_get(&ar, arguments);
+    }
+  else
+    {
+    k = acc_find(&ar,ACC_RANGE1,FALSE);
+    }
+
+  net_send_sms_start(caller);
+  s = stp_i(net_scratchpad,"ACC Status #",k);
+  if ((k>0)&&(ar.acc_recversion == ACC_RECVERSION))
+    {
+    s = stp_latlon(s, "\r\n ", ar.acc_latitude);
+    s = stp_latlon(s, ", ", ar.acc_longitude);
+    s = stp_rom(s, (ar.acc_flags.AccEnabled)?"\r\n Enabled":"\r\n Disabled");
+    if (ar.acc_flags.Cooldown)
+      s = stp_rom(s, "\r\n Cooldown");
+    if (ar.acc_flags.Homelink)
+      s = stp_i(s, "\r\n Homelink #",ar.acc_homelink);
+    if (ar.acc_flags.ChargeAtPlugin)
+      s = stp_rom(s, "\r\n Charge at plugin");
+    if (ar.acc_flags.ChargeAtTime)
+      s = stp_time(s, "\r\n Charge at time ",(unsigned long)ar.acc_chargetime * 60);
+    if (ar.acc_flags.ChargeByTime)
+      s = stp_time(s, "\r\n Charge by time ",(unsigned long)ar.acc_chargetime * 60);
+    s = stp_mode(s, "\r\n Mode: ",ar.acc_chargemode);
+    s = stp_i(s, " (",ar.acc_chargelimit);
+    s = stp_rom(s, "A)");
+    if (ar.acc_stopsoc>0)
+      {
+      s = stp_i(s, "\r\n Stop at SOC ",ar.acc_stopsoc);
+      s = stp_rom(s, "%");
+      }
+    if (ar.acc_stoprange>0)
+      {
+      r = (unsigned long)ar.acc_stoprange;
+      if (can_mileskm=='M')
+        {
+        s = stp_l(s, "\r\n Stop at range ",r);
+        s = stp_rom(s, "miles");
+        }
+      else
+        {
+        s = stp_l(s, "\r\n Stop at range ",KmFromMi(r));
+        s = stp_rom(s, "km");
+        }
+      }
+    }
+  else
+    {
+    s = stp_rom(s," - No ACC defined here");
+    }
+
+  net_puts_ram(net_scratchpad);
+  return TRUE;
+  }
+
 BOOL acc_cmd(char *caller, char *command, char *arguments, BOOL sms)
   {
   char *p = arguments;
@@ -775,6 +854,10 @@ BOOL acc_cmd(char *caller, char *command, char *arguments, BOOL sms)
   else if (strcmppgm2ram(p,"DISABLE")==0)
     {
     return acc_cmd_enable(sms, caller, arguments, 0);
+    }
+  else if (strcmppgm2ram(p,"PARAMS?")==0)
+    {
+    return acc_cmd_paramsq(sms, caller, arguments);
     }
   else if (strcmppgm2ram(p,"PARAMS")==0)
     {
