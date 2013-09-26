@@ -1040,7 +1040,7 @@ int MinutesToChargeCAC(
   switch (chgmod)
     {
     case 0: // Standard
-      if (imEnd == -1)
+      if (imEnd <= 0)
         imEnd = (imCapacityStandard * pctEnd + 50)/100;
       imStart += imStdToRng;
       imEnd += imStdToRng;
@@ -1048,13 +1048,13 @@ int MinutesToChargeCAC(
 
     case 4: // Performance
       imStart += imStdToRng;
-      if (imEnd == -1)
+      if (imEnd <= 0)
         imEnd = ((imCapacityStandard + imStdToRng) * pctEnd + 50)/100;
       imEnd += imStdToRng;
       break;
 
     case 3: // Range
-      if (imEnd == -1)
+      if (imEnd <= 0)
         imEnd = (imCapacityRange * pctEnd + 50)/100;
       break;
 
