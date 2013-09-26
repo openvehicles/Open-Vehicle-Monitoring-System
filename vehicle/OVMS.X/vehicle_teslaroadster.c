@@ -1191,7 +1191,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
           car_linevoltage*car_chargecurrent, // watts available from the wall
           car_ambient_temp            // ambient temperature in degrees C
           );
-      if ((remain<car_chargelimit_minsremaining)&&(car_chargelimit_minsremaining>=0))
+      if ((remain<car_chargelimit_minsremaining)||(car_chargelimit_minsremaining<0))
         car_chargelimit_minsremaining = remain;
       }
 
