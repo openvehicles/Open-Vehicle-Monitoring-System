@@ -32,6 +32,7 @@
 #include <string.h>
 #include "ovms.h"
 #include "acc.h"
+#include "net_msg.h"
 #include "net_sms.h"
 #include "utils.h"
 #include "vehicle.h"
@@ -112,7 +113,8 @@ void acc_state_enter(unsigned char newstate)
         CHECKPOINT(0x61)
         m[0] = acc_current_rec.acc_homelink + '0' - 1;
         m[1] = 0;
-        vehicle_fn_commandhandler(FALSE, 24, m);
+        net_msg_cmd_msg = m;
+        vehicle_fn_commandhandler(FALSE, 24, net_msg_cmd_msg);
         }
       break;
     case ACC_STATE_PARKEDIN:
@@ -179,10 +181,12 @@ void acc_state_enter(unsigned char newstate)
       for (k=0;k<2;k++) // Be persistent, do this a few times...
         {
         stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
-        vehicle_fn_commandhandler(FALSE, 10, net_scratchpad);
+        net_msg_cmd_msg = net_scratchpad;
+        vehicle_fn_commandhandler(FALSE, 10, net_msg_cmd_msg);
         delay100(1);
         stp_i(net_scratchpad, "", acc_current_rec.acc_chargelimit);
-        vehicle_fn_commandhandler(FALSE, 15, net_scratchpad);
+        net_msg_cmd_msg = net_scratchpad;
+        vehicle_fn_commandhandler(FALSE, 15, net_msg_cmd_msg);
         delay100(1);
         vehicle_fn_commandhandler(FALSE, 11, NULL); // Start charge
         delay100(1);
