@@ -337,6 +337,10 @@ void acc_state_ticker1(void)
         {
         acc_state_enter(ACC_STATE_DRIVINGIN);
         }
+      else if ((!car_doors1bits.ChargePort)||(!car_doors1bits.PilotSignal))
+        {
+        acc_state_enter(ACC_STATE_PARKEDIN);
+        }
       break;
     }
   }
