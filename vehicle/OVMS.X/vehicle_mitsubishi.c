@@ -3,6 +3,9 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
+;    1.4  27.09.13 (Thomas)
+;         - Fixed battery temperature reading.
+;         - TODO: Fix charge status on charge interruption.
 ;    1.3  23.09.13 (Thomas)
 ;         - Fixed charging notification when battery is full, SOC=100%
 ;         - TODO: Fix battery temperature reading. 
@@ -80,6 +83,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
       car_doors3 |= 0x01;   // Car is awake
       }
     }
+  
   car_time++;
   
   
@@ -174,11 +178,37 @@ BOOL vehicle_mitsubishi_ticker1(void)
     car_doors1bits.ChargePort = 0;   // Charging cable unplugged, charging door closed.
     }
 
-
   return FALSE;
   }
 
+  
+////////////////////////////////////////////////////////////////////////
+// vehicle_mitsubishi_ticker10()
+// State Model: 10 second ticker
+// This function is called approximately once every 10 seconds (since state
+// was first entered), and gives the state a timeslice for activity.
+//
 
+BOOL vehicle_mitsubishi_ticker10(void)
+  {
+   ////////////////////////////////////////////////////////////////////////
+  // Battery temperature
+  ////////////////////////////////////////////////////////////////////////
+  
+  int i;
+  signed int tbattery = 0;
+  car_tpem = 100;     // Min cell temp
+  car_tmotor = 0;     // Max cell temp
+  for(i=0; i<24; i++)
+    {
+    tbattery += mi_batttemps[i];
+    if(mi_batttemps[i] < car_tpem) car_tpem = mi_batttemps[i];
+    if(mi_batttemps[i] > car_tmotor) car_tmotor = mi_batttemps[i];
+    }
+  car_tbattery = tbattery / 24;
+
+  return FALSE;
+  }
 
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
@@ -206,6 +236,7 @@ BOOL vehicle_mitsubishi_poll0(void)
   
   switch (id)
     {
+
     case 0x346: //Range
       {
       if (can_mileskm == 'K') 
@@ -213,9 +244,9 @@ BOOL vehicle_mitsubishi_poll0(void)
         car_estrange = (unsigned int)(MiFromKm((unsigned long)can_databuffer[7]));
         }
       else
-       {
-       car_estrange = (unsigned int)can_databuffer[7]; 
-       }
+        {
+        car_estrange = (unsigned int)can_databuffer[7]; 
+        }
       break;
       }
     
@@ -228,11 +259,10 @@ BOOL vehicle_mitsubishi_poll0(void)
     case 0x374: //SOC
       {
       car_SOC = (unsigned char)(((unsigned int)can_databuffer[1] - 10) / 2); 
-      car_idealrange = ((((unsigned int)car_SOC) * 93) / 100); //Ideal range: i-Miev - 93 miles (150 Km). C-Zero - 80 miles?
+      car_idealrange = ((((unsigned int)car_SOC) * 93) / 100); //Ideal range: 93 miles (150 Km).
       break;
       }
 
-    
     case 0x389: //charge voltage & current
       {
       car_linevoltage = (unsigned char)can_databuffer[1];
@@ -278,7 +308,8 @@ BOOL vehicle_mitsubishi_poll1(void)
           net_req_notification(NET_NOTIFY_ENV);
           }
         }
-      if (can_databuffer[6] == 0x0E) // Car not in park
+      
+      else if (can_databuffer[6] == 0x0E) // Car not in park
         {
         car_doors1 &= ~0x40;     //  NOT PARK
         car_doors1 |= 0x80;      // CAR ON
@@ -312,32 +343,18 @@ BOOL vehicle_mitsubishi_poll1(void)
         }
       break;
       }
-
-
+    
     case 0x6e1: 
       {
        // Calculate average battery pack temperature based on 24 of the 64 temperature values
        // Message 0x6e1 carries two temperatures for each of 12 banks, bank number (1..12) in byte 0,
        // temperatures in bytes 2 and 3, offset by 50C
-       int idx = can_databuffer[0] - 1;
-       if((idx >= 0) && (idx <= 11))
+       int idx = can_databuffer[0];
+       if((idx >= 1) && (idx <= 12))
          {
-         int i;
-         int tbattery = 0;
-         idx <<= 2;
+         idx = ((idx << 1)-2);
          mi_batttemps[idx] = (signed char)(can_databuffer[2] - 50);
          mi_batttemps[idx + 1] = (signed char)(can_databuffer[3] - 50);
-
-         car_tpem = 100;     // Min cell temp
-         car_tmotor = 0;     // Max cell temp
-         for(i=0; i<24; i++)
-           {
-           signed char t = mi_batttemps[i];
-           tbattery += t;
-           if(t < car_tpem) car_tpem = t;
-           if(t > car_tmotor) car_tmotor = t;
-           }
-         car_tbattery = tbattery / 24;
          car_stale_temps = 120; // Reset stale indicator
          }
       break;
@@ -370,7 +387,7 @@ BOOL vehicle_mitsubishi_initialise(void)
   mi_candata_timer = 0;
   
    // Clear the battery temperatures
-  for(i=0; i<12; i++) mi_batttemps[i] = 0;
+  for(i=0; i<24; i++) mi_batttemps[i] = 0;
 
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
@@ -433,6 +450,7 @@ BOOL vehicle_mitsubishi_initialise(void)
   vehicle_fn_poll0 = &vehicle_mitsubishi_poll0;
   vehicle_fn_poll1 = &vehicle_mitsubishi_poll1;
   vehicle_fn_ticker1 = &vehicle_mitsubishi_ticker1;
+  vehicle_fn_ticker10 = &vehicle_mitsubishi_ticker10;
 
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
