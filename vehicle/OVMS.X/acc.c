@@ -325,7 +325,25 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
-      if (! CAR_IS_CHARGING) acc_state_enter(ACC_STATE_CHARGEDONE);
+      if (! CAR_IS_CHARGING)
+        {
+        acc_state_enter(ACC_STATE_CHARGEDONE);
+        }
+      else
+        {
+        if (car_chargemode != acc_current_rec.acc_chargemode)
+          {
+          stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
+          net_msg_cmd_msg = net_scratchpad;
+          vehicle_fn_commandhandler(FALSE, 10, net_msg_cmd_msg);
+          }
+        if (car_chargelimit != acc_current_rec.acc_chargelimit)
+          {
+          stp_i(net_scratchpad, "", acc_current_rec.acc_chargelimit);
+          net_msg_cmd_msg = net_scratchpad;
+          vehicle_fn_commandhandler(FALSE, 15, net_msg_cmd_msg);
+          }
+        }
       break;
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
