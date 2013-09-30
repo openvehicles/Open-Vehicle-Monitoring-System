@@ -1132,24 +1132,27 @@ int vehicle_teslaroadster_minutestocharge(unsigned char chgmod, int wAvail, int 
 
 BOOL vehicle_teslaroadster_ticker1(void)
   {
-  if ((tr_cooldown_recycle > 0)&&(CAR_IS_CHARGING))
+  if ((car_coolingdown>=0)&&(CAR_IS_CHARGING))
     {
-    tr_cooldown_recycle--;
-    if (tr_cooldown_recycle == 10)
+    if (tr_cooldown_recycle > 0)
       {
-      // Switch to PERFORMANCE mode for ten seconds
-      vehicle_teslaroadster_tx_setchargemode(4);     // Switch to PERFORMANCE mode
+      tr_cooldown_recycle--;
+      if (tr_cooldown_recycle == 10)
+        {
+        // Switch to PERFORMANCE mode for ten seconds
+        vehicle_teslaroadster_tx_setchargemode(4);     // Switch to PERFORMANCE mode
+        }
+      else if (tr_cooldown_recycle == 0)
+        {
+        // Switch back to RANGE mode, and reset cycle
+        vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
+        tr_cooldown_recycle = 60;
+        }
       }
-    else if (tr_cooldown_recycle == 0)
+    if (car_chargelimit != 13)
       {
-      // Switch back to RANGE mode, and reset cycle
-      vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
-      tr_cooldown_recycle = 60;
+      vehicle_teslaroadster_tx_setchargecurrent(13); // 13A charge when cooling down
       }
-    }
-  if ((car_coolingdown>=0)&&(car_chargelimit != 13)&&(CAR_IS_CHARGING))
-    {
-    vehicle_teslaroadster_tx_setchargecurrent(13); // 13A charge when cooling down
     }
 
   return FALSE;
@@ -1294,6 +1297,7 @@ void vehicle_teslaroadster_initialise(void)
   can_lastspeedmsg[0] = 0;
   can_lastspeedrpt = 0;
   tr_requestcac = 0;
+  tr_cooldown_recycle = -1;
 
   net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
 
