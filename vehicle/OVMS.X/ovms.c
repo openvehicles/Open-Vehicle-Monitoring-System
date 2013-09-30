@@ -182,6 +182,9 @@ void main(void)
     sys_features[x] = atoi(par_get(PARAM_FEATURE_S + (x - FEATURES_MAP_PARAM)));
   }
 
+  // Make sure cooldown is off
+  car_coolingdown = -1;
+
   // Port configuration
   inputs_initialise();
   TRISB = 0xFE;

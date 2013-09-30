@@ -1147,7 +1147,7 @@ BOOL vehicle_teslaroadster_ticker1(void)
       tr_cooldown_recycle = 60;
       }
     }
-  if ((car_coolingdown>=0)&&(car_chargelimit != 13))
+  if ((car_coolingdown>=0)&&(car_chargelimit != 13)&&(CAR_IS_CHARGING))
     {
     vehicle_teslaroadster_tx_setchargecurrent(13); // 13A charge when cooling down
     }
