@@ -665,6 +665,59 @@ BOOL acc_cmd_enable(BOOL sms, char* caller, char *arguments, unsigned char enabl
   return TRUE;
   }
 
+void acc_sms_params(int k, struct acc_record* ar)
+  {
+  // SMS ACC parameters
+  char *s,*p;
+  unsigned long r;
+
+  s = stp_i(net_scratchpad,"ACC #",k);
+  if ((k>0)&&(ar->acc_recversion == ACC_RECVERSION))
+    {
+    s = stp_latlon(s, "\r\n ", ar->acc_latitude);
+    s = stp_latlon(s, ", ", ar->acc_longitude);
+    s = stp_rom(s, (ar->acc_flags.AccEnabled)?"\r\n Enabled":"\r\n Disabled");
+    if (ar->acc_flags.Cooldown)
+      s = stp_rom(s, "\r\n Cooldown");
+    if (ar->acc_flags.Homelink)
+      s = stp_i(s, "\r\n Homelink #",ar->acc_homelink);
+    if (ar->acc_flags.ChargeAtPlugin)
+      s = stp_rom(s, "\r\n Charge at plugin");
+    if (ar->acc_flags.ChargeAtTime)
+      s = stp_time(s, "\r\n Charge at time ",(unsigned long)ar->acc_chargetime * 60);
+    if (ar->acc_flags.ChargeByTime)
+      s = stp_time(s, "\r\n Charge by time ",(unsigned long)ar->acc_chargetime * 60);
+    s = stp_mode(s, "\r\n Mode: ",ar->acc_chargemode);
+    s = stp_i(s, " (",ar->acc_chargelimit);
+    s = stp_rom(s, "A)");
+    if (ar->acc_stopsoc>0)
+      {
+      s = stp_i(s, "\r\n Stop at SOC ",ar->acc_stopsoc);
+      s = stp_rom(s, "%");
+      }
+    if (ar->acc_stoprange>0)
+      {
+      r = (unsigned long)ar->acc_stoprange;
+      if (can_mileskm=='M')
+        {
+        s = stp_l(s, "\r\n Stop at range ",r);
+        s = stp_rom(s, "miles");
+        }
+      else
+        {
+        s = stp_l(s, "\r\n Stop at range ",KmFromMi(r));
+        s = stp_rom(s, "km");
+        }
+      }
+    }
+  else
+    {
+    s = stp_rom(s," - No ACC defined here");
+    }
+
+  net_puts_ram(net_scratchpad);
+  }
+
 BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
   {
   // Set ACC params
@@ -763,7 +816,7 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
         arguments = net_sms_nextarg(arguments);
       }
     par_setbase64(k+PARAM_ACC_S-1,&ar,sizeof(ar));
-    net_puts_rom("ACC parameters set");
+    acc_sms_params(k, &ar);
     }
 
   return TRUE;
@@ -787,51 +840,8 @@ BOOL acc_cmd_paramsq(BOOL sms, char* caller, char *arguments)
     }
 
   net_send_sms_start(caller);
-  s = stp_i(net_scratchpad,"ACC Status #",k);
-  if ((k>0)&&(ar.acc_recversion == ACC_RECVERSION))
-    {
-    s = stp_latlon(s, "\r\n ", ar.acc_latitude);
-    s = stp_latlon(s, ", ", ar.acc_longitude);
-    s = stp_rom(s, (ar.acc_flags.AccEnabled)?"\r\n Enabled":"\r\n Disabled");
-    if (ar.acc_flags.Cooldown)
-      s = stp_rom(s, "\r\n Cooldown");
-    if (ar.acc_flags.Homelink)
-      s = stp_i(s, "\r\n Homelink #",ar.acc_homelink);
-    if (ar.acc_flags.ChargeAtPlugin)
-      s = stp_rom(s, "\r\n Charge at plugin");
-    if (ar.acc_flags.ChargeAtTime)
-      s = stp_time(s, "\r\n Charge at time ",(unsigned long)ar.acc_chargetime * 60);
-    if (ar.acc_flags.ChargeByTime)
-      s = stp_time(s, "\r\n Charge by time ",(unsigned long)ar.acc_chargetime * 60);
-    s = stp_mode(s, "\r\n Mode: ",ar.acc_chargemode);
-    s = stp_i(s, " (",ar.acc_chargelimit);
-    s = stp_rom(s, "A)");
-    if (ar.acc_stopsoc>0)
-      {
-      s = stp_i(s, "\r\n Stop at SOC ",ar.acc_stopsoc);
-      s = stp_rom(s, "%");
-      }
-    if (ar.acc_stoprange>0)
-      {
-      r = (unsigned long)ar.acc_stoprange;
-      if (can_mileskm=='M')
-        {
-        s = stp_l(s, "\r\n Stop at range ",r);
-        s = stp_rom(s, "miles");
-        }
-      else
-        {
-        s = stp_l(s, "\r\n Stop at range ",KmFromMi(r));
-        s = stp_rom(s, "km");
-        }
-      }
-    }
-  else
-    {
-    s = stp_rom(s," - No ACC defined here");
-    }
+  acc_sms_params(k, &ar);
 
-  net_puts_ram(net_scratchpad);
   return TRUE;
   }
 
