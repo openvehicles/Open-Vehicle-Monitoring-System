@@ -272,7 +272,7 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_COOLDOWN:
       // Cooldown in a charge store area
-      if (car_coolingdown < 0)
+      if ((car_coolingdown < 0)||(!CAR_IS_CHARGING))
         {
         // Cooldown has completed
         if ((car_doors1bits.ChargePort)&&
@@ -308,10 +308,6 @@ void acc_state_ticker1(void)
           {
           acc_state_enter(ACC_STATE_CHARGEDONE);
           }
-        }
-      else if (!CAR_IS_CHARGING)
-        {
-        acc_state_enter(ACC_STATE_CHARGEDONE);
         }
       break;
     case ACC_STATE_WAITCHARGE:
