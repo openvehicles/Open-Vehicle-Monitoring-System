@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 2,5,3
+#define OVMS_FIRMWARE_VERSION 2,5,4
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
