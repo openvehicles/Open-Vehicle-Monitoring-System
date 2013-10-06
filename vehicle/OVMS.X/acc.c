@@ -194,6 +194,11 @@ void acc_state_enter(unsigned char newstate)
         vehicle_fn_commandhandler(FALSE, 11, NULL); // Start charge
         delay100(1);
         }
+      // A bit of a kludge, but we're going to set a state timeout transition
+      // so we can only monitor charge after a minute or so. We will never
+      // let this timeout actually happen...
+      acc_timeout_goto = ACC_STATE_CHARGEDONE;
+      acc_timeout_ticks = 120;
       break;
     case ACC_STATE_WAKEUPCIN:
       // Wake up car, delay a bit, then goto ACC_STATE_CHARGINGIN
@@ -324,8 +329,15 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
-      if (! CAR_IS_CHARGING)
+      if (acc_timeout_ticks < 60)
         {
+        // Stop timeout 1 minute into the 2 minutes
+        acc_timeout_ticks = 0;
+        acc_timeout_goto = 0;
+        }
+      if ((! CAR_IS_CHARGING)&&(acc_timeout_ticks>0))
+        {
+        // Only monitor for charge done after 1 minute
         acc_state_enter(ACC_STATE_CHARGEDONE);
         }
       else
@@ -426,39 +438,6 @@ void acc_state_ticker10(void)
       break;
     }
   
-  }
-
-void acc_state_ticker60(void)
-  {
-  CHECKPOINT(0x65)
-
-  switch (acc_state)
-    {
-    case ACC_STATE_FIRSTRUN:
-      // First time run
-      break;
-    case ACC_STATE_FREE:
-      // Outside a charge store area
-      break;
-    case ACC_STATE_DRIVINGIN:
-      // Driving in a charge store area
-      break;
-    case ACC_STATE_PARKEDIN:
-      // Parked in a charge store area
-      break;
-    case ACC_STATE_COOLDOWN:
-      // Cooldown in a charge store area
-      break;
-    case ACC_STATE_WAITCHARGE:
-      // Waiting for charge time in a charge store area
-      break;
-    case ACC_STATE_CHARGINGIN:
-      // Charging in a charge store area
-      break;
-    case ACC_STATE_CHARGEDONE:
-      // Completed charging in a charge store area
-      break;
-    }
   }
 
 void acc_initialise(void)        // ACC Initialisation
@@ -927,7 +906,6 @@ void acc_ticker(void)            // ACC Ticker
   if ((acc_granular_tick % 10)==0) acc_state_ticker10();
   if ((acc_granular_tick % 60)==0)
     {
-    acc_state_ticker60();
     acc_granular_tick -= 60;
     }
   }
