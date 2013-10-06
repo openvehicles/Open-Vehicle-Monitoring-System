@@ -662,6 +662,9 @@ BOOL acc_cmd_enable(BOOL sms, char* caller, char *arguments, unsigned char enabl
     }
 
   net_puts_ram(net_scratchpad);
+
+  acc_state_enter(ACC_STATE_FIRSTRUN);
+
   return TRUE;
   }
 
@@ -818,6 +821,8 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
     par_setbase64(k+PARAM_ACC_S-1,&ar,sizeof(ar));
     acc_sms_params(k, &ar);
     }
+
+  acc_state_enter(ACC_STATE_FIRSTRUN);
 
   return TRUE;
   }
