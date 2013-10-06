@@ -150,11 +150,11 @@ void acc_state_enter(unsigned char newstate)
         }
       else if (acc_current_rec.acc_flags.ChargeByTime)
         {
-        // TODO: work out when to start the charge
+        // Work out when to start the charge
         if (vehicle_fn_minutestocharge != NULL)
           {
           k = vehicle_fn_minutestocharge(acc_current_rec.acc_chargemode,
-                                         acc_current_rec.acc_chargelimit * 220,
+                                         (int)acc_current_rec.acc_chargelimit * 220,
                                          acc_current_rec.acc_stoprange,
                                          acc_current_rec.acc_stopsoc);
           if (k<=0)
@@ -165,8 +165,11 @@ void acc_state_enter(unsigned char newstate)
             }
           else
             {
-            acc_chargeminute = acc_current_rec.acc_chargetime - (k + 30); // 30 minute safety margin
-            if (acc_chargeminute<0) acc_chargeminute += 1440; // Support wrap to previous day
+            // 30 minute safety margin
+            if ((k+30) <= acc_current_rec.acc_chargetime)
+              acc_chargeminute = acc_current_rec.acc_chargetime - (k + 30); // Dchedule charge today
+            else
+              acc_chargeminute = (acc_current_rec.acc_chargetime + 1440) - (k + 30); // Wrap to previous day
             }
           }
         }
