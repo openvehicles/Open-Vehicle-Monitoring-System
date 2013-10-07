@@ -138,6 +138,12 @@ void acc_state_enter(unsigned char newstate)
         // started, so that it will continue the charge.
         car_cooldown_wascharging = 1;
         }
+      // A bit of a kludge, but we're going to set a state timeout transition
+      // so we can only monitor charge after a minute or so. We will never
+      // let this timeout actually happen...
+      acc_timeout_goto = ACC_STATE_CHARGEDONE;
+      acc_timeout_ticks = 120;
+      break;
       break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
@@ -280,9 +286,15 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_COOLDOWN:
       // Cooldown in a charge store area
-      if ((car_coolingdown < 0)||(!CAR_IS_CHARGING))
+      if (acc_timeout_ticks < 60)
         {
-        // Cooldown has completed
+        // Stop timeout 1 minute into the 2 minutes
+        acc_timeout_ticks = 0;
+        acc_timeout_goto = 0;
+        }
+      if ((car_coolingdown < 0)||((!CAR_IS_CHARGING)&&(acc_timeout_ticks==0)))
+        {
+        // Cooldown has completed (or never started)
         if ((car_doors1bits.ChargePort)&&
             (car_doors1bits.PilotSignal))
           {
@@ -335,10 +347,11 @@ void acc_state_ticker1(void)
         acc_timeout_ticks = 0;
         acc_timeout_goto = 0;
         }
-      if ((! CAR_IS_CHARGING)&&(acc_timeout_ticks>0))
+      if (! CAR_IS_CHARGING)
         {
         // Only monitor for charge done after 1 minute
-        acc_state_enter(ACC_STATE_CHARGEDONE);
+        if (acc_timeout_ticks==0)
+          acc_state_enter(ACC_STATE_CHARGEDONE);
         }
       else
         {
