@@ -1003,7 +1003,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
 int MinutesToChargeCAC(
       unsigned char chgmod,       // charge mode, Standard, Range and Performance are supported
       int ixStart,                // ideal mi at start of charge (units determined by can_mileskm)
-      int ixEnd,                  // ideal mi desired at end of charge (use -1 for full charge)
+      int ixEnd,                  // ideal mi desired at end of charge (use <=0 for full charge)
       int pctEnd,                 // if ixEnd == -1, specified desired percent SOC, use 100 for full charge
                                   // pctEnd is ignored if ixEnd != -1
       int cac,                    // the battery pack CAC (160 is a perfect battery)
@@ -1022,12 +1022,20 @@ int MinutesToChargeCAC(
   int imStart = ixStart;
   int imEnd = ixEnd;
 
+  int imCapacityRange;
+  int imCapacityStandard;
+  int imStdToRng;
+
+  if (cac == 0) cac=160;       // Default to a perfect battery pack
+  if (pctEnd == 0) pctEnd=100; // Default to a full charge
+  
   // IM capacity in range mode is about 31.598 + 1.3193 * cac;
-  int imCapacityRange = ((signed long)cac * 199 + 4740 + 75) / 150;
+  imCapacityRange = ((signed long)cac * 199 + 4740 + 75) / 150;
 
   // IM in standard mode is about 13.504 + 1.1075 * cac;
-  int imCapacityStandard = ((signed long)cac * 166 + 2026 + 75) / 150;
-  int imStdToRng = (imCapacityRange - imCapacityStandard + 1) / 2;
+  imCapacityStandard = ((signed long)cac * 166 + 2026 + 75) / 150;
+
+  imStdToRng = (imCapacityRange - imCapacityStandard + 1) / 2;
 
   // if needed, convert from km to mi
   //if (can_mileskm == 'K')
@@ -1121,8 +1129,8 @@ int vehicle_teslaroadster_minutestocharge(unsigned char chgmod, int wAvail, int 
   {
   return MinutesToChargeCAC(
           chgmod,                     // charge mode, Standard, Range and Performance are supported
-          car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
-          ixEnd,                      // ideal mi desired at end of charge (use -1 for full charge)
+          car_idealrange,             // ideal mi at start of charge
+          ixEnd,                      // ideal mi desired at end of charge (use <=0 for full charge)
           pctEnd,                     // SOC percent desired at end of charge (ignored if ideal mi specified)
           car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
           wAvail,                     // watts available from the wall
