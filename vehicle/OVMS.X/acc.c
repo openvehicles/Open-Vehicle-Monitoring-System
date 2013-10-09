@@ -159,11 +159,12 @@ void acc_state_enter(unsigned char newstate)
         // Work out when to start the charge
         if (vehicle_fn_minutestocharge != NULL)
           {
-          k = vehicle_fn_minutestocharge(acc_current_rec.acc_chargemode,
-                                         (int)acc_current_rec.acc_chargelimit * 220,
-                                         acc_current_rec.acc_stoprange,
-                                         acc_current_rec.acc_stopsoc);
-          if (k<=0)
+          car_chargeestimate = vehicle_fn_minutestocharge(acc_current_rec.acc_chargemode,
+                                                          (int)acc_current_rec.acc_chargelimit * 220,
+                                                          acc_current_rec.acc_stoprange,
+                                                          acc_current_rec.acc_stopsoc);
+          
+          if (car_chargeestimate<=0)
             {
             // Not achievable - start immediately
             acc_state_enter(ACC_STATE_CHARGINGIN);
@@ -172,10 +173,10 @@ void acc_state_enter(unsigned char newstate)
           else
             {
             // 30 minute safety margin
-            if ((k+30) <= acc_current_rec.acc_chargetime)
-              acc_chargeminute = acc_current_rec.acc_chargetime - (k + 30); // Dchedule charge today
+            if ((car_chargeestimate+30) <= acc_current_rec.acc_chargetime)
+              acc_chargeminute = acc_current_rec.acc_chargetime - (car_chargeestimate + 30); // Schedule charge today
             else
-              acc_chargeminute = (acc_current_rec.acc_chargetime + 1440) - (k + 30); // Wrap to previous day
+              acc_chargeminute = (acc_current_rec.acc_chargetime + 1440) - (car_chargeestimate + 30); // Wrap to previous day
             }
           }
         }
@@ -605,6 +606,9 @@ BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
       // Waiting for charge time in a charge store area
       s = stp_rom(s, "Wait Charge");
       s = stp_time(s, "\r\n Wake at: ",(unsigned long)acc_chargeminute * 60);
+      s = stp_i(s, "\r\n Charge: ",(int)acc_current_rec.acc_chargelimit * 220);
+      s = stp_i(s, "W\r\n Estimate: ",car_chargeestimate);
+      s = stp_rom(s, "mins");
       break;
     case ACC_STATE_CHARGINGIN:
       // Charging in a charge store area
