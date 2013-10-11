@@ -28,6 +28,32 @@
 ; THE SOFTWARE.
 */
 
+2013-10-11 2.5.4       Firmware 2.5.4
+                       # Make MINSOC drive NET_NOTIFY_CHARGE (rather than NET_NOTIFY_STAT)
+                       # Input GPIO control for input RA2..RA5, and output RC0..RC3
+                       # ThinkCity: Updates to Think City support
+                       # iMiev: Updates to Mitsubishi vehicle support
+                       # Think City: Added support for switching on/off external heater/auxilary via Valet Mode button
+                       # ACC: Aggressively stop charge if cooldown is done
+                       # ACC: If we are waiting for a charge, but the charge is started, then stop it
+                       # Range and SOC limits stop exactly ON the limit
+                       # Think City: car_parktime added
+                       # Fix for command handler with net_msg_cmd_msg
+                       # Tesla Roadster: fix for mins remain estimate if SOC limit but no RANGE limit
+                       # Use <=0, not ==-1, as indication range limit is not set
+                       # ACC: Move old STAT command to PARAMS?, and add a new STAT command to show true status
+                       # ACC: If charge is done, in acc location, and unplugged, transition to parked-in state
+                       # ACC: Repeat tx charge mode and limit commands, during cooldown and acc charge, if necessary
+                       # Tesla Roadster: Disable cooldown on boot
+                       # ACC: Race condition for charge finishes before cooldown flag is cleared
+                       # ACC: Setting params now returns a summary
+                       # ACC: Reset acc state, if enable/disable or setting parameters
+                       # ACC: Integer/Byte overflow workarounds
+                       # ACC: Workaround race condition where charge may take a few seconds to actually start (when commanded)
+                       # Tesla Roadster: Provide defaults for range, soc and cac in charge estimates
+                       # Support car_chargeestimate
+                       # ACC: rework to use new car_chargeestimate
+
 2013-09-18 2.5.3       Firmware 2.5.3
                        ## Updates to thinkcity
                        ## Remove DIAG and add ACC to V1_Production build config
