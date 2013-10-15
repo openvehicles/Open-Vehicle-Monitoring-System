@@ -265,9 +265,9 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_CPDECIDE:
       // Charge port has been opened, so decide what to do
-      if ((! car_doors1bits.ChargePort)||(! car_doors1bits.PilotSignal))
+      if (! car_doors1bits.ChargePort)
         {
-        // The charge port has been closed, or we lost pilot signal.
+        // The charge port has been closed
         acc_timeout_ticks = 0;
         acc_state_enter(ACC_STATE_PARKEDIN);
         }
@@ -333,9 +333,10 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
-      if ((! car_doors1bits.ChargePort)||(! car_doors1bits.PilotSignal))
+      if (! car_doors1bits.ChargePort)
         {
-        // The charge port has been closed, or we lost pilot signal.
+        // The charge port has been closed
+        // (note don't test pilot signal here, as it may fluctuate)
         acc_timeout_ticks = 0;
         acc_state_enter(ACC_STATE_PARKEDIN);
         }
@@ -380,7 +381,7 @@ void acc_state_ticker1(void)
         {
         acc_state_enter(ACC_STATE_DRIVINGIN);
         }
-      else if ((!car_doors1bits.ChargePort)||(!car_doors1bits.PilotSignal))
+      else if (!car_doors1bits.ChargePort)
         {
         acc_state_enter(ACC_STATE_PARKEDIN);
         }
