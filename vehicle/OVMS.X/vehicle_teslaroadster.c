@@ -1067,12 +1067,14 @@ int MinutesToChargeCAC(
       break;
 
     default: // invalid charge mode passed in (Storage mode doesn't make sense)
-      return 0;
+      return -1;
     }
 
   // check for silly cases
-  if (wAvail <= 0 || imEnd <= imStart)
-    return -1;
+  if (wAvail <= 0)
+    return -2;
+  if (imEnd <= imStart)
+    return -3;
 
   // I don't believe air temperatures above 60 C, and this avoids overflow issues
   if (degAmbient > 60)
