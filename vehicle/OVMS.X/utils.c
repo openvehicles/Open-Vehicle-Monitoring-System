@@ -503,8 +503,8 @@ char *stp_mode(char *dst, const rom char *prefix, unsigned char mode)
     {
     case 0: dst = stp_rom(dst, "standard"); break;
     case 1: dst = stp_rom(dst, "storage"); break;
-    case 2: dst = stp_rom(dst, "range"); break;
-    case 3: dst = stp_rom(dst, "performance"); break;
+    case 3: dst = stp_rom(dst, "range"); break;
+    case 4: dst = stp_rom(dst, "performance"); break;
     default: dst = stp_i(dst, "mode ",mode);
     }
 
