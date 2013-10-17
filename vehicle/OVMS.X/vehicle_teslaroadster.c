@@ -1016,7 +1016,7 @@ int MinutesToChargeCAC(
   int bIntercept;
   int mx1000;
   int whPerIM;
-  int secPerIM;
+  signed long secPerIM;
   signed long seconds;
   
   int imStart = ixStart;
@@ -1025,6 +1025,21 @@ int MinutesToChargeCAC(
   int imCapacityRange;
   int imCapacityStandard;
   int imStdToRng;
+
+  char *p;
+
+  if (net_state == NET_STATE_DIAGMODE)
+    {
+    p = stp_i(net_scratchpad,"\r\n# TR MinutesToChargeCAC(",chgmod);
+    p = stp_i(p,", ",ixStart);
+    p = stp_i(p,", ",ixEnd);
+    p = stp_i(p,", ",pctEnd);
+    p = stp_i(p,", ",cac);
+    p = stp_i(p,", ",wAvail);
+    p = stp_i(p,", ",degAmbient);
+    p = stp_rom(p,")\r\n");
+    net_puts_ram(net_scratchpad);
+    }
 
   if (cac == 0) cac=160;       // Default to a perfect battery pack
   if (pctEnd == 0) pctEnd=100; // Default to a full charge
@@ -1097,8 +1112,12 @@ int MinutesToChargeCAC(
     mx1000 = 0;
 
   // calculate seconds per ideal mile
-  whPerIM = bIntercept + mx1000 * degAmbient / 1000;
+  whPerIM = bIntercept + (signed long)mx1000 * degAmbient / 1000;
   secPerIM = whPerIM * 3600L / wAvail;
+
+  // detect implausible low power values that can lead to overflowing the number of minutes
+  if ((0x7FFFL*60+30)/secPerIM < 244)
+    return -4;
 
   // ready to calculate the charge duration
   seconds = 0;
@@ -1124,11 +1143,31 @@ int MinutesToChargeCAC(
       }
     }
 
+  if (net_state == NET_STATE_DIAGMODE)
+    {
+    p = stp_i(net_scratchpad,"\r\n# TR MinutesToChargeCAC result=",(seconds + 30) / 60);
+    p = stp_rom(p,"\r\n");
+    net_puts_ram(net_scratchpad);
+    }
+
   return (seconds + 30) / 60;
   }
 
 int vehicle_teslaroadster_minutestocharge(unsigned char chgmod, int wAvail, int ixEnd, int pctEnd)
   {
+  char *p;
+
+  if (net_state == NET_STATE_DIAGMODE)
+    {
+    p = stp_i(net_scratchpad,"\r\n# TR vehicle_teslaroadster_minutestocharge mode=",chgmod);
+    p = stp_i(p,", car_idealrange=",car_idealrange);
+    p = stp_i(p,", car_cac100=",car_cac100);
+    p = stp_i(p,", car_ambient_temp=",car_ambient_temp);
+    p = stp_i(p,", wAvail=",wAvail);
+    p = stp_rom(p,"\r\n");
+    net_puts_ram(net_scratchpad);
+    }
+
   return MinutesToChargeCAC(
           chgmod,                     // charge mode, Standard, Range and Performance are supported
           car_idealrange,             // ideal mi at start of charge

@@ -97,6 +97,13 @@ void acc_state_enter(unsigned char newstate)
 
   acc_state = newstate;
 
+  if (net_state == NET_STATE_DIAGMODE)
+    {
+    p = stp_x(net_scratchpad,"\r\n# ACC state enter ",acc_state);
+    p = stp_rom(p,"\r\n");
+    net_puts_ram(net_scratchpad);
+    }
+
   switch (acc_state)
     {
     case ACC_STATE_FIRSTRUN:
@@ -149,7 +156,7 @@ void acc_state_enter(unsigned char newstate)
       // Waiting for charge time in a charge store area
       // Make sure car doesn't charge now...
       CHECKPOINT(0x68)
-      vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop Chargea
+      vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop Charge
       if (acc_current_rec.acc_flags.ChargeAtTime)
         {
         acc_chargeminute = acc_current_rec.acc_chargetime;
@@ -159,11 +166,26 @@ void acc_state_enter(unsigned char newstate)
         // Work out when to start the charge
         if (vehicle_fn_minutestocharge != NULL)
           {
+          if (net_state == NET_STATE_DIAGMODE)
+            {
+            p = stp_i(net_scratchpad,"\r\n# ACC vehicle_fn_minutestocharge(",acc_current_rec.acc_chargemode);
+            p = stp_i(p,", ",(int)acc_current_rec.acc_chargelimit * 220);
+            p = stp_i(p,", ",acc_current_rec.acc_stoprange);
+            p = stp_i(p,", ",acc_current_rec.acc_stopsoc);
+            p = stp_rom(p,")\r\n");
+            net_puts_ram(net_scratchpad);
+            }
           car_chargeestimate = vehicle_fn_minutestocharge(acc_current_rec.acc_chargemode,
                                                           (int)acc_current_rec.acc_chargelimit * 220,
                                                           acc_current_rec.acc_stoprange,
                                                           acc_current_rec.acc_stopsoc);
           
+          if (net_state == NET_STATE_DIAGMODE)
+            {
+            p = stp_i(net_scratchpad,"\r\n# ACC vehicle_fn_minutestocharge result=",car_chargeestimate);
+            p = stp_rom(p,"\r\n");
+            net_puts_ram(net_scratchpad);
+            }
           if (car_chargeestimate<=0)
             {
             // Not achievable - start immediately

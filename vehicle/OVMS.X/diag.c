@@ -325,13 +325,14 @@ void diag_handle_t2(char *command, char *arguments)
   char *s;
   
   car_cac100 = 15282;
-  car_idealrange = MiFromKm(165);
-  car_SOC=68;
+  car_idealrange = 145;
+  car_SOC=78;
+  car_ambient_temp = 24;
 
   k = vehicle_fn_minutestocharge(0,
                                  (int)t * 220,
                                  0,
-                                 90);
+                                 0);
 
   s = stp_i(net_scratchpad,"# MTC ",car_SOC);
   s = stp_i(s, " / ",car_idealrange);
