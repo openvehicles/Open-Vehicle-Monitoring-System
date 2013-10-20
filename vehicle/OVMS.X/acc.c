@@ -97,6 +97,10 @@ void acc_state_enter(unsigned char newstate)
 
   acc_state = newstate;
 
+  // New state, so cancel any pending timeout
+  acc_timeout_ticks = 0;
+  acc_timeout_goto = 0;
+
   if (net_state == NET_STATE_DIAGMODE)
     {
     p = stp_x(net_scratchpad,"\r\n# ACC state enter ",acc_state);
@@ -151,7 +155,6 @@ void acc_state_enter(unsigned char newstate)
       acc_timeout_goto = ACC_STATE_CHARGEDONE;
       acc_timeout_ticks = 120;
       break;
-      break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
       // Make sure car doesn't charge now...
@@ -189,8 +192,8 @@ void acc_state_enter(unsigned char newstate)
           if (car_chargeestimate<=0)
             {
             // Not achievable - start immediately
-            acc_state_enter(ACC_STATE_CHARGINGIN);
             net_req_notification(NET_NOTIFY_CHARGE); // And notify the user as best we can
+            acc_state_enter(ACC_STATE_CHARGINGIN);
             }
           else
             {
@@ -287,10 +290,9 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_CPDECIDE:
       // Charge port has been opened, so decide what to do
-      if (! car_doors1bits.ChargePort)
+      if ((! car_doors1bits.ChargePort)||(! car_doors1bits.PilotSignal))
         {
-        // The charge port has been closed
-        acc_timeout_ticks = 0;
+        // The charge port has been closed or we have no pilot signal
         acc_state_enter(ACC_STATE_PARKEDIN);
         }
       else if (acc_current_rec.acc_flags.Cooldown)
@@ -355,12 +357,20 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_WAITCHARGE:
       // Waiting for charge time in a charge store area
+      // Let ensure charge port is closed for at least 10 seconds, before getting out of here
       if (! car_doors1bits.ChargePort)
         {
-        // The charge port has been closed
-        // (note don't test pilot signal here, as it may fluctuate)
+        if (acc_timeout_goto == 0)
+          {
+          // Get out in 10 seconds, unless charge port is re-opened
+          acc_timeout_ticks = 10;
+          acc_timeout_goto = ACC_STATE_PARKEDIN;
+          }
+        }
+      else
+        {
         acc_timeout_ticks = 0;
-        acc_state_enter(ACC_STATE_PARKEDIN);
+        acc_timeout_goto = 0;
         }
       break;
     case ACC_STATE_CHARGINGIN:
