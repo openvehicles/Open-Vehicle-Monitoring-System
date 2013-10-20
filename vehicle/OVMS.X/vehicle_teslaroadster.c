@@ -1220,7 +1220,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
         -1,                         // ideal mi desired at end of charge (use -1 for full charge)
         100,                        // SOC percent desired at end of charge (ignored if ideal mi specified)
         car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
-        car_linevoltage*car_chargecurrent, // watts available from the wall
+        car_linevoltage*car_chargelimit, // watts available from the wall
         car_ambient_temp            // ambient temperature in degrees C
         );
     car_chargelimit_minsremaining = -1;
@@ -1232,7 +1232,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
           car_chargelimit_rangelimit, // ideal mi desired at end of charge (use -1 for full charge)
           100,                        // SOC percent desired at end of charge (ignored if ideal mi specified)
           car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
-          car_linevoltage*car_chargecurrent, // watts available from the wall
+          car_linevoltage*car_chargelimit, // watts available from the wall
           car_ambient_temp            // ambient temperature in degrees C
           );
       }
@@ -1244,7 +1244,7 @@ BOOL vehicle_teslaroadster_ticker60(void)
           -1,                         // ideal mi desired at end of charge (use -1 for full charge)
           car_chargelimit_soclimit,   // SOC percent desired at end of charge (ignored if ideal mi specified)
           car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
-          car_linevoltage*car_chargecurrent, // watts available from the wall
+          car_linevoltage*car_chargelimit, // watts available from the wall
           car_ambient_temp            // ambient temperature in degrees C
           );
       if ((remain<car_chargelimit_minsremaining)||(car_chargelimit_minsremaining<0))
