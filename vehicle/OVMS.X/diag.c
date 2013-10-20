@@ -343,6 +343,25 @@ void diag_handle_t2(char *command, char *arguments)
 
 void diag_handle_t3(char *command, char *arguments)
   {
+  int k;
+  char t = 40;
+  char *s;
+
+  car_cac100 = 15282;
+  car_idealrange = 144;
+  car_SOC=77;
+  car_ambient_temp = 24;
+
+  k = vehicle_fn_minutestocharge(0,
+                                 (int)t * 220,
+                                 0,
+                                 0);
+
+  s = stp_i(net_scratchpad,"# MTC ",car_SOC);
+  s = stp_i(s, " / ",car_idealrange);
+  s = stp_i(s, " = ",k);
+  s = stp_rom(s, "\r\n");
+  net_puts_ram(net_scratchpad);
   }
 
 // This is the DIAG command table
