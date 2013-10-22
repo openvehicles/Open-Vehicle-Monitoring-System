@@ -845,6 +845,23 @@ BOOL net_sms_handle_reset(char *caller, char *command, char *arguments)
   return FALSE;
   }
 
+BOOL net_sms_handle_temps(char *caller, char *command, char *arguments)
+  {
+  char *s;
+
+  s = stp_i(net_scratchpad, "Temperatures:\r\n  Ambient: ", car_ambient_temp);
+  s = stp_i(s, "C\r\n  PEM: ", car_tpem);
+  s = stp_i(s, "C\r\n  Motor: ", car_tmotor);
+  s = stp_i(s, "C\r\n  Battery: ", car_tbattery);
+  s = stp_rom(s, "C");
+  if ((car_stale_ambient==0)||(car_stale_temps==0))
+    s = stp_rom(s, "\r\n  (stale)");
+
+  net_send_sms_start(caller);
+  net_puts_ram(net_scratchpad);
+  return TRUE;
+  }
+
 BOOL net_sms_handle_help(char *caller, char *command, char *arguments);
 
 // This is the SMS command table
@@ -896,6 +913,7 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "2COOLDOWN",
     "3VERSION",
     "3RESET",
+    "3TEMPS",
 #ifdef OVMS_ACCMODULE
     "2ACC ",
 #endif
@@ -937,6 +955,7 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_cooldown,
   &net_sms_handle_version,
   &net_sms_handle_reset,
+  &net_sms_handle_temps,
 #ifdef OVMS_ACCMODULE
   &acc_handle_sms,
 #endif
