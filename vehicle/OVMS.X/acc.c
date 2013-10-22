@@ -275,9 +275,9 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_PARKEDIN:
       // Parked in a charge store area
-      if ((car_doors1bits.ChargePort)&&(car_doors1bits.PilotSignal))
+      if ((car_doors1bits.ChargePort)&&(car_chargesubstate != 0x07))
         {
-        // The charge port has been opened, and we have pilot signal.
+        // The charge port has been opened, and we are not waiting for cable connection.
         acc_state_enter(ACC_STATE_CPDECIDE);
         }
       else if (CAR_IS_ON)
@@ -290,9 +290,9 @@ void acc_state_ticker1(void)
       break;
     case ACC_STATE_CPDECIDE:
       // Charge port has been opened, so decide what to do
-      if ((! car_doors1bits.ChargePort)||(! car_doors1bits.PilotSignal))
+      if ((! car_doors1bits.ChargePort)||(car_chargesubstate == 0x07))
         {
-        // The charge port has been closed or we have no pilot signal
+        // The charge port has been closed or cable not connected
         acc_state_enter(ACC_STATE_PARKEDIN);
         }
       else if (acc_current_rec.acc_flags.Cooldown)
@@ -321,7 +321,7 @@ void acc_state_ticker1(void)
         {
         // Cooldown has completed (or never started)
         if ((car_doors1bits.ChargePort)&&
-            (car_doors1bits.PilotSignal))
+            (car_chargesubstate != 0x07))
           {
           if (acc_current_rec.acc_flags.ChargeAtPlugin)
             {
