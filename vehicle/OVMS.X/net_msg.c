@@ -347,6 +347,7 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", car_coolingdown);
   s = stp_i(s, ",", car_cooldown_tbattery);
   s = stp_i(s, ",", car_cooldown_timelimit);
+  s = stp_i(s, ",", car_chargeestimate);
 
   return net_msg_encode_statputs(stat, &crc_stat);
 }
@@ -623,7 +624,7 @@ void net_msg_in(char* msg)
   // The following is a nasty hack because base64decode doesn't like incoming
   // messages of length divisible by 4, and is really expecting a CRLF
   // terminated string, so we give it one...
-  CHECKPOINT (25)
+  CHECKPOINT(0x40)
   if (((strlen(msg)*4)/3) >= (NET_BUF_MAX-3))
     {
     // Quick exit to reset link if incoming message is too big
@@ -632,7 +633,7 @@ void net_msg_in(char* msg)
     }
   strcatpgm2ram(msg,(char const rom far*)"\r\n");
   k = base64decode(msg,net_scratchpad);
-  CHECKPOINT (26)
+  CHECKPOINT(0x41)
   RC4_crypt(&rx_crypto1, &rx_crypto2, net_scratchpad, k);
   if (memcmppgm2ram(net_scratchpad, (char const rom far*)"MP-0 ", 5) != 0)
     {
@@ -662,7 +663,7 @@ void net_msg_in(char* msg)
     msg = net_msg_scratchpad;
     }
 
-  CHECKPOINT (21)
+  CHECKPOINT(0x42)
   switch (*msg)
     {
     case 'A': // PING
@@ -726,6 +727,8 @@ BOOL net_msg_cmd_exec(void)
   char *p, *s;
 
   delay100(2);
+
+  CHECKPOINT(0x43)
 
   switch (net_msg_cmd_code)
     {
@@ -870,7 +873,7 @@ BOOL net_msg_cmd_exec(void)
 
 void net_msg_cmd_do(void)
   {
-  CHECKPOINT (22)
+  CHECKPOINT(0x44)
   delay100(2);
 
   // commands 40-49 are special AT commands, thus, disable net_msg here
@@ -904,6 +907,8 @@ void net_msg_forward_sms(char *caller, char *SMS)
   //TODO: store this message inside buffer, resend it when server is connected
   if ((net_msg_serverok == 0)||(net_msg_sendpending)>0)
     return;
+
+  CHECKPOINT(0x45)
 
   delay100(2);
   net_msg_start();
@@ -984,7 +989,11 @@ char *net_prep_stat(char *s)
 
   if (car_coolingdown>=0)
     {
-    s = stp_rom(s, "Cooldown "); // Cooling down...
+    s = stp_i(s, "Cooldown: ", car_tbattery);
+    s = stp_i(s, "C/",car_cooldown_tbattery);
+    s = stp_i(s, "C (",car_coolingdown);
+    s = stp_i(s, "cycles, ",car_cooldown_timelimit);
+    s = stp_rom(s, "mins remain)");
     }
 
   if (car_doors1bits.ChargePort)
@@ -1047,7 +1056,7 @@ char *net_prep_stat(char *s)
         }
       if (car_chargelimit_rangelimit > 0)
         {
-        s = stp_i(s, "\r ", car_chargelimit_rangelimit);
+        s = stp_i(s, "\r ", (can_mileskm == 'K')?KmFromMi(car_chargelimit_rangelimit):car_chargelimit_rangelimit);
         s = stp_rom(s, unit);
         s = stp_i(s,": ",car_chargelimit_minsremaining);
         s = stp_rom(s," mins");

@@ -44,6 +44,9 @@
 //
 BOOL vehicle_nissanleaf_poll0(void)
   {
+  unsigned int id = ((unsigned int)RXB0SIDL >>5)
+                  + ((unsigned int)RXB0SIDH <<3);
+
   can_datalength = RXB0DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB0D0;
   can_databuffer[1] = RXB0D1;
@@ -61,6 +64,9 @@ BOOL vehicle_nissanleaf_poll0(void)
 
 BOOL vehicle_nissanleaf_poll1(void)
   {
+  unsigned int id = ((unsigned int)RXB1SIDL >>5)
+                  + ((unsigned int)RXB1SIDH <<3);
+
   can_datalength = RXB1DLC & 0x0F; // number of received bytes
   can_databuffer[0] = RXB1D0;
   can_databuffer[1] = RXB1D1;
@@ -73,6 +79,12 @@ BOOL vehicle_nissanleaf_poll1(void)
 
   RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
 
+  switch (id)
+    {
+    case 0x55b:
+      car_SOC = ((((int)can_databuffer[0]<<2)|((int)can_databuffer[1]>>6))+5)/10;
+      break;
+    }
   return TRUE;
   }
 
@@ -116,20 +128,20 @@ BOOL vehicle_nissanleaf_initialise(void)
   // Buffer 1 (filters 2, 3, 4 and 5) for direct can bus messages
   RXB1CON  = 0b00000000;	// RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
 
-  RXM1SIDL = 0b11100000;
-  RXM1SIDH = 0b11111111;	// Set Mask1 to 0x7ff
+  RXM1SIDL = 0b00000000;
+  RXM1SIDH = 0b11100000;	// Set Mask1 to 11100000000
 
-  RXF2SIDL = 0b11000000;	// Setup Filter2 so that CAN ID 0x206 will be accepted
-  RXF2SIDH = 0b01000000;
+  RXF2SIDL = 0b00000000;	// Setup Filter2 so that CAN ID 0x500 - 0x5FF will be accepted
+  RXF2SIDH = 0b10100000;
 
-  RXF3SIDL = 0b00100000;	// Setup Filter3 so that CAN ID 0x4E1 will be accepted
-  RXF3SIDH = 0b10011100;
+  RXF3SIDL = 0b00000000;	// Setup Filter3 so that CAN ID 0x100 - 0x1FF will be accepted
+  RXF3SIDH = 0b00100000;
 
-  RXF4SIDL = 0b10000000;  // Setup Filter4 so that CAN ID 0x514 will be accepted
-  RXF4SIDH = 0b10100010;
+  RXF4SIDL = 0b00000000;  // Setup Filter4 so that CAN ID 0x300 - 0x3FF will be accepted
+  RXF4SIDH = 0b01100000;
 
-  RXF5SIDL = 0b10100000;  // Setup Filter5 so that CAN ID 0x135 will be accepted
-  RXF5SIDH = 0b00100110;
+  RXF5SIDL = 0b00000000;  // Setup Filter5 so that CAN ID 0x000 - 0x0FF will be accepted
+  RXF5SIDH = 0b00000000;
 
   // CAN bus baud rate
 

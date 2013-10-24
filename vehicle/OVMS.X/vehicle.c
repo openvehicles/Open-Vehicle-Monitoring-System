@@ -54,6 +54,7 @@ rom BOOL (*vehicle_fn_idlepoll)(void) = NULL;
 rom BOOL (*vehicle_fn_commandhandler)(BOOL msgmode, int code, char* msg);
 rom BOOL (*vehicle_fn_smshandler)(BOOL premsg, char *caller, char *command, char *arguments);
 rom BOOL (*vehicle_fn_smsextensions)(char *caller, char *command, char *arguments);
+rom int  (*vehicle_fn_minutestocharge)(unsigned char chgmod, int wAvail, int ixEnd, int pctEnd);
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_initialise()
@@ -78,6 +79,7 @@ void vehicle_initialise(void)
   vehicle_fn_commandhandler = NULL;
   vehicle_fn_smshandler = NULL;
   vehicle_fn_smsextensions = NULL;
+  vehicle_fn_minutestocharge = NULL;
 
   // Clear the internal GPS flag, unless specifically requested by the module
   net_fnbits &= ~(NET_FN_INTERNALGPS);
@@ -246,23 +248,35 @@ void vehicle_ticker(void)
   // And give the vehicle module a chance...
   if (vehicle_fn_ticker1 != NULL)
     {
-    if (vehicle_fn_ticker1()) return;
+    vehicle_fn_ticker1();
     }
 
-  if ((can_granular_tick % 10)==0)
+  if (((can_granular_tick % 10)==0)&&(vehicle_fn_ticker10 != NULL))
     {
-    if (vehicle_fn_ticker10 != NULL) vehicle_fn_ticker10();
+    vehicle_fn_ticker10();
     }
 
+  // Check chargelimits
+  if (CAR_IS_CHARGING)
+    {
+    if (((car_chargelimit_rangelimit>0)&&(car_idealrange>=car_chargelimit_rangelimit))||
+        ((car_chargelimit_soclimit>0)&&(car_SOC>=car_chargelimit_soclimit)))
+      {
+      // Charge has hit the limit, so can be stopped
+      vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
+      }
+    }
+
+  // minSOC alerts
   if ((can_granular_tick % 60)==0)
     {
     int minSOC;
 
     // check minSOC
     minSOC = sys_features[FEATURE_MINSOC];
-    if (!(can_minSOCnotified & CAN_MINSOC_ALERT_MAIN) && (car_SOC < minSOC))
+    if ((!(can_minSOCnotified & CAN_MINSOC_ALERT_MAIN)) && (car_SOC < minSOC))
       {
-      net_req_notification(NET_NOTIFY_STAT);
+      net_req_notification(NET_NOTIFY_CHARGE);
       can_minSOCnotified |= CAN_MINSOC_ALERT_MAIN;
       }
     else if ((can_minSOCnotified & CAN_MINSOC_ALERT_MAIN) && (car_SOC > minSOC + 2))
@@ -273,9 +287,9 @@ void vehicle_ticker(void)
     if (vehicle_fn_ticker60 != NULL) vehicle_fn_ticker60();
     }
 
-  if ((can_granular_tick % 300)==0)
+  if (((can_granular_tick % 300)==0)&&(vehicle_fn_ticker300 != NULL))
     {
-    if (vehicle_fn_ticker300 != NULL) vehicle_fn_ticker300();
+    vehicle_fn_ticker300();
     }
   
   if ((can_granular_tick % 600)==0)

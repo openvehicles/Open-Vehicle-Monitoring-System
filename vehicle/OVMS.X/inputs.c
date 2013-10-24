@@ -61,6 +61,46 @@ unsigned char inputs_gsmgprs(void)
 
 #ifdef OVMS_HW_V2
 
+unsigned char input_gpi2(void)
+  {
+  return (PORTAbits.RA2==0);
+  }
+
+unsigned char input_gpi3(void)
+  {
+  return (PORTAbits.RA3==0);
+  }
+
+unsigned char input_gpi4(void)
+  {
+  return (PORTAbits.RA4==0);
+  }
+
+unsigned char input_gpi5(void)
+  {
+  return (PORTAbits.RA5==0);
+  }
+
+unsigned char output_gpo0(unsigned char onoff)
+  {
+  PORTCbits.RC0 = onoff;
+  }
+
+unsigned char output_gpo1(unsigned char onoff)
+  {
+  PORTCbits.RC1 = onoff;
+  }
+
+unsigned char output_gpo2(unsigned char onoff)
+  {
+  PORTCbits.RC2 = onoff;
+  }
+
+unsigned char output_gpo3(unsigned char onoff)
+  {
+  PORTCbits.RC3 = onoff;
+  }
+
 float inputs_voltage(void)
   {
   ADCON0=0;   //Select ADC Channel #0

@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 2,5,2
+#define OVMS_FIRMWARE_VERSION 2,5,4
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -212,11 +212,15 @@ extern unsigned char car_cooldown_chargemode;    // 0=standard, 1=storage, 3=ran
 extern unsigned char car_cooldown_chargelimit;   // Charge Limit (amps)
 extern signed int car_cooldown_tbattery;         // Cooldown temperature limit
 extern unsigned int car_cooldown_timelimit;      // Cooldown time limit (minutes) remaining
+extern unsigned char car_cooldown_wascharging;   // TRUE if car was charging when cooldown started
+extern int car_chargeestimate;                   // Charge minute estimate
+extern unsigned char car_SOCalertlimit;          // Limit of SOC at which alert should be raised
 
 // Helpers
 
 #define CAR_IS_ON (car_doors1bits.CarON)
-#define CAR_IS_CHARGING ((car_chargestate==0x01)||(car_chargestate==0x02)||(car_chargestate==0x0f))
+#define CAR_IS_CHARGING (car_doors1bits.Charging)
+#define CAR_IS_HEATING (car_chargestate==0x0f)
 
 // DEBUG / QA stats:
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up

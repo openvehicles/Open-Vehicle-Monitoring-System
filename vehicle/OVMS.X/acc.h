@@ -36,17 +36,15 @@
 #define ACC_STATE_FREE       0x10  // Outside a charge store area
 #define ACC_STATE_DRIVINGIN  0x20  // Driving in a charge store area
 #define ACC_STATE_PARKEDIN   0x30  // Parked in a charge store area
-#define ACC_STATE_CPWAIT     0x31  // Charge port has been opened, wait 3 seconds
-#define ACC_STATE_CPDECIDE   0x32  // Charge port has been opened, so decide what to do
+#define ACC_STATE_CPDECIDE   0x31  // Charge port has been opened, so decide what to do
 #define ACC_STATE_COOLDOWN   0x40  // Cooldown in a charge store area
 #define ACC_STATE_WAITCHARGE 0x50  // Waiting for charge time in a charge store area
 #define ACC_STATE_CHARGINGIN 0x51  // Charging in a charge store area
+#define ACC_STATE_WAKEUPCIN  0x52  // Wake up and charge in a charge store area
 #define ACC_STATE_CHARGEDONE 0x60  // Completed charging in a charge store area
 
 // ACC data
 extern unsigned char acc_state;                // The current state
-extern unsigned char acc_state_vchar;          //   A per-state CHAR variable
-extern unsigned int  acc_state_vint;           //   A per-state INT variable
 extern unsigned char acc_current_loc;          // Current ACC location
 extern unsigned char acc_timeout_goto;         // State to auto-transition to, after timeout
 extern unsigned int  acc_timeout_ticks;        // Number of seconds before timeout auto-transition
@@ -79,6 +77,8 @@ struct acc_record
   unsigned int acc_stoprange;       // Range to stop charge at
   unsigned char acc_stopsoc;        // SOC to stop charge at
   unsigned char acc_homelink;       // Homelink to activate
+  unsigned char acc_reserved1;
+  unsigned char acc_reserved2;
   };
 
 void acc_initialise(void);        // ACC Initialisation
