@@ -257,6 +257,18 @@ void acc_state_enter(unsigned char newstate)
       acc_timeout_ticks = 10;
       vehicle_fn_commandhandler(FALSE, 18, NULL); // Wake up car
       break;
+    case ACC_STATE_WAKEUPWC:
+      acc_timeout_goto = ACC_STATE_WAITCHARGE;
+      acc_timeout_ticks = 10;
+      vehicle_fn_commandhandler(FALSE, 18, NULL); // Wake up car
+      for (k=0;k<2;k++) // Be persistent, do this a few times...
+        {
+        delay100(1);
+        stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
+        net_msg_cmd_msg = net_scratchpad;
+        vehicle_fn_commandhandler(FALSE, 10, net_msg_cmd_msg);
+        }
+      break;
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
       car_chargelimit_rangelimit = 0;
@@ -325,7 +337,7 @@ void acc_state_ticker1(void)
       else if ((acc_current_rec.acc_flags.ChargeAtTime)||
                (acc_current_rec.acc_flags.ChargeByTime))
         {
-        acc_state_enter(ACC_STATE_WAITCHARGE);
+        acc_state_enter(ACC_STATE_WAKEUPWC);
         }
       break;
     case ACC_STATE_COOLDOWN:
@@ -351,7 +363,7 @@ void acc_state_ticker1(void)
                    (acc_current_rec.acc_flags.ChargeByTime))
             {
             // Let's wait or a scheduled charge...
-            acc_state_enter(ACC_STATE_WAITCHARGE);
+            acc_state_enter(ACC_STATE_WAKEUPWC);
             }
           else
             {
@@ -673,6 +685,10 @@ BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
     case ACC_STATE_WAKEUPCIN:
       // Wake up and charge in a charge store area
       s = stp_rom(s, "WakeUp to Charge");
+      break;
+    case ACC_STATE_WAKEUPWC:
+      // Wake up and wait for charge
+      s = stp_rom(s, "WakeUp to wait charge");
       break;
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
