@@ -129,7 +129,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_HW_V1;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_ACCMODULE"/>
+                  value="OVMS_HW_V1;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_LOGGINGMODULE"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -189,7 +189,7 @@
         <property key="programoptions.uselvpprogramming" value="false"/>
         <property key="voltagevalue" value="5.0"/>
       </PICkit3PlatformTool>
-      <item path="acc.c" ex="false" overriding="false">
+      <item path="acc.c" ex="true" overriding="false">
         <C18>
         </C18>
         <C18-AS>
@@ -229,7 +229,7 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
-      <item path="logging.c" ex="true" overriding="false">
+      <item path="logging.c" ex="false" overriding="false">
         <C18>
         </C18>
         <C18-AS>
@@ -553,7 +553,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_INTERNALGPS"/>
+                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_TRACK;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_INTERNALGPS"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -653,7 +653,7 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
-      <item path="logging.c" ex="true" overriding="false">
+      <item path="logging.c" ex="false" overriding="false">
         <C18>
         </C18>
         <C18-AS>
@@ -733,7 +733,7 @@
         <C18LanguageToolchain>
         </C18LanguageToolchain>
       </item>
-      <item path="vehicle_track.c" ex="true" overriding="false">
+      <item path="vehicle_track.c" ex="false" overriding="false">
         <C18>
         </C18>
         <C18-AS>
@@ -861,7 +861,7 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0xffff"/>
         <property key="memories.programmemory.start" value="0x0"/>
-        <property key="poweroptions.powerenable" value="false"/>
+        <property key="poweroptions.powerenable" value="true"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmspeed" value="2"/>
