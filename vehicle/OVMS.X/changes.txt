@@ -28,6 +28,17 @@
 ; THE SOFTWARE.
 */
 
+
+2013-11-28 2.5.5       Firmware 2.5.5
+                       # Fix mode numnbers for display of range and performance charge modes
+                       # V1_TeslaRoadster config: include logging, but no room for ACC
+                       # TeslaRoadster: CTP prediction based on charge limit, not current current
+                       # ACC: Use car_chargesubstate!=0x07 instead of pilot signal
+                       # Add TEMPS SMS command for temperatures
+                       # ACC: Delay CTP calculations until acc charge mode is stable
+                       # ACC: Remove 30 minute safety margin for CHARGEBY
+                       # Config changes to optimise what is in each config
+
 2013-10-11 2.5.4       Firmware 2.5.4
                        # Make MINSOC drive NET_NOTIFY_CHARGE (rather than NET_NOTIFY_STAT)
                        # Input GPIO control for input RA2..RA5, and output RC0..RC3
