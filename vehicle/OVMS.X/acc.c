@@ -216,11 +216,11 @@ void acc_state_enter(unsigned char newstate)
             }
           else
             {
-            // 30 minute safety margin
-            if ((car_chargeestimate+30) <= acc_current_rec.acc_chargetime)
-              acc_chargeminute = acc_current_rec.acc_chargetime - (car_chargeestimate + 30); // Schedule charge today
+            // Schedule the charge
+            if ((car_chargeestimate) <= acc_current_rec.acc_chargetime)
+              acc_chargeminute = acc_current_rec.acc_chargetime - car_chargeestimate; // Schedule charge today
             else
-              acc_chargeminute = (acc_current_rec.acc_chargetime + 1440) - (car_chargeestimate + 30); // Wrap to previous day
+              acc_chargeminute = (acc_current_rec.acc_chargetime + 1440) - car_chargeestimate; // Wrap to previous day
             }
           }
         }
