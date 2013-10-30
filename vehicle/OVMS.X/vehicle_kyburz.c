@@ -68,8 +68,6 @@ BOOL vehicle_kyburz_ticker1(void)
   int k;
   BOOL doneone = FALSE;
 
-  if (car_stale_ambient>0) car_stale_ambient--;
-  if (car_stale_temps>0) car_stale_temps--;
   if (kd_candata_timer>0)
     {
     if (--kd_candata_timer == 0)

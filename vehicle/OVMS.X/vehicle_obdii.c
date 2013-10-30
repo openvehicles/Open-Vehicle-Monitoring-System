@@ -78,8 +78,6 @@ BOOL vehicle_obdii_ticker1(void)
   ////////////////////////////////////////////////////////////////////////
   // Stale tickers
   ////////////////////////////////////////////////////////////////////////
-  if (car_stale_ambient>0) car_stale_ambient--;
-  if (car_stale_temps>0) car_stale_temps--;
   if (obdii_candata_timer>0)
     {
     if (--obdii_candata_timer == 0)

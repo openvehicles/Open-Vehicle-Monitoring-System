@@ -185,9 +185,6 @@ unsigned int tc_bit_chgovercurr;
 
 BOOL vehicle_thinkcity_state_ticker1(void)
   {
-  if (car_stale_ambient>0) car_stale_ambient--;
-  if (car_stale_temps>0) car_stale_temps--;
-
   if (tc_srs_stat == 0)
   {
     output_gpo0(1); // Set digital out RC0 high, pin2 header 9X2.

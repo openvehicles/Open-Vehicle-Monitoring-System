@@ -87,8 +87,6 @@ BOOL vehicle_voltampera_ticker1(void)
   ////////////////////////////////////////////////////////////////////////
   // Stale tickers
   ////////////////////////////////////////////////////////////////////////
-  if (car_stale_ambient>0) car_stale_ambient--;
-  if (car_stale_temps>0) car_stale_temps--;
   if (va_candata_timer>0)
     {
     if (--va_candata_timer == 0)

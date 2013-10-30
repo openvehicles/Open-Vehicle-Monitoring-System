@@ -71,7 +71,6 @@ BOOL vehicle_mitsubishi_ticker1(void)
   // Stale tickers
   ////////////////////////////////////////////////////////////////////////
   
-  if (car_stale_temps>0) car_stale_temps--;
   if (mi_candata_timer > 0)
     {
     if (--mi_candata_timer == 0) 
