@@ -4,6 +4,8 @@
 ;
 ;
 ;    Changes:
+;    2.7  30.10.2013 (Haakon)
+;         - Added function for stale temps
 ;    2.6  25.09.2013 (Haakon)
 ;         - Added car_parktime for the app
 ;
@@ -196,6 +198,7 @@ BOOL vehicle_thinkcity_state_ticker1(void)
 
   car_chargemode = 0;
   car_SOCalertlimit = 10;
+  car_doors3bits.CoolingPump= (car_stale_temps<=1)?0:1;
 
   return FALSE;
   }
