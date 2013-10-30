@@ -3,6 +3,9 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
+;    1.6  30.10.13 (Thomas)
+;         - Added car_SOCalertlimit = 10 to set a system alert when SOC < 10
+;         - Added function for stale temps
 ;    1.5  26.10.13 (Thomas)
 ;         - Added Motor and PEM temperature reading (thanks to Matt Beard)
 ;         - Added calculation of estimated range during QC (thanks to Matt Beard)
@@ -84,14 +87,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
   // Stale tickers
   ////////////////////////////////////////////////////////////////////////
   
-  if (car_stale_temps > 0) 
-    {
-    car_stale_temps--;
-    }
-  else
-    {
-    car_doors3bits.CoolingPump = 0; // For backward compatibility with app
-    }
+  car_doors3bits.CoolingPump = (car_stale_temps <= 1)?0:1;
 
   if (mi_candata_timer > 0)
     {
@@ -193,7 +189,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
       mi_charge_wm = 0;       // Reset the per-minute watt accumulator
       net_req_notification(NET_NOTIFY_STAT);
       }
-	  
+
     else
       { // Charge is ongoing
       car_doors1bits.ChargePort = 1;  //MJ
@@ -225,7 +221,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
         mi_charge_wm = 0;       // Reset the per-minute watt accumulator
         net_req_notification(NET_NOTIFY_STAT);
         }
-		
+
       else
         { // Charge is ongoing
         car_doors1bits.ChargePort = 1;  //MJ
@@ -303,19 +299,16 @@ BOOL vehicle_mitsubishi_ticker1(void)
 
 BOOL vehicle_mitsubishi_ticker10(void)
   {
-   ////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////
   // Battery temperature
   ////////////////////////////////////////////////////////////////////////
   
   int i;
   signed int tbattery = 0;
- // car_tpem = 100;     // Min cell temp
- //  car_tmotor = 0;     // Max cell temp
+
   for(i=0; i<24; i++)
     {
     tbattery += mi_batttemps[i];
-//    if(mi_batttemps[i] < car_tpem) car_tpem = mi_batttemps[i];
-//    if(mi_batttemps[i] > car_tmotor) car_tmotor = mi_batttemps[i];
     }
   car_tbattery = tbattery / 24;
 
@@ -427,11 +420,10 @@ BOOL vehicle_mitsubishi_poll1(void)
       break;
       }
 
-     case 0x286: // Charger temp + 40C?
+    case 0x286: // Charger temp + 40C?
       {
       car_tpem = (signed char)can_databuffer[3] - 40;
       car_stale_temps = 60; // Reset stale indicator
-      car_doors3bits.CoolingPump = 1; // For backward compatibility with app
       break;
       }
 
@@ -439,7 +431,6 @@ BOOL vehicle_mitsubishi_poll1(void)
       {
       car_tmotor = (unsigned char)can_databuffer[3] - 40;
       car_stale_temps = 60; // Reset stale indicator
-      car_doors3bits.CoolingPump = 1; // For backward compatibility with app
       break;
       }
 
@@ -477,7 +468,6 @@ BOOL vehicle_mitsubishi_poll1(void)
          mi_batttemps[idx] = (signed char)(can_databuffer[2] - 50);
          mi_batttemps[idx + 1] = (signed char)(can_databuffer[3] - 50);
          car_stale_temps = 60; // Reset stale indicator
-         car_doors3bits.CoolingPump = 0; // For backward compatibility with app
          }
       break;
       }
@@ -507,6 +497,7 @@ BOOL vehicle_mitsubishi_initialise(void)
   car_stale_timer = -1; // Timed charging is not supported for OVMS MI
   car_time = 0;
   mi_candata_timer = 0;
+  car_SOCalertlimit = 10; 
   
    // Clear the battery temperatures
   for(i=0; i<24; i++) mi_batttemps[i] = 0;
@@ -529,12 +520,6 @@ BOOL vehicle_mitsubishi_initialise(void)
 // Filter0 0b01101000000 (0x340..0x347 to 0x370..0x377 - includes 0x346, 0x373 and 0x374)
   RXF0SIDL = 0b00000000;
   RXF0SIDH = 0b01101000;
-    
-  /*
-  // Filter0 0b01100000000 (0x300..0x3F8)
-  RXF0SIDL = 0b00000000;
-  RXF0SIDH = 0b01100000;
-  */
   
   // Filter1 0b01110001001 (0x389)
   RXF1SIDL = 0b00100000;
@@ -549,11 +534,6 @@ BOOL vehicle_mitsubishi_initialise(void)
   RXM1SIDL = 0b10000000;
   RXM1SIDH = 0b11111111;
   
-/*  
-  // Mask1 = 0b11111111111 (0x7FF)
-  RXM1SIDL = 0b11100000;
-  RXM1SIDH = 0b11111111;
-*/
   // Filter2 0b01010000101 (0x285 & 0x286)
   RXF2SIDL = 0b10000000;
   RXF2SIDH = 0b01010000;
