@@ -3,6 +3,8 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
+;    1.8  02.10.13 (Thomas)
+;         - Added filtering of QC state detection to prevent false QC status
 ;    1.7  31.10.13 (Thomas)
 ;         - Changed quick charge detection.
 ;         - Added charge stale timer to prevent hanging in charging mode.
@@ -70,7 +72,9 @@ unsigned long mi_charge_wm;      // A per-minute watt accumulator
 unsigned char mi_candata_timer;  // A per-second timer for CAN bus data
 unsigned char mi_stale_charge;   // A charge stale timer
 unsigned char mi_quick_charge;   // Quick charge status 
+unsigned char mi_qc_counter;     // Counter to filter false QC messages (0xff)
 unsigned int  mi_estrange;       // The estimated range from the CAN-bus
+
 
 signed char mi_batttemps[24]; // Temperature buffer, holds first two temps from the 0x6e1 messages (24 of the 64 values)
 
@@ -225,7 +229,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
         { // One minute has passed
         mi_charge_timer = 0;
         car_chargeduration++;
-        if (mi_estrange != 255)
+        if (mi_quick_charge == 0) // Not QC
           {
           mi_charge_wm += (car_chargecurrent*car_linevoltage);
           if (mi_charge_wm >= 60000L)
@@ -237,7 +241,10 @@ BOOL vehicle_mitsubishi_ticker1(void)
         }
       }
     }
-
+  
+  // Special case: The car will take a ~15 min charging brake buring normal charging to level 
+  // battery cellsat ~70% SOC. car_chargecurrent 0A and car_chargevoltage > 100V will be reporter
+  // reported in this stage.   
   else if ((car_chargecurrent == 0) && (car_linevoltage > 100))
     { // CAN says the car is not charging
     if ((car_doors1 & 0x08) && (car_SOC == 100))
@@ -341,14 +348,28 @@ BOOL vehicle_mitsubishi_poll0(void)
     case 0x346: //Range
       {
       mi_estrange = (unsigned int)can_databuffer[7];
-      if (mi_estrange == 255) // Quick charging
+      
+      // Quick charging indicated by range = 255.
+      // To filter out false 255 messages we need 3 subsequent 255 messages to indicate QC. 
+  
+      if ((mi_estrange == 255) && (car_speed < 5))
         {
-        mi_quick_charge = 1;
-        mi_stale_charge = 30; // Reset stale charging indicator
-        }
+        if (mi_qc_counter > 0) mi_qc_counter--;
+          
+        if (mi_qc_counter == 0)
+          {
+          mi_quick_charge = 1;
+          mi_stale_charge = 30; // Reset stale charging indicator
+          }
+
       else
         {
-        mi_quick_charge = 0;
+        if (mi_qc_counter < 3) mi_qc_counter++;
+ 
+        else 
+          {
+          mi_quick_charge = 0;
+          }
         }
         
       break;
@@ -506,6 +527,7 @@ BOOL vehicle_mitsubishi_initialise(void)
   car_SOCalertlimit = 10;
   mi_stale_charge = 0;  
   mi_quick_charge = 0;
+  mi_qc_counter = 3;
   mi_estrange = 0;
   
    // Clear the battery temperatures
