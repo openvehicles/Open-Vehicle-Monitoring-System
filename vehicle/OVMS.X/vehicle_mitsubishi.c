@@ -361,6 +361,7 @@ BOOL vehicle_mitsubishi_poll0(void)
           mi_quick_charge = 1;
           mi_stale_charge = 30; // Reset stale charging indicator
           }
+        }
 
       else
         {
