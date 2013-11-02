@@ -176,20 +176,6 @@ BOOL vehicle_tazzari_poll0(void)
   unsigned char k;
   unsigned int value16;
   unsigned char value8;
-  unsigned int id = ((unsigned int)RXB0SIDL >>5)
-                  + ((unsigned int)RXB0SIDH <<3);
-
-  can_datalength = RXB0DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB0D0;
-  can_databuffer[1] = RXB0D1;
-  can_databuffer[2] = RXB0D2;
-  can_databuffer[3] = RXB0D3;
-  can_databuffer[4] = RXB0D4;
-  can_databuffer[5] = RXB0D5;
-  can_databuffer[6] = RXB0D6;
-  can_databuffer[7] = RXB0D7;
-
-  RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
   tz_candata_timer = 60;   // Reset the timer
 
@@ -201,7 +187,7 @@ BOOL vehicle_tazzari_poll0(void)
   pid = can_databuffer[3]+((unsigned int) can_databuffer[2] << 8);
   value16 = can_databuffer[7] + ((unsigned int)can_databuffer[6] << 8);
   value8 = can_databuffer[7];
-  if (id == 0x775)
+  if (can_id == 0x775)
     {
     switch (pid)
       {
@@ -268,25 +254,10 @@ BOOL vehicle_tazzari_poll0(void)
 
 BOOL vehicle_tazzari_poll1(void)
   {
-  unsigned char CANctrl;
-
-  can_datalength = RXB1DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB1D0;
-  can_databuffer[1] = RXB1D1;
-  can_databuffer[2] = RXB1D2;
-  can_databuffer[3] = RXB1D3;
-  can_databuffer[4] = RXB1D4;
-  can_databuffer[5] = RXB1D5;
-  can_databuffer[6] = RXB1D6;
-  can_databuffer[7] = RXB1D7;
-
-  CANctrl=RXB1CON;		// copy CAN RX1 Control register
-  RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
-
   tz_bus_is_active = TRUE; // Activity has been seen on the bus
   tz_candata_timer = 60;   // Reset the timer
 
-  if ((CANctrl & 0x07) == 2)             // Acceptance Filter 2 (RXF2) = CAN ID 0x267
+  if (can_id == 0x267)
     {
     if (can_databuffer[4] == 0)
       { // Driving

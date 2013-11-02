@@ -233,22 +233,7 @@ BOOL vehicle_voltampera_poll0(void)
   unsigned char value;
   unsigned char k;
   char *p;
-  unsigned int id = ((unsigned int)RXB0SIDL >>5)
-                  + ((unsigned int)RXB0SIDH <<3);
-
-   unsigned int edrive_distance = 0;
-
-  can_datalength = RXB0DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB0D0;
-  can_databuffer[1] = RXB0D1;
-  can_databuffer[2] = RXB0D2;
-  can_databuffer[3] = RXB0D3;
-  can_databuffer[4] = RXB0D4;
-  can_databuffer[5] = RXB0D5;
-  can_databuffer[6] = RXB0D6;
-  can_databuffer[7] = RXB0D7;
-
-  RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
+  unsigned int edrive_distance = 0;
 
   va_candata_timer = 60;   // Reset the timer
 
@@ -256,12 +241,12 @@ BOOL vehicle_voltampera_poll0(void)
   value = can_databuffer[4];
 
   // First check for net_msg 46 (OBDII extended pid request)
-  if ((pid == va_obd_expect_pid)&&(id == va_obd_expect_id)&&(!va_obd_expect_waiting))
+  if ((pid == va_obd_expect_pid)&&(can_id == va_obd_expect_id)&&(!va_obd_expect_waiting))
     {
     // This is the response we were looking for
     p = stp_rom(va_obd_expect_buf, "MP-0 ");
     p = stp_i(p, "c", 46);
-    p = stp_i(p, ",0,",id);
+    p = stp_i(p, ",0,",can_id);
     p = stp_i(p, ",", pid);
     for (k=0;k<8;k++)
       p = stp_i(p, ",", can_databuffer[k]);
@@ -272,7 +257,7 @@ BOOL vehicle_voltampera_poll0(void)
 
   if (can_databuffer[1] != 0x62) return TRUE; // Check the return code
 
-  if (id == 0x7ec)
+  if (can_id == 0x7ec)
     {
     switch (pid)
       {
@@ -306,7 +291,7 @@ BOOL vehicle_voltampera_poll0(void)
         break;
       }
     }
-  else if (id == 0x7e8)
+  else if (can_id == 0x7e8)
     {
     switch (pid)
       {
@@ -318,7 +303,7 @@ BOOL vehicle_voltampera_poll0(void)
         break;
       }
     }
-  else if (id == 0x7e9)
+  else if (can_id == 0x7e9)
     {
     switch (pid)
       {
@@ -335,26 +320,12 @@ BOOL vehicle_voltampera_poll0(void)
 
 BOOL vehicle_voltampera_poll1(void)
   {
-  unsigned char CANctrl;
   unsigned char k;
-
-  can_datalength = RXB1DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB1D0;
-  can_databuffer[1] = RXB1D1;
-  can_databuffer[2] = RXB1D2;
-  can_databuffer[3] = RXB1D3;
-  can_databuffer[4] = RXB1D4;
-  can_databuffer[5] = RXB1D5;
-  can_databuffer[6] = RXB1D6;
-  can_databuffer[7] = RXB1D7;
-
-  CANctrl=RXB1CON;		// copy CAN RX1 Control register
-  RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
 
   va_bus_is_active = TRUE; // Activity has been seen on the bus
   va_candata_timer = 60;   // Reset the timer
 
-  if ((CANctrl & 0x07) == 2)             // Acceptance Filter 2 (RXF2) = CAN ID 0x206
+  if (can_filter == 2)             // Acceptance Filter 2 (RXF2) = CAN ID 0x206
     {
     // SOC
     // For the SOC, each 4,000 is 1kWh. Assuming a 16.1kWh battery, 1% SOC is 644 decimal bytes
@@ -366,7 +337,7 @@ BOOL vehicle_voltampera_poll1(void)
     //car_idealrange = ((unsigned int)car_SOC * (unsigned int)37)/100;  // Kludgy, but ok for the moment
     //car_estrange = car_idealrange;                              // Very kludgy, but ok ...
     }
-  else if ((CANctrl & 0x07) == 3)        // Acceptance Filter 3 (RXF3) = CAN ID 4E1
+  else if (can_filter == 3)        // Acceptance Filter 3 (RXF3) = CAN ID 4E1
     {
     // The VIN can be constructed by taking the number "1" and converting the CAN IDs 4E1 and 514 to ASCII.
     // So with "4E1 4255313032363839" and "514 4731524436453436",
@@ -376,13 +347,13 @@ BOOL vehicle_voltampera_poll1(void)
       car_vin[k+9] = can_databuffer[k];
     car_vin[17] = 0;
     }
-  else if ((CANctrl & 0x07) == 4)        // Acceptance Filter 4 (RXF4) = CAN ID 514
+  else if (can_filter == 4)        // Acceptance Filter 4 (RXF4) = CAN ID 514
     {
     car_vin[0] = '1';
     for (k=0;k<8;k++)
       car_vin[k+1] = can_databuffer[k];
     }
-  else if ((CANctrl & 0x07) == 5)        // Acceptance Filter 5 (RXF5) = CAN ID 135
+  else if (can_filter == 5)        // Acceptance Filter 5 (RXF5) = CAN ID 135
     {
     if (can_databuffer[0] == 0)
       { // Car is in PARK

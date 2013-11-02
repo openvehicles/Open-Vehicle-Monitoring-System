@@ -294,25 +294,7 @@ BOOL vehicle_thinkcity_state_ticker10(void)
 //
 BOOL vehicle_thinkcity_poll0(void)
   {
-
-  unsigned int id = ((unsigned int)RXB0SIDL >>5)
-                  + ((unsigned int)RXB0SIDH <<3);
-
-  can_datalength = RXB0DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB0D0;
-  can_databuffer[1] = RXB0D1;
-  can_databuffer[2] = RXB0D2;
-  can_databuffer[3] = RXB0D3;
-  can_databuffer[4] = RXB0D4;
-  can_databuffer[5] = RXB0D5;
-  can_databuffer[6] = RXB0D6;
-  can_databuffer[7] = RXB0D7;
-
-  RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
-
-
-
-  switch (id)
+  switch (can_id)
     {
     case 0x301:
       tc_pack_current = (((int) can_databuffer[0] << 8) + can_databuffer[1]) / 10;
@@ -386,23 +368,7 @@ BOOL vehicle_thinkcity_poll0(void)
 
 BOOL vehicle_thinkcity_poll1(void)
   {
-    unsigned int id = ((unsigned int)RXB1SIDL >>5)
-                    + ((unsigned int)RXB1SIDH <<3);
-
-
-  can_datalength = RXB1DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB1D0;
-  can_databuffer[1] = RXB1D1;
-  can_databuffer[2] = RXB1D2;
-  can_databuffer[3] = RXB1D3;
-  can_databuffer[4] = RXB1D4;
-  can_databuffer[5] = RXB1D5;
-  can_databuffer[6] = RXB1D6;
-  can_databuffer[7] = RXB1D7;
-
-  RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
-
-  switch (id)
+  switch (can_id)
     {
     case 0x263:
       car_stale_ambient = 60;
