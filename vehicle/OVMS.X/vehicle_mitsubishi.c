@@ -3,8 +3,10 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
-;    1.8  02.10.13 (Thomas)
+;    1.8  03.11.13 (Thomas)
 ;         - Added filtering of QC state detection to prevent false QC status
+;         - Move can bus low level register access to vehicle.c to 
+;           support OVMS_FIRMWARE_VERSION 2,6,1
 ;    1.7  31.10.13 (Thomas)
 ;         - Changed quick charge detection.
 ;         - Added charge stale timer to prevent hanging in charging mode.
@@ -335,7 +337,8 @@ BOOL vehicle_mitsubishi_poll0(void)
       mi_estrange = (unsigned int)can_databuffer[7];
       
       // Quick charging indicated by range = 255.
-      // To filter out false 255 messages we need 3 subsequent 255 messages to indicate QC. 
+      // To filter out false QC messages we need 3 subsequent 255 messages to indicate QC mode. 
+	  // Also need 3 normal range messages to exit QC mode
   
       if ((mi_estrange == 255) && (car_speed < 5))
         {
@@ -352,7 +355,7 @@ BOOL vehicle_mitsubishi_poll0(void)
         {
         if (mi_qc_counter < 3) mi_qc_counter++;
  
-        else 
+        if (mi_qc_counter == 3)
           {
           mi_quick_charge = 0;
           }
