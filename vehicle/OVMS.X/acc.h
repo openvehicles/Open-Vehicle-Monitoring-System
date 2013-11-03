@@ -41,6 +41,7 @@
 #define ACC_STATE_WAITCHARGE 0x50  // Waiting for charge time in a charge store area
 #define ACC_STATE_CHARGINGIN 0x51  // Charging in a charge store area
 #define ACC_STATE_WAKEUPCIN  0x52  // Wake up and charge in a charge store area
+#define ACC_STATE_WAKEUPWC   0x53  // Wake up and then wait charge
 #define ACC_STATE_CHARGEDONE 0x60  // Completed charging in a charge store area
 
 // ACC data

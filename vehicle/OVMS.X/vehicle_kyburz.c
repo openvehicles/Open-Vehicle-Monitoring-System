@@ -68,8 +68,6 @@ BOOL vehicle_kyburz_ticker1(void)
   int k;
   BOOL doneone = FALSE;
 
-  if (car_stale_ambient>0) car_stale_ambient--;
-  if (car_stale_temps>0) car_stale_temps--;
   if (kd_candata_timer>0)
     {
     if (--kd_candata_timer == 0)
@@ -163,20 +161,6 @@ BOOL vehicle_kyburz_poll0(void)
   unsigned char k;
   unsigned int value16;
   unsigned char value8;
-  unsigned int id = ((unsigned int)RXB0SIDL >>5)
-                  + ((unsigned int)RXB0SIDH <<3);
-
-  can_datalength = RXB0DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB0D0;
-  can_databuffer[1] = RXB0D1;
-  can_databuffer[2] = RXB0D2;
-  can_databuffer[3] = RXB0D3;
-  can_databuffer[4] = RXB0D4;
-  can_databuffer[5] = RXB0D5;
-  can_databuffer[6] = RXB0D6;
-  can_databuffer[7] = RXB0D7;
-
-  RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
   kd_candata_timer = 60;   // Reset the timer
 
@@ -186,7 +170,7 @@ BOOL vehicle_kyburz_poll0(void)
 
   pid = can_databuffer[1]+((unsigned int) can_databuffer[2] << 8);
   value16 = can_databuffer[4] + ((unsigned int)can_databuffer[5] << 8);
-  if (id == 0x5A6)
+  if (can_id == 0x5A6)
     {
     switch (pid)
       {

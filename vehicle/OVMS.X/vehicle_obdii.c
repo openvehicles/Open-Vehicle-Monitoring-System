@@ -78,8 +78,6 @@ BOOL vehicle_obdii_ticker1(void)
   ////////////////////////////////////////////////////////////////////////
   // Stale tickers
   ////////////////////////////////////////////////////////////////////////
-  if (car_stale_ambient>0) car_stale_ambient--;
-  if (car_stale_temps>0) car_stale_temps--;
   if (obdii_candata_timer>0)
     {
     if (--obdii_candata_timer == 0)
@@ -160,20 +158,6 @@ BOOL vehicle_obdii_poll0(void)
   unsigned char value1;
   unsigned int value2;
   char *p;
-  unsigned int id = ((unsigned int)RXB0SIDL >>5)
-                  + ((unsigned int)RXB0SIDH <<3);
-
-  can_datalength = RXB0DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB0D0;
-  can_databuffer[1] = RXB0D1;
-  can_databuffer[2] = RXB0D2;
-  can_databuffer[3] = RXB0D3;
-  can_databuffer[4] = RXB0D4;
-  can_databuffer[5] = RXB0D5;
-  can_databuffer[6] = RXB0D6;
-  can_databuffer[7] = RXB0D7;
-
-  RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 
   obdii_bus_is_active = TRUE; // Activity has been seen on the bus
   obdii_candata_timer = 60;   // Reset the timer
@@ -188,7 +172,7 @@ BOOL vehicle_obdii_poll0(void)
     // This is the response we were looking for
     p = stp_rom(obdii_expect_buf, "MP-0 ");
     p = stp_i(p, "c", 45);
-    p = stp_i(p, ",0,",id);
+    p = stp_i(p, ",0,",can_id);
     p = stp_i(p, ",", pid);
     for (k=0;k<8;k++)
       p = stp_i(p, ",", can_databuffer[k]);

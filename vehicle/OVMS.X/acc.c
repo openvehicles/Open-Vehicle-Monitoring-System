@@ -47,6 +47,15 @@ unsigned char acc_timeout_goto = 0;         // State to auto-transition to, afte
 unsigned int  acc_timeout_ticks = 0;        // Number of seconds before timeout auto-transition
 unsigned int  acc_granular_tick = 0;        // An internal ticker used to generate 1min, 5min, etc, calls
 
+unsigned int acc_last_chgmod = 0;
+int acc_last_wAvail = 0;
+int acc_last_ixEnd = 0;
+int acc_last_pctEnd = 0;
+int acc_last_car_idealrange = 0;
+int acc_last_cac = 0;
+unsigned char acc_last_loc = 0;
+int acc_last_estimate = 0;
+
 rom char ACC_NOTHERE[] = "ACC not at this location";
 
 signed char acc_find(struct acc_record* ar, int range, BOOL enabledonly)
@@ -178,11 +187,21 @@ void acc_state_enter(unsigned char newstate)
             p = stp_rom(p,")\r\n");
             net_puts_ram(net_scratchpad);
             }
+
+          acc_last_chgmod = acc_current_rec.acc_chargemode;
+          acc_last_wAvail = (int)acc_current_rec.acc_chargelimit * 220;
+          acc_last_ixEnd = acc_current_rec.acc_stoprange;
+          acc_last_pctEnd = acc_current_rec.acc_stopsoc;
+          acc_last_car_idealrange = car_idealrange;
+          acc_last_cac = car_cac100;
+          acc_last_loc = acc_current_loc;
+
           car_chargeestimate = vehicle_fn_minutestocharge(acc_current_rec.acc_chargemode,
                                                           (int)acc_current_rec.acc_chargelimit * 220,
                                                           acc_current_rec.acc_stoprange,
                                                           acc_current_rec.acc_stopsoc);
-          
+          acc_last_estimate = car_chargeestimate;
+
           if (net_state == NET_STATE_DIAGMODE)
             {
             p = stp_i(net_scratchpad,"\r\n# ACC vehicle_fn_minutestocharge result=",car_chargeestimate);
@@ -197,11 +216,11 @@ void acc_state_enter(unsigned char newstate)
             }
           else
             {
-            // 30 minute safety margin
-            if ((car_chargeestimate+30) <= acc_current_rec.acc_chargetime)
-              acc_chargeminute = acc_current_rec.acc_chargetime - (car_chargeestimate + 30); // Schedule charge today
+            // Schedule the charge
+            if ((car_chargeestimate) <= acc_current_rec.acc_chargetime)
+              acc_chargeminute = acc_current_rec.acc_chargetime - car_chargeestimate; // Schedule charge today
             else
-              acc_chargeminute = (acc_current_rec.acc_chargetime + 1440) - (car_chargeestimate + 30); // Wrap to previous day
+              acc_chargeminute = (acc_current_rec.acc_chargetime + 1440) - car_chargeestimate; // Wrap to previous day
             }
           }
         }
@@ -237,6 +256,18 @@ void acc_state_enter(unsigned char newstate)
       acc_timeout_goto = ACC_STATE_CHARGINGIN;
       acc_timeout_ticks = 10;
       vehicle_fn_commandhandler(FALSE, 18, NULL); // Wake up car
+      break;
+    case ACC_STATE_WAKEUPWC:
+      acc_timeout_goto = ACC_STATE_WAITCHARGE;
+      acc_timeout_ticks = 10;
+      vehicle_fn_commandhandler(FALSE, 18, NULL); // Wake up car
+      for (k=0;k<2;k++) // Be persistent, do this a few times...
+        {
+        delay100(1);
+        stp_i(net_scratchpad, "", acc_current_rec.acc_chargemode);
+        net_msg_cmd_msg = net_scratchpad;
+        vehicle_fn_commandhandler(FALSE, 10, net_msg_cmd_msg);
+        }
       break;
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
@@ -306,7 +337,7 @@ void acc_state_ticker1(void)
       else if ((acc_current_rec.acc_flags.ChargeAtTime)||
                (acc_current_rec.acc_flags.ChargeByTime))
         {
-        acc_state_enter(ACC_STATE_WAITCHARGE);
+        acc_state_enter(ACC_STATE_WAKEUPWC);
         }
       break;
     case ACC_STATE_COOLDOWN:
@@ -332,7 +363,7 @@ void acc_state_ticker1(void)
                    (acc_current_rec.acc_flags.ChargeByTime))
             {
             // Let's wait or a scheduled charge...
-            acc_state_enter(ACC_STATE_WAITCHARGE);
+            acc_state_enter(ACC_STATE_WAKEUPWC);
             }
           else
             {
@@ -655,11 +686,36 @@ BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
       // Wake up and charge in a charge store area
       s = stp_rom(s, "WakeUp to Charge");
       break;
+    case ACC_STATE_WAKEUPWC:
+      // Wake up and wait for charge
+      s = stp_rom(s, "WakeUp to wait charge");
+      break;
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
       s = stp_rom(s, "Charge Done");
       break;
     }
+
+  net_puts_ram(net_scratchpad);
+  return TRUE;
+  }
+
+
+BOOL acc_cmd_diag(BOOL sms, char* caller, char *arguments)
+  {
+  // Return ACC status
+  char *s;
+
+  net_send_sms_start(caller);
+
+  s = stp_i(net_scratchpad,"ACC DIAG last:\r\n  chgmod: ",acc_last_chgmod);
+  s = stp_i(s,"\r\n  wAvail: ",acc_last_wAvail);
+  s = stp_i(s,"\r\n  ixEnd: ",acc_last_ixEnd);
+  s = stp_i(s,"\r\n  pctEnd: ",acc_last_pctEnd);
+  s = stp_i(s,"\r\n  idealRange: ",acc_last_car_idealrange);
+  s = stp_i(s,"\r\n  CAC: ",acc_last_cac);
+  s = stp_i(s,"\r\n  location: ",acc_last_loc);
+  s = stp_i(s,"\r\n  estimate: ",acc_last_estimate);
 
   net_puts_ram(net_scratchpad);
   return TRUE;
@@ -911,6 +967,10 @@ BOOL acc_cmd(char *caller, char *command, char *arguments, BOOL sms)
   else if (strcmppgm2ram(p,"STAT")==0)
     {
     return acc_cmd_stat(sms, caller, arguments);
+    }
+  else if (strcmppgm2ram(p,"DIAG")==0)
+    {
+    return acc_cmd_diag(sms, caller, arguments);
     }
   else if (strcmppgm2ram(p,"ENABLE")==0)
     {

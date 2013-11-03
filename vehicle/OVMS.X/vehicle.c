@@ -32,6 +32,8 @@
 
 #pragma udata
 unsigned int  can_granular_tick = 0;         // An internal ticker used to generate 1min, 5min, etc, calls
+unsigned int  can_id;                        // ID of can message
+unsigned char can_filter;                    // CAN filter
 unsigned char can_datalength;                // The number of valid bytes in the can_databuffer
 unsigned char can_databuffer[8];             // A buffer to store the current CAN message
 unsigned char can_minSOCnotified = 0;        // minSOC notified flag
@@ -199,8 +201,40 @@ void can_int_service(void)
 void high_isr(void)
   {
   // High priority CAN interrupt
-  if ((RXB0CONbits.RXFUL)&&(vehicle_fn_poll0 != NULL)) vehicle_fn_poll0();
-  if ((RXB1CONbits.RXFUL)&&(vehicle_fn_poll1 != NULL)) vehicle_fn_poll1();
+  if ((RXB0CONbits.RXFUL)&&(vehicle_fn_poll0 != NULL))
+    {
+    can_id = ((unsigned int)RXB0SIDL >>5)
+           + ((unsigned int)RXB0SIDH <<3);
+    can_filter = RXB0CON & 0x01;
+    can_datalength = RXB0DLC & 0x0F; // number of received bytes
+    can_databuffer[0] = RXB0D0;
+    can_databuffer[1] = RXB0D1;
+    can_databuffer[2] = RXB0D2;
+    can_databuffer[3] = RXB0D3;
+    can_databuffer[4] = RXB0D4;
+    can_databuffer[5] = RXB0D5;
+    can_databuffer[6] = RXB0D6;
+    can_databuffer[7] = RXB0D7;
+    RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
+    vehicle_fn_poll0();
+    }
+  if ((RXB1CONbits.RXFUL)&&(vehicle_fn_poll1 != NULL))
+    {
+    can_id = ((unsigned int)RXB1SIDL >>5)
+           + ((unsigned int)RXB1SIDH <<3);
+    can_filter = RXB1CON & 0x07;
+    can_datalength = RXB1DLC & 0x0F; // number of received bytes
+    can_databuffer[0] = RXB1D0;
+    can_databuffer[1] = RXB1D1;
+    can_databuffer[2] = RXB1D2;
+    can_databuffer[3] = RXB1D3;
+    can_databuffer[4] = RXB1D4;
+    can_databuffer[5] = RXB1D5;
+    can_databuffer[6] = RXB1D6;
+    can_databuffer[7] = RXB1D7;
+    RXB1CONbits.RXFUL = 0;        // All bytes read, Clear flag
+    vehicle_fn_poll1();
+    }
   PIR3=0;     // Clear Interrupt flags
   }
 

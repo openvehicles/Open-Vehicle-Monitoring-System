@@ -33,8 +33,10 @@
 
 extern unsigned int   can_granular_tick;         // An internal ticker used to generate 1min, 5min, etc, calls
 
+extern unsigned int   can_id;                    // ID of can message
+extern unsigned char  can_filter;                // CAN filter
 extern unsigned char  can_datalength;            // The number of valid bytes in the can_databuffer
-extern unsigned char  can_databuffer[8];
+extern unsigned char  can_databuffer[8];         // CAN message bytes
 
 // can_databuffer byte + nibble access macros: b=byte# 0..7 / n=nibble# 0..15
 #define CAN_BYTE(b)     can_databuffer[b]

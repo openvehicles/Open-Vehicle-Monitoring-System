@@ -67,25 +67,12 @@ BOOL vehicle_teslaroadster_ticker60(void);
 //
 BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
   {
-  unsigned char CANsidl = RXB0SIDL & 0b11100000;
   unsigned char k;
   unsigned int k1;
   unsigned long k2;
 
-  can_datalength = RXB0DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB0D0;
-  can_databuffer[1] = RXB0D1;
-  can_databuffer[2] = RXB0D2;
-  can_databuffer[3] = RXB0D3;
-  can_databuffer[4] = RXB0D4;
-  can_databuffer[5] = RXB0D5;
-  can_databuffer[6] = RXB0D6;
-  can_databuffer[7] = RXB0D7;
-
-  RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
-
-  if (CANsidl == 0)
-    { // CAN ID 0x100
+  if (can_id == 0x100)
+    {
     switch (can_databuffer[0])
       {
       case 0x06: // Charge timer mode
@@ -310,8 +297,8 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
         break;
       }
     }
-  else
-    { // CAN id 0x102
+  else if (can_id == 0x102)
+    {
     switch (can_databuffer[0])
       {
       case 0x0E: // Lock/Unlock state on ID#102
@@ -327,22 +314,7 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
 
 BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
 {
-  unsigned char CANctrl;
-
-  can_datalength = RXB1DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB1D0;
-  can_databuffer[1] = RXB1D1;
-  can_databuffer[2] = RXB1D2;
-  can_databuffer[3] = RXB1D3;
-  can_databuffer[4] = RXB1D4;
-  can_databuffer[5] = RXB1D5;
-  can_databuffer[6] = RXB1D6;
-  can_databuffer[7] = RXB1D7;
-
-  CANctrl=RXB1CON;		// copy CAN RX1 Control register
-  RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
-
-  if ((CANctrl & 0x07) == 4)           // Acceptance Filter 4 (RXF4) = CAN ID 400
+  if (can_id == 0x400)
     {
     // Speedometer feature - replace Range->Dash with speed
     if ((can_databuffer[0]==0x02)&&         // The SPEEDO AMPS message
@@ -378,7 +350,7 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
       if (can_lastspeedrpt>10) can_lastspeedrpt=10;
       }
     }
-  else if ((CANctrl & 0x07) == 2)    	// Acceptance Filter 2 (RXF2) = CAN ID 344
+  else if (can_id == 0x344)
     {
     // TPMS code here
     if (can_databuffer[3]>0) // front-right
@@ -403,7 +375,7 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
       }
     car_stale_tpms = 120; // Reset stale indicator
     }
-  else  				// It must be CAN ID 402
+  else if (can_id == 0x402)
     {
     switch (can_databuffer[0])
       {

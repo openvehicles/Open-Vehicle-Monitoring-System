@@ -4,6 +4,8 @@
 ;
 ;
 ;    Changes:
+;    2.7  30.10.2013 (Haakon)
+;         - Added function for stale temps
 ;    2.6  25.09.2013 (Haakon)
 ;         - Added car_parktime for the app
 ;
@@ -185,9 +187,6 @@ unsigned int tc_bit_chgovercurr;
 
 BOOL vehicle_thinkcity_state_ticker1(void)
   {
-  if (car_stale_ambient>0) car_stale_ambient--;
-  if (car_stale_temps>0) car_stale_temps--;
-
   if (tc_srs_stat == 0)
   {
     output_gpo0(1); // Set digital out RC0 high, pin2 header 9X2.
@@ -199,6 +198,7 @@ BOOL vehicle_thinkcity_state_ticker1(void)
 
   car_chargemode = 0;
   car_SOCalertlimit = 10;
+  car_doors3bits.CoolingPump= (car_stale_temps<=1)?0:1;
 
   return FALSE;
   }
@@ -294,25 +294,7 @@ BOOL vehicle_thinkcity_state_ticker10(void)
 //
 BOOL vehicle_thinkcity_poll0(void)
   {
-
-  unsigned int id = ((unsigned int)RXB0SIDL >>5)
-                  + ((unsigned int)RXB0SIDH <<3);
-
-  can_datalength = RXB0DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB0D0;
-  can_databuffer[1] = RXB0D1;
-  can_databuffer[2] = RXB0D2;
-  can_databuffer[3] = RXB0D3;
-  can_databuffer[4] = RXB0D4;
-  can_databuffer[5] = RXB0D5;
-  can_databuffer[6] = RXB0D6;
-  can_databuffer[7] = RXB0D7;
-
-  RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
-
-
-
-  switch (id)
+  switch (can_id)
     {
     case 0x301:
       tc_pack_current = (((int) can_databuffer[0] << 8) + can_databuffer[1]) / 10;
@@ -386,23 +368,7 @@ BOOL vehicle_thinkcity_poll0(void)
 
 BOOL vehicle_thinkcity_poll1(void)
   {
-    unsigned int id = ((unsigned int)RXB1SIDL >>5)
-                    + ((unsigned int)RXB1SIDH <<3);
-
-
-  can_datalength = RXB1DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB1D0;
-  can_databuffer[1] = RXB1D1;
-  can_databuffer[2] = RXB1D2;
-  can_databuffer[3] = RXB1D3;
-  can_databuffer[4] = RXB1D4;
-  can_databuffer[5] = RXB1D5;
-  can_databuffer[6] = RXB1D6;
-  can_databuffer[7] = RXB1D7;
-
-  RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
-
-  switch (id)
+  switch (can_id)
     {
     case 0x263:
       car_stale_ambient = 60;
