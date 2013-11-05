@@ -38,6 +38,7 @@
 1170=Tow Mode is not available while car is on
 1174=Fasten Seatbelt
 1416=Low Power System Service Required
+1426=HVAC: High current pump failure
 1463=HVAC: Compressor OverTemp
 1465=HVAC: Low current pump fault
 1469=HVAC: Compressor comms timeout
