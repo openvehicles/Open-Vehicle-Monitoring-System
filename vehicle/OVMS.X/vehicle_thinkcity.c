@@ -4,8 +4,17 @@
 ;
 ;
 ;    Changes:
+;    2.9  13.11.2013 (Haakon)
+;         - Bugfix, charger symbol in app disappared at end of charge. Now it's present
+;         - False 12V alerts solved by setting car_doors1bits.CarON and car_doors5bits.Charging12V
+;           correct according to charging state.
+;
+;    2.8  11.11.2013 (Haakon)
+;         - Added charge alert when interruped, when 80% (Ocvm) and when done
+;
 ;    2.7  30.10.2013 (Haakon)
 ;         - Added function for stale temps
+;
 ;    2.6  25.09.2013 (Haakon)
 ;         - Added car_parktime for the app
 ;
@@ -223,36 +232,80 @@ BOOL vehicle_thinkcity_state_ticker10(void)
 // 0x10 Vehicle charging, bit 4 set
 // 0x0C Chargeport open and pilot signal, bits 2,3 set
 // 0x1C Bits 2,3,4 set
+
+// Charge enable:
+  if (tc_bit_chrgen == 1) // Is charge_enable_bit (bit 0) set (turns to 0 during 0CV-measuring at 80% SOC)?
+  {
+    car_chargestate = 1;
+    car_chargesubstate = 3; // (by request)
+    car_doors1 = 0x1C; //Charging
+    car_doors5bits.Charging12V = 1;  //MJ
+
+  }
+
+// Open Circuit Measurement at 80% SOC
+  if ((tc_bit_ocvmeas == 2) && (car_chargestate == 1))  // Is ocv_meas_in_progress (bit 1) set?
+  {
+    car_chargestate = 2; //Top off
+    car_chargesubstate = 3; // (by request)
+    car_doors1 = 0x0C;
+    net_req_notification(NET_NOTIFY_CHARGE);
+  }
+
+
+// Alert when End of Charge occurs
+  if ((tc_bit_eoc == 1) && (car_chargestate == 1)) // Is EOC_bit (bit 0) set?
+  {
+    car_chargestate = 4; //Done
+    car_chargesubstate = 3; // (by request)
+    net_req_notification(NET_NOTIFY_CHARGE);
+  }
+
+// Detection of charging connector at End of Charge
   if (tc_bit_eoc == 1) // Is EOC_bit (bit 0) set?
   {
     car_chargestate = 4; //Done
+    car_chargesubstate = 3; // (by request)
+
     if (car_linevoltage > 100)  // Is AC line voltage > 100 ?
     {
       car_doors1 = 0x0C;  // Charge connector connected
+      car_doors5bits.Charging12V = 1;  //MJ
+
     }
     else
       car_doors1 = 0x00;  // Charge connector disconnected
-  }
+      car_doors5bits.Charging12V = 0;  //MJ
+   }
 
-  if (tc_bit_chrgen == 1) // Is charge_enable_bit (bit 0) set (turns to 0 during 0CV-measuring at 80% SOC)?
-  {
-    car_chargestate = 1; //Charging
-    car_doors1 = 0x1C;
-  }
-  if (tc_bit_ocvmeas == 2) // Is ocv_meas_in_progress (bit 1) set?
-  {
-    car_chargestate = 2; //Top off
-    car_doors1 = 0x0C;
-  }
 
+// Charging unplugged or power disconnected
   if (car_linevoltage < 100)  // AC line voltage < 100
   {
     car_doors1 = 0x00;  // charging connector unplugged
   }
 
+// Charging interrupted (assumed)
+  if ((car_chargestate == 1) && (tc_bit_eoc != 1) && (tc_bit_ocvmeas !=2) && (car_chargecurrent == 0) && (car_SOC < 99))
+  {
+    car_chargestate = 21;    // Charge STOPPED
+    car_chargesubstate = 14; // Charge INTERRUPTED
+    net_req_notification(NET_NOTIFY_CHARGE);
+  }
+
+// Detection of 12V charge off
+if ((tc_bit_chrgen == 0) && (tc_bit_dischgenbl == 0)) // Is charge_enable_bit (bit 0) set (turns to 0 during 0CV-measuring at 80% SOC)?
+  {
+    car_doors1bits.CarON = 0;  // Car off
+    car_doors5bits.Charging12V = 0;  //MJ
+  }
+
+// Parking timer
   if (tc_bit_dischgenbl > 0) //Discharge allowed, car is on
   {
     car_doors1bits.CarON = 1;  // Car is on 0x80
+    car_doors5bits.Charging12V = 1;  //MJ
+
     if (car_parktime != 0)
     {
       car_parktime = 0; // No longer parking
@@ -263,6 +316,8 @@ BOOL vehicle_thinkcity_state_ticker10(void)
   if (tc_bit_dischgenbl == 0) //Discharge not allowed, car is off
   {
     car_doors1bits.CarON = 0;  // Car off
+
+
     if (car_parktime == 0)
     {
       car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
@@ -270,7 +325,7 @@ BOOL vehicle_thinkcity_state_ticker10(void)
     }
   }
 
-  
+// Heater handeling
   if (tc_heater_count == 0)
   {
     output_gpo3(0);
