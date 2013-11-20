@@ -126,6 +126,22 @@ BOOL net_sms_stat(char* number)
   return TRUE;
   }
 
+BOOL net_sms_ctp(char* number, char *arguments)
+  {
+  char *p;
+
+  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
+
+  delay100(2);
+  net_send_sms_start(number);
+  
+  net_prep_ctp(net_scratchpad, arguments);
+  cr2lf(net_scratchpad);
+  net_puts_ram(net_scratchpad);
+
+  return TRUE;
+  }
+
 void net_sms_alarm(char* number)
   {
   char *p;
@@ -845,6 +861,11 @@ BOOL net_sms_handle_reset(char *caller, char *command, char *arguments)
   return FALSE;
   }
 
+BOOL net_sms_handle_ctp(char *caller, char *command, char *arguments)
+  {
+  return net_sms_ctp(caller, arguments);
+  }
+
 BOOL net_sms_handle_temps(char *caller, char *command, char *arguments)
   {
   char *s;
@@ -913,6 +934,7 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "2COOLDOWN",
     "3VERSION",
     "3RESET",
+    "3CTP",
     "3TEMPS",
 #ifdef OVMS_ACCMODULE
     "2ACC ",
@@ -955,6 +977,7 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_cooldown,
   &net_sms_handle_version,
   &net_sms_handle_reset,
+  &net_sms_handle_ctp,
   &net_sms_handle_temps,
 #ifdef OVMS_ACCMODULE
   &acc_handle_sms,

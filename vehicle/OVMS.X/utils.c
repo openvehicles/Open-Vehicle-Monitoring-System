@@ -131,16 +131,22 @@ unsigned char string_to_mode(char *mode)
 int timestring_to_mins(char* arg)
   {
   // Take a time string of the format HH:MM (24 hour) and return as number of minutes.
+  int min = 0;
+  int hour = 0;
   int sign = 1;
+  int *pval = &hour;
+  char ch;
 
-  if (*arg == 0) return 0;
-  if (*arg == '-') { sign = -1; arg++; }
-
-  return sign *
-         (((int)(arg[0] - '0')*600) +
-          ((int)(arg[1] - '0')*60) +
-          ((int)(arg[3] - '0')*10) +
-           (int)(arg[4] - '0'));
+  while ((ch = *arg++) != 0)
+    {
+    if (ch == '-')
+      sign = -sign;
+    else if (ch == ':')
+      pval = &min;
+    else
+      *pval = *pval*10 + ch - '0';
+    }
+  return sign*(hour*60 + min);
   }
 
 // convert miles to kilometers by multiplying by ~1.609344

@@ -987,6 +987,13 @@ char *net_prep_stat(char *s)
     unit = " km";
   }
 
+  if (car_time != 0)
+    {
+    char *p = par_get(PARAM_TIMEZONE);
+    s = stp_time(s, NULL, car_time + timestring_to_mins(p)*60L);
+    s = stp_rom(s, "\r ");
+    }
+
   if (car_coolingdown>=0)
     {
     s = stp_i(s, "Cooldown: ", car_tbattery);
@@ -1091,6 +1098,116 @@ char *net_prep_stat(char *s)
     s = stp_l2f_h(s, "\r CAC: ", (unsigned long)car_cac100, 2);
     }
 
+  return s;
+}
+
+char *net_prep_ctp(char *s, char *argument)
+{
+  int imStart = car_idealrange;
+  int imTarget = 0;
+  int pctTarget = 0;
+  int cac100 = car_cac100;
+  int volts = car_linevoltage;
+  int amps = car_chargelimit;
+  int degAmbient = car_ambient_temp;
+  int chargemode = car_chargemode;
+  int watts = 0;
+  int imExpect;
+  int minRemain;
+  
+  if (vehicle_fn_minutestocharge == NULL)
+  {
+    return stp_rom(s, "CTP not available");
+  }
+  
+  // CTP 90s 150e 70% 16800w 160a 24d
+  while (argument != NULL)
+  {
+    int cch = strlen(argument);
+    strupr(argument); // Convert argument to upper case
+    if (cch > 0)
+      {
+      int val;
+      char chType = argument[cch-1];
+      argument[cch-1] = 0;
+      if (cch > 1)
+        {
+        val = atoi(argument);
+        switch (chType)
+          {
+          case 'S':
+            imStart = val;
+            break;
+          case 'E':
+            imTarget = val;
+           break;
+          case '%':
+            pctTarget = val;
+            break;
+          case 'W':
+            watts = val;
+            break;
+          case 'V':
+            volts = val;
+            break;
+          case 'A':
+            amps = val;
+            break;
+          case 'C':
+            cac100 = val*100;
+            break;
+          case 'D':
+            degAmbient = val;
+            break;
+          }
+        }
+      else
+        {
+        switch (chType)
+          {
+          case 'S':
+            chargemode = 0;
+            break;
+          case 'R':
+            chargemode = 3;
+            break;
+          case 'P':
+            chargemode = 4;
+            break;
+          }
+        }
+      argument[cch-1] = chType;
+      }
+    argument = net_sms_nextarg(argument);
+  }
+  
+  if (volts > 0 && amps > 0)
+    watts = volts * amps;
+
+  if (watts < 1000)
+    {
+    s = stp_rom(s, "no power level specified");
+    return s;
+    }
+  
+  minRemain = vehicle_fn_minutestocharge(chargemode, watts, imStart, imTarget, pctTarget, cac100, degAmbient, &imExpect);
+
+  s = stp_i(s, NULL, imStart);
+  s = stp_i(s, " to ", imExpect);
+  s = stp_rom(s, " ideal mi\r");
+  if (minRemain >= 0)
+    {
+    s = stp_i(s, NULL, minRemain/60);
+    s = stp_ulp(s, ":", minRemain % 60, 2, '0');
+    }
+  else if (minRemain == -3)
+    {
+    s = stp_rom(s, "target reached");
+    }
+  else
+    {
+    s = stp_i(s, "error: ", minRemain);
+    }
   return s;
 }
 
