@@ -83,4 +83,41 @@ void vehicle_ticker(void);
 void vehicle_ticker10th(void);
 void vehicle_idlepoll(void);
 
+#ifdef OVMS_HW_V2
+// Vehicle Poller functions and data
+
+#define VEHICLE_POLL_NSTATES 3
+
+#define VEHICLE_POLL_TYPE_NONE          0x00
+#define VEHICLE_POLL_TYPE_OBDIICURRENT  0x01
+#define VEHICLE_POLL_TYPE_OBDIIVEHICLE  0x09
+#define VEHICLE_POLL_TYPE_OBDIIGROUP    0x21
+#define VEHICLE_POLL_TYPE_OBDIIEXTENDED 0x22
+
+typedef struct
+{
+  unsigned int moduleid;
+  unsigned char type;
+  unsigned int pid;
+  unsigned int polltime[VEHICLE_POLL_NSTATES];
+} vehicle_pid_t;
+
+extern unsigned char vehicle_poll_state;        // Current poll state
+extern rom vehicle_pid_t* vehicle_poll_plist;   // Head of poll list
+extern rom vehicle_pid_t* vehicle_poll_plcur;   // Current position in poll list
+extern unsigned int vehicle_poll_ticker;        // Polling ticker
+extern unsigned int vehicle_poll_moduleid_low;  // Expected moduleid low mark
+extern unsigned int vehicle_poll_moduleid_high; // Expected moduleid high mark
+extern unsigned char vehicle_poll_type;         // Expected type
+extern unsigned int vehicle_poll_pid;           // Expected pid
+extern unsigned char vehicle_poll_busactive;    // Indicates recent activity on the passive bus
+extern unsigned int vehicle_poll_ml_remain;     // Bytes remaining for vehicle poll
+extern unsigned int vehicle_poll_ml_offset;     // Offset of vehicle poll data
+extern unsigned int vehicle_poll_ml_frame;      // Frame number for vehicle poll
+
+void vehicle_poll_setpidlist(rom vehicle_pid_t *plist);
+void vehicle_poll_setstate(unsigned char state);
+
+#endif //#ifdef OVMS_HW_V2
+
 #endif // #ifndef __OVMS_VEHICLE_H
