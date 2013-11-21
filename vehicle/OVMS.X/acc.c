@@ -56,6 +56,8 @@ int acc_last_cac = 0;
 unsigned char acc_last_loc = 0;
 int acc_last_estimate = 0;
 
+#define VOLTS_ACC_ASSUMED 220
+
 rom char ACC_NOTHERE[] = "ACC not at this location";
 
 signed char acc_find(struct acc_record* ar, int range, BOOL enabledonly)
@@ -181,15 +183,18 @@ void acc_state_enter(unsigned char newstate)
           if (net_state == NET_STATE_DIAGMODE)
             {
             p = stp_i(net_scratchpad,"\r\n# ACC vehicle_fn_minutestocharge(",acc_current_rec.acc_chargemode);
-            p = stp_i(p,", ",(int)acc_current_rec.acc_chargelimit * 220);
+            p = stp_i(p,", ",(int)acc_current_rec.acc_chargelimit * VOLTS_ACC_ASSUMED);
+            p = stp_i(p,", ",car_idealrange);
             p = stp_i(p,", ",acc_current_rec.acc_stoprange);
             p = stp_i(p,", ",acc_current_rec.acc_stopsoc);
-            p = stp_rom(p,")\r\n");
+            p = stp_i(p,", ",car_cac100);
+            p = stp_i(p,", ",car_ambient_temp);
+            p = stp_rom(p,", NULL)\r\n");
             net_puts_ram(net_scratchpad);
             }
 
           acc_last_chgmod = acc_current_rec.acc_chargemode;
-          acc_last_wAvail = (int)acc_current_rec.acc_chargelimit * 220;
+          acc_last_wAvail = (int)acc_current_rec.acc_chargelimit * VOLTS_ACC_ASSUMED;
           acc_last_ixEnd = acc_current_rec.acc_stoprange;
           acc_last_pctEnd = acc_current_rec.acc_stopsoc;
           acc_last_car_idealrange = car_idealrange;
@@ -197,9 +202,13 @@ void acc_state_enter(unsigned char newstate)
           acc_last_loc = acc_current_loc;
 
           car_chargeestimate = vehicle_fn_minutestocharge(acc_current_rec.acc_chargemode,
-                                                          (int)acc_current_rec.acc_chargelimit * 220,
+                                                          (int)acc_current_rec.acc_chargelimit * VOLTS_ACC_ASSUMED,
+                                                          car_idealrange,
                                                           acc_current_rec.acc_stoprange,
-                                                          acc_current_rec.acc_stopsoc);
+                                                          acc_current_rec.acc_stopsoc,
+                                                          car_cac100,
+                                                          car_ambient_temp,
+                                                          NULL);
           acc_last_estimate = car_chargeestimate;
 
           if (net_state == NET_STATE_DIAGMODE)
@@ -670,7 +679,7 @@ BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
       // Waiting for charge time in a charge store area
       s = stp_rom(s, "Wait Charge");
       s = stp_time(s, "\r\n Wake at: ",(unsigned long)acc_chargeminute * 60);
-      s = stp_i(s, "\r\n Charge: ",(int)acc_current_rec.acc_chargelimit * 220);
+      s = stp_i(s, "\r\n Charge: ",(int)acc_current_rec.acc_chargelimit * VOLTS_ACC_ASSUMED);
       s = stp_i(s, "W\r\n Estimate: ",car_chargeestimate);
       s = stp_rom(s, "mins");
       break;

@@ -972,95 +972,103 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
   return TRUE;
   }
 
-int MinutesToChargeCAC(
-      unsigned char chgmod,       // charge mode, Standard, Range and Performance are supported
-      int ixStart,                // ideal mi at start of charge (units determined by can_mileskm)
-      int ixEnd,                  // ideal mi desired at end of charge (use <=0 for full charge)
-      int pctEnd,                 // if ixEnd == -1, specified desired percent SOC, use 100 for full charge
-                                  // pctEnd is ignored if ixEnd != -1
-      int cac,                    // the battery pack CAC (160 is a perfect battery)
-      int wAvail,                 // watts available from the wall
-      signed char degAmbient      // ambient temperature in degrees C
+int vehicle_teslaroadster_minutestocharge(
+      unsigned char chgmod,    // charge mode: 0 (Standard), 3 (Range) or 4 (Performance)
+      int wAvail,              // watts available from the wall
+      int imStart,             // ideal mi at start of charge
+      int imTarget,            // ideal mi desired at end of charge (use <=0 for full charge)
+      int pctTarget,           // if imTarget == -1, specified desired percent SOC
+                               // use 100 for full charge
+                               // pctTarget is ignored if imEnd != -1
+      int cac100,              // the battery pack CAC*100 (pass 0 if unknown)
+      signed char degAmbient,  // ambient temperature in degrees C
+      int *pimTarget           // if not null, will be filled in with expected ideal
+                               // miles at target charge level
       )
   {
-  enum { imTaperBase = 200 }; // ideal miles at which tapering begins in nominal battery pack
-
   int bIntercept;
   int mx1000;
   int whPerIM;
-  signed long secPerIM;
+  signed long secPerIMSteady;
   signed long seconds;
-  
-  int imStart = ixStart;
-  int imEnd = ixEnd;
+  int imCapacityNominal;
+  int imCapacity;
+  int imTaperBase;
+  signed long numTaper;
+  int denBaseTaper;
 
-  int imCapacityRange;
-  int imCapacityStandard;
-  int imStdToRng;
-
+#ifdef OVMS_DIAGMODULE
   char *p;
 
   if (net_state == NET_STATE_DIAGMODE)
     {
-    p = stp_i(net_scratchpad,"\r\n# TR MinutesToChargeCAC(",chgmod);
-    p = stp_i(p,", ",ixStart);
-    p = stp_i(p,", ",ixEnd);
-    p = stp_i(p,", ",pctEnd);
-    p = stp_i(p,", ",cac);
+    p = stp_i(net_scratchpad,"\r\n# TR minutestocharge(",chgmod);
+    p = stp_i(p,", ",imStart);
+    p = stp_i(p,", ",imTarget);
+    p = stp_i(p,", ",pctTarget);
+    p = stp_i(p,", ",cac100);
     p = stp_i(p,", ",wAvail);
     p = stp_i(p,", ",degAmbient);
     p = stp_rom(p,")\r\n");
     net_puts_ram(net_scratchpad);
     }
+#endif
 
-  if (cac == 0) cac=160;       // Default to a perfect battery pack
-  if (pctEnd == 0) pctEnd=100; // Default to a full charge
-  
-  // IM capacity in range mode is about 31.598 + 1.3193 * cac;
-  imCapacityRange = ((signed long)cac * 199 + 4740 + 75) / 150;
-
-  // IM in standard mode is about 13.504 + 1.1075 * cac;
-  imCapacityStandard = ((signed long)cac * 166 + 2026 + 75) / 150;
-
-  imStdToRng = (imCapacityRange - imCapacityStandard + 1) / 2;
-
-  // if needed, convert from km to mi
-  //if (can_mileskm == 'K')
-  //{
-  //  imStart = MiFromKm(ixStart);
-  //  if (imEnd != -1)
-	//  imEnd = MiFromKm(ixEnd);
-  //}
+  if (cac100 == 0) cac100=16000; // Default to a nominal new battery pack
+  if (pctTarget <= 0) pctTarget=100;   // Default to a full charge
 
   switch (chgmod)
     {
     case 0: // Standard
-      if (imEnd <= 0)
-        imEnd = (imCapacityStandard * pctEnd + 50)/100;
-      imStart += imStdToRng;
-      imEnd += imStdToRng;
-      break;
+	  // standard mode IM capacity is about 1.1891 * CAC + 0.8 (10/10/2013 survey data)
+	  imCapacity = (1189L * cac100 + 80000 + 50000)/ 100000;
 
-    case 4: // Performance
-      imStart += imStdToRng;
-      if (imEnd <= 0)
-        imEnd = ((imCapacityStandard + imStdToRng) * pctEnd + 50)/100;
-      imEnd += imStdToRng;
+       // algorithm parameters, determined from OVMS Log Data, 2418 data points
+      imCapacityNominal = 191;
+      imTaperBase = 169;
+      numTaper = 197578L;
+      denBaseTaper = 19777;
       break;
 
     case 3: // Range
-      if (imEnd <= 0)
-        imEnd = (imCapacityRange * pctEnd + 50)/100;
+      // range mode IM capacity is about 1.5463 * CAC - 3.4 (10/10/2013 survey data)
+      imCapacity = (1546L * cac100 - 340000 + 50000)/ 100000;
+
+      // algorithm parameters, determined from OVMS Log Data, 234 data points
+      imCapacityNominal = 244;
+      imTaperBase = 215;
+      numTaper = 212156L;
+      denBaseTaper = 24647;
+      break;
+
+    case 4: // Performance
+      // interpolate standard and range to get performance mode
+      // IM = 1.3677 * CAC - 1.3
+      imCapacity = (1368L * cac100 - 130000 + 50000)/ 100000;
+
+      // algorithm parameters, determined from OVMS Log Data, 13 data points
+      imCapacityNominal = 218;
+      imTaperBase = 167;
+      numTaper = 429204L;
+      denBaseTaper = 23122;
       break;
 
     default: // invalid charge mode passed in (Storage mode doesn't make sense)
-      return -1;
+      return -(int)(100+chgmod);
     }
+
+  // if needed, calculate charge target from specified percent
+  if (imTarget <= 0)
+    imTarget = (imCapacity * pctTarget + 50)/100;
+
+  // tell the caller the expected ideal miles at the requested charge level
+  if (pimTarget != NULL)
+    *pimTarget = imTarget;
 
   // check for silly cases
   if (wAvail <= 0)
     return -2;
-  if (imEnd <= imStart)
+  if (imTarget <= imStart)
     return -3;
 
   // I don't believe air temperatures above 60 C, and this avoids overflow issues
@@ -1068,10 +1076,10 @@ int MinutesToChargeCAC(
     degAmbient = 60;
 
   // normalize the IM values to look like a nominal new pack
-  imStart = imStart - imCapacityRange + 244;
-  imEnd   = imEnd   - imCapacityRange + 244;
-  if (imEnd > 244)
-    imEnd = 244;
+  imStart  += imCapacityNominal - imCapacity;
+  imTarget += imCapacityNominal - imCapacity;
+  if (imTarget > imCapacityNominal)
+    imTarget = imCapacityNominal;
 
   // calculate temperature to charge rate equation
   bIntercept = (wAvail >= 2300) ? 288 : (signed long)745 - (signed long)199 * wAvail / 1000;
@@ -1085,10 +1093,10 @@ int MinutesToChargeCAC(
 
   // calculate seconds per ideal mile
   whPerIM = bIntercept + (signed long)mx1000 * degAmbient / 1000;
-  secPerIM = whPerIM * 3600L / wAvail;
+  secPerIMSteady = whPerIM * 3600L / wAvail;
 
   // detect implausible low power values that can lead to overflowing the number of minutes
-  if ((0x7FFFL*60+30)/secPerIM < 244)
+  if ((0x7FFFL*60+30)/secPerIMSteady < 244)
     return -4;
 
   // ready to calculate the charge duration
@@ -1097,58 +1105,37 @@ int MinutesToChargeCAC(
   // calculate time spent in the steady charge region
   if (imStart < imTaperBase)
     {
-    int imEndSteady = imEnd < imTaperBase ? imEnd : imTaperBase;
-    seconds += secPerIM * (imEndSteady - imStart);
+    int imEndSteady = imTarget < imTaperBase ? imTarget : imTaperBase;
+    seconds += secPerIMSteady * (imEndSteady - imStart);
     }
 
   // figure out time spent in the tapered charge region
-  if (imEnd > imTaperBase)
+  if (imTarget > imTaperBase)
     {
     int im = imStart > imTaperBase ? imStart : imTaperBase;
+    int secPerIMMost = 1117000L/(wAvail > 2000 ? 2000 : wAvail);
 
-    for ( ; im < imEnd; ++im)
+    for ( ; im < imTarget; ++im)
       {
-      int secPerIMTaper = (signed long)3600/(293 - ((signed long)1177*im + 500)/1000);
-      if (secPerIMTaper < secPerIM)
-        secPerIMTaper = secPerIM;
+      int secPerIMTaper = numTaper/(denBaseTaper - 100*im);
+      if (secPerIMTaper < 0 || secPerIMTaper > secPerIMMost)
+      	secPerIMTaper = secPerIMMost;
+      else if (secPerIMTaper < secPerIMSteady)
+        secPerIMTaper = secPerIMSteady;
       seconds += secPerIMTaper;
       }
     }
 
+#ifdef OVMS_DIAGMODULE
   if (net_state == NET_STATE_DIAGMODE)
     {
-    p = stp_i(net_scratchpad,"\r\n# TR MinutesToChargeCAC result=",(seconds + 30) / 60);
+    p = stp_i(net_scratchpad,"\r\n# TR minutestocharge result=",(seconds + 30) / 60);
     p = stp_rom(p,"\r\n");
     net_puts_ram(net_scratchpad);
     }
+#endif
 
   return (seconds + 30) / 60;
-  }
-
-int vehicle_teslaroadster_minutestocharge(unsigned char chgmod, int wAvail, int ixEnd, int pctEnd)
-  {
-  char *p;
-
-  if (net_state == NET_STATE_DIAGMODE)
-    {
-    p = stp_i(net_scratchpad,"\r\n# TR vehicle_teslaroadster_minutestocharge mode=",chgmod);
-    p = stp_i(p,", car_idealrange=",car_idealrange);
-    p = stp_i(p,", car_cac100=",car_cac100);
-    p = stp_i(p,", car_ambient_temp=",car_ambient_temp);
-    p = stp_i(p,", wAvail=",wAvail);
-    p = stp_rom(p,"\r\n");
-    net_puts_ram(net_scratchpad);
-    }
-
-  return MinutesToChargeCAC(
-          chgmod,                     // charge mode, Standard, Range and Performance are supported
-          car_idealrange,             // ideal mi at start of charge
-          ixEnd,                      // ideal mi desired at end of charge (use <=0 for full charge)
-          pctEnd,                     // SOC percent desired at end of charge (ignored if ideal mi specified)
-          car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
-          wAvail,                     // watts available from the wall
-          car_ambient_temp            // ambient temperature in degrees C
-          );
   }
 
 BOOL vehicle_teslaroadster_ticker1(void)
@@ -1186,38 +1173,41 @@ BOOL vehicle_teslaroadster_ticker60(void)
   if (car_doors1 & 0x10)
     {
     // Vehicle is charging
-    car_chargefull_minsremaining = MinutesToChargeCAC(
+    car_chargefull_minsremaining = vehicle_teslaroadster_minutestocharge(
         car_chargemode,             // charge mode, Standard, Range and Performance are supported
+        car_linevoltage*car_chargelimit, // watts available from the wall
         car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
         -1,                         // ideal mi desired at end of charge (use -1 for full charge)
         100,                        // SOC percent desired at end of charge (ignored if ideal mi specified)
-        car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
-        car_linevoltage*car_chargelimit, // watts available from the wall
-        car_ambient_temp            // ambient temperature in degrees C
+        car_cac100,                 // the battery pack CAC*100 (pass 0 if unknown)
+        car_ambient_temp,           // ambient temperature in degrees C
+        NULL
         );
     car_chargelimit_minsremaining = -1;
     if (car_chargelimit_rangelimit>0)
       {
-      car_chargelimit_minsremaining = MinutesToChargeCAC(
+      car_chargelimit_minsremaining = vehicle_teslaroadster_minutestocharge(
           car_chargemode,             // charge mode, Standard, Range and Performance are supported
+          car_linevoltage*car_chargelimit, // watts available from the wall
           car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
           car_chargelimit_rangelimit, // ideal mi desired at end of charge (use -1 for full charge)
           100,                        // SOC percent desired at end of charge (ignored if ideal mi specified)
-          car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
-          car_linevoltage*car_chargelimit, // watts available from the wall
-          car_ambient_temp            // ambient temperature in degrees C
+          car_cac100,                 // the battery pack CAC*100 (pass 0 if unknown)
+          car_ambient_temp,           // ambient temperature in degrees C
+          NULL
           );
       }
     if (car_chargelimit_soclimit>0)
       {
-      remain = MinutesToChargeCAC(
+      remain = vehicle_teslaroadster_minutestocharge(
           car_chargemode,             // charge mode, Standard, Range and Performance are supported
+          car_linevoltage*car_chargelimit, // watts available from the wall
           car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
           -1,                         // ideal mi desired at end of charge (use -1 for full charge)
           car_chargelimit_soclimit,   // SOC percent desired at end of charge (ignored if ideal mi specified)
-          car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
-          car_linevoltage*car_chargelimit, // watts available from the wall
-          car_ambient_temp            // ambient temperature in degrees C
+          car_cac100,                 // the battery pack CAC*100 (pass 0 if unknown)
+          car_ambient_temp,           // ambient temperature in degrees C
+          NULL
           );
       if ((remain<car_chargelimit_minsremaining)||(car_chargelimit_minsremaining<0))
         car_chargelimit_minsremaining = remain;

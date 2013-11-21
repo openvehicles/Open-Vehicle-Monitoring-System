@@ -75,7 +75,7 @@ extern rom BOOL (*vehicle_fn_idlepoll)(void);
 extern rom BOOL (*vehicle_fn_commandhandler)(BOOL msgmode, int code, char* msg);
 extern rom BOOL (*vehicle_fn_smshandler)(BOOL premsg, char *caller, char *command, char *arguments);
 extern rom BOOL (*vehicle_fn_smsextensions)(char *caller, char *command, char *arguments);
-extern rom int  (*vehicle_fn_minutestocharge)(unsigned char chgmod, int wAvail, int ixEnd, int pctEnd);
+extern rom int  (*vehicle_fn_minutestocharge)(unsigned char chgmod, int wAvail, int imStart, int imTarget, int pctTarget, int cac100, signed char degAmbient, int *pimExpect);
 
 void vehicle_initialise(void);
 

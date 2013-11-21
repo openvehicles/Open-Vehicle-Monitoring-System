@@ -92,6 +92,7 @@ void net_msg_forward_sms(char* caller, char* SMS);
 void net_msg_reply_ussd(char *buf, unsigned char buflen);
 
 char *net_prep_stat(char *s);
+char *net_prep_ctp(char *s, char *arguments);
 void net_msg_alert(void);
 void net_msg_valettrunk(void);
 void net_msg_alarm(void);
