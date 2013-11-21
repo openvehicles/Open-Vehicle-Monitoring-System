@@ -56,7 +56,7 @@ rom BOOL (*vehicle_fn_idlepoll)(void);
 rom BOOL (*vehicle_fn_commandhandler)(BOOL msgmode, int code, char* msg);
 rom BOOL (*vehicle_fn_smshandler)(BOOL premsg, char *caller, char *command, char *arguments);
 rom BOOL (*vehicle_fn_smsextensions)(char *caller, char *command, char *arguments);
-rom int  (*vehicle_fn_minutestocharge)(unsigned char chgmod, int wAvail, int ixEnd, int pctEnd);
+rom int  (*vehicle_fn_minutestocharge)(unsigned char chgmod, int wAvail, int imStart, int imTarget, int pctTarget, int cac100, signed char degAmbient, int *pimExpect);
 
 #ifdef OVMS_HW_V2
 
