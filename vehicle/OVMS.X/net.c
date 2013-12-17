@@ -689,6 +689,14 @@ void net_state_activity()
     return;
     }
 
+  if ((net_buf_pos >= 8)&&
+      (memcmppgm2ram(net_buf, (char const rom far*)"*PSUTTZ:", 8) == 0))
+    {
+    // We have a time source from the GSM provider
+    // e.g.; *PSUTTZ: 2013, 12, 16, 15, 45, 17, "+32", 1
+    return;
+    }
+
   switch (net_state)
     {
 #ifdef OVMS_DIAGMODULE
@@ -913,6 +921,11 @@ void net_state_activity()
           }
         delay100(1);
         net_puts_rom(NET_HANGUP);
+        }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CCLK", 5) == 0)
+        {
+        // local clock update
+        // e.g.; +CCLK: "13/12/16,22:01:39+32"
         }
 #ifdef OVMS_INTERNALGPS
       else if ((memcmppgm2ram(net_buf, (char const rom far*)"2,", 2) == 0)&&
