@@ -51,8 +51,44 @@ BOOL vehicle_nissanleaf_poll1(void)
   {
   switch (can_id)
     {
-    case 0x55b:
-      car_SOC = ((((int)can_databuffer[0]<<2)|((int)can_databuffer[1]>>6))+5)/10;
+    case 0x280:
+      if (can_mileskm=='M')
+        car_speed = (((int)can_databuffer[4]<<8)+((int)can_databuffer[5]))/160;
+      else
+        car_speed = (((int)can_databuffer[4]<<8)+((int)can_databuffer[5]))/100;
+      break;
+    case 0x358:
+      car_doors2bits.Headlights = (can_databuffer[0] & 0x80);
+      break;
+    case 0x58a:
+      if ((can_databuffer[0]&0x10) != 0)
+        {
+        // Car is parked
+        vehicle_poll_setstate(0);
+        car_doors1 |= 0x40;     // PARK
+        car_doors1 &= ~0x80;    // CAR OFF
+        car_speed = 0;
+        if (car_parktime == 0)
+          {
+          car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
+          net_req_notification(NET_NOTIFY_ENV);
+          }
+        }
+      else
+        {
+        // Car is not parked
+        vehicle_poll_setstate(1);
+        car_doors1 &= ~0x40;    // NOT PARK
+        car_doors1 |= 0x80;     // CAR ON
+        if (car_parktime != 0)
+          {
+          car_parktime = 0; // No longer parking
+          net_req_notification(NET_NOTIFY_ENV);
+          }
+        }
+    case 0x5b3:
+      // Rough and kludgy
+      car_SOC = ((((int)can_databuffer[5]&0x01)<<1) + ((int)can_databuffer[6])) / 3;
       break;
     }
   return TRUE;
@@ -104,8 +140,8 @@ BOOL vehicle_nissanleaf_initialise(void)
   RXF2SIDL = 0b00000000;	// Setup Filter2 so that CAN ID 0x500 - 0x5FF will be accepted
   RXF2SIDH = 0b10100000;
 
-  RXF3SIDL = 0b00000000;	// Setup Filter3 so that CAN ID 0x100 - 0x1FF will be accepted
-  RXF3SIDH = 0b00100000;
+  RXF3SIDL = 0b00000000;	// Setup Filter3 so that CAN ID 0x200 - 0x2FF will be accepted
+  RXF3SIDH = 0b01000000;
 
   RXF4SIDL = 0b00000000;  // Setup Filter4 so that CAN ID 0x300 - 0x3FF will be accepted
   RXF4SIDH = 0b01100000;
