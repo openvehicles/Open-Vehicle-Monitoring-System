@@ -177,6 +177,37 @@ unsigned long MiFromKm(unsigned long km)
  return (high * 40722) + ((low * 40722 + km/6 + 0x7FFF) >> 16);
 }
 
+// decodes Julian Date to year, month, day valid from 
+// http://aa.usno.navy.mil/faq/docs/JD_Formula.php
+// only valid for the years 1801–2099 (because 1800 and 2100 are not leap years)
+void JdToYMD(unsigned long jd, int *pyear, int *pmonth, int *pday)
+  {
+  long L,N,I,J,K;
+
+  L= jd+68569;
+  N= 4*L/146097;
+  L= L-(146097*N+3)/4;
+  I= 4000*(L+1)/1461001;
+  L= L-1461*I/4+31;
+  J= 80*L/2447;
+  K= L-2447*J/80;
+  L= J/11;
+  J= J+2-12*L;
+  I= 100*(N-49)+I+L;
+  
+  *pyear = (int)I;
+  *pmonth = (int)J;
+  *pday = (int)K;
+}
+
+// computes the Julian date from year, month, day
+// http://aa.usno.navy.mil/faq/docs/JD_Formula.php
+// only valid for the years 1801–2099 (because 1800 and 2100 are not leap years)
+unsigned long JdFromYMD(int year, int month, int day)
+{
+  return day-32075+1461L*(year+4800+(month-14)/12)/4+367*(month-2-(month-14)/12*12)/12-3*((year+4900+(month-14)/12)/100)/4;
+}
+
 // builtin atof() does not work... returns strange values
 
 float myatof(char *src)
@@ -499,6 +530,17 @@ char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp)
   *dst = 0;
   return dst;
 }
+
+char *stp_date(char *dst, const rom char *prefix, unsigned long timestamp)
+  {
+  int month, day, year;	
+  unsigned long jd = JDEpoch + timestamp / (24*3600L);
+  JdToYMD(jd, &year, &month, &day);
+
+  dst = stp_i(dst, prefix, year);
+  dst = stp_ulp(dst, "-", month, 2, '0');
+  return stp_ulp(dst, "-", day, 2, '0');
+  }
 
 char *stp_mode(char *dst, const rom char *prefix, unsigned char mode)
   {
