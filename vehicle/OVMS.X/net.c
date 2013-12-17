@@ -1727,7 +1727,7 @@ void net_initialise(void)
 //
 // supported string format:
 // +CCLK: "yy/mm/dd,hh:mm:ss+00"
-unsigned long datestring_to_timestamp(const rom char *arg)
+unsigned long datestring_to_timestamp(const char *arg)
   {
   char aval[6];
   int ival = -1;
