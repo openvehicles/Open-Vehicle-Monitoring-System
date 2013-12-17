@@ -37,6 +37,9 @@
 #define SQR(n) ((n)*(n))
 #define ABS(n) (((n) < 0) ? -(n) : (n))
 
+// let the compiler compute the size of statically allocated arrays
+#define DIM(a) (sizeof(a)/sizeof(*(a)))
+
 void reset_cpu(void);              // Reset the cpu
 void delay5b(void);                // Delay 5ms
 void delay100b(void);              // Delay 100ms
@@ -58,6 +61,11 @@ void cr2lf(char *s);                // replace \r by \n in s (to convert msg tex
 unsigned long KmFromMi(unsigned long miles);
 unsigned long MiFromKm(unsigned long km);
 
+// functions to convert between YMD and Julian Date
+#define JDEpoch 2440588 // Julian date of the Unix epoch
+void JdToYMD(unsigned long jd, int *pyear, int *pmonth, int *pday);
+unsigned long JdFromYMD(int year, int month, int day);
+
 // sprintf replacement utils: stp string print
 char *stp_rom(char *dst, const rom char *val);
 char *stp_ram(char *dst, const char *val);
@@ -74,6 +82,7 @@ char *stp_l2f(char *dst, const rom char *prefix, long val, int prec);
 char *stp_l2f_h(char *dst, const rom char *prefix, unsigned long val, int cdecimal);
 char *stp_latlon(char *dst, const rom char *prefix, long latlon);
 char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp);
+char *stp_date(char *dst, const rom char *prefix, unsigned long timestamp);
 char *stp_mode(char *dst, const rom char *prefix, unsigned char mode);
 
 // longitude/latitude math

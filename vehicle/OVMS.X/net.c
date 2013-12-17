@@ -1720,3 +1720,47 @@ void net_initialise(void)
   net_reg = 0;
   net_state_enter(NET_STATE_FIRSTRUN);
   }
+
+////////////////////////////////////////////////////////////////////////
+// convert GSM clock response string to timestamp
+// timezone string must be set correctly to convert local time to UTC
+//
+// supported string format:
+// +CCLK: "yy/mm/dd,hh:mm:ss+00"
+unsigned long datestring_to_timestamp(const rom char *arg)
+  {
+  char aval[6];
+  int ival = -1;
+  char ch;
+  char *ptimezone = par_get(PARAM_TIMEZONE);
+
+  aval[0] = 0; // the rest get handled as we go
+  while ((ch = *arg++) != 0 && ival < (int)DIM(aval))
+    {
+    switch (ch)
+      {
+      case '/':
+      case ':':
+      case ',':
+        if (ival != -1)
+          aval[++ival] = 0;
+        break;
+      case '+':
+        if (ival != -1)
+          ++ival;
+        break;
+      case '"':
+        ++ival;
+        break;
+      default:
+        if (0 <= ival && ival < DIM(aval))
+          aval[ival] = aval[ival] * 10 + ch - '0';
+        break;
+      }
+    }
+
+  return (JdFromYMD(2000+aval[0], aval[1], aval[2]) - JDEpoch) * (24L * 3600);
+              + ((aval[3] * 60L + aval[4]) * 60) + aval[5]
+              - timestring_to_mins(ptimezone) * 60L;
+  }
+
