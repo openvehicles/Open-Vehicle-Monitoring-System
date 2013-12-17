@@ -96,14 +96,14 @@ rom char NET_INIT1[] = "AT+CSMINS?\r";
 #endif
 
 rom char NET_INIT2[] = "AT+CCID;+CPBF=\"O-\";+CPIN?\r";
-rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
-//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
+rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;+CLTS=1;E0\r";
+//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;+CLTS=1;E1\r";
 // NOTE: changing IP mode to QSEND=0 needs handling change for "SEND OK"/"DATA ACCEPT" in net_state_activity()
 rom char NET_COPS[] = "AT+COPS=0,1;+COPS?\r";
 
 rom char NET_WAKEUP[] = "AT\r";
 rom char NET_HANGUP[] = "ATH\r";
-rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
+rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CCLK?;+CSQ\r";
 rom char NET_IPR_SET[] = "AT+IPR=9600\r"; // sets fixed baud rate for the modem
 
 ////////////////////////////////////////////////////////////////////////
