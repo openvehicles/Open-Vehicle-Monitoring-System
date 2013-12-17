@@ -118,9 +118,9 @@ typedef struct {
   unsigned :1;                  // 0x04
   unsigned CarLocked:1;         // 0x08
   unsigned ValetMode:1;         // 0x10
-  unsigned Bonnet:1;            // 0x20
-  unsigned Trunk:1;             // 0x40
-  unsigned :1;                  // 0x80
+  unsigned Headlights:1;        // 0x20
+  unsigned Bonnet:1;            // 0x40
+  unsigned Trunk:1;             // 0x80
 } car_doors2bits_t;
 #define car_doors2bits (*((car_doors2bits_t*)&car_doors2))
 
