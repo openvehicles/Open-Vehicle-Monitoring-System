@@ -272,6 +272,7 @@ void diag_handle_cantxstop(char *command, char *arguments)
   delay100(2);
   }
 
+#ifdef OVMS_CAR_TESLAROADSTER
 int MinutesToChargeCAC(
       unsigned char chgmod,       // charge mode, Standard, Range and Performance are supported
       int imStart,                // ideal miles at start of charge (caller must convert from ideal km)
@@ -317,6 +318,7 @@ void diag_handle_tr(char *command, char *arguments)
   n = stp_rom(n, "\r\n");
   net_puts_ram(net_scratchpad);
   }
+#endif
 
 // This is the DIAG command table
 //
@@ -334,7 +336,9 @@ rom char diag_cmdtable[][27] =
     "+CSQ:",
     "CANTXSTART",
     "CANTXSTOP",
+#ifdef OVMS_CAR_TESLAROADSTER
     "TR",
+#endif
     "" };
 
 rom void (*diag_hfntable[])(char *command, char *arguments) =
@@ -345,8 +349,10 @@ rom void (*diag_hfntable[])(char *command, char *arguments) =
   &diag_handle_diag,
   &diag_handle_csq,
   &diag_handle_cantxstart,
-  &diag_handle_cantxstop,
-  &diag_handle_tr
+  &diag_handle_cantxstop
+#ifdef OVMS_CAR_TESLAROADSTER
+  , &diag_handle_tr
+#endif
   };
 
 // net_sms_in handles reception of an SMS message

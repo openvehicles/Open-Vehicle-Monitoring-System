@@ -59,6 +59,17 @@ void delay5b(void)
     }
   }
 
+// Delay in 5ms increments
+// N.B. Interrupts (async and can) will still be handled, and queued
+void delay5(unsigned char n)
+  {
+  while(n>0)
+    {
+    delay5b();
+    n--;
+    }
+  }
+
 void delay100b(void)
   {
   unsigned char count = 0;
@@ -170,6 +181,39 @@ float myatof(char *src)
 }
 
 
+// hex string decode:
+
+unsigned long axtoul(char *s)
+{
+  unsigned long val = 0;
+  unsigned char c;
+  unsigned int dig = 0;
+
+  while (s && *s) {
+    c = *s | 0x20;
+
+    if (c == 'x') {
+      val = 0; // prefix 0x => reset val
+    }
+    else if (c >= '0' && c <= '9') {
+      dig = c - '0';
+      val = (val << 4) | dig;
+    }
+    else if (c >= 'a' && c <= 'f') {
+      dig = c - 'a' + 10;
+      val = (val << 4) | dig;
+    }
+    else {
+      break; // no hex char, stop
+    }
+
+    s++;
+  }
+
+  return val;
+}
+
+
 // Convert GPS coordinate form DDDMM.MMMMMM to internal latlon value
 
 long gps2latlon(char *gpscoord)
@@ -278,17 +322,17 @@ char *stp_ul(char *dst, const rom char *prefix, unsigned long val)
   return dst;
 }
 
-// itox
-//  (note: fills fixed 4 chars with '0' padding = sprintf %04x)
+// ltox
+//  (note: fills fixed len chars with '0' padding = sprintf %04x)
 
-void itox(unsigned int i, char *s)
+void ltox(unsigned long i, char *s, unsigned int len)
 {
   unsigned char n;
 
-  s += 4;
+  s += len;
   *s = '\0';
 
-  for (n = 4; n != 0; --n)
+  for (n = len; n != 0; --n)
   {
     *--s = "0123456789ABCDEF"[i & 0x0F];
     i >>= 4;
@@ -302,26 +346,9 @@ char *stp_x(char *dst, const rom char *prefix, unsigned int val)
 {
   if (prefix)
     dst = stp_rom(dst, prefix);
-  itox(val, dst);
+  ltox(val, dst, 4);
   while (*dst) dst++;
   return dst;
-}
-
-// ltox
-//  (note: fills fixed 8 chars with '0' padding = sprintf %08lx)
-
-void ltox(unsigned long i, char *s)
-{
-  unsigned char n;
-
-  s += 8;
-  *s = '\0';
-
-  for (n = 8; n != 0; --n)
-  {
-    *--s = "0123456789ABCDEF"[i & 0x0F];
-    i >>= 4;
-  }
 }
 
 // string-print unsigned long hexadecimal with optional string prefix:
@@ -331,7 +358,19 @@ char *stp_lx(char *dst, const rom char *prefix, unsigned long val)
 {
   if (prefix)
     dst = stp_rom(dst, prefix);
-  ltox(val, dst);
+  ltox(val, dst, 8);
+  while (*dst) dst++;
+  return dst;
+}
+
+// string-print unsigned integer hexadecimal with optional string prefix:
+//  (note: fills fixed 2 chars with '0' padding = sprintf %02x)
+
+char *stp_sx(char *dst, const rom char *prefix, unsigned char val)
+{
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+  ltox(val, dst, 2);
   while (*dst) dst++;
   return dst;
 }

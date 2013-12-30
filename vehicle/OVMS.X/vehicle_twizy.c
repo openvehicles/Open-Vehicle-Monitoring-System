@@ -176,7 +176,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "2.6.5";
+rom char vehicle_twizy_version[] = "3.0.0";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -282,6 +282,7 @@ unsigned char twizy_status; // Car + charge status from CAN:
 #define CAN_STATUS_OFFLINE      0x40        //  bit 6 = 0x40: 1 = Switch-ON/-OFF phase / 0 = normal operation
 #define CAN_STATUS_ONLINE       0x80        //  bit 7 = 0x80: 1 = CAN-Bus online (test flag to detect offline)
 
+volatile unsigned char twizy_button_cnt; // will count key presses in STOP mode (msg 081)
 
 // MSG notification queue (like net_notify for vehicle specific notifies)
 volatile UINT8 twizy_notify; // bit set of...
@@ -399,6 +400,52 @@ volatile UINT8 twizy_batt_sensors_state;
 #endif // OVMS_TWIZY_BATTMON
 
 
+
+/***************************************************************
+ * Twizy CANopen SDO communication variables
+ */
+
+// SDO request:
+volatile UINT8    twizy_sdo_control;      // control/status/command
+volatile UINT     twizy_sdo_index;        // index
+volatile UINT8    twizy_sdo_subindex;     // subindex
+volatile UINT32   twizy_sdo_data;         // payload
+
+/* NOTE:
+ * the SDO comm could become common functionality by
+ * adding the node id (fixed #1 for the Twizy SEVCON)
+ */
+
+// Convenience:
+#define readsdo       vehicle_twizy_readsdo
+#define writesdo      vehicle_twizy_writesdo
+#define login         vehicle_twizy_login
+#define configmode    vehicle_twizy_configmode
+
+
+// I/O level CAN error codes / classes:
+
+#define ERR_NoCANWrite          0x0001
+
+#define ERR_ReadSDO             0x0002
+#define ERR_ReadSDO_Timeout     0x0003
+#define ERR_ReadSDO_SegXfer     0x0004
+
+#define ERR_WriteSDO            0x0008
+#define ERR_WriteSDO_Timeout    0x0009
+
+
+// App level CAN error codes / classes:
+
+#define ERR_LoginFailed         0x0010
+#define ERR_CfgModeFailed       0x0020
+#define ERR_Range               0x0030
+
+// check if SDO may contain relevant error info:
+#define ERROR_IN_SDO(c) (((c) & 0xfff0) != ERR_Range)
+
+
+
 //#pragma udata   // return to default udata section -- why?
 
 
@@ -423,6 +470,1165 @@ BOOL vehicle_twizy_battstatus_cmd(BOOL msgmode, int cmd, char *arguments);
 BOOL
 vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char *arguments);
 #endif // OVMS_TWIZY_BATTMON
+
+
+
+/***************************************************************
+ * Twizy / CANopen SDO utilities
+ */
+
+void vehicle_twizy_sendsdoreq(void)
+{
+  // wait for previous async send (if any) to finish:
+  while (TXB0CONbits.TXREQ) {}
+
+  // try to prevent bus flooding:
+  delay5b();
+
+  // init transmit:
+  TXB0CON = 0;
+
+  // dest ID 0x601 (SEVCON):
+  TXB0SIDH = 0b11000000;
+  TXB0SIDL = 0b00100000;
+
+  // fill in from twizy_sdo:
+  TXB0D0 = twizy_sdo_control;
+  TXB0D1 = (twizy_sdo_index) & 0xff;
+  TXB0D2 = (twizy_sdo_index >> 8) & 0xff;
+  TXB0D3 = twizy_sdo_subindex;
+  TXB0D4 = (twizy_sdo_data) & 0xff;
+  TXB0D5 = (twizy_sdo_data >> 8) & 0xff;
+  TXB0D6 = (twizy_sdo_data >> 16) & 0xff;
+  TXB0D7 = (twizy_sdo_data >> 24) & 0xff;
+
+  // data length (8):
+  TXB0DLC = 0b00001000;
+
+  // clear status to detect reply:
+  twizy_sdo_control = 0;
+
+  // send:
+  TXB0CON = 0b00001000;
+  while (TXB0CONbits.TXREQ) {}
+}
+
+
+// read from SDO:
+UINT vehicle_twizy_readsdo(UINT index, UINT8 subindex)
+{
+  UINT8 timeout;
+
+  if (sys_features[FEATURE_CANWRITE] == 0)
+    return ERR_NoCANWrite;
+
+  // SDO init upload request:
+  twizy_sdo_control = 0b01000000;
+  twizy_sdo_index = index;
+  twizy_sdo_subindex = subindex;
+  vehicle_twizy_sendsdoreq();
+
+  // wait for reply:
+  timeout = 400; // ~2000 ms
+  do {
+    delay5b();
+  } while (twizy_sdo_control == 0 && --timeout);
+
+  if (timeout == 0) {
+    // timeout, abort request:
+    twizy_sdo_control = 0b10000000; // abort
+    twizy_sdo_data = 0x05040000; // protocol timed out
+    vehicle_twizy_sendsdoreq();
+    return ERR_ReadSDO_Timeout;
+  }
+  
+  // check reply status:
+  if ((twizy_sdo_control & 0b11100000) != 0b01000000) {
+    // check for CANopen general error:
+    if (twizy_sdo_data == 0x08000000) {
+      // add SEVCON error code:
+      timeout = twizy_sdo_control;
+      readsdo(0x5310,0x00);
+      twizy_sdo_control = timeout;
+      twizy_sdo_index = index;
+      twizy_sdo_subindex = subindex;
+      twizy_sdo_data |= 0x08000000;
+    }
+    return ERR_ReadSDO;
+  }
+
+  // check if segmented xfer necessary (not supported yet):
+  if ((twizy_sdo_control & 0b00000010) != 0b00000010) {
+    // abort request:
+    twizy_sdo_control = 0b10000000; // abort
+    twizy_sdo_data = 0x05040005; // out of memory (for now)
+    vehicle_twizy_sendsdoreq();
+    return ERR_ReadSDO_SegXfer;
+  }
+
+  return 0;
+}
+
+
+// write to SDO without size indication:
+UINT vehicle_twizy_writesdo(UINT index, UINT8 subindex, UINT32 data)
+{
+  UINT timeout;
+
+  if (sys_features[FEATURE_CANWRITE] == 0)
+    return ERR_NoCANWrite;
+
+  // SDO init download request:
+  twizy_sdo_control = 0b00100010; // no size needed, server is smart
+  twizy_sdo_index = index;
+  twizy_sdo_subindex = subindex;
+  twizy_sdo_data = data;
+  vehicle_twizy_sendsdoreq();
+
+  // wait for reply:
+  timeout = 400; // ~2000 ms
+  do {
+    delay5b();
+  } while (twizy_sdo_control == 0 && --timeout);
+
+  if (timeout == 0) {
+    // timeout, abort request:
+    twizy_sdo_control = 0b10000000; // abort
+    twizy_sdo_data = 0x05040000; // protocol timed out
+    vehicle_twizy_sendsdoreq();
+    return ERR_WriteSDO_Timeout;
+  }
+
+  // check reply status:
+  if ((twizy_sdo_control & 0b11100000) != 0b01100000) {
+    // check for CANopen general error:
+    if (twizy_sdo_data == 0x08000000) {
+      // add SEVCON error code:
+      timeout = twizy_sdo_control;
+      readsdo(0x5310,0x00);
+      twizy_sdo_control = timeout;
+      twizy_sdo_index = index;
+      twizy_sdo_subindex = subindex;
+      twizy_sdo_data |= 0x08000000;
+    }
+    return ERR_WriteSDO;
+  }
+
+  return 0;
+}
+
+
+UINT vehicle_twizy_login(BOOL on)
+{
+  UINT err;
+
+  // check login level:
+  if (err = readsdo(0x5000,1))
+    return ERR_LoginFailed + err;
+
+  if (on && twizy_sdo_data != 4) {
+    // login:
+    writesdo(0x5000,3,0);
+    if (err = writesdo(0x5000,2,0x4bdf))
+      return ERR_LoginFailed + err;
+
+    // check new level:
+    if (err = readsdo(0x5000,1))
+      return ERR_LoginFailed + err;
+    if (twizy_sdo_data != 4)
+      return ERR_LoginFailed;
+  }
+
+  else if (!on && twizy_sdo_data != 0) {
+    // logout:
+    writesdo(0x5000,3,0);
+    if (err = writesdo(0x5000,2,0))
+      return ERR_LoginFailed + err;
+
+    // check new level:
+    if (err = readsdo(0x5000,1))
+      return ERR_LoginFailed + err;
+    if (twizy_sdo_data != 0)
+      return ERR_LoginFailed;
+  }
+
+  return 0;
+}
+
+
+UINT vehicle_twizy_configmode(BOOL on)
+{
+  UINT err, cnt;
+
+  // login if necessary:
+  if (err = login(1))
+    return err;
+
+  // check controller status:
+  if (err = readsdo(0x5110,0))
+    return ERR_CfgModeFailed + err;
+
+  if (on && twizy_sdo_data != 127) {
+    // request preoperational state:
+    if (err = writesdo(0x2800,0,1))
+      return ERR_CfgModeFailed + err;
+
+    // give controller some time:
+    delay5(2);
+
+    // check new status:
+    if (err = readsdo(0x5110,0))
+      return ERR_CfgModeFailed + err;
+
+    if (twizy_sdo_data != 127) {
+      // reset preop state request:
+      if (err = writesdo(0x2800,0,0))
+        return ERR_CfgModeFailed + err;
+      return ERR_CfgModeFailed;
+    }
+  }
+  
+  else if (!on && twizy_sdo_data != 5) {
+
+    // request operational state:
+    if (err = writesdo(0x2800,0,0))
+      return ERR_CfgModeFailed + err;
+
+    // give controller some time:
+    delay5(2);
+
+    // check new status:
+    if (err = readsdo(0x5110,0))
+      return ERR_CfgModeFailed + err;
+    if (twizy_sdo_data != 5)
+      return ERR_CfgModeFailed;
+  }
+  
+  return 0;
+}
+
+
+/***********************************************************************
+ * COMMAND CLASS: SEVCON CONTROLLER CONFIGURATION
+ *
+ *  MSG: ...todo...
+ *  SMS: CFG [cmd]
+ *
+ */
+
+char *vehicle_twizy_fmt_sdo(char *s)
+{
+  s = stp_rom(s, " SDO ");
+  if ((twizy_sdo_control & 0b11100000) == 0b10000000)
+    s = stp_rom(s, "ABORT ");
+  s = stp_x(s, "0x", twizy_sdo_index);
+  s = stp_sx(s, ".", twizy_sdo_subindex);
+  if (twizy_sdo_data > 0x0ffff)
+    s = stp_lx(s, ": 0x", twizy_sdo_data);
+  else
+    s = stp_x(s, ": 0x", twizy_sdo_data);
+  return s;
+}
+
+
+UINT32 scale(UINT32 deflt, UINT32 from, UINT32 to, UINT32 min, UINT32 max)
+{
+  UINT32 val;
+
+  if (to == from)
+    return deflt;
+
+  val = (deflt * to) / from;
+
+  if (val < min)
+    return min;
+  else if (val > max)
+    return max;
+  else
+    return val;
+}
+
+
+UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
+// max_kph: 6..111, -1=reset to default (80)
+// warn_kph: 6..111, -1=reset to default (89)
+{
+  UINT err;
+  UINT32 peaktrq;
+  UINT32 rpm, rpm2;
+
+  // parameter validation:
+
+  if (max_kph == -1)
+    max_kph = 80;
+  else if (max_kph < 6 || max_kph > 111)
+    return ERR_Range + 1;
+
+  if (warn_kph == -1)
+    warn_kph = 89;
+  else if (warn_kph < 6 || warn_kph > 111)
+    return ERR_Range + 2;
+
+  // we need pre-op state for the map manipulation (0x4611):
+  if (err = configmode(1))
+    return err;
+
+  // get peak torque (for map scaling):
+  if (err = readsdo(0x6076,0x00))
+    return err;
+  peaktrq = twizy_sdo_data;
+
+  // references:
+  //    7250 rpm = default max speed = ~80 kph
+  //    8050 rpm = default overspeed warning trigger (STOP lamp ON) = ~89 kph
+  //    8500 rpm = default overspeed brakedown trigger = ~94 kph
+  //    10000 rpm = max neutral speed (0x3813.2d) = ~110 kph
+  //    11000 rpm = severe overspeed fault (0x4624.00) = ~121 kph
+
+  // calc fwd rpm:
+  rpm = scale(7250,80,max_kph,400,10000);
+
+  // set fwd rpm:
+  if (err = writesdo(0x2920,0x05,rpm))
+    return err;
+
+  // adjust overspeed braking points (using fixed offsets):
+  if (err = writesdo(0x3813,0x33,rpm+400)) // neutral braking start
+    return err;
+  if (err = writesdo(0x3813,0x35,rpm+800)) // neutral braking end
+    return err;
+  if (err = writesdo(0x3813,0x3b,MAX(rpm+1250,10900))) // drive brakedown trigger
+    return err;
+
+  // set overspeed warning range (STOP lamp):
+  rpm2 = scale(8050,89,warn_kph,400,10900);
+  if (err = writesdo(0x3813,0x34,rpm2)) // lamp ON
+    return err;
+  if (err = writesdo(0x3813,0x3c,rpm2-550)) // lamp OFF
+    return err;
+
+  // spread torque/speed map:
+
+#if 0
+  // is scaling all rpms any good? max points should be sufficient...
+  // or just keep 2115 rpm (rated speed) and scale above?
+
+  if (err = writesdo(0x4611,0x04,scale(2115,80,max_kph,400,10000)))
+    return err;
+  if (err = writesdo(0x4611,0x06,scale(2700,80,max_kph,400,10000)))
+    return err;
+  if (err = writesdo(0x4611,0x08,scale(3000,80,max_kph,400,10000)))
+    return err;
+  if (err = writesdo(0x4611,0x0a,scale(3500,80,max_kph,400,10000)))
+    return err;
+  if (err = writesdo(0x4611,0x0c,scale(4500,80,max_kph,400,10000)))
+    return err;
+  if (err = writesdo(0x4611,0x0e,scale(5500,80,max_kph,400,10000)))
+    return err;
+  if (err = writesdo(0x4611,0x10,scale(6500,80,max_kph,400,10000)))
+    return err;
+#endif
+
+  // end speed minimum 7250:
+  rpm2 = MAX(rpm, 7250);
+  if (err = writesdo(0x4611,0x12,rpm2))
+    return err;
+
+  // end torque needs to be scaled up by peaktrq and down by fwdrpm:
+  if (err = writesdo(0x4611,0x11,
+    scale(scale(273,55000,peaktrq,160,1122),
+      rpm2,7250,160,1122)))
+    return err;
+
+  // commit map changes:
+  if (err = writesdo(0x4641,0x01,1))
+    return err;
+  delay5(10);
+
+  return 0;
+}
+
+
+UINT vehicle_twizy_cfg_torque(int max_prc)
+// max_prc: 10..100, -1=reset to default (78%)
+//    100% = 70.125 Nm
+{
+  UINT err;
+  UINT32 peaktrq;
+  UINT32 fwdrpm;
+
+  // parameter validation:
+
+  if (max_prc == -1)
+    max_prc = 78;
+  else if (max_prc < 10 || max_prc > 100)
+    return ERR_Range + 1;
+
+  // we need pre-op state for the map manipulation (0x4611):
+  if (err = configmode(1))
+    return err;
+
+  // get map end point rpm:
+  if (err = readsdo(0x4611,0x12))
+    return err;
+  fwdrpm = twizy_sdo_data;
+
+  // references:
+  //    55 Nm (0x6076.0x00) = default peak torque to use (also in tq/speed map)
+  //    57 Nm (0x2916.0x01) = ??? should be equal to 0x6076...
+  //    70.125 Nm (0x4610.0x11) = max motor torque according to flux map
+
+  // calc peak use torque:
+  peaktrq = scale(55000,78,max_prc,10000,70125);
+
+  // set peak use torque:
+  if (err = writesdo(0x6076,0x00,peaktrq))
+    return err;
+
+  // set rated torque too?
+  //if (err = writesdo(0x2916,0x01,scale(57000,78,max_prc,10000,70125)))
+  //  return err;
+
+  // scale torque/speed map:
+  if (err = writesdo(0x4611,0x01,scale(880,78,max_prc,160,1122)))
+    return err;
+  if (err = writesdo(0x4611,0x03,scale(880,78,max_prc,160,1122)))
+    return err;
+  if (err = writesdo(0x4611,0x05,scale(659,78,max_prc,160,1122)))
+    return err;
+  if (err = writesdo(0x4611,0x07,scale(608,78,max_prc,160,1122)))
+    return err;
+  if (err = writesdo(0x4611,0x09,scale(516,78,max_prc,160,1122)))
+    return err;
+  if (err = writesdo(0x4611,0x0b,scale(421,78,max_prc,160,1122)))
+    return err;
+  if (err = writesdo(0x4611,0x0d,scale(360,78,max_prc,160,1122)))
+    return err;
+  if (err = writesdo(0x4611,0x0f,scale(307,78,max_prc,160,1122)))
+    return err;
+
+  // end torque needs to be scaled up by peaktrq and down by fwdrpm:
+  if (err = writesdo(0x4611,0x11,
+    scale(scale(273,55000,peaktrq,160,1122),
+      fwdrpm,7250,160,1122)))
+    return err;
+
+  // commit map changes:
+  if (err = writesdo(0x4641,0x01,1))
+    return err;
+  delay5(10);
+
+  return 0;
+}
+
+
+UINT vehicle_twizy_cfg_tsmap(char map, int t1_prc, int t2_prc, int t3_prc, int t4_prc)
+// map: 'D'=Drive 'N'=Neutral 'B'=Footbrake
+// t1_prc: 1..100, -1=reset to default (D=100, N/B=100)
+// t2_prc: 1..100, -1=reset to default (D=100, N/B=80)
+// t3_prc: 1..100, -1=reset to default (D=100, N/B=50)
+// t4_prc: 1..100, -1=reset to default (D=100, N/B=20)
+{
+  UINT err;
+  UINT base;
+  UINT32 val;
+
+  // parameter validation:
+
+  if (map != 'D' && map != 'N' && map != 'B')
+    return ERR_Range + 1;
+
+  if ((t1_prc != -1) && (t1_prc < 1 || t1_prc > 100))
+    return ERR_Range + 2;
+
+  if ((t2_prc != -1) && (t2_prc < 1 || t2_prc > 100))
+    return ERR_Range + 3;
+
+  if ((t3_prc != -1) && (t3_prc < 1 || t3_prc > 100))
+    return ERR_Range + 4;
+
+  if ((t4_prc != -1) && (t4_prc < 1 || t4_prc > 100))
+    return ERR_Range + 5;
+
+  // we need pre-op state:
+  if (err = configmode(1))
+    return err;
+
+  // get map base subindex in SDO 0x3813:
+
+  if (map=='B')
+    base = 0x07;
+  else if (map=='N')
+    base = 0x1b;
+  else // 'D'
+    base = 0x24;
+
+  // set:
+
+  if (t1_prc >= 0)
+    val = scale(32767,100,t1_prc,0,32767);
+  else
+    val = 32767;
+  if (err = writesdo(0x3813,base+0,val))
+    return err;
+
+  if (t2_prc >= 0)
+    val = scale(32767,100,t2_prc,0,32767);
+  else
+    val = (map=='D') ? 32767 : 26214;
+  if (err = writesdo(0x3813,base+2,val))
+    return err;
+
+  if (t3_prc >= 0)
+    val = scale(32767,100,t3_prc,0,32767);
+  else
+    val = (map=='D') ? 32767 : 16383;
+  if (err = writesdo(0x3813,base+4,val))
+    return err;
+
+  if (t4_prc >= 0)
+    val = scale(32767,100,t4_prc,0,32767);
+  else
+    val = (map=='D') ? 32767 : 6553;
+  if (err = writesdo(0x3813,base+6,val))
+    return err;
+
+  return 0;
+}
+
+
+UINT vehicle_twizy_cfg_power(int max_prc)
+// max_prc: 10..100, -1=reset to default (100)
+{
+  UINT err;
+
+  // parameter validation:
+
+  if (max_prc == -1)
+    max_prc = 100;
+  else if (max_prc < 10 || max_prc > 100)
+    return ERR_Range + 1;
+
+  // set:
+  if (err = writesdo(0x2920,0x01,max_prc*10))
+    return err;
+
+  return 0;
+}
+
+
+UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc)
+// neutral_prc: 0..100, -1=reset to default (18)
+// brake_prc: 0..100, -1=reset to default (18)
+{
+  UINT err;
+
+  // parameter validation:
+
+  if (neutral_prc == -1)
+    neutral_prc = 18;
+  else if (neutral_prc < 0 || neutral_prc > 100)
+    return ERR_Range + 1;
+
+  if (brake_prc == -1)
+    brake_prc = 18;
+  else if (brake_prc < 0 || brake_prc > 100)
+    return ERR_Range + 2;
+
+  // set:
+  if (err = writesdo(0x2920,0x03,scale(182,18,neutral_prc,0,1000)))
+    return err;
+  if (err = writesdo(0x2920,0x04,scale(182,18,brake_prc,0,1000)))
+    return err;
+
+  return 0;
+}
+
+
+UINT vehicle_twizy_cfg_ramps(int start_prc, int accel_prc, int decel_prc, int neutral_prc, int brake_prc)
+// start_prc: 1..100, -1=reset to default (4)
+// accel_prc: 1..100, -1=reset to default (25)
+// decel_prc: 0..100, -1=reset to default (20)
+// neutral_prc: 0..100, -1=reset to default (40)
+// brake_prc: 0..100, -1=reset to default (40)
+{
+  UINT err;
+
+  // parameter validation:
+
+  if (start_prc == -1)
+    start_prc = 4;
+  else if (start_prc < 1 || start_prc > 100)
+    return ERR_Range + 1;
+
+  if (accel_prc == -1)
+    accel_prc = 25;
+  else if (accel_prc < 1 || accel_prc > 100)
+    return ERR_Range + 2;
+
+  if (decel_prc == -1)
+    decel_prc = 20;
+  else if (decel_prc < 0 || decel_prc > 100)
+    return ERR_Range + 3;
+
+  if (neutral_prc == -1)
+    neutral_prc = 40;
+  else if (neutral_prc < 0 || neutral_prc > 100)
+    return ERR_Range + 4;
+
+  if (brake_prc == -1)
+    brake_prc = 40;
+  else if (brake_prc < 0 || brake_prc > 100)
+    return ERR_Range + 5;
+
+  // set:
+
+  if (err = writesdo(0x291c,0x02,scale(400,4,start_prc,10,10000)))
+    return err;
+  if (err = writesdo(0x2920,0x07,scale(2500,25,accel_prc,10,10000)))
+    return err;
+  if (err = writesdo(0x2920,0x0b,scale(2000,20,decel_prc,10,10000)))
+    return err;
+  if (err = writesdo(0x2920,0x0d,scale(4000,40,neutral_prc,10,10000)))
+    return err;
+  if (err = writesdo(0x2920,0x0e,scale(4000,40,brake_prc,10,10000)))
+    return err;
+
+  return 0;
+}
+
+
+UINT vehicle_twizy_cfg_smoothing(int prc)
+// prc: 0..100, -1=reset to default (70)
+{
+  UINT err;
+
+  // parameter validation:
+
+  if (prc == -1)
+    prc = 70;
+  else if (prc < 0 || prc > 100)
+    return ERR_Range + 1;
+
+  // set:
+  if (err = writesdo(0x290a,0x01,1+(prc/10)))
+    return err;
+  if (err = writesdo(0x290a,0x03,scale(800,70,prc,0,1000)))
+    return err;
+
+  return 0;
+}
+
+
+UINT vehicle_twizy_cfg_brakelight(int on_lev, int off_lev)
+// *** NOT FUNCTIONAL WITHOUT HARDWARE MODIFICATION ***
+// *** SEVCON cannot control Twizy brake lights ***
+// on_lev: 0..100, -1=reset to default (100=off)
+// off_lev: 0..100, -1=reset to default (100=off)
+// on_lev must be >= off_lev
+// ctrl bit in 0x2910.1 will be set/cleared accordingly
+{
+  UINT err;
+
+  // parameter validation:
+
+  if (on_lev == -1)
+    on_lev = 100;
+  else if (on_lev < 0 || on_lev > 100)
+    return ERR_Range + 1;
+
+  if (off_lev == -1)
+    off_lev = 100;
+  else if (off_lev < 0 || off_lev > 100)
+    return ERR_Range + 2;
+
+  if (on_lev < off_lev)
+    return ERR_Range + 3;
+
+  // we need pre-op state for manipulating 0x2910 (ctrl bit):
+  if (err = configmode(1))
+    return err;
+
+  // set range:
+  if (err = writesdo(0x3813,0x05,scale(1024,100,off_lev,64,1024)))
+    return err;
+  if (err = writesdo(0x3813,0x06,scale(1024,100,on_lev,64,1024)))
+    return err;
+
+  // set ctrl bit:
+  if (err = readsdo(0x2910,0x01))
+    return err;
+  if (on_lev != 100 || off_lev != 100)
+    twizy_sdo_data |= 0x2000;
+  else
+    twizy_sdo_data &= ~0x2000;
+  if (err = writesdo(0x2910,0x01,twizy_sdo_data))
+    return err;
+
+  return 0;
+}
+
+
+// RESET all known parameters to default:
+//  ATT: will not reset arbitrary WRITEs, just macro commands!
+UINT vehicle_twizy_cfg_reset(void)
+{
+  UINT err;
+
+  // clear watchdog timer:
+  ClrWdt();
+
+  // issue reset on every macro command:
+  if (err = vehicle_twizy_cfg_speed(-1,-1))
+    return err;
+  if (err = vehicle_twizy_cfg_torque(-1))
+    return err;
+  if (err = vehicle_twizy_cfg_tsmap('D',-1,-1,-1,-1))
+    return err;
+  if (err = vehicle_twizy_cfg_tsmap('N',-1,-1,-1,-1))
+    return err;
+  if (err = vehicle_twizy_cfg_tsmap('B',-1,-1,-1,-1))
+    return err;
+
+  ClrWdt();
+
+  if (err = vehicle_twizy_cfg_power(-1))
+    return err;
+  if (err = vehicle_twizy_cfg_recup(-1,-1))
+    return err;
+  if (err = vehicle_twizy_cfg_ramps(-1,-1,-1,-1,-1))
+    return err;
+  if (err = vehicle_twizy_cfg_smoothing(-1))
+    return err;
+  if (err = vehicle_twizy_cfg_brakelight(-1,-1))
+    return err;
+
+  return 0;
+}
+
+
+BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *command, char *arguments)
+{
+  char *s;
+  char *cmd;
+  UINT err;
+  BOOL go_op_onexit = TRUE;
+
+  if (!premsg)
+    return FALSE;
+
+  if (!caller || !*caller)
+  {
+    caller = par_get(PARAM_REGPHONE);
+    if (!caller || !*caller)
+      return FALSE;
+  }
+
+  if (sys_features[FEATURE_CANWRITE] == 0) {
+    s = stp_rom(net_scratchpad, "Error: CAN bus in read only mode");
+    net_send_sms_start(caller);
+    net_puts_ram(net_scratchpad);
+    return TRUE;
+  }
+
+  // get cmd:
+  if (!arguments)
+    return FALSE; // no cmd
+
+  cmd = arguments;
+
+  // convert cmd to upper-case:
+  for (s=cmd; ((*s!=0)&&(*s!=' ')); s++)
+    if ((*s > 0x60) && (*s < 0x7b)) *s=*s-0x20;
+
+
+  // common SMS reply intro:
+  s = stp_s(net_scratchpad, "CFG ", cmd);
+  s = stp_rom(s, ": ");
+
+
+  // login:
+  if (err = login(1)) {
+    s = stp_x(s, "LOGIN FAILED ERROR ", err);
+    net_send_sms_start(caller);
+    net_puts_ram(net_scratchpad);
+    return TRUE;
+  }
+
+  //
+  // cmd dispatcher:
+  //
+
+  if (strncmppgm2ram(cmd, "PRE", 3) == 0) {
+    // PRE: enter config mode
+    if (err = configmode(1)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+    }
+    go_op_onexit = FALSE;
+  }
+
+  else if (strncmppgm2ram(cmd, "OP", 2) == 0) {
+    // OP: leave config mode
+    if (err = configmode(0)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+    }
+    go_op_onexit = FALSE;
+  }
+
+  else if (strncmppgm2ram(cmd, "READ", 4) == 0) {
+    // READ index_hex subindex_hex
+    UINT index;
+    UINT8 subindex;
+
+    if (arguments = net_sms_nextarg(arguments))
+      index = axtoul(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      subindex = axtoul(arguments);
+
+    if (!arguments) {
+      s = stp_rom(s, "ERROR: Too few args");
+    }
+    else {
+      if (err = readsdo(index, subindex)) {
+        s = stp_x(s, "ERROR ", err);
+        if (ERROR_IN_SDO(err))
+          s = vehicle_twizy_fmt_sdo(s);
+      }
+      else {
+        s = vehicle_twizy_fmt_sdo(s);
+        s = stp_ul(s, " = ", twizy_sdo_data);
+      }
+    }
+
+    go_op_onexit = FALSE;
+  }
+
+  else if (strncmppgm2ram(cmd, "WRITE", 5) == 0) {
+    // WRITE index_hex subindex_hex data_dec
+    UINT index;
+    UINT8 subindex;
+    UINT32 data;
+
+    if (arguments = net_sms_nextarg(arguments))
+      index = axtoul(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      subindex = axtoul(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      data = atoul(arguments);
+
+    if (!arguments) {
+      s = stp_rom(s, "ERROR: Too few args");
+    }
+    else {
+      // read old value:
+      if (err = readsdo(index, subindex)) {
+        s = stp_x(s, "ERROR ", err);
+        if (ERROR_IN_SDO(err))
+          s = vehicle_twizy_fmt_sdo(s);
+      }
+      else {
+        // read ok:
+        s = stp_rom(s, "OLD:");
+        s = vehicle_twizy_fmt_sdo(s);
+        s = stp_ul(s, " = ", twizy_sdo_data);
+
+        // write new value:
+        if (err = writesdo(index, subindex, data)) {
+          s = stp_x(s, "ERROR ", err);
+          if (ERROR_IN_SDO(err))
+            s = vehicle_twizy_fmt_sdo(s);
+        }
+        else {
+          s = stp_ul(s, " => NEW: ", data);
+        }
+      }
+    }
+
+    go_op_onexit = FALSE;
+  }
+
+  else if (strncmppgm2ram(cmd, "SPEED", 5) == 0) {
+    // SPEED [max_kph] [warn_kph]
+    int max_kph=-1, warn_kph=-1;
+
+    if (arguments = net_sms_nextarg(arguments))
+      max_kph = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      warn_kph = atoi(arguments);
+
+    if (err = vehicle_twizy_cfg_speed(max_kph, warn_kph)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK, power cycle to activate!");
+
+      // debug:
+      if (readsdo(0x2920,0x05) == 0)
+        s = stp_ul(s, " fwd=", twizy_sdo_data);
+      if (readsdo(0x3813,0x3c) == 0)
+        s = stp_ul(s, " wrn=", twizy_sdo_data);
+    }
+  }
+
+  else if (strncmppgm2ram(cmd, "TORQUE", 6) == 0) {
+    // TORQUE [max_prc]
+    int max_prc=-1;
+
+    if (arguments = net_sms_nextarg(arguments))
+      max_prc = atoi(arguments);
+
+    if (err = vehicle_twizy_cfg_torque(max_prc)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK, power cycle to activate!");
+
+      // debug:
+      if (readsdo(0x6076,0x00))
+        s = stp_ul(s, " trq=", twizy_sdo_data);
+    }
+  }
+
+  else if (strncmppgm2ram(cmd, "TSMAP", 5) == 0) {
+    // TSMAP [map] [t1_prc] [t2_prc] [t3_prc] [t4_prc]
+    char maps[4]={'D','N','B',0}, t1_prc=-1, t2_prc=-1, t3_prc=-1, t4_prc=-1;
+    int i;
+
+    if (arguments = net_sms_nextarg(arguments)) {
+      for (i=0; i<3 && arguments[i]; i++)
+        maps[i] = arguments[i] & ~0x20;
+      maps[i] = 0;
+    }
+    if (arguments = net_sms_nextarg(arguments))
+      t1_prc = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      t2_prc = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      t3_prc = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      t4_prc = atoi(arguments);
+
+    for (i=0; maps[i]; i++) {
+      if (err = vehicle_twizy_cfg_tsmap(maps[i], t1_prc, t2_prc, t3_prc, t4_prc))
+        break;
+    }
+
+    if (err) {
+      s = stp_x(s, "ERROR ", err);
+      s = stp_rom(s, " IN MAP ");
+      *s++ = maps[i]; *s = 0;
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+
+      // debug:
+      if (readsdo(0x3813,0x24+6) == 0)
+        s = stp_ul(s, " D4=", twizy_sdo_data);
+      if (readsdo(0x3813,0x1b+6) == 0)
+        s = stp_ul(s, " N4=", twizy_sdo_data);
+      if (readsdo(0x3813,0x07+6) == 0)
+        s = stp_ul(s, " B4=", twizy_sdo_data);
+    }
+  }
+
+  else if (strncmppgm2ram(cmd, "POWER", 5) == 0) {
+    // POWER [max_prc]
+    int max_prc=-1;
+
+    if (arguments = net_sms_nextarg(arguments))
+      max_prc = atoi(arguments);
+
+    if (err = vehicle_twizy_cfg_power(max_prc)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+
+      // debug:
+      if (readsdo(0x2920,0x01))
+        s = stp_ul(s, " pow=", twizy_sdo_data);
+    }
+  }
+
+  else if (strncmppgm2ram(cmd, "RECUP", 5) == 0) {
+    // RECUP [neutral_prc] [brake_prc]
+    int neutral_prc=-1, brake_prc=-1;
+
+    if (arguments = net_sms_nextarg(arguments))
+      neutral_prc = atoi(arguments);
+
+    if (arguments = net_sms_nextarg(arguments))
+      brake_prc = atoi(arguments);
+    else
+      brake_prc = neutral_prc;
+
+    if (err = vehicle_twizy_cfg_recup(neutral_prc, brake_prc)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+
+      // debug:
+      if (readsdo(0x2920,0x03) == 0)
+        s = stp_ul(s, " ntr=", twizy_sdo_data);
+      if (readsdo(0x2920,0x04) == 0)
+        s = stp_ul(s, " brk=", twizy_sdo_data);
+    }
+  }
+
+  else if (strncmppgm2ram(cmd, "RAMPS", 5) == 0) {
+    // RAMPS [start_prc] [accel_prc] [decel_prc] [neutral_prc] [brake_prc]
+    int start_prc=-1, accel_prc=-1, decel_prc=-1, neutral_prc=-1, brake_prc=-1;
+
+    if (arguments = net_sms_nextarg(arguments))
+      start_prc = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      accel_prc = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      decel_prc = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      neutral_prc = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      brake_prc = atoi(arguments);
+
+    if (err = vehicle_twizy_cfg_ramps(start_prc, accel_prc, decel_prc, neutral_prc, brake_prc)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+
+      // debug:
+      if (readsdo(0x291c,0x02) == 0)
+        s = stp_ul(s, " rstr=", twizy_sdo_data);
+      if (readsdo(0x2920,0x07) == 0)
+        s = stp_ul(s, " racc=", twizy_sdo_data);
+      if (readsdo(0x2920,0x0e) == 0)
+        s = stp_ul(s, " rbrk=", twizy_sdo_data);
+    }
+  }
+
+  else if (strncmppgm2ram(cmd, "SMOOTH", 6) == 0) {
+    // SMOOTH [prc]
+    int prc=-1;
+
+    if (arguments = net_sms_nextarg(arguments))
+      prc = atoi(arguments);
+
+    if (err = vehicle_twizy_cfg_smoothing(prc)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+
+      // debug:
+      if (readsdo(0x290a,0x01))
+        s = stp_ul(s, " scrv=", twizy_sdo_data);
+      if (readsdo(0x290a,0x03))
+        s = stp_ul(s, " srmp=", twizy_sdo_data);
+    }
+  }
+
+  else if (strncmppgm2ram(cmd, "BRAKELIGHT", 10) == 0) {
+    // BRAKELIGHT [on_lev] [off_lev]
+    int on_lev=-1, off_lev=-1;
+
+    if (arguments = net_sms_nextarg(arguments))
+      on_lev = atoi(arguments);
+
+    if (arguments = net_sms_nextarg(arguments))
+      off_lev = atoi(arguments);
+    else
+      off_lev = on_lev;
+
+    if (err = vehicle_twizy_cfg_brakelight(on_lev, off_lev)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+
+      // debug:
+      if (readsdo(0x3813,0x06) == 0)
+        s = stp_ul(s, " bon=", twizy_sdo_data);
+      if (readsdo(0x2910,0x01) == 0)
+        s = stp_x(s, " flgs=", twizy_sdo_data);
+    }
+  }
+
+  else if (strncmppgm2ram(cmd, "RESET", 5) == 0) {
+    // RESET all macro commands to defaults
+    if (err = vehicle_twizy_cfg_reset()) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+
+      // debug:
+      if (readsdo(0x2920,0x05) == 0)
+        s = stp_ul(s, " fwd=", twizy_sdo_data);
+      if (readsdo(0x6076,0x00))
+        s = stp_ul(s, " trq=", twizy_sdo_data);
+      if (readsdo(0x2920,0x01) == 0)
+        s = stp_ul(s, " pow=", twizy_sdo_data);
+      if (readsdo(0x2920,0x03) == 0)
+        s = stp_ul(s, " ntr=", twizy_sdo_data);
+    }
+  }
+
+  else {
+    // unknown command
+    s = stp_rom(s, "Unknown command");
+  }
+
+  // go operational?
+  if (go_op_onexit) {
+    // retry until success to avoid pre-op stuck situations:
+    while (configmode(0) != 0) {
+      ClrWdt();
+      delay100(5);
+    }
+  }
+
+  // logout should not be needed here
+
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+    return FALSE; // handled, but no SMS has been started
+
+  net_send_sms_start(caller);
+  net_puts_ram(net_scratchpad);
+
+  return TRUE;
+}
+
+
+
 
 
 /**
@@ -647,9 +1853,11 @@ void vehicle_twizy_simulator_run(int chunk)
 BOOL vehicle_twizy_poll0(void)
 {
   unsigned char CANfilter;
-  //unsigned char CANsidh;
-  //unsigned char CANsidl;
+  unsigned char CANsid;
+
   unsigned int t;
+  unsigned char u;
+  unsigned long v;
 
 
 #ifdef OVMS_DIAGMODULE
@@ -676,8 +1884,7 @@ BOOL vehicle_twizy_poll0(void)
     // READ CAN BUFFER:
 
     CANfilter = RXB0CON & 0x01;
-    //CANsidh = RXB0SIDH;
-    //CANsidl = RXB0SIDL & 0b11100000;
+    CANsid = (RXB0SIDH >> 5) & 0x0F;
 
     can_datalength = RXB0DLC & 0x0F; // number of received bytes
     can_databuffer[0] = RXB0D0;
@@ -697,69 +1904,131 @@ BOOL vehicle_twizy_poll0(void)
 
   if (CANfilter == 0)
   {
-    /*****************************************************
-     * FILTER 0:
-     * CAN ID 0x155: sent every 10 ms (100 per second)
-     */
-
-    // Basic validation:
-    // Byte 4:  0x94 = init/exit phase (CAN data invalid)
-    //          0x54 = Twizy online (CAN data valid)
-    if (can_databuffer[3] == 0x54)
+    if (CANsid == 0x1)
     {
-      // SOC:
-      t = ((unsigned int) can_databuffer[4] << 8) + can_databuffer[5];
-      if (t > 0 && t <= 40000)
+      /*****************************************************
+       * FILTER 0:
+       * CAN ID 0x155: sent every 10 ms (100 per second)
+       */
+
+      // Basic validation:
+      // Byte 4:  0x94 = init/exit phase (CAN data invalid)
+      //          0x54 = Twizy online (CAN data valid)
+      if (can_databuffer[3] == 0x54)
       {
-        twizy_soc = t >> 2;
-        // car value derived in ticker1()
-
-        // Remember maximum SOC for charging "done" distinction:
-        if (twizy_soc > twizy_soc_max)
-          twizy_soc_max = twizy_soc;
-
-        // ...and minimum SOC for range calculation during charging:
-        if (twizy_soc < twizy_soc_min)
+        // SOC:
+        t = ((unsigned int) can_databuffer[4] << 8) + can_databuffer[5];
+        if (t > 0 && t <= 40000)
         {
-          twizy_soc_min = twizy_soc;
-          twizy_soc_min_range = twizy_range;
+          twizy_soc = t >> 2;
+          // car value derived in ticker1()
+
+          // Remember maximum SOC for charging "done" distinction:
+          if (twizy_soc > twizy_soc_max)
+            twizy_soc_max = twizy_soc;
+
+          // ...and minimum SOC for range calculation during charging:
+          if (twizy_soc < twizy_soc_min)
+          {
+            twizy_soc_min = twizy_soc;
+            twizy_soc_min_range = twizy_range;
+          }
+        }
+
+        // POWER:
+        t = ((unsigned int) (can_databuffer[1] & 0x0f) << 8) + can_databuffer[2];
+        if (t > 0 && t < 0x0f00)
+        {
+          twizy_power = 2000 - (signed int) t;
+
+          // calculate distance from ref:
+          if (twizy_dist >= twizy_speed_distref)
+            t = twizy_dist - twizy_speed_distref;
+          else
+            t = twizy_dist + (0x10000L - twizy_speed_distref);
+          twizy_speed_distref = twizy_dist;
+
+          // add to speed state:
+          twizy_speedpwr[twizy_speed_state].dist += t;
+          if (twizy_power > 0)
+          {
+            twizy_speedpwr[twizy_speed_state].use += twizy_power;
+            twizy_level_use += twizy_power;
+          }
+          else
+          {
+            twizy_speedpwr[twizy_speed_state].rec += -twizy_power;
+            twizy_level_rec += -twizy_power;
+          }
+
+          // do we need to take base power consumption into account?
+          // i.e. for lights etc. -- varies...
         }
       }
-
-      // POWER:
-      t = ((unsigned int) (can_databuffer[1] & 0x0f) << 8) + can_databuffer[2];
-      if (t > 0 && t < 0x0f00)
-      {
-        twizy_power = 2000 - (signed int) t;
-
-        // calculate distance from ref:
-        if (twizy_dist >= twizy_speed_distref)
-          t = twizy_dist - twizy_speed_distref;
-        else
-          t = twizy_dist + (0x10000L - twizy_speed_distref);
-        twizy_speed_distref = twizy_dist;
-
-        // add to speed state:
-        twizy_speedpwr[twizy_speed_state].dist += t;
-        if (twizy_power > 0)
-        {
-          twizy_speedpwr[twizy_speed_state].use += twizy_power;
-          twizy_level_use += twizy_power;
-        }
-        else
-        {
-          twizy_speedpwr[twizy_speed_state].rec += -twizy_power;
-          twizy_level_rec += -twizy_power;
-        }
-
-        // do we need to take base power consumption into account?
-        // i.e. for lights etc. -- varies...
-      }
-
     }
   }
 
-  // else CANfilter == 1 ...reserved...
+  else
+  {
+    /*****************************************************
+     * FILTER 1:
+     * CAN ID 0x_81: CANopen message from SEVCON (Node #1)
+     */
+
+    if (CANsid == 0x0)
+    {
+      /*****************************************************
+       * FILTER 1:
+       * CAN ID 0x081: CANopen error message from SEVCON (Node #1)
+       */
+
+      // count errors to detect manual CFG RESET request:
+      if ((CAN_BYTE(1)==0x10) && (CAN_BYTE(2)==0x01))
+        twizy_button_cnt++;
+
+    }
+
+    else if (CANsid == 0x5)
+    {
+      /*****************************************************
+       * FILTER 1:
+       * CAN ID 0x581: CANopen SDO reply from SEVCON (Node #1)
+       */
+      // message structure:
+      //    0 = control byte
+      //    1+2 = index (little endian)
+      //    3 = subindex
+      //    4..7 = data (little endian)
+
+      // check if index/subindex match our request:
+      t = CAN_BYTE(1) + ((unsigned int)CAN_BYTE(2) << 8);
+      u = CAN_BYTE(3);
+
+      if (t == twizy_sdo_index && u == twizy_sdo_subindex)
+      {
+        // OK, get data:
+        v = 0;
+        switch (CAN_BYTE(0) & 0b00001100) // size / unused bytes
+        {
+        case 0b00000000:
+          v |= (unsigned long)CAN_BYTE(7) << 24;
+        case 0b00000100:
+          v |= (unsigned long)CAN_BYTE(6) << 16;
+        case 0b00001000:
+          v |= (unsigned long)CAN_BYTE(5) << 8;
+        case 0b00001100:
+          v |= (unsigned long)CAN_BYTE(4);
+        }
+        twizy_sdo_data = v;
+
+        // get status:
+        twizy_sdo_control = CAN_BYTE(0);
+      }
+
+    }
+
+  }
+
   return TRUE;
 }
 
@@ -805,7 +2074,7 @@ BOOL vehicle_twizy_poll1(void)
     // READ CAN BUFFER:
 
     CANfilter = RXB1CON & 0x07;
-    CANsid = ((RXB1SIDH & 0x01) << 3) + ((RXB1SIDL & 0xe0) >> 5);
+    CANsid = ((RXB1SIDH & 0x01) << 3) + ((RXB1SIDL >> 5) & 0x0F);
 
     can_datalength = RXB1DLC & 0x0F; // number of received bytes
     can_databuffer[0] = RXB1D0;
@@ -1384,6 +2653,9 @@ BOOL vehicle_twizy_state_ticker1(void)
 
       // reset power statistics:
       vehicle_twizy_power_reset();
+
+      // reset button cnt:
+      twizy_button_cnt = 0;
     }
   }
   else
@@ -1399,6 +2671,9 @@ BOOL vehicle_twizy_state_ticker1(void)
       // send power statistics:
       if (twizy_speedpwr[CAN_SPEED_CONST].use > 22500)
         twizy_notify |= SEND_PowerNotify;
+
+      // reset button cnt:
+      twizy_button_cnt = 0;
     }
   }
 
@@ -1584,6 +2859,35 @@ BOOL vehicle_twizy_state_ticker1(void)
           && ((can_granular_tick % 5) == 0))
   {
     twizy_notify |= SEND_StreamUpdate;
+  }
+
+
+  /***************************************************************************
+   * Check for button presses in STOP mode => CFG RESET:
+   */
+
+  if (twizy_button_cnt >= 3)
+  {
+    char cmd[6];
+
+    // do CFG RESET with SMS reply:
+    strcpypgm2ram(cmd, "RESET");
+    if (vehicle_twizy_cfg_sms(TRUE, NULL, NULL, cmd))
+      net_send_sms_finish();
+
+    // reset button cnt:
+    twizy_button_cnt = 0;
+  }
+
+  else if (twizy_button_cnt >= 1)
+  {
+    // check if we're stuck in pre-op state:
+    if ((readsdo(0x5110,0x00) == 0) && (twizy_sdo_data == 0x7f)
+      && (readsdo(0x5000,0x01) == 0) && (twizy_sdo_data != 4)) {
+      // we're in pre-op but not logged in, try to solve:
+      if ((login(1) == 0) && (configmode(0) == 0))
+        twizy_button_cnt = 0; // solved
+    }
   }
 
 
@@ -2157,15 +3461,17 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
 
   s = net_scratchpad;
   s = stp_x(s, " STS=", twizy_status);
+  s = stp_i(s, " BC=", twizy_button_cnt);
+
   //s = stp_x(s, " DS1=", car_doors1);
   //s = stp_x(s, " DS5=", car_doors5);
   //s = stp_i(s, " MSN=", can_minSOCnotified);
   //s = stp_i(s, " CHG=", car_chargestate);
   //s = stp_i(s, " SPD=", twizy_speed);
   //s = stp_i(s, " PWR=", twizy_power);
-  s = stp_ul(s, " ODO=", twizy_odometer);
-  s = stp_ul(s, " di=", twizy_dist);
-  s = stp_ul(s, " dr=", twizy_speed_distref);
+  //s = stp_ul(s, " ODO=", twizy_odometer);
+  //s = stp_ul(s, " di=", twizy_dist);
+  //s = stp_ul(s, " dr=", twizy_speed_distref);
   //s = stp_i(s, " SOC=", twizy_soc);
   //s = stp_i(s, " SMIN=", twizy_soc_min);
   //s = stp_i(s, " SMAX=", twizy_soc_max);
@@ -3457,6 +4763,7 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
 
 
 
+
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 /****************************************************************
@@ -3535,6 +4842,8 @@ rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] = {
 
   "3POWER", // Twizy: power usage statistics
 
+  "3CFG", // Twizy: configuration tweaking
+
   ""
 };
 
@@ -3549,7 +4858,9 @@ rom far BOOL(*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *com
   &vehicle_twizy_battstatus_sms,
 #endif // OVMS_TWIZY_BATTMON
 
-  &vehicle_twizy_power_sms
+  &vehicle_twizy_power_sms,
+
+  &vehicle_twizy_cfg_sms
 };
 
 // SMS COMMAND DISPATCHER:
@@ -3655,6 +4966,7 @@ BOOL vehicle_twizy_initialise(void)
     car_type[4] = 0;
 
     twizy_status = CAN_STATUS_OFFLINE;
+    twizy_button_cnt = 0;
 
     twizy_soc = 5000;
     twizy_soc_min = 10000;
@@ -3728,17 +5040,17 @@ BOOL vehicle_twizy_initialise(void)
 
   // Setup Filter0 and Mask for CAN ID 0x155
 
-  // Mask0 = 0x7ff = exact ID filter match (high perf)
-  RXM0SIDH = 0b11111111;
+  // Mask0 =
+  RXM0SIDH = 0b01011111;
   RXM0SIDL = 0b11100000;
 
-  // Filter0 = ID 0x155:
-  RXF0SIDH = 0b00101010;
+  // Filter0 = ID 0x155 (Power + SOC):
+  RXF0SIDH = 0b00001010;
   RXF0SIDL = 0b10100000;
 
-  // Filter1 = unused (reserved for another frequent ID)
-  RXF1SIDH = 0b00000000;
-  RXF1SIDL = 0b00000000;
+  // Filter1 = ID 0x081 + 0x581 (CANopen message from SEVCON):
+  RXF1SIDH = 0b00010000;
+  RXF1SIDL = 0b00100000;
 
 
   // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
