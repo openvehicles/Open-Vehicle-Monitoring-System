@@ -176,7 +176,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.0.0";
+rom char vehicle_twizy_version[] = "3.0.1";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -664,44 +664,44 @@ UINT vehicle_twizy_configmode(BOOL on)
   if (err = login(1))
     return err;
 
-  // check controller status:
-  if (err = readsdo(0x5110,0))
-    return ERR_CfgModeFailed + err;
+  ClrWdt();
 
-  if (on && twizy_sdo_data != 127) {
-    // request preoperational state:
-    if (err = writesdo(0x2800,0,1))
-      return ERR_CfgModeFailed + err;
-
-    // give controller some time:
-    delay5(2);
-
-    // check new status:
-    if (err = readsdo(0x5110,0))
-      return ERR_CfgModeFailed + err;
-
-    if (twizy_sdo_data != 127) {
-      // reset preop state request:
-      if (err = writesdo(0x2800,0,0))
-        return ERR_CfgModeFailed + err;
-      return ERR_CfgModeFailed;
-    }
-  }
-  
-  else if (!on && twizy_sdo_data != 5) {
+  if (!on) {
 
     // request operational state:
     if (err = writesdo(0x2800,0,0))
       return ERR_CfgModeFailed + err;
 
-    // give controller some time:
-    delay5(2);
+    // no need to check the new state if the write succeeded,
+    // the SEVCON will go operational ASAP
+  }
+  
+  else {
 
-    // check new status:
+    // check controller status:
     if (err = readsdo(0x5110,0))
       return ERR_CfgModeFailed + err;
-    if (twizy_sdo_data != 5)
-      return ERR_CfgModeFailed;
+
+    if (twizy_sdo_data != 127) {
+
+      // request preoperational state:
+      if (err = writesdo(0x2800,0,1))
+        return ERR_CfgModeFailed + err;
+
+      // give controller some time:
+      delay5(2);
+
+      // check new status:
+      if (err = readsdo(0x5110,0))
+        return ERR_CfgModeFailed + err;
+
+      if (twizy_sdo_data != 127) {
+        // reset preop state request:
+        if (err = writesdo(0x2800,0,0))
+          return ERR_CfgModeFailed + err;
+        return ERR_CfgModeFailed;
+      }
+    }
   }
   
   return 0;
@@ -1608,13 +1608,8 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *command, char *argum
   }
 
   // go operational?
-  if (go_op_onexit) {
-    // retry until success to avoid pre-op stuck situations:
-    while (configmode(0) != 0) {
-      ClrWdt();
-      delay100(5);
-    }
-  }
+  if (go_op_onexit)
+    configmode(0);
 
   // logout should not be needed here
 
@@ -2881,6 +2876,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 
   else if (twizy_button_cnt >= 1)
   {
+    // pre-op also sends a CAN error, so for button_cnt >= 1
     // check if we're stuck in pre-op state:
     if ((readsdo(0x5110,0x00) == 0) && (twizy_sdo_data == 0x7f)
       && (readsdo(0x5000,0x01) == 0) && (twizy_sdo_data != 4)) {
