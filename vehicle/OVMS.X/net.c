@@ -119,14 +119,17 @@ void uart_int_service(void)
   }
 #pragma code
 
-//#pragma	interruptlow low_isr save=section(".tmpdata")
-#pragma	interruptlow low_isr
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata low_isr_tmpdata
+#pragma	interruptlow low_isr nosave=section(".tmpdata")
 void low_isr(void)
   {
   // call of library module function, MUST
   UARTIntISR();
   led_isr();
   }
+#pragma tmpdata
+
 
 ////////////////////////////////////////////////////////////////////////
 // net_reset_async()

@@ -36,8 +36,8 @@
 // Math utils:
 #define SQR(n) ((n)*(n))
 #define ABS(n) (((n) < 0) ? -(n) : (n))
-#define MIN(n,lim) ((n) < (lim) ? (lim) : (n))
-#define MAX(n,lim) ((n) > (lim) ? (lim) : (n))
+#define LIMIT_MIN(n,lim) ((n) < (lim) ? (lim) : (n))
+#define LIMIT_MAX(n,lim) ((n) > (lim) ? (lim) : (n))
 
 void reset_cpu(void);              // Reset the cpu
 void delay5b(void);                // Delay 5ms

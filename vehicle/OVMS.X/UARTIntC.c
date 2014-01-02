@@ -322,6 +322,10 @@ unsigned char UARTIntGetRxBufferDataSize(void)
  *						it clears and sets the CREN bit, so that
  *						USART can receive further data.
  ********************************************************************/
+
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata low_isr_tmpdata
+
 void UARTIntISR(void)
 {
 	#if	RXON
@@ -388,3 +392,5 @@ void UARTIntISR(void)
 			}
   		#endif		
 }
+
+#pragma tmpdata

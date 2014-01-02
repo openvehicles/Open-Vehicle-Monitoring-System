@@ -70,6 +70,10 @@ void led_initialise(void)
   TMR1H = 0;
   }
 
+
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata low_isr_tmpdata
+
 void led_isr(void)
   {
   if(PIR1bits.TMR1IF)
@@ -130,3 +134,6 @@ void led_isr(void)
     PIR1bits.TMR1IF = 0;
     }
   }
+
+#pragma tmpdata
+

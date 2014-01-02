@@ -179,7 +179,9 @@ void can_int_service(void)
   }
 
 #pragma code
-#pragma	interrupt high_isr
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata high_isr_tmpdata
+#pragma	interrupt high_isr nosave=section(".tmpdata")
 void high_isr(void)
   {
   // High priority CAN interrupt
@@ -187,6 +189,7 @@ void high_isr(void)
   if ((RXB1CONbits.RXFUL)&&(vehicle_fn_poll1 != NULL)) vehicle_fn_poll1();
   PIR3=0;     // Clear Interrupt flags
   }
+#pragma tmpdata
 
 ////////////////////////////////////////////////////////////////////////
 // Vehicle Public Hooks
