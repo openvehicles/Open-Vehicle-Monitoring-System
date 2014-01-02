@@ -3,8 +3,13 @@
 ;    Date:          6 May 2012
 ;
 ;    Changes:
-;    1.8  02.10.13 (Thomas)
+;    1.9  26.12.13 (Thomas)
+;         - Changed QC detection, need to see QC for 5 consecutive 1-second ticks.
+;         - Fixed 12V alert issue.
+;    1.8  03.11.13 (Thomas)
 ;         - Added filtering of QC state detection to prevent false QC status
+;         - Move can bus low level register access to vehicle.c to 
+;           support OVMS_FIRMWARE_VERSION 2,6,1
 ;    1.7  31.10.13 (Thomas)
 ;         - Changed quick charge detection.
 ;         - Added charge stale timer to prevent hanging in charging mode.
@@ -71,8 +76,8 @@ unsigned char mi_charge_timer;   // A per-second charge timer
 unsigned long mi_charge_wm;      // A per-minute watt accumulator
 unsigned char mi_candata_timer;  // A per-second timer for CAN bus data
 unsigned char mi_stale_charge;   // A charge stale timer
-unsigned char mi_quick_charge;   // Quick charge status 
-unsigned char mi_qc_counter;     // Counter to filter false QC messages (0xff)
+unsigned char mi_QC;             // Quick charge status 
+unsigned char mi_QC_counter;     // Counter to filter false QC messages (0xff)
 unsigned int  mi_estrange;       // The estimated range from the CAN-bus
 
 
@@ -102,7 +107,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
     {
     if (--mi_stale_charge == 0) // Charge stale
       {
-      mi_quick_charge = 0;
+      mi_QC = 0;
       car_linevoltage = 0;
       car_chargecurrent = 0;
       }
@@ -113,14 +118,44 @@ BOOL vehicle_mitsubishi_ticker1(void)
     if (--mi_candata_timer == 0) 
       { // Car has gone to sleep
       car_doors3 &= ~0x01;  // Car is asleep
+      car_doors1bits.CarON = 0;  // Car is off
+      car_doors5bits.Charging12V = 0;
       }
     else
-      {
+      { // Car is awake
       car_doors3 |= 0x01;   // Car is awake
+      car_doors1bits.CarON = 1;  // Car is on
+      car_doors5bits.Charging12V = 1;
       }
     }
 
   car_time++;
+  
+   ////////////////////////////////////////////////////////////////////////
+  // Quick/rapid charge detection
+  ////////////////////////////////////////////////////////////////////////
+  // Range of 255 is returned during rapid/quick charge
+  // We can use this to indicate charge rate, but we will need to
+  // calculate a new range based on the last seen SOC and estrange
+
+
+  // A reported estimated range of 255 is a probable signal that we are rapid charging.
+  // However, this has been seen to be reported during turn-on initialisation and
+  // it may be read in error at times too. So, we only accept it if we have seen it
+  // for 5 consecutive 1-second ticks. Then mi_QC_counter == 0 becomes an indicator
+  // of the rapid charge state
+  if (mi_estrange == 255)
+    {
+    if (mi_QC_counter > 0)
+      {
+      if (--mi_QC_counter == 0) mi_QC = 1;
+      }
+    }
+  else
+    {
+    if (mi_QC_counter < 5) mi_QC_counter++;
+    if (mi_QC_counter == 5) mi_QC = 0;
+    }
   
   
   ////////////////////////////////////////////////////////////////////////
@@ -130,7 +165,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
   // We can use this to indicate charge rate, but we will need to
   // calculate a new range based on the last seen SOC and estrange
   
-  if (mi_quick_charge == 1) //Quick charging
+  if (mi_QC != 0) //Quick charging
     {
     // Simple range stimation during quick/rapid charge based on
     // last seen decent values of SOC and estrange and assuming that
@@ -143,6 +178,10 @@ BOOL vehicle_mitsubishi_ticker1(void)
 
     else
       {
+      // Simple range stimation during quick/rapid charge based on
+      // last seen decent values of SOC and estrange and assuming that
+      // estrange hits 0 at 10% SOC and is linear from there to 100%
+      
       // If the last known SOC was too low for accurate guesstimating, 
       // use fundge-figures giving 72 mile (116 km)range as it is probably best
       // to guess low-ish here (but not silly low)
@@ -185,34 +224,32 @@ BOOL vehicle_mitsubishi_ticker1(void)
     car_idealrange = ((((unsigned int)(car_SOC) - 10) * 104) / 100); //Ideal range: 93 miles (150 Km)
     }
   
+ 
+  
   
   ////////////////////////////////////////////////////////////////////////
   // Charge state determination
   ////////////////////////////////////////////////////////////////////////
-  // 0x04 Chargeport open, bit 2 set
-  // 0x08 Pilot signal on, bit 3 set
-  // 0x10 Vehicle charging, bit 4 set
-  // 0x0C Chargeport open and pilot signal, bits 2,3 set
-  // 0x1C Bits 2,3,4 set
-  
-  
-  
-  if ((mi_quick_charge == 1) || ((car_chargecurrent != 0) && (car_linevoltage > 100)))
+   
+  if ((mi_QC != 0) || ((car_chargecurrent != 0) && (car_linevoltage > 100)))
     { // CAN says the car is charging
     car_doors5bits.Charging12V = 1;  //MJ
     if ((car_doors1 & 0x08) == 0)
       { // Charge has started
-      car_doors1 |= 0x1c;     // Set charge, door and pilot bits
+      car_doors1bits.Charging = 1;
+      car_doors1bits.PilotSignal = 1;
+      car_doors1bits.ChargePort = 1;  
       car_chargemode = 0;     // Standard charge mode
       car_chargestate = 1;    // Charging state
       car_chargesubstate = 3; // Charging by request
-      if (mi_quick_charge == 1) // Quick charge
+      car_chargelimit = 16;   // Hard-coded 16A charging
+      if (mi_QC != 0) // Quick charge
         {
         car_chargelimit = 125;// Signal quick charging
         }
       else
         {
-          car_chargelimit = 16; // Hard-coded 16A charging
+        car_chargelimit = 16; // Hard-coded 16A charging
         }
       car_chargeduration = 0; // Reset charge duration
       car_chargekwh = 0;      // Reset charge kWh
@@ -229,7 +266,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
         { // One minute has passed
         mi_charge_timer = 0;
         car_chargeduration++;
-        if (mi_quick_charge == 0) // Not QC
+        if (mi_QC == 0) // Not QC
           {
           mi_charge_wm += (car_chargecurrent*car_linevoltage);
           if (mi_charge_wm >= 60000L)
@@ -241,34 +278,16 @@ BOOL vehicle_mitsubishi_ticker1(void)
         }
       }
     }
-  
-  // Special case: The car will take a ~15 min charging brake buring normal charging to level 
-  // battery cellsat ~70% SOC. car_chargecurrent 0A and car_chargevoltage > 100V will be reporter
-  // reported in this stage.   
-  else if ((car_chargecurrent == 0) && (car_linevoltage > 100))
-    { // CAN says the car is not charging
-    if ((car_doors1 & 0x08) && (car_SOC == 100))
-      { // Charge has completed 
-      car_doors1 &= ~0x18;    // Clear charge and pilot bits
-      car_doors1bits.ChargePort = 1;  //MJ
-      car_chargemode = 0;     // Standard charge mode
-      car_chargestate = 4;    // Charge DONE
-      car_chargesubstate = 3; // Leave it as is
-      net_req_notification(NET_NOTIFY_CHARGE);  // Charge done Message MJ
-      mi_charge_timer = 0;       // Reset the per-second charge timer
-      mi_charge_wm = 0;          // Reset the per-minute watt accumulator
-      net_req_notification(NET_NOTIFY_STAT);
-      }
-    car_doors5bits.Charging12V = 0;  // MJ
-    }
-
-  else if ((car_chargecurrent == 0) && (car_linevoltage < 100) && (mi_quick_charge == 0))
+ 
+  else if ((car_chargecurrent == 0) && (car_linevoltage < 100) && (mi_QC == 0))
     { // CAN says the car is not charging
     if (car_doors1 & 0x08)
       { // Charge has completed / stopped
-      car_doors1 &= ~0x18;    // Clear charge and pilot bits
-      car_doors1bits.ChargePort = 1;  //MJ
-      car_chargemode = 0;     // Standard charge mode
+      car_doors1bits.Charging = 0; // Charging stopped
+      car_doors1bits.PilotSignal = 0; 
+      car_doors1bits.ChargePort = 0;  // Charging cable disconnected
+      car_doors5bits.Charging12V = 0; // 12V charging stopped
+      //car_chargemode = 0;     // Standard charge mode
       if (car_SOC < 95)
         { // Assume charge was interrupted
         car_chargestate = 21;    // Charge STOPPED
@@ -285,8 +304,6 @@ BOOL vehicle_mitsubishi_ticker1(void)
       mi_charge_wm = 0;          // Reset the per-minute watt accumulator
       net_req_notification(NET_NOTIFY_STAT);
       }
-    car_doors5bits.Charging12V = 0;  // MJ
-    car_doors1bits.ChargePort = 0;   // Charging cable unplugged, charging door closed.
     }
 
   return FALSE;
@@ -334,30 +351,11 @@ BOOL vehicle_mitsubishi_poll0(void)
       {
       mi_estrange = (unsigned int)can_databuffer[7];
       
-      // Quick charging indicated by range = 255.
-      // To filter out false 255 messages we need 3 subsequent 255 messages to indicate QC. 
-  
-      if ((mi_estrange == 255) && (car_speed < 5))
+      if ((mi_QC != 0) && (mi_estrange == 255))
         {
-        if (mi_qc_counter > 0) mi_qc_counter--;
-          
-        if (mi_qc_counter == 0)
-          {
-          mi_quick_charge = 1;
-          mi_stale_charge = 30; // Reset stale charging indicator
-          }
+        mi_stale_charge = 30; // Reset stale charging indicator
         }
 
-      else
-        {
-        if (mi_qc_counter < 3) mi_qc_counter++;
- 
-        else 
-          {
-          mi_quick_charge = 0;
-          }
-        }
-        
       break;
       }
     
@@ -493,12 +491,13 @@ BOOL vehicle_mitsubishi_initialise(void)
 
   // Vehicle specific data initialisation
   car_stale_timer = -1; // Timed charging is not supported for OVMS MI
+  car_stale_temps = 0;
   car_time = 0;
   mi_candata_timer = 0;
-  car_SOCalertlimit = 10;
+  car_SOCalertlimit = 15;
   mi_stale_charge = 0;  
-  mi_quick_charge = 0;
-  mi_qc_counter = 3;
+  mi_QC = 0;
+  mi_QC_counter = 5;
   mi_estrange = 0;
   
    // Clear the battery temperatures
