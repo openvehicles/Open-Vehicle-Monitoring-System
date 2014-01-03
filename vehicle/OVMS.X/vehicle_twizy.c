@@ -122,7 +122,27 @@
 ;    2.6.5  7 May 2013 (Michael Balzer):
 ;           - FEATURE_STREAM changed to bit field: 2 = GPS log stream
 ;
-;
+
+ *   3.0.0  30 Dec 2013 (Michael Balzer):
+    Twizy: Major update: SEVCON controller configuration
+      !HIGHLY EXPERIMENTAL FEATURE!
+      read documentation (userguide) first!
+
+    ATT: due to ROM limitations, this release cannot be
+      combined with other vehicles and/or DIAG mode!
+
+ *  3.0.1  3 Jan 2014 (Michael Balzer):
+    - CAN simulator preprocessor flag renamed to OVMS_CANSIM
+    - Read/write SDO: retries + watchdog clearing
+    - Power map generator for SPEED / TORQUE
+    - TORQUE command extended by max motor power parameter
+    - Stack usage optimizations
+    - Interrupt optimization (#pragma tmpdata => needed for all ISR - TODO!)
+    - Minor fixes
+    - Code cleanup
+    - Added preprocessor flag OVMS_TWIZY_CFG for SEVCON functions
+
+
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
 ; in the Software without restriction, including without limitation the rights
@@ -282,11 +302,17 @@ unsigned char twizy_status; // Car + charge status from CAN:
 #define CAN_STATUS_OFFLINE      0x40        //  bit 6 = 0x40: 1 = Switch-ON/-OFF phase / 0 = normal operation
 #define CAN_STATUS_ONLINE       0x80        //  bit 7 = 0x80: 1 = CAN-Bus online (test flag to detect offline)
 
+
+#ifdef OVMS_TWIZY_CFG
+
 volatile unsigned char twizy_button_cnt; // will count key presses in STOP mode (msg 081)
 
 unsigned int twizy_max_rpm;         // CFG: max speed (RPM: 0..11000)
 unsigned long twizy_max_trq;        // CFG: max torque (mNm: 0..70125)
 unsigned int twizy_max_pwr;         // CFG: max power (W: 0..17000)
+
+#endif // OVMS_TWIZY_CFG
+
 
 
 // MSG notification queue (like net_notify for vehicle specific notifies)
@@ -406,6 +432,8 @@ volatile UINT8 twizy_batt_sensors_state;
 
 
 
+#ifdef OVMS_TWIZY_CFG
+
 /***************************************************************
  * Twizy CANopen SDO communication variables
  */
@@ -449,6 +477,7 @@ volatile UINT32   twizy_sdo_data;         // payload
 // check if SDO may contain relevant error info:
 #define ERROR_IN_SDO(c) (((c) & 0xfff0) != ERR_Range)
 
+#endif // OVMS_TWIZY_CFG
 
 
 //#pragma udata   // return to default udata section -- why?
@@ -477,6 +506,8 @@ vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char *arg
 #endif // OVMS_TWIZY_BATTMON
 
 
+
+#ifdef OVMS_TWIZY_CFG
 
 /***************************************************************
  * Twizy / CANopen SDO utilities
@@ -927,47 +958,6 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
   if (err = vehicle_twizy_cfg_makepowermap())
     return err;
 
-
-#if 0
-  // is scaling all rpms any good? max points should be sufficient...
-  // or just keep 2115 rpm (rated speed) and scale above?
-
-  if (err = writesdo(0x4611,0x04,scale(2115,80,max_kph,400,10000)))
-    return err;
-  if (err = writesdo(0x4611,0x06,scale(2700,80,max_kph,400,10000)))
-    return err;
-  if (err = writesdo(0x4611,0x08,scale(3000,80,max_kph,400,10000)))
-    return err;
-  if (err = writesdo(0x4611,0x0a,scale(3500,80,max_kph,400,10000)))
-    return err;
-  if (err = writesdo(0x4611,0x0c,scale(4500,80,max_kph,400,10000)))
-    return err;
-  if (err = writesdo(0x4611,0x0e,scale(5500,80,max_kph,400,10000)))
-    return err;
-  if (err = writesdo(0x4611,0x10,scale(6500,80,max_kph,400,10000)))
-    return err;
-#endif
-
-#if 0
-  // old version:
-
-  // end speed minimum 7250:
-  rpm2 = LIMIT_MIN(rpm, 7250);
-  if (err = writesdo(0x4611,0x12,rpm2))
-    return err;
-
-  // end torque needs to be scaled up by peaktrq and down by fwdrpm:
-  if (err = writesdo(0x4611,0x11,
-    scale(scale(273,55000,twizy_max_trq,160,1122),
-      rpm2,7250,160,1122)))
-    return err;
-
-  // commit map changes:
-  if (err = writesdo(0x4641,0x01,1))
-    return err;
-  delay5(10);
-#endif
-
   return 0;
 }
 
@@ -1025,39 +1015,6 @@ UINT vehicle_twizy_cfg_torque(int trq_prc, int pwr_prc)
   // rework torque/speed map:
   if (err = vehicle_twizy_cfg_makepowermap())
     return err;
-
-#if 0
-  // old version:
-
-  // scale torque/speed map:
-  if (err = writesdo(0x4611,0x01,scale(880,78,trq_prc,160,1122)))
-    return err;
-  if (err = writesdo(0x4611,0x03,scale(880,78,trq_prc,160,1122)))
-    return err;
-  if (err = writesdo(0x4611,0x05,scale(659,78,trq_prc,160,1122)))
-    return err;
-  if (err = writesdo(0x4611,0x07,scale(608,78,trq_prc,160,1122)))
-    return err;
-  if (err = writesdo(0x4611,0x09,scale(516,78,trq_prc,160,1122)))
-    return err;
-  if (err = writesdo(0x4611,0x0b,scale(421,78,trq_prc,160,1122)))
-    return err;
-  if (err = writesdo(0x4611,0x0d,scale(360,78,trq_prc,160,1122)))
-    return err;
-  if (err = writesdo(0x4611,0x0f,scale(307,78,trq_prc,160,1122)))
-    return err;
-
-  // end torque needs to be scaled up by peaktrq and down by fwdrpm:
-  if (err = writesdo(0x4611,0x11,
-    scale(scale(273,55000,twizy_max_trq,160,1122),
-      twizy_max_rpm,7250,160,1122)))
-    return err;
-
-  // commit map changes:
-  if (err = writesdo(0x4641,0x01,1))
-    return err;
-  delay5(10);
-#endif
 
   return 0;
 }
@@ -1791,7 +1748,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   return TRUE;
 }
 
-
+#endif // OVMS_TWIZY_CFG
 
 
 
@@ -2135,6 +2092,9 @@ BOOL vehicle_twizy_poll0(void)
     }
   }
 
+
+#ifdef OVMS_TWIZY_CFG
+
   else
   {
     /*****************************************************
@@ -2195,6 +2155,8 @@ BOOL vehicle_twizy_poll0(void)
     }
 
   }
+
+#endif // OVMS_TWIZY_CFG
 
   return TRUE;
 }
@@ -2823,8 +2785,11 @@ BOOL vehicle_twizy_state_ticker1(void)
       // reset power statistics:
       vehicle_twizy_power_reset();
 
+#ifdef OVMS_TWIZY_CFG
       // reset button cnt:
       twizy_button_cnt = 0;
+#endif // OVMS_TWIZY_CFG
+
     }
   }
   else
@@ -2841,8 +2806,11 @@ BOOL vehicle_twizy_state_ticker1(void)
       if (twizy_speedpwr[CAN_SPEED_CONST].use > 22500)
         twizy_notify |= SEND_PowerNotify;
 
+#ifdef OVMS_TWIZY_CFG
       // reset button cnt:
       twizy_button_cnt = 0;
+#endif // OVMS_TWIZY_CFG
+
     }
   }
 
@@ -3031,6 +2999,8 @@ BOOL vehicle_twizy_state_ticker1(void)
   }
 
 
+#ifdef OVMS_TWIZY_CFG
+
   /***************************************************************************
    * Check for button presses in STOP mode => CFG RESET:
    */
@@ -3059,6 +3029,8 @@ BOOL vehicle_twizy_state_ticker1(void)
         twizy_button_cnt = 0; // solved
     }
   }
+
+#endif // OVMS_TWIZY_CFG
 
 
   return FALSE;
@@ -3631,7 +3603,9 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
 
   s = net_scratchpad;
   s = stp_x(s, " STS=", twizy_status);
+#ifdef OVMS_TWIZY_CFG
   s = stp_i(s, " BC=", twizy_button_cnt);
+#endif // OVMS_TWIZY_CFG
 
   //s = stp_x(s, " DS1=", car_doors1);
   //s = stp_x(s, " DS5=", car_doors5);
@@ -5000,20 +4974,21 @@ BOOL vehicle_twizy_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
 BOOL vehicle_twizy_help_sms(BOOL premsg, char *caller, char *command, char *arguments);
 
 rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] = {
-  "3DEBUG", // Twizy: output internal state dump for debug
-  "3STAT", // override standard STAT
-  "3RANGE", // Twizy: set/query max ideal range
-  "3CA", // Twizy: set/query charge alerts
-  "3HELP", // extend HELP output
+  "3DEBUG",       // Twizy: output internal state dump for debug
+  "3STAT",        // override standard STAT
+  "3RANGE",       // Twizy: set/query max ideal range
+  "3CA",          // Twizy: set/query charge alerts
+  "3POWER",       // Twizy: power usage statistics
 
 #ifdef OVMS_TWIZY_BATTMON
-  "3BATT", // Twizy: battery status
+  "3BATT",        // Twizy: battery status
 #endif // OVMS_TWIZY_BATTMON
 
-  "3POWER", // Twizy: power usage statistics
+#ifdef OVMS_TWIZY_CFG
+  "3CFG",         // Twizy: SEVCON configuration tweaking
+#endif // OVMS_TWIZY_CFG
 
-  "3CFG", // Twizy: configuration tweaking
-
+  "3HELP", // extend HELP output
   ""
 };
 
@@ -5022,15 +4997,17 @@ rom far BOOL(*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *com
   &vehicle_twizy_stat_sms,
   &vehicle_twizy_range_sms,
   &vehicle_twizy_ca_sms,
-  &vehicle_twizy_help_sms,
+  &vehicle_twizy_power_sms,
 
 #ifdef OVMS_TWIZY_BATTMON
   &vehicle_twizy_battstatus_sms,
 #endif // OVMS_TWIZY_BATTMON
 
-  &vehicle_twizy_power_sms,
+#ifdef OVMS_TWIZY_CFG
+  &vehicle_twizy_cfg_sms,
+#endif // OVMS_TWIZY_CFG
 
-  &vehicle_twizy_cfg_sms
+  &vehicle_twizy_help_sms
 };
 
 
@@ -5151,7 +5128,6 @@ BOOL vehicle_twizy_initialise(void)
     car_type[4] = 0;
 
     twizy_status = CAN_STATUS_OFFLINE;
-    twizy_button_cnt = 0;
 
     twizy_soc = 5000;
     twizy_soc_min = 10000;
@@ -5205,9 +5181,14 @@ BOOL vehicle_twizy_initialise(void)
     car_time = 0;
     car_parktime = 0;
 
+#ifdef OVMS_TWIZY_CFG
+    twizy_button_cnt = 0;
+
     twizy_max_rpm = 0;
     twizy_max_trq = 0;
     twizy_max_pwr = 0;
+#endif // OVMS_TWIZY_CFG
+
   }
 
 #ifdef OVMS_TWIZY_BATTMON
