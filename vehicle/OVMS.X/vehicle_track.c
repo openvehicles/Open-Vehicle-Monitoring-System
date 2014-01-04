@@ -1,13 +1,10 @@
+
 /*
 ;    Project:       Open Vehicle Monitor System
-;    Date:          16 October 2011
+;    Date:          6 May 2012
 ;
 ;    Changes:
 ;    1.0  Initial release
-;
-;    (C) 2011  Michael Stegen / Stegen Electronics
-;    (C) 2011  Mark Webb-Johnson
-;    (C) 2011  Sonny Chen @ EPRO/DX
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -28,24 +25,41 @@
 ; THE SOFTWARE.
 */
 
-#ifndef __OVMS_INPUTS_H
-#define __OVMS_INPUTS_H
+#include <stdlib.h>
+#include <delays.h>
+#include <string.h>
+#include "ovms.h"
 
-void inputs_initialise(void);
-unsigned char inputs_gsmgprs(void);
+// OBDII state variables
 
-#ifdef OVMS_HW_V2
-unsigned char input_gpi2(void);
-unsigned char input_gpi3(void);
-unsigned char input_gpi4(void);
-unsigned char input_gpi5(void);
+#pragma udata overlay vehicle_overlay_data
 
-unsigned char output_gpo0(unsigned char onoff);
-unsigned char output_gpo1(unsigned char onoff);
-unsigned char output_gpo2(unsigned char onoff);
-unsigned char output_gpo3(unsigned char onoff);
+#pragma udata
 
-float inputs_voltage(void);
-#endif // #ifdef OVMS_HW_V2
+////////////////////////////////////////////////////////////////////////
+// vehicle_track_initialise()
+// This function is the initialisation entry point should we be the
+// selected vehicle.
+//
+BOOL vehicle_track_initialise(void)
+  {
+  char *p;
 
-#endif // #ifndef __OVMS_LED_H
+  car_type[0] = 'X'; // Car is type XX
+  car_type[1] = 'X';
+  car_type[2] = 0;
+  car_type[3] = 0;
+  car_type[4] = 0;
+
+  // Vehicle specific data initialisation
+  car_stale_timer = -1; // Timed charging is not supported for OVMS TRACK
+  car_time = 0;
+
+  // Hook in...
+  net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
+  net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
+  car_doors1bits.CarON = 1;           // Fake car is ON (for GPS)
+  car_speed = 1;                      // Fake car moving (for GPS)
+  
+  return TRUE;
+  }

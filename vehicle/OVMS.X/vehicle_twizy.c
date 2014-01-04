@@ -1976,9 +1976,6 @@ void vehicle_twizy_simulator_run(int chunk)
 
 BOOL vehicle_twizy_poll0(void)
 {
-  unsigned char CANfilter;
-  unsigned char CANsid;
-
   unsigned int t;
   unsigned char u;
   unsigned long v;
@@ -1988,47 +1985,26 @@ BOOL vehicle_twizy_poll0(void)
   if (twizy_sim >= 0)
   {
     // READ SIMULATION DATA:
-    UINT i;
-
-    i = (((UINT) twizy_sim_data[twizy_sim][0]) << 8)
+    can_id = (((UINT) twizy_sim_data[twizy_sim][0]) << 8)
             + twizy_sim_data[twizy_sim][1];
 
-    if (i == 0x155)
-      CANfilter = 0;
+    if (can_id == 0x155)
+      can_filter = 0;
     else
-      return FALSE;
+      can_filter = 1;
 
     can_datalength = twizy_sim_data[twizy_sim][2];
-    for (i = 0; i < 8; i++)
-      can_databuffer[i] = twizy_sim_data[twizy_sim][3 + i];
+    for (u = 0; u < 8; u++)
+      can_databuffer[u] = twizy_sim_data[twizy_sim][3 + u];
   }
-  else
 #endif // OVMS_CANSIM
-  {
-    // READ CAN BUFFER:
-
-    CANfilter = RXB0CON & 0x01;
-    CANsid = (RXB0SIDH >> 5) & 0x0F;
-
-    can_datalength = RXB0DLC & 0x0F; // number of received bytes
-    can_databuffer[0] = RXB0D0;
-    can_databuffer[1] = RXB0D1;
-    can_databuffer[2] = RXB0D2;
-    can_databuffer[3] = RXB0D3;
-    can_databuffer[4] = RXB0D4;
-    can_databuffer[5] = RXB0D5;
-    can_databuffer[6] = RXB0D6;
-    can_databuffer[7] = RXB0D7;
-
-    RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
-  }
 
 
   // HANDLE CAN MESSAGE:
 
-  if (CANfilter == 0)
+  if (can_filter == 0)
   {
-    if (CANsid == 0x1)
+    if (can_id == 0x155)
     {
       /*****************************************************
        * FILTER 0:
@@ -2102,7 +2078,7 @@ BOOL vehicle_twizy_poll0(void)
      * CAN ID 0x_81: CANopen message from SEVCON (Node #1)
      */
 
-    if (CANsid == 0x0)
+    if (can_id == 0x081)
     {
       /*****************************************************
        * FILTER 1:
@@ -2115,7 +2091,7 @@ BOOL vehicle_twizy_poll0(void)
 
     }
 
-    else if (CANsid == 0x5)
+    else if (can_id == 0x581)
     {
       /*****************************************************
        * FILTER 1:
@@ -2167,71 +2143,45 @@ BOOL vehicle_twizy_poll0(void)
 
 BOOL vehicle_twizy_poll1(void)
 {
-  unsigned char CANfilter;
-  unsigned char CANsid;
-
+  unsigned char i;
   unsigned int new_speed;
-
 
 #ifdef OVMS_CANSIM
   if (twizy_sim >= 0)
   {
     // READ SIMULATION DATA:
-    UINT i;
-
-    i = (((UINT) twizy_sim_data[twizy_sim][0]) << 8)
+    can_id = (((UINT) twizy_sim_data[twizy_sim][0]) << 8)
             + twizy_sim_data[twizy_sim][1];
 
-    if ((i & 0x590) == 0x590)
-      CANfilter = 2;
-    else if ((i & 0x690) == 0x690)
-      CANfilter = 3;
-    else if ((i & 0x550) == 0x550)
-      CANfilter = 4;
+    if ((can_id & 0x590) == 0x590)
+      can_filter = 2;
+    else if ((can_id & 0x690) == 0x690)
+      can_filter = 3;
+    else if ((can_id & 0x550) == 0x550)
+      can_filter = 4;
     else
       return FALSE;
-
-    CANsid = i & 0x00f;
 
     can_datalength = twizy_sim_data[twizy_sim][2];
     for (i = 0; i < 8; i++)
       can_databuffer[i] = twizy_sim_data[twizy_sim][3 + i];
   }
-  else
 #endif // OVMS_CANSIM
-  {
-    // READ CAN BUFFER:
-
-    CANfilter = RXB1CON & 0x07;
-    CANsid = ((RXB1SIDH & 0x01) << 3) + ((RXB1SIDL >> 5) & 0x0F);
-
-    can_datalength = RXB1DLC & 0x0F; // number of received bytes
-    can_databuffer[0] = RXB1D0;
-    can_databuffer[1] = RXB1D1;
-    can_databuffer[2] = RXB1D2;
-    can_databuffer[3] = RXB1D3;
-    can_databuffer[4] = RXB1D4;
-    can_databuffer[5] = RXB1D5;
-    can_databuffer[6] = RXB1D6;
-    can_databuffer[7] = RXB1D7;
-
-    RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
-  }
 
 
   // HANDLE CAN MESSAGE:
 
-  if (CANfilter == 2)
+  if (can_filter == 2)
   {
     // Filter 2 = CAN ID GROUP 0x59_:
 
-    switch (CANsid)
+    switch (can_id)
     {
       /*****************************************************
        * FILTER 2:
        * CAN ID 0x597: sent every 100 ms (10 per second)
        */
-    case 0x07:
+    case 0x597:
 
       // VEHICLE state:
       //  [0]: 0x20 = power line connected
@@ -2270,7 +2220,7 @@ BOOL vehicle_twizy_poll1(void)
        * FILTER 2:
        * CAN ID 0x599: sent every 100 ms (10 per second)
        */
-    case 0x09:
+    case 0x599:
 
       // RANGE:
       // we need to check for charging, as the Twizy
@@ -2306,7 +2256,7 @@ BOOL vehicle_twizy_poll1(void)
        * FILTER 2:
        * CAN ID 0x59E: sent every 100 ms (10 per second)
        */
-    case 0x0E:
+    case 0x59E:
 
       // CYCLIC DISTANCE COUNTER:
       twizy_dist = ((UINT) CAN_BYTE(0) << 8) + CAN_BYTE(1);
@@ -2323,17 +2273,17 @@ BOOL vehicle_twizy_poll1(void)
 
   }
 
-  else if (CANfilter == 3)
+  else if (can_filter == 3)
   {
     // Filter 3 = CAN ID GROUP 0x69_:
 
-    switch (CANsid)
+    switch (can_id)
     {
       /*****************************************************
        * FILTER 3:
        * CAN ID 0x69F: sent every 1000 ms (1 per second)
        */
-    case 0x0f:
+    case 0x69f:
       // VIN: last 7 digits of real VIN, in nibbles, reverse:
       // (assumption: no hex digits)
       if (car_vin[7]) // we only need to process this once
@@ -2353,7 +2303,7 @@ BOOL vehicle_twizy_poll1(void)
   }
 
 #ifdef OVMS_TWIZY_BATTMON
-  else if (CANfilter == 4)
+  else if (can_filter == 4)
   {
     UINT8 i, state;
 
@@ -2371,9 +2321,9 @@ BOOL vehicle_twizy_poll1(void)
     // volatile optimization:
     state = twizy_batt_sensors_state;
 
-    switch (CANsid)
+    switch (can_id)
     {
-    case 0x06:
+    case 0x556:
       // CAN ID 0x556: Battery cell voltages 1-5
       // 100 ms = 10 per second
       //  => used to clock examination window
@@ -2417,7 +2367,7 @@ BOOL vehicle_twizy_poll1(void)
 
       break;
 
-    case 0x04:
+    case 0x554:
       // CAN ID 0x554: Battery cell module temperatures
       // (1000 ms = 1 per second)
       if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
@@ -2435,7 +2385,7 @@ BOOL vehicle_twizy_poll1(void)
       }
       break;
 
-    case 0x07:
+    case 0x557:
       // CAN ID 0x557: Battery cell voltages 6-10
       // (1000 ms = 1 per second)
       if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
@@ -2461,7 +2411,7 @@ BOOL vehicle_twizy_poll1(void)
       }
       break;
 
-    case 0x0E:
+    case 0x55E:
       // CAN ID 0x55E: Battery cell voltages 11-14
       // (1000 ms = 1 per second)
       if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
@@ -2485,7 +2435,7 @@ BOOL vehicle_twizy_poll1(void)
       }
       break;
 
-    case 0x0F:
+    case 0x55F:
       // CAN ID 0x55F: Battery pack voltages
       // (1000 ms = 1 per second)
       if ((CAN_BYTE(5) != 0x0ff) && (state != BATT_SENSORS_READY))
@@ -2515,17 +2465,17 @@ BOOL vehicle_twizy_poll1(void)
   }
 #endif // OVMS_TWIZY_BATTMON
 
-  else if (CANfilter == 5)
+  else if (can_filter == 5)
   {
     // Filter 5 = CAN ID GROUP 0x5D_: exact speed & odometer
 
-    switch (CANsid)
+    switch (can_id)
     {
       /*****************************************************
        * FILTER 5:
        * CAN ID 0x5D7: sent every 100 ms (10 per second)
        */
-    case 0x07:
+    case 0x5d7:
 
       // ODOMETER:
       twizy_odometer = ((unsigned long) CAN_BYTE(5) >> 4)
@@ -4264,7 +4214,7 @@ void vehicle_twizy_battstatus_collect(void)
 
     m = (float) sum / BATT_CMODS;
 
-    car_tbattery = (signed char) m + 0.5 - 40;
+    car_tbattery = (signed int) m + 0.5 - 40;
     car_stale_temps = 120; // Reset stale indicator
 
     //stddev = (unsigned int) sqrt( ((float)sqrsum/BATT_CMODS) - SQR((float)sum/BATT_CMODS) ) + 1;

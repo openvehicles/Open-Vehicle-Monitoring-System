@@ -39,6 +39,9 @@
 #define LIMIT_MIN(n,lim) ((n) < (lim) ? (lim) : (n))
 #define LIMIT_MAX(n,lim) ((n) > (lim) ? (lim) : (n))
 
+// let the compiler compute the size of statically allocated arrays
+#define DIM(a) (sizeof(a)/sizeof(*(a)))
+
 void reset_cpu(void);              // Reset the cpu
 void delay5b(void);                // Delay 5ms
 void delay5(unsigned char n);      // Delay in 5ms increments
@@ -47,6 +50,9 @@ void delay100(unsigned char n);    // Delay in 100ms increments
 void led_net(unsigned char led);   // Change NET led
 void led_act(unsigned char led);   // Change ACT led
 void modem_reboot(void);           // Reboot modem
+unsigned char string_to_mode(char *mode); // Convert a string to a mode number
+int timestring_to_mins(char* arg); // Convert a time string to minutes
+
 //void format_latlon(long latlon, char* dest);  // Format latitude/longitude string
 #define format_latlon(latlon,dest) stp_latlon(dest,NULL,latlon)
 float myatof(char *s);             // builtin atof() does not work
@@ -59,6 +65,11 @@ void ltox(unsigned long i, char *s, unsigned int len); // format hexadecimal num
 // convert miles to kilometers and vice-versa, using factor 1.609344
 unsigned long KmFromMi(unsigned long miles);
 unsigned long MiFromKm(unsigned long km);
+
+// functions to convert between YMD and Julian Date
+#define JDEpoch 2440588 // Julian date of the Unix epoch
+void JdToYMD(unsigned long jd, int *pyear, int *pmonth, int *pday);
+unsigned long JdFromYMD(int year, int month, int day);
 
 // sprintf replacement utils: stp string print
 char *stp_rom(char *dst, const rom char *val);
@@ -75,5 +86,10 @@ char *stp_l2f(char *dst, const rom char *prefix, long val, int prec);
 char *stp_l2f_h(char *dst, const rom char *prefix, unsigned long val, int cdecimal);
 char *stp_latlon(char *dst, const rom char *prefix, long latlon);
 char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp);
+char *stp_date(char *dst, const rom char *prefix, unsigned long timestamp);
+char *stp_mode(char *dst, const rom char *prefix, unsigned char mode);
+
+// longitude/latitude math
+int FIsLatLongClose(long lat1, long long1, long lat2, long long2, int meterClose);
 
 #endif // #ifndef __OVMS_UTILS_H

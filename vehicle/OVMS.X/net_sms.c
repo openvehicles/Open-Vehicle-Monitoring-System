@@ -37,6 +37,9 @@
 #include "net.h"
 #include "net_sms.h"
 #include "net_msg.h"
+#ifdef OVMS_ACCMODULE
+#include "acc.h"
+#endif
 
 #pragma udata
 char *net_sms_argend;
@@ -54,6 +57,7 @@ rom char NET_MSG_UNVALET[] = "Valet mode cancel requested";
 rom char NET_MSG_CHARGEMODE[] = "Charge mode change requested";
 rom char NET_MSG_CHARGESTART[] = "Charge start requested";
 rom char NET_MSG_CHARGESTOP[] = "Charge stop requested";
+rom char NET_MSG_COOLDOWN[] = "Cooldown requested";
 rom char NET_MSG_ALARM[] = "Vehicle alarm is sounding!";
 rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
 //rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
@@ -116,6 +120,22 @@ BOOL net_sms_stat(char* number)
   net_send_sms_start(number);
   
   net_prep_stat(net_scratchpad);
+  cr2lf(net_scratchpad);
+  net_puts_ram(net_scratchpad);
+
+  return TRUE;
+  }
+
+BOOL net_sms_ctp(char* number, char *arguments)
+  {
+  char *p;
+
+  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
+
+  delay100(2);
+  net_send_sms_start(number);
+  
+  net_prep_ctp(net_scratchpad, arguments);
   cr2lf(net_scratchpad);
   net_puts_ram(net_scratchpad);
 
@@ -665,6 +685,7 @@ BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
       s = stp_rom(s, " STKFUL"); // Stack overflow
     if (debug_crashreason & 0x40)
       s = stp_rom(s, " STKUNF"); // Stack underflow
+    s = stp_i(s, " - ", debug_checkpoint);
   }
 
   net_puts_ram(net_scratchpad);
@@ -762,21 +783,15 @@ BOOL net_sms_handle_unvalet(char *caller, char *command, char *arguments)
 // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance) and optional current limit
 BOOL net_sms_handle_chargemode(char *caller, char *command, char *arguments)
   {
+  char mode[2];
   if (arguments == NULL) return FALSE;
 
   strupr(arguments);
   if (vehicle_fn_commandhandler != NULL)
     {
-    if (memcmppgm2ram(arguments, (char const rom far*)"STA", 3) == 0)
-      vehicle_fn_commandhandler(FALSE, 10, (char*)"0");
-    else if (memcmppgm2ram(arguments, (char const rom far*)"STO", 3) == 0)
-      vehicle_fn_commandhandler(FALSE, 10, (char*)"1");
-    else if (memcmppgm2ram(arguments, (char const rom far*)"RAN", 3) == 0)
-      vehicle_fn_commandhandler(FALSE, 10, (char*)"3");
-    else if (memcmppgm2ram(arguments, (char const rom far*)"PER", 3) == 0)
-      vehicle_fn_commandhandler(FALSE, 10, (char*)"4");
-    else
-      return FALSE;
+    mode[0] = '0' + string_to_mode(arguments);
+    mode[1] = 0;
+    vehicle_fn_commandhandler(FALSE, 10, mode);
 
     arguments = net_sms_nextarg(arguments);
     if (arguments != NULL)
@@ -808,6 +823,15 @@ BOOL net_sms_handle_chargestop(char *caller, char *command, char *arguments)
   return TRUE;
   }
 
+BOOL net_sms_handle_cooldown(char *caller, char *command, char *arguments)
+  {
+  if (vehicle_fn_commandhandler != NULL)
+    vehicle_fn_commandhandler(FALSE, 25, NULL);
+  net_send_sms_start(caller);
+  net_puts_rom(NET_MSG_COOLDOWN);
+  return TRUE;
+  }
+
 BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
   {
   unsigned char hwv = 1;
@@ -833,8 +857,30 @@ BOOL net_sms_handle_reset(char *caller, char *command, char *arguments)
   {
   char *p;
 
-  net_state_enter(NET_STATE_HARDRESET);
+  net_state_enter(NET_STATE_HARDSTOP);
   return FALSE;
+  }
+
+BOOL net_sms_handle_ctp(char *caller, char *command, char *arguments)
+  {
+  return net_sms_ctp(caller, arguments);
+  }
+
+BOOL net_sms_handle_temps(char *caller, char *command, char *arguments)
+  {
+  char *s;
+
+  s = stp_i(net_scratchpad, "Temperatures:\r\n  Ambient: ", car_ambient_temp);
+  s = stp_i(s, "C\r\n  PEM: ", car_tpem);
+  s = stp_i(s, "C\r\n  Motor: ", car_tmotor);
+  s = stp_i(s, "C\r\n  Battery: ", car_tbattery);
+  s = stp_rom(s, "C");
+  if ((car_stale_ambient==0)||(car_stale_temps==0))
+    s = stp_rom(s, "\r\n  (stale)");
+
+  net_send_sms_start(caller);
+  net_puts_ram(net_scratchpad);
+  return TRUE;
   }
 
 BOOL net_sms_handle_help(char *caller, char *command, char *arguments);
@@ -885,8 +931,14 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "2CHARGEMODE ",
     "2CHARGESTART",
     "2CHARGESTOP",
+    "2COOLDOWN",
     "3VERSION",
     "3RESET",
+    "3CTP",
+    "3TEMPS",
+#ifdef OVMS_ACCMODULE
+    "2ACC ",
+#endif
     "3HELP",
     "" };
 
@@ -922,8 +974,14 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_chargemode,
   &net_sms_handle_chargestart,
   &net_sms_handle_chargestop,
+  &net_sms_handle_cooldown,
   &net_sms_handle_version,
   &net_sms_handle_reset,
+  &net_sms_handle_ctp,
+  &net_sms_handle_temps,
+#ifdef OVMS_ACCMODULE
+  &acc_handle_sms,
+#endif
   &net_sms_handle_help
   };
 
@@ -993,6 +1051,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
         if (vehicle_fn_smshandler(TRUE, caller, buf, arguments))
           return;
         }
+
       result = (*sms_hfntable[k])(caller, buf, arguments);
       if (result)
         {

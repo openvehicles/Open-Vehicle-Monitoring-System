@@ -124,6 +124,42 @@ void modem_reboot(void)
   PORTBbits.RB0 = 1;
 }
 
+unsigned char string_to_mode(char *mode)
+  {
+  // Convert a string to a mode number
+  if (memcmppgm2ram(mode, (char const rom far*)"STA", 3) == 0)
+    return 0;
+  else if (memcmppgm2ram(mode, (char const rom far*)"STO", 3) == 0)
+    return 1;
+  else if (memcmppgm2ram(mode, (char const rom far*)"RAN", 3) == 0)
+    return 3;
+  else if (memcmppgm2ram(mode, (char const rom far*)"PER", 3) == 0)
+    return 4;
+  else
+    return 0;
+  }
+
+int timestring_to_mins(char* arg)
+  {
+  // Take a time string of the format HH:MM (24 hour) and return as number of minutes.
+  int min = 0;
+  int hour = 0;
+  int sign = 1;
+  int *pval = &hour;
+  char ch;
+
+  while ((ch = *arg++) != 0)
+    {
+    if (ch == '-')
+      sign = -sign;
+    else if (ch == ':')
+      pval = &min;
+    else
+      *pval = *pval*10 + ch - '0';
+    }
+  return sign*(hour*60 + min);
+  }
+
 // convert miles to kilometers by multiplying by ~1.609344
 unsigned long KmFromMi(unsigned long miles)
 {
@@ -150,6 +186,37 @@ unsigned long MiFromKm(unsigned long km)
  // this yields six significant digits of accuracy and doesn't
  // overflow for any 32-bit input value.
  return (high * 40722) + ((low * 40722 + km/6 + 0x7FFF) >> 16);
+}
+
+// decodes Julian Date to year, month, day valid from 
+// http://aa.usno.navy.mil/faq/docs/JD_Formula.php
+// only valid for the years 1801–2099 (because 1800 and 2100 are not leap years)
+void JdToYMD(unsigned long jd, int *pyear, int *pmonth, int *pday)
+  {
+  long L,N,I,J,K;
+
+  L= jd+68569;
+  N= 4*L/146097;
+  L= L-(146097*N+3)/4;
+  I= 4000*(L+1)/1461001;
+  L= L-1461*I/4+31;
+  J= 80*L/2447;
+  K= L-2447*J/80;
+  L= J/11;
+  J= J+2-12*L;
+  I= 100*(N-49)+I+L;
+  
+  *pyear = (int)I;
+  *pmonth = (int)J;
+  *pday = (int)K;
+}
+
+// computes the Julian date from year, month, day
+// http://aa.usno.navy.mil/faq/docs/JD_Formula.php
+// only valid for the years 1801–2099 (because 1800 and 2100 are not leap years)
+unsigned long JdFromYMD(int year, int month, int day)
+{
+  return day-32075+1461L*(year+4800+(month-14)/12)/4+367*(month-2-(month-14)/12*12)/12-3*((year+4900+(month-14)/12)/100)/4;
 }
 
 // builtin atof() does not work... returns strange values
@@ -501,4 +568,120 @@ char *stp_time(char *dst, const rom char *prefix, unsigned long timestamp)
   // null terminate
   *dst = 0;
   return dst;
+}
+
+char *stp_date(char *dst, const rom char *prefix, unsigned long timestamp)
+  {
+  int month, day, year;	
+  unsigned long jd = JDEpoch + timestamp / (24*3600L);
+  JdToYMD(jd, &year, &month, &day);
+
+  dst = stp_i(dst, prefix, year);
+  dst = stp_ulp(dst, "-", month, 2, '0');
+  return stp_ulp(dst, "-", day, 2, '0');
+  }
+
+char *stp_mode(char *dst, const rom char *prefix, unsigned char mode)
+  {
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+
+  switch (mode)
+    {
+    case 0: dst = stp_rom(dst, "standard"); break;
+    case 1: dst = stp_rom(dst, "storage"); break;
+    case 3: dst = stp_rom(dst, "range"); break;
+    case 4: dst = stp_rom(dst, "performance"); break;
+    default: dst = stp_i(dst, "mode ",mode);
+    }
+
+  return dst;
+  }
+
+
+#define GPSFromDeg(deg) ((long)((deg)*3600L*2048L))
+#define Rad14FromGPS(gps) ((int)((gps)/25783L))   // gives radians * 2^14
+
+int IntCosine14(int rad);
+
+int FIsLatLongClose(long lat1, long long1, long lat2, long long2, int meterClose)
+{
+  long dlong;
+  int sCosine;
+  long distLong;
+  long dlat = ABS(lat2 - lat1);
+
+  // convert to meters
+  long distLat = dlat / 66;
+
+  // is the latitude separation far enough to fail the test?
+  if (distLat > meterClose)
+    return 0;
+
+  // normalize the longitude separation, a slightly tricky business
+  // since we can't represent angles over 291.27 degrees, so 360 is right out
+  if (long1 > long2)
+  {
+    // swap values so long2 >= long1
+    long longT = long1;
+    long1 = long2;
+    long2 = longT;
+  }
+  if (long2 > 0 && long1 < long2 - GPSFromDeg(180))
+  {
+    // if long2 - long1 > 180, shuffle values to compute
+    // (l1 + 180) - (l2 - 180) = l1 - l2 + 360
+    // while carefully avoiding overflowing 32 bits
+    long longT = long1 + GPSFromDeg(180);
+    long1 = long2 - GPSFromDeg(180);
+    long2 = longT;
+  }
+  dlong = long2 - long1;
+
+  // cosine(77) > 1/5, so here's a quick check to see if dlong is obviously too large
+  if (ABS(lat1) < GPSFromDeg(80) && dlong > 66L * 5L * (long)meterClose)
+    return 0;
+
+  // no easy out, we have to do some math; compute cosine(lat1) * 2^14
+  sCosine = IntCosine14(Rad14FromGPS(lat1));
+
+  // distLong = dlong * cosine(lat1) / 66; done carefully to preserve precision
+  distLong = ((((dlong & 0x3FFF) * sCosine) >> 14) + ((dlong >> 14) * sCosine)) / 66;
+
+  // is the longitude separation large enough to fail the test?
+  if (distLong > meterClose)
+    return 0;
+
+  // we're forced to do the Euclid thing
+  return distLat * distLat + distLong * distLong <= (long)meterClose * meterClose;
+}
+
+// input: radians * 2^14
+// output: cosine * 2^14
+int IntCosine14(int rad)
+{
+ long cos;
+ int cDouble = 0;
+
+ if (rad < 0)
+   rad = -rad;
+
+ cDouble = 0;
+ while (rad > (1L << 12)) // get the angle under a 1/4 radian
+ {
+   rad = (rad + 1) / 2;
+   ++cDouble;
+ }
+
+ // cosine Taylor series: 1 - x^2/2!
+ cos = (1L << 14);
+ cos -= ((long)rad * rad + (1L << 14)) >> 15;
+
+ while (cDouble-- > 0)
+ {
+   // cos(2x) = 2 * cos(x) * cos(x) - 1;
+   cos = (((long)cos * cos + (1L << 12)) >> 13) - (1L << 14);
+ }
+
+ return cos;
 }

@@ -51,6 +51,16 @@
 #define PARAM_S_GROUP2    0x0C
 #define PARAM_GSMLOCK     0x0D
 #define PARAM_VEHICLETYPE 0x0E
+#define PARAM_COOLDOWN    0x0F
+
+#define PARAM_ACC_S       0x10
+#define PARAM_ACC_COUNT   4
+#define PARAM_ACC_1       0x10
+#define PARAM_ACC_2       0x11
+#define PARAM_ACC_3       0x12
+#define PARAM_ACC_4       0x13
+
+#define PARAM_TIMEZONE    0x17
 
 #define PARAM_FEATURE_BASE 0x10
 #define PARAM_FEATURE_S   0x18
@@ -66,5 +76,7 @@
 void par_initialise(void);
 char* par_get(unsigned char param);
 void par_set(unsigned char param, char* value);
+void par_getbase64(unsigned char param, void* dest, size_t length);
+void par_setbase64(unsigned char param, void* source, size_t length);
 
 #endif // #ifndef __OVMS_PARAMS_H

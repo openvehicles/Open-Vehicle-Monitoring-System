@@ -42,6 +42,9 @@
 #ifdef OVMS_LOGGINGMODULE
 #include "logging.h"
 #endif
+#ifdef OVMS_ACCMODULE
+#include "acc.h"
+#endif
 
 // Configuration settings
 #pragma	config FCMEN = OFF,      IESO = OFF
@@ -95,7 +98,7 @@ unsigned char car_vin[18] = "-----------------"; // VIN
 unsigned char car_type[5]; // Car Type, intentionally uninitialised for vehicle init
 signed char car_tpem = 0; // Tpem
 unsigned char car_tmotor = 0; // Tmotor
-signed char car_tbattery = 0; // Tbattery
+signed int car_tbattery = 0; // Tbattery
 signed char car_tpms_t[4] = {0,0,0,0}; // TPMS temperature
 unsigned char car_tpms_p[4] = {0,0,0,0}; // TPMS pressure
 unsigned int car_trip = 0; // ODO trip in miles /10
@@ -126,7 +129,14 @@ signed int car_chargefull_minsremaining = -1;  // Minutes of charge remaining
 signed int car_chargelimit_minsremaining = -1; // Minutes of charge remaining
 unsigned int car_chargelimit_rangelimit = 0;   // Range limit (in vehicle units)
 unsigned char car_chargelimit_soclimit = 0;    // SOC% limit
-
+signed char car_coolingdown = -1;              // >=0 if car is cooling down
+unsigned char car_cooldown_chargemode = 0;     // 0=standard, 1=storage, 3=range, 4=performance
+unsigned char car_cooldown_chargelimit = 0;    // Charge Limit (amps)
+signed int car_cooldown_tbattery = 0;          // Cooldown temperature limit
+unsigned int car_cooldown_timelimit = 0;       // Cooldown time limit (minutes) remaining
+unsigned char car_cooldown_wascharging = 0;    // TRUE if car was charging when cooldown started
+int car_chargeestimate = -1;                   // Charge minute estimate
+unsigned char car_SOCalertlimit = 5;           // Limit of SOC at which alert should be raised
 
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 UINT8 debug_crashreason;        // last saved reset reason (bit set)
@@ -152,6 +162,9 @@ void main(void)
   {
     debug_crashreason = 0;
     debug_crashcnt = 0;
+#ifdef OVMS_LOGGINGMODULE
+    logging_initialise();
+#endif
   }
   else
   {
@@ -159,7 +172,7 @@ void main(void)
     debug_crashcnt++;
   }
 
-  CHECKPOINT(0)
+  CHECKPOINT(0x20)
 
   for (x = 0; x < FEATURES_MAP_PARAM; x++)
     sys_features[x] = 0; // Turn off the features
@@ -169,6 +182,9 @@ void main(void)
   {
     sys_features[x] = atoi(par_get(PARAM_FEATURE_S + (x - FEATURES_MAP_PARAM)));
   }
+
+  // Make sure cooldown is off
+  car_coolingdown = -1;
 
   // Port configuration
   inputs_initialise();
@@ -183,6 +199,8 @@ void main(void)
   par_initialise();
   vehicle_initialise();
   net_initialise();
+
+  CHECKPOINT(0x21)
 
   // Startup sequence...
   // Holding the RED led on, pulse out the firmware version on the GREEN led
@@ -218,26 +236,26 @@ void main(void)
   car_12vline_ref = 0;
 #endif
 
-#ifdef OVMS_LOGGINGMODULE
-  logging_initialise();
+#ifdef OVMS_ACCMODULE
+  acc_initialise();
 #endif
 
   // Proceed to main loop
   y = 0; // Last TMR0H
   while (1) // Main Loop
   {
-    CHECKPOINT(1)
+    CHECKPOINT(0x22)
     if ((vUARTIntStatus.UARTIntRxError) ||
             (vUARTIntStatus.UARTIntRxOverFlow))
       net_reset_async();
 
     while (!vUARTIntStatus.UARTIntRxBufferEmpty)
     {
-      CHECKPOINT(2)
+      CHECKPOINT(0x23)
       net_poll();
     }
 
-    CHECKPOINT(3)
+    CHECKPOINT(0x24)
     vehicle_idlepoll();
 
     ClrWdt(); // Clear Watchdog Timer
@@ -247,23 +265,28 @@ void main(void)
     {
       TMR0H = 0;
       TMR0L = 0; // Reset timer
-      CHECKPOINT(4)
+      CHECKPOINT(0x25)
       net_ticker();
-      CHECKPOINT(5)
+      CHECKPOINT(0x26)
       vehicle_ticker();
 #ifdef OVMS_LOGGINGMODULE
-      CHECKPOINT(8)
+      CHECKPOINT(0x27)
       logging_ticker();
+#endif
+#ifdef OVMS_ACCMODULE
+      CHECKPOINT(0x28)
+      acc_ticker();
 #endif
     }
     else if (TMR0H != y)
     {
       if ((TMR0H % 0x04) == 0)
       {
-        CHECKPOINT(6)
+        CHECKPOINT(0x29)
         net_ticker10th();
-        CHECKPOINT(7)
+        CHECKPOINT(0x2A)
         vehicle_ticker10th();
+        CHECKPOINT(0x2B)
       }
       y = TMR0H;
     }

@@ -43,15 +43,22 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 2,3,6
+#define OVMS_FIRMWARE_VERSION 2,6,1
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
-#define FEATURE_SPEEDO       0x00 // Speedometer feature
 #define FEATURE_STREAM       0x08 // Location streaming feature
 #define FEATURE_MINSOC       0x09 // Minimum SOC feature
+#define FEATURE_OPTIN        0x0D // Features to opt-in to
 #define FEATURE_CARBITS      0x0E // Various ON/OFF features (bitmap)
 #define FEATURE_CANWRITE     0x0F // CAN bus can be written to
+
+// The FEATURE_OPTIN feature is a set of ON/OFF bits to control different
+// miscelaneous aspects of the system that must be opted in to. The following
+// bits are defined:
+#define FEATURE_OI_SPEEDO    0x01 // Set to 1 to enable digital speedo
+#define FEATURE_OI_LOGDRIVES 0x02 // Set to 1 to enable logging of drives
+#define FEATURE_OI_LOGCHARGE 0x04 // Set to 1 to enable logging of charges
 
 // The FEATURE_CARBITS feature is a set of ON/OFF bits to control different
 // miscelaneous aspects of the system. The following bits are defined:
@@ -70,6 +77,8 @@
 // the vehicle normal operations.
 
 #define MAX_ICCID 24
+#define COOLDOWN_DEFAULT_TEMPLIMIT 31
+#define COOLDOWN_DEFAULT_TIMELIMIT 60
 
 #pragma udata
 extern rom unsigned char ovms_firmware[3]; // Firmware version
@@ -109,9 +118,9 @@ typedef struct {
   unsigned :1;                  // 0x04
   unsigned CarLocked:1;         // 0x08
   unsigned ValetMode:1;         // 0x10
-  unsigned Bonnet:1;            // 0x20
-  unsigned Trunk:1;             // 0x40
-  unsigned :1;                  // 0x80
+  unsigned Headlights:1;        // 0x20
+  unsigned Bonnet:1;            // 0x40
+  unsigned Trunk:1;             // 0x80
 } car_doors2bits_t;
 #define car_doors2bits (*((car_doors2bits_t*)&car_doors2))
 
@@ -150,7 +159,7 @@ typedef struct {
   unsigned Charging12V:1;       // 0x10
   unsigned :1;                  // 0x20
   unsigned :1;                  // 0x40
-  unsigned :1;                  // 0x80
+  unsigned HVAC:1;              // 0x80
 } car_doors5bits_t;
 #define car_doors5bits (*((car_doors5bits_t*)&car_doors5))
 
@@ -167,7 +176,7 @@ extern unsigned char car_vin[18]; // VIN
 extern unsigned char car_type[5]; // Car Type
 extern signed char car_tpem; // Tpem
 extern unsigned char car_tmotor; // Tmotor
-extern signed char car_tbattery; // Tbattery
+extern signed int car_tbattery; // Tbattery
 extern signed char car_tpms_t[4]; // TPMS temperature
 extern unsigned char car_tpms_p[4]; // TPMS pressure
 extern unsigned int car_trip; // ODO trip in miles /10
@@ -198,6 +207,20 @@ extern signed int car_chargefull_minsremaining;  // Minutes of charge remaining
 extern signed int car_chargelimit_minsremaining; // Minutes of charge remaining
 extern unsigned int car_chargelimit_rangelimit;  // Range limit (in vehicle units)
 extern unsigned char car_chargelimit_soclimit;   // SOC% limit
+extern signed char car_coolingdown;              // >=0 if car is cooling down
+extern unsigned char car_cooldown_chargemode;    // 0=standard, 1=storage, 3=range, 4=performance
+extern unsigned char car_cooldown_chargelimit;   // Charge Limit (amps)
+extern signed int car_cooldown_tbattery;         // Cooldown temperature limit
+extern unsigned int car_cooldown_timelimit;      // Cooldown time limit (minutes) remaining
+extern unsigned char car_cooldown_wascharging;   // TRUE if car was charging when cooldown started
+extern int car_chargeestimate;                   // Charge minute estimate
+extern unsigned char car_SOCalertlimit;          // Limit of SOC at which alert should be raised
+
+// Helpers
+
+#define CAR_IS_ON (car_doors1bits.CarON)
+#define CAR_IS_CHARGING (car_doors1bits.Charging)
+#define CAR_IS_HEATING (car_chargestate==0x0f)
 
 // DEBUG / QA stats:
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up

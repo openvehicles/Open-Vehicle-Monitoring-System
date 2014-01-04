@@ -30,6 +30,7 @@
 
 #include <string.h>
 #include "ovms.h"
+#include "crypt_base64.h"
 
 // EEprom data
 // The following data can be changed by sending SMS commands, and will survive a reboot
@@ -71,21 +72,11 @@ char* par_get(unsigned char param)
   return par_value;
   }
 
-void par_set(unsigned char param, char* value)
+void par_write(unsigned char param)
   {
   int k = 0;
   char savint;
   unsigned int eeaddress;
-
-  if (param >= PARAM_MAX) return;
-
-  if (value)
-    {
-    strncpy(par_value,value,PARAM_MAX_LENGTH);
-    par_value[PARAM_MAX_LENGTH-1]='\0';
-    }
-  else
-      par_value[0] = 0;
 
   // Write parameter to EEprom
   eeaddress = (int)param;
@@ -109,3 +100,30 @@ void par_set(unsigned char param, char* value)
     }
   }
 
+void par_set(unsigned char param, char* value)
+  {
+  if (param >= PARAM_MAX) return;
+
+  if (value)
+    {
+    strncpy(par_value,value,PARAM_MAX_LENGTH);
+    par_value[PARAM_MAX_LENGTH-1]='\0';
+    }
+  else
+      par_value[0] = 0;
+
+  par_write(param);
+  }
+
+void par_getbase64(unsigned char param, void* dest, size_t length)
+  {
+  char *p = par_get(param);
+  memset(dest,0,length);
+  base64decode(p, dest);
+  }
+
+void par_setbase64(unsigned char param, void* source, size_t length)
+  {
+  base64encode(source, length, par_value);
+  par_write(param);
+  }

@@ -45,11 +45,13 @@
 #include "params.h"
 #include "net_msg.h"
 
+#define FEATURE_SPEEDO_REPEATS 5 // Number of times to repeat speedo updates
+
 // Capabilities for Tesla Roadster
 rom char teslaroadster_capabilities[] = "C10-12,C15-24";
 
 #pragma udata overlay vehicle_overlay_data
-
+signed char tr_cooldown_recycle;             // Ticker counter for cooldown recycle
 unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
 unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
 unsigned char tr_requestcac;                 // Request CAC
@@ -65,25 +67,12 @@ BOOL vehicle_teslaroadster_ticker60(void);
 //
 BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
   {
-  unsigned char CANsidl = RXB0SIDL & 0b11100000;
   unsigned char k;
   unsigned int k1;
   unsigned long k2;
 
-  can_datalength = RXB0DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB0D0;
-  can_databuffer[1] = RXB0D1;
-  can_databuffer[2] = RXB0D2;
-  can_databuffer[3] = RXB0D3;
-  can_databuffer[4] = RXB0D4;
-  can_databuffer[5] = RXB0D5;
-  can_databuffer[6] = RXB0D6;
-  can_databuffer[7] = RXB0D7;
-
-  RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
-
-  if (CANsidl == 0)
-    { // CAN ID 0x100
+  if (can_id == 0x100)
+    {
     switch (can_databuffer[0])
       {
       case 0x06: // Charge timer mode
@@ -145,6 +134,10 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
           }
         break;
       case 0x88: // Charging Current / Duration
+        if (can_databuffer[6] != car_chargelimit)
+          { // If the charge limit has changed, notify it
+          net_req_notification(NET_NOTIFY_STAT);
+          }
         car_chargecurrent = can_databuffer[1];
         car_chargelimit = can_databuffer[6];
         car_chargeduration = ((unsigned int)can_databuffer[3]<<8)+(can_databuffer[2]);
@@ -184,6 +177,25 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
             }
           }
         break;
+      case 0x8F: // HVAC#1 message
+        k1 = ((unsigned int)can_databuffer[7]<<8)+(can_databuffer[6]);
+        if (k1 > 0)
+          {
+          car_doors5bits.HVAC = 1;
+          tr_cooldown_recycle = -1;  // Stop the recycle attempts
+          }
+        else
+          {
+          if ((car_coolingdown>=0)&&(car_doors5bits.HVAC))
+            {
+            // Car is cooling down, and HVAC has just gone off - end of a cycle
+            car_coolingdown++;
+            tr_cooldown_recycle = 60;  // Try to recycle cooling in 60 seconds
+            net_req_notification(NET_NOTIFY_STAT);
+            }
+          car_doors5bits.HVAC = 0;
+          }
+        break;
       case 0x95: // Charging mode
         if ((can_databuffer[1] != car_chargestate)&&            // Charge state has changed AND
             ((car_chargestate<=2)||(car_chargestate==0x0f))&&   // was (Charging or Heating) AND
@@ -203,9 +215,14 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
         car_chargestate = can_databuffer[1];
         car_chargesubstate = can_databuffer[2];
         if (sys_features[FEATURE_CARBITS]&FEATURE_CB_2008) // A 2010+ roadster?
-          car_chargemode = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
+          k = (can_databuffer[4]) & 0x0F;  // for 2008 roadsters
         else
-          car_chargemode = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
+          k = (can_databuffer[5] >> 4) & 0x0F; // for 2010 roadsters
+        if (k != car_chargemode)
+          { // If the charge mode has changed, notify it
+          car_chargemode = k;
+          net_req_notification(NET_NOTIFY_STAT);
+          }
         car_charge_b4 = can_databuffer[3];
         car_chargekwh = can_databuffer[7];
         break;
@@ -252,7 +269,7 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
       case 0xA3: // Temperatures
         car_tpem = (signed char)can_databuffer[1]; // Tpem
         car_tmotor = (unsigned char)can_databuffer[2]; // Tmotor
-        car_tbattery = (signed char)can_databuffer[6]; // Tbattery
+        car_tbattery = (signed int)can_databuffer[6]; // Tbattery
         car_stale_temps = 120; // Reset stale indicator
         break;
       case 0xA4: // 7 VIN bytes i.e. "SFZRE2B"
@@ -280,8 +297,8 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
         break;
       }
     }
-  else
-    { // CAN id 0x102
+  else if (can_id == 0x102)
+    {
     switch (can_databuffer[0])
       {
       case 0x0E: // Lock/Unlock state on ID#102
@@ -297,27 +314,12 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
 
 BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
 {
-  unsigned char CANctrl;
-
-  can_datalength = RXB1DLC & 0x0F; // number of received bytes
-  can_databuffer[0] = RXB1D0;
-  can_databuffer[1] = RXB1D1;
-  can_databuffer[2] = RXB1D2;
-  can_databuffer[3] = RXB1D3;
-  can_databuffer[4] = RXB1D4;
-  can_databuffer[5] = RXB1D5;
-  can_databuffer[6] = RXB1D6;
-  can_databuffer[7] = RXB1D7;
-
-  CANctrl=RXB1CON;		// copy CAN RX1 Control register
-  RXB1CONbits.RXFUL = 0; // All bytes read, Clear flag
-
-  if ((CANctrl & 0x07) == 4)           // Acceptance Filter 4 (RXF4) = CAN ID 400
+  if (can_id == 0x400)
     {
-#ifdef OVMS_SPEEDO_EXPERIMENT
-    // Experimental speedometer feature - replace Range->Dash with speed
+    // Speedometer feature - replace Range->Dash with speed
     if ((can_databuffer[0]==0x02)&&         // The SPEEDO AMPS message
-        (sys_features[FEATURE_SPEEDO]>0)&&  // The SPEEDO feature is on
+        (sys_features[FEATURE_OPTIN]&FEATURE_OI_SPEEDO)&& // Digital speedo
+        ((sys_features[FEATURE_CARBITS]&FEATURE_CB_2008)==0)&& // A 2010+ roadster?
         (car_doors1 & 0x80)&&               // The car is on
         (car_speed != can_databuffer[2])&&  // The speed != Amps
         (sys_features[FEATURE_CANWRITE]>0)) // The CAN bus can be written to
@@ -344,12 +346,11 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
       TXB0D7 = can_lastspeedmsg[7];
       TXB0DLC = 0b00001000; // data length (8)
       TXB0CON = 0b00001000; // mark for transmission
-      can_lastspeedrpt = sys_features[FEATURE_SPEEDO]; // Force re-transmissions
+      can_lastspeedrpt = FEATURE_SPEEDO_REPEATS; // Force re-transmissions
       if (can_lastspeedrpt>10) can_lastspeedrpt=10;
       }
-#endif // #ifdef OVMS_SPEEDO_EXPERIMENT
     }
-  else if ((CANctrl & 0x07) == 2)    	// Acceptance Filter 2 (RXF2) = CAN ID 344
+  else if (can_id == 0x344)
     {
     // TPMS code here
     if (can_databuffer[3]>0) // front-right
@@ -374,7 +375,7 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
       }
     car_stale_tpms = 120; // Reset stale indicator
     }
-  else  				// It must be CAN ID 402
+  else if (can_id == 0x402)
     {
     switch (can_databuffer[0])
       {
@@ -398,10 +399,7 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
 //
 BOOL vehicle_teslaroadster_ticker10th(void)
   {
-#ifdef OVMS_SPEEDO_EXPERIMENT
-  if (can_lastspeedrpt==0) can_lastspeedrpt=sys_features[FEATURE_SPEEDO];
-  if (can_lastspeedrpt>10) can_lastspeedrpt=10;
-#endif // #ifdef OVMS_SPEEDO_EXPERIMENT
+  if (can_lastspeedrpt==0) can_lastspeedrpt=FEATURE_SPEEDO_REPEATS;
   return FALSE;
   }
 
@@ -464,10 +462,10 @@ BOOL vehicle_teslaroadster_idlepoll(void)
 
   if (can_lastspeedrpt == 0) return FALSE;
 
-#ifdef OVMS_SPEEDO_EXPERIMENT
-  // Experimental speedometer feature - replace Range->Dash with speed
+  // Speedometer feature - replace Range->Dash with speed
   if ((can_lastspeedmsg[0]==0x02)&&        // It is a valid AMPS message
-      (sys_features[FEATURE_SPEEDO]>0)&&   // The SPEEDO feature is enabled
+      (sys_features[FEATURE_OPTIN]&FEATURE_OI_SPEEDO)&& // Digital speedo
+      ((sys_features[FEATURE_CARBITS]&FEATURE_CB_2008)==0)&& // A 2010+ roadster?
       (car_doors1 & 0x80)&&                // The car is on
       (sys_features[FEATURE_CANWRITE]>0))  // The CAN bus can be written to
     {
@@ -487,7 +485,6 @@ BOOL vehicle_teslaroadster_idlepoll(void)
     TXB0DLC = 0b00001000; // data length (8)
     TXB0CON = 0b00001000; // mark for transmission
     }
-#endif //#ifdef OVMS_SPEEDO_EXPERIMENT
   can_lastspeedrpt--;
 
   return FALSE;
@@ -519,6 +516,25 @@ void vehicle_teslaroadster_tx_wakeuptemps(void)
   TXB0D5 = 0x09;
   TXB0D6 = 0x10;
   TXB0D7 = 0x00;
+  TXB0DLC = 0b00001000; // data length (8)
+  TXB0CON = 0b00001000; // mark for transmission
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
+void vehicle_teslaroadster_tx_wakeuphvac(void)
+  {
+  while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = 0b01000000; // Setup 0x102
+  TXB0SIDH = 0b00100000; // Setup 0x102
+  TXB0D0 = 0x06;
+  TXB0D1 = 0xd0;
+  TXB0D2 = 0x07;
+  TXB0D3 = 0x00;
+  TXB0D4 = 0x00;
+  TXB0D5 = 0x80;
+  TXB0D6 = 0x00;
+  TXB0D7 = 0x08;
   TXB0DLC = 0b00001000; // data length (8)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
@@ -665,6 +681,61 @@ void vehicle_teslaroadster_tx_homelink(unsigned char button)
   TXB0DLC = 0b00000011; // data length (3)
   TXB0CON = 0b00001000; // mark for transmission
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+  }
+
+void vehicle_teslaroadster_cooldown(void)
+  {
+  // We have been requested to cool down the battery pack
+  char *p;
+  int k;
+
+  // Save the old charge mode and limit
+  car_cooldown_wascharging = (CAR_IS_CHARGING)?1:0;
+  car_cooldown_chargemode = car_chargemode;
+  car_cooldown_chargelimit = car_chargelimit;
+
+  // Work out new mode and limit
+  p = par_get(PARAM_COOLDOWN);
+  p = strtokpgmram(p,":");
+  if (p != NULL)
+    {
+    car_cooldown_tbattery = atoi(p);
+    p = strtokpgmram(NULL,":");
+    if (p != NULL)
+      {
+      car_cooldown_timelimit = atoi(p);
+      }
+    else
+      {
+      car_cooldown_timelimit = COOLDOWN_DEFAULT_TIMELIMIT;
+      }
+    }
+  else
+    {
+    car_cooldown_tbattery = COOLDOWN_DEFAULT_TEMPLIMIT;
+    car_cooldown_timelimit = COOLDOWN_DEFAULT_TIMELIMIT;
+    }
+
+  if ((car_tbattery > car_cooldown_tbattery)&& // Car is hot enough
+      (car_doors1bits.CarON == 0)&&            // Car is not ON
+      (car_doors1bits.ChargePort == 1))        // Charge port is open
+    {
+    // We need to start a cooldown
+    vehicle_teslaroadster_tx_wakeup();
+    delay100(10);
+    for (k=0;k<2;k++) // Be persistent, and do this a few times to make sure
+      {
+      vehicle_teslaroadster_tx_setchargecurrent(13); // 13A charge
+      delay100(1);
+      vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
+      delay100(1);
+      vehicle_teslaroadster_tx_startstopcharge(1);   // Force START charge
+      delay100(1);
+      }
+    vehicle_teslaroadster_tx_wakeuphvac();         // Start HVAC data
+    car_coolingdown = 0;
+    tr_cooldown_recycle = -1;
+    }
   }
 
 BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
@@ -875,6 +946,18 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       break;
 
+    case 25: // Cooldown
+      if (sys_features[FEATURE_CANWRITE]==0)
+        {
+        STP_NOCANWRITE(net_scratchpad, code);
+        }
+      else
+        {
+        vehicle_teslaroadster_cooldown();
+        STP_OK(net_scratchpad, code);
+        }
+      break;
+
     default:
       return FALSE;
     }
@@ -889,69 +972,114 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
   return TRUE;
   }
 
-int MinutesToChargeCAC(
-      unsigned char chgmod,       // charge mode, Standard, Range and Performance are supported
-      int imStart,                // ideal miles at start of charge (caller must convert from ideal km)
-      int imEnd,                  // ideal miles desired at end of charge
-      int cac,                    // the battery pack CAC (160 is a perfect battery)
-      int wAvail,                 // watts available from the wall
-      signed char degAmbient      // ambient temperature in degrees C
+int vehicle_teslaroadster_minutestocharge(
+      unsigned char chgmod,    // charge mode: 0 (Standard), 3 (Range) or 4 (Performance)
+      int wAvail,              // watts available from the wall
+      int imStart,             // ideal mi at start of charge
+      int imTarget,            // ideal mi desired at end of charge (use <=0 for full charge)
+      int pctTarget,           // if imTarget == -1, specified desired percent SOC
+                               // use 100 for full charge
+                               // pctTarget is ignored if imEnd != -1
+      int cac100,              // the battery pack CAC*100 (pass 0 if unknown)
+      signed char degAmbient,  // ambient temperature in degrees C
+      int *pimTarget           // if not null, will be filled in with expected ideal
+                               // miles at target charge level
       )
   {
-  enum { imTaperBase = 200 }; // ideal miles at which tapering begins in nominal battery pack
-
   int bIntercept;
   int mx1000;
   int whPerIM;
-  int secPerIM;
+  signed long secPerIMSteady;
   signed long seconds;
+  int imCapacityNominal;
+  int imCapacity;
+  int imTaperBase;
+  signed long numTaper;
+  int denBaseTaper;
 
-  // IM capacity in range mode is about 31.598 + 1.3193 * cac;
-  int imCapacityRange = ((signed long)cac * 199 + 4740 + 75) / 150;
+#ifdef OVMS_DIAGMODULE
+  char *p;
 
-  // IM in standard mode is about 13.504 + 1.1075 * cac;
-  int imCapacityStandard = ((signed long)cac * 166 + 2026 + 75) / 150;
-  int imStdToRng = (imCapacityRange - imCapacityStandard + 1) / 2;
+  if (net_state == NET_STATE_DIAGMODE)
+    {
+    p = stp_i(net_scratchpad,"\r\n# TR minutestocharge(",chgmod);
+    p = stp_i(p,", ",imStart);
+    p = stp_i(p,", ",imTarget);
+    p = stp_i(p,", ",pctTarget);
+    p = stp_i(p,", ",cac100);
+    p = stp_i(p,", ",wAvail);
+    p = stp_i(p,", ",degAmbient);
+    p = stp_rom(p,")\r\n");
+    net_puts_ram(net_scratchpad);
+    }
+#endif
+
+  if (cac100 == 0) cac100=16000; // Default to a nominal new battery pack
+  if (pctTarget <= 0) pctTarget=100;   // Default to a full charge
 
   switch (chgmod)
     {
     case 0: // Standard
-      if (imEnd == -1)
-        imEnd = imCapacityStandard;
-      imStart += imStdToRng;
-      imEnd += imStdToRng;
-      break;
+	  // standard mode IM capacity is about 1.1891 * CAC + 0.8 (10/10/2013 survey data)
+	  imCapacity = (1189L * cac100 + 80000 + 50000)/ 100000;
 
-    case 4: // Performance
-      imStart += imStdToRng;
-      if (imEnd == -1)
-        imEnd = imCapacityRange;
-      else
-        imEnd += imStdToRng;
+       // algorithm parameters, determined from OVMS Log Data, 2418 data points
+      imCapacityNominal = 191;
+      imTaperBase = 169;
+      numTaper = 197578L;
+      denBaseTaper = 19777;
       break;
 
     case 3: // Range
-      if (imEnd == -1)
-        imEnd = imCapacityRange;
+      // range mode IM capacity is about 1.5463 * CAC - 3.4 (10/10/2013 survey data)
+      imCapacity = (1546L * cac100 - 340000 + 50000)/ 100000;
+
+      // algorithm parameters, determined from OVMS Log Data, 234 data points
+      imCapacityNominal = 244;
+      imTaperBase = 215;
+      numTaper = 212156L;
+      denBaseTaper = 24647;
+      break;
+
+    case 4: // Performance
+      // interpolate standard and range to get performance mode
+      // IM = 1.3677 * CAC - 1.3
+      imCapacity = (1368L * cac100 - 130000 + 50000)/ 100000;
+
+      // algorithm parameters, determined from OVMS Log Data, 13 data points
+      imCapacityNominal = 218;
+      imTaperBase = 167;
+      numTaper = 429204L;
+      denBaseTaper = 23122;
       break;
 
     default: // invalid charge mode passed in (Storage mode doesn't make sense)
-      return 0;
+      return -(int)(100+chgmod);
     }
 
+  // if needed, calculate charge target from specified percent
+  if (imTarget <= 0)
+    imTarget = (imCapacity * pctTarget + 50)/100;
+
+  // tell the caller the expected ideal miles at the requested charge level
+  if (pimTarget != NULL)
+    *pimTarget = imTarget;
+
   // check for silly cases
-  if (wAvail <= 0 || imEnd <= imStart)
-    return -1;
+  if (wAvail <= 0)
+    return -2;
+  if (imTarget <= imStart)
+    return -3;
 
   // I don't believe air temperatures above 60 C, and this avoids overflow issues
   if (degAmbient > 60)
     degAmbient = 60;
 
   // normalize the IM values to look like a nominal new pack
-  imStart = imStart - imCapacityRange + 244;
-  imEnd   = imEnd   - imCapacityRange + 244;
-  if (imEnd > 244)
-    imEnd = 244;
+  imStart  += imCapacityNominal - imCapacity;
+  imTarget += imCapacityNominal - imCapacity;
+  if (imTarget > imCapacityNominal)
+    imTarget = imCapacityNominal;
 
   // calculate temperature to charge rate equation
   bIntercept = (wAvail >= 2300) ? 288 : (signed long)745 - (signed long)199 * wAvail / 1000;
@@ -964,8 +1092,12 @@ int MinutesToChargeCAC(
     mx1000 = 0;
 
   // calculate seconds per ideal mile
-  whPerIM = bIntercept + mx1000 * degAmbient / 1000;
-  secPerIM = whPerIM * 3600L / wAvail;
+  whPerIM = bIntercept + (signed long)mx1000 * degAmbient / 1000;
+  secPerIMSteady = whPerIM * 3600L / wAvail;
+
+  // detect implausible low power values that can lead to overflowing the number of minutes
+  if ((0x7FFFL*60+30)/secPerIMSteady < 244)
+    return -4;
 
   // ready to calculate the charge duration
   seconds = 0;
@@ -973,43 +1105,145 @@ int MinutesToChargeCAC(
   // calculate time spent in the steady charge region
   if (imStart < imTaperBase)
     {
-    int imEndSteady = imEnd < imTaperBase ? imEnd : imTaperBase;
-    seconds += secPerIM * (imEndSteady - imStart);
+    int imEndSteady = imTarget < imTaperBase ? imTarget : imTaperBase;
+    seconds += secPerIMSteady * (imEndSteady - imStart);
     }
 
   // figure out time spent in the tapered charge region
-  if (imEnd > imTaperBase)
+  if (imTarget > imTaperBase)
     {
     int im = imStart > imTaperBase ? imStart : imTaperBase;
+    int secPerIMMost = 1117000L/(wAvail > 2000 ? 2000 : wAvail);
 
-    for ( ; im < imEnd; ++im)
+    for ( ; im < imTarget; ++im)
       {
-      int secPerIMTaper = (signed long)3600/(293 - ((signed long)1177*im + 500)/1000);
-      if (secPerIMTaper < secPerIM)
-        secPerIMTaper = secPerIM;
+      int secPerIMTaper = numTaper/(denBaseTaper - 100*im);
+      if (secPerIMTaper < 0 || secPerIMTaper > secPerIMMost)
+      	secPerIMTaper = secPerIMMost;
+      else if (secPerIMTaper < secPerIMSteady)
+        secPerIMTaper = secPerIMSteady;
       seconds += secPerIMTaper;
       }
     }
 
+#ifdef OVMS_DIAGMODULE
+  if (net_state == NET_STATE_DIAGMODE)
+    {
+    p = stp_i(net_scratchpad,"\r\n# TR minutestocharge result=",(seconds + 30) / 60);
+    p = stp_rom(p,"\r\n");
+    net_puts_ram(net_scratchpad);
+    }
+#endif
+
   return (seconds + 30) / 60;
+  }
+
+BOOL vehicle_teslaroadster_ticker1(void)
+  {
+  if ((car_coolingdown>=0)&&(CAR_IS_CHARGING))
+    {
+    if (tr_cooldown_recycle > 0)
+      {
+      tr_cooldown_recycle--;
+      if (tr_cooldown_recycle == 10)
+        {
+        // Switch to PERFORMANCE mode for ten seconds
+        vehicle_teslaroadster_tx_setchargemode(4);     // Switch to PERFORMANCE mode
+        }
+      else if (tr_cooldown_recycle == 0)
+        {
+        // Switch back to RANGE mode, and reset cycle
+        vehicle_teslaroadster_tx_setchargemode(3);     // Switch to RANGE mode
+        tr_cooldown_recycle = 60;
+        }
+      }
+    if (car_chargelimit != 13)
+      {
+      vehicle_teslaroadster_tx_setchargecurrent(13); // 13A charge when cooling down
+      }
+    }
+
+  return FALSE;
   }
 
 BOOL vehicle_teslaroadster_ticker60(void)
   {
+  int remain;
+
   if (car_doors1 & 0x10)
     {
     // Vehicle is charging
-    car_chargefull_minsremaining = MinutesToChargeCAC(
+    car_chargefull_minsremaining = vehicle_teslaroadster_minutestocharge(
         car_chargemode,             // charge mode, Standard, Range and Performance are supported
-        car_idealrange,             // ideal miles at start of charge (caller must convert from ideal km)
-        -1,                         // ideal miles desired at end of charge
-        car_cac100/100,             // the battery pack's ideal mile capacity in this charge mode
-        car_linevoltage*car_chargecurrent, // watts available from the wall
-        car_ambient_temp            // ambient temperature in degrees C
+        car_linevoltage*car_chargelimit, // watts available from the wall
+        car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
+        -1,                         // ideal mi desired at end of charge (use -1 for full charge)
+        100,                        // SOC percent desired at end of charge (ignored if ideal mi specified)
+        car_cac100,                 // the battery pack CAC*100 (pass 0 if unknown)
+        car_ambient_temp,           // ambient temperature in degrees C
+        NULL
         );
     car_chargelimit_minsremaining = -1;
-    car_chargelimit_rangelimit = 0;
-    car_chargelimit_soclimit = 0;
+    if (car_chargelimit_rangelimit>0)
+      {
+      car_chargelimit_minsremaining = vehicle_teslaroadster_minutestocharge(
+          car_chargemode,             // charge mode, Standard, Range and Performance are supported
+          car_linevoltage*car_chargelimit, // watts available from the wall
+          car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
+          car_chargelimit_rangelimit, // ideal mi desired at end of charge (use -1 for full charge)
+          100,                        // SOC percent desired at end of charge (ignored if ideal mi specified)
+          car_cac100,                 // the battery pack CAC*100 (pass 0 if unknown)
+          car_ambient_temp,           // ambient temperature in degrees C
+          NULL
+          );
+      }
+    if (car_chargelimit_soclimit>0)
+      {
+      remain = vehicle_teslaroadster_minutestocharge(
+          car_chargemode,             // charge mode, Standard, Range and Performance are supported
+          car_linevoltage*car_chargelimit, // watts available from the wall
+          car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
+          -1,                         // ideal mi desired at end of charge (use -1 for full charge)
+          car_chargelimit_soclimit,   // SOC percent desired at end of charge (ignored if ideal mi specified)
+          car_cac100,                 // the battery pack CAC*100 (pass 0 if unknown)
+          car_ambient_temp,           // ambient temperature in degrees C
+          NULL
+          );
+      if ((remain<car_chargelimit_minsremaining)||(car_chargelimit_minsremaining<0))
+        car_chargelimit_minsremaining = remain;
+      }
+
+    if (car_coolingdown>=0)
+      {
+      car_cooldown_timelimit--;
+      vehicle_teslaroadster_tx_wakeuphvac();         // Start HVAC data
+      if ((car_cooldown_timelimit == 0)||
+          (car_tbattery <= car_cooldown_tbattery))
+        {
+        // Stop the cooldown...
+        net_notify_suppresscount = 30;
+        vehicle_teslaroadster_tx_setchargecurrent(car_cooldown_chargelimit); // Restore charge limit
+        vehicle_teslaroadster_tx_setchargemode(car_cooldown_chargemode);     // Restore charge mode
+        if (car_cooldown_wascharging == 0)
+          {
+          vehicle_teslaroadster_tx_startstopcharge(0);                        // Force START charge
+          }
+        car_coolingdown = -1;
+        tr_cooldown_recycle = -1;
+        }
+      }
+    }
+  else
+    {
+    // Vehicle is not charging
+    if (car_coolingdown>0)
+      {
+      net_notify_suppresscount = 30;
+      vehicle_teslaroadster_tx_setchargecurrent(car_cooldown_chargelimit); // Restore charge limit
+      vehicle_teslaroadster_tx_setchargemode(car_cooldown_chargemode);     // Restore charge mode
+      car_coolingdown = -1;
+      tr_cooldown_recycle = -1;
+      }
     }
   
   return FALSE;
@@ -1070,9 +1304,11 @@ void vehicle_teslaroadster_initialise(void)
     CANCON = 0b01100000; // Listen only mode, Receive bufer 0
     }
 
+  car_cooldown_wascharging = 0;
   can_lastspeedmsg[0] = 0;
   can_lastspeedrpt = 0;
   tr_requestcac = 0;
+  tr_cooldown_recycle = -1;
 
   net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
 
@@ -1081,7 +1317,9 @@ void vehicle_teslaroadster_initialise(void)
   vehicle_fn_poll0 = &vehicle_teslaroadster_poll0;
   vehicle_fn_poll1 = &vehicle_teslaroadster_poll1;
   vehicle_fn_ticker10th = &vehicle_teslaroadster_ticker10th;
+  vehicle_fn_ticker1 = &vehicle_teslaroadster_ticker1;
   vehicle_fn_ticker60 = &vehicle_teslaroadster_ticker60;
   vehicle_fn_idlepoll = &vehicle_teslaroadster_idlepoll;
   vehicle_fn_commandhandler = &vehicle_teslaroadster_commandhandler;
+  vehicle_fn_minutestocharge = &vehicle_teslaroadster_minutestocharge;
   }

@@ -45,6 +45,7 @@ my $db;
 my $config;
 my %http_request_api_noauth;
 my %http_request_api_auth;
+my %authfail_notified;
 
 # PUSH notifications
 my @apns_queue_sandbox;
@@ -89,6 +90,7 @@ foreach (sort glob 'ovms_server*.vece')
 my $timeout_app      = $config->val('server','timeout_app',60*20);
 my $timeout_car      = $config->val('server','timeout_car',60*16);
 my $timeout_svr      = $config->val('server','timeout_svr',60*60);
+my $loghistory_tim   = $config->val('log','history',0);
 
 # A database ticker
 $db = DBI->connect($config->val('db','path'),$config->val('db','user'),$config->val('db','pass'));
@@ -138,7 +140,7 @@ sub io_error
   my $fn = $hdl->fh->fileno();
   my $vid = $conns{$fn}{'vehicleid'}; $vid='-' if (!defined $vid);
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
-  AE::log info => "#$fn $clienttype $vid got error $msg";
+  &log($fn, $clienttype, $vid, "got error $msg");
   &io_terminate($fn,$hdl,$conns{$fn}{'vehicleid'},undef);
   }
 
@@ -157,7 +159,7 @@ sub io_timeout
     {
     # OK, it has been 60 seconds since the client connected, but still no identification
     # Time to shut it down...
-    AE::log error => "#$fn $clienttype $vid timeout due to no initial welcome exchange";
+    &log($fn, $clienttype, $vid, "timeout due to no initial welcome exchange");
     &io_terminate($fn,$hdl,$vid,undef);
     return;
     }
@@ -171,7 +173,7 @@ sub io_timeout
     if (($lastrx+$timeout_app)<$now)
       {
       # The APP has been unresponsive for timeout_app seconds - time to disconnect it
-      AE::log error => "#$fn $clienttype $vid timeout app due to inactivity";
+      &log($fn, $clienttype, $vid, "timeout due app due to inactivity");
       &io_terminate($fn,$hdl,$vid,undef);
       return;
       }
@@ -191,7 +193,7 @@ sub io_timeout
     if (($lastrx+$timeout_car)<$now)
       {
       # The CAR has been unresponsive for timeout_car seconds - time to disconnect it
-      AE::log error => "#$fn $clienttype $vid timeout car due to inactivity";
+      &log($fn, $clienttype, $vid, "timeout car due to inactivity");
       &io_terminate($fn,$hdl,$vid,undef);
       return;
       }
@@ -240,8 +242,23 @@ sub io_line
     $serverhmac->add($clienttoken);
     if ($serverhmac->digest() ne $dclientdigest)
       {
+      if (($clienttype eq 'C')&&(!defined $authfail_notified{$vehicleid}))
+        {
+        $authfail_notified{$vehicleid}=1;
+        my $host = $conns{$fn}{'host'};
+        &push_queuenotify($vehicleid, 'A', "Vehicle authentication failed ($host)");
+        }
       &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Incorrect client authentication - aborting connection");
       return;
+      }
+    else
+      {
+      if (($clienttype eq 'C')&&(defined $authfail_notified{$vehicleid}))
+        {
+        delete $authfail_notified{$vehicleid};
+        my $host = $conns{$fn}{'host'};
+        &push_queuenotify($vehicleid, 'A', "Vehicle authentication successful ($host)");
+        }
       }
 
     # Check server permissions
@@ -341,7 +358,7 @@ sub io_line
     if ($message =~ /^MP-0\s(\S)(.*)/)
       {
       my ($code,$data) = ($1,$2);
-      AE::log info => "#$fn $clienttype $vid rx msg $code $data";
+      &log($fn, $clienttype, $vid, "rx msg $code $data");
       &io_message($fn, $hdl, $conns{$fn}{'vehicleid'}, $vrec, $code, $data);
       }
     else
@@ -536,6 +553,8 @@ tcp_server undef, 6867, sub
 
   $conns{$fn}{'fh'} = $fh;
   $conns{$fn}{'handle'} = $handle;
+  $conns{$fn}{'host'} = $host;
+  $conns{$fn}{'port'} = $port;
   };
 
 # An HTTP server
@@ -900,6 +919,21 @@ sub io_message
           . "VALUES (?,UTC_TIMESTAMP(),?,?,?,UTC_TIMESTAMP()+INTERVAL ? SECOND)",
             undef,
             $vehicleid, $h_recordtype, $h_recordnumber, $h_data, $h_lifetime);
+    return;
+    }
+  elsif ($m_code eq 'h')
+    {
+    if ($clienttype ne 'C')
+      {
+      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'h' message from non-Car";
+      return;
+      }
+    my ($h_ackcode,$h_timediff,$h_recordtype,$h_recordnumber,$h_lifetime,$h_data) = split /,/,$data,6;
+    $db->do("INSERT IGNORE INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) "
+          . "VALUES (?,UTC_TIMESTAMP()+INTERVAL ? SECOND,?,?,?,UTC_TIMESTAMP()+INTERVAL ? SECOND)",
+            undef,
+            $vehicleid, $h_timediff, $h_recordtype, $h_recordnumber, $h_data, $h_lifetime-$h_timediff);
+    &io_tx($fn, $conns{$fn}{'handle'}, 'h', $h_ackcode);
     return;
     }
 
@@ -2246,5 +2280,21 @@ sub drupal_password_base64_encode
   } while ($i < $count);
 
   return $output;
+  }
+
+my $loghistory_rec = 0;
+sub log
+  {
+  my ($fh, $clienttype, $vid, $msg) = @_;
+
+  AE::log info => "#$fh $clienttype $vid $msg";
+
+  return if ($loghistory_tim<=0);
+
+  $db->do('INSERT INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) '
+          . 'VALUES (?,UTC_TIMESTAMP(),"*-OVM-ServerLogs",?,?,UTC_TIMESTAMP()+INTERVAL ? SECOND) ',
+            undef,
+            $vid,$loghistory_rec++,"#$fh $clienttype $msg",$loghistory_tim);
+  $loghistory_rec=0 if ($loghistory_rec>65535);
   }
 
