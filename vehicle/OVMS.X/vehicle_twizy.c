@@ -142,6 +142,9 @@
     - Code cleanup
     - Added preprocessor flag OVMS_TWIZY_CFG for SEVCON functions
 
+ * 3.0.2  4 Jan 2014 (Michael Balzer)
+    - TSMAP: levels 2..4 now allow 0%
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -196,7 +199,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.0.1";
+rom char vehicle_twizy_version[] = "3.0.2";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -1023,9 +1026,9 @@ UINT vehicle_twizy_cfg_torque(int trq_prc, int pwr_prc)
 UINT vehicle_twizy_cfg_tsmap(char map, int t1_prc, int t2_prc, int t3_prc, int t4_prc)
 // map: 'D'=Drive 'N'=Neutral 'B'=Footbrake
 // t1_prc: 1..100, -1=reset to default (D=100, N/B=100)
-// t2_prc: 1..100, -1=reset to default (D=100, N/B=80)
-// t3_prc: 1..100, -1=reset to default (D=100, N/B=50)
-// t4_prc: 1..100, -1=reset to default (D=100, N/B=20)
+// t2_prc: 0..100, -1=reset to default (D=100, N/B=80)
+// t3_prc: 0..100, -1=reset to default (D=100, N/B=50)
+// t4_prc: 0..100, -1=reset to default (D=100, N/B=20)
 {
   UINT err;
   UINT8 base;
@@ -1039,13 +1042,13 @@ UINT vehicle_twizy_cfg_tsmap(char map, int t1_prc, int t2_prc, int t3_prc, int t
   if ((t1_prc != -1) && (t1_prc < 1 || t1_prc > 100))
     return ERR_Range + 2;
 
-  if ((t2_prc != -1) && (t2_prc < 1 || t2_prc > 100))
+  if ((t2_prc != -1) && (t2_prc < 0 || t2_prc > 100))
     return ERR_Range + 3;
 
-  if ((t3_prc != -1) && (t3_prc < 1 || t3_prc > 100))
+  if ((t3_prc != -1) && (t3_prc < 0 || t3_prc > 100))
     return ERR_Range + 4;
 
-  if ((t4_prc != -1) && (t4_prc < 1 || t4_prc > 100))
+  if ((t4_prc != -1) && (t4_prc < 0 || t4_prc > 100))
     return ERR_Range + 5;
 
   // we need pre-op state:
@@ -2143,10 +2146,11 @@ BOOL vehicle_twizy_poll0(void)
 
 BOOL vehicle_twizy_poll1(void)
 {
-  unsigned char i;
   unsigned int new_speed;
 
 #ifdef OVMS_CANSIM
+  unsigned char i;
+
   if (twizy_sim >= 0)
   {
     // READ SIMULATION DATA:

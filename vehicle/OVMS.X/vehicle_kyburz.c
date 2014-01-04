@@ -155,6 +155,10 @@ BOOL vehicle_kyburz_ticker1(void)
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
 //
+
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata high_isr_tmpdata
+
 BOOL vehicle_kyburz_poll0(void)
   {
   unsigned int pid;
@@ -206,6 +210,9 @@ BOOL vehicle_kyburz_poll0(void)
 
   return TRUE;
   }
+
+#pragma tmpdata
+
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_kyburz_initialise()

@@ -227,6 +227,10 @@ BOOL vehicle_voltampera_ticker1(void)
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
 //
+
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata high_isr_tmpdata
+
 BOOL vehicle_voltampera_poll0(void)
   {
   unsigned int pid;
@@ -379,6 +383,9 @@ BOOL vehicle_voltampera_poll1(void)
 
   return TRUE;
   }
+
+#pragma tmpdata
+
 
 BOOL vehicle_voltampera_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
   {
