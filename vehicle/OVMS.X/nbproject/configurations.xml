@@ -391,7 +391,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_INTERNALGPS;OVMS_CAR_NONE;OVMS_CAR_OBDII;OVMS_CAR_NISSANLEAF;OVMS_CAR_THINKCITY;OVMS_CAR_TAZZARI;OVMS_CAR_MITSUBISHI;OVMS_CAR_TRACK;OVMS_CAR_KYBURZ"/>
+                  value="OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_INTERNALGPS;OVMS_POLLER;OVMS_CAR_NONE;OVMS_CAR_OBDII;OVMS_CAR_NISSANLEAF;OVMS_CAR_THINKCITY;OVMS_CAR_TAZZARI;OVMS_CAR_MITSUBISHI;OVMS_CAR_TRACK;OVMS_CAR_KYBURZ"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -427,7 +427,6 @@
         <property key="ToolFirmwareFilePath"
                   value="Press to browse for a specific firmware version"/>
         <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>

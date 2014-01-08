@@ -66,3 +66,7 @@
 // The ACC code provides for advanced charge control - sophisticated charging
 // algorithms.
 // #define OVMS_ACCMODULE
+
+// The OVMS_POLLER code supports OBDII polling for various vehicles. It should
+// be enabled for those vehicles that require it.
+// #define OVMS_POLLER
