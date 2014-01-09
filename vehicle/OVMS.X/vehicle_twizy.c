@@ -145,6 +145,12 @@
  * 3.0.2  4 Jan 2014 (Michael Balzer)
     - TSMAP: levels 2..4 now allow 0%
 
+ * 3.1.0  9 Jan 2014 (Michael Balzer)
+    - TSMAP: levels 1..4 now allow 0%
+    - Power map generator extended for pwr max lo/hi, added sanity check
+    - Renamed command "POWER" to "DRIVE"
+    - Renamed command "TORQUE" to "POWER", changed param handling
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -199,7 +205,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.0.2";
+rom char vehicle_twizy_version[] = "3.1.0";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -312,7 +318,8 @@ volatile unsigned char twizy_button_cnt; // will count key presses in STOP mode 
 
 unsigned int twizy_max_rpm;         // CFG: max speed (RPM: 0..11000)
 unsigned long twizy_max_trq;        // CFG: max torque (mNm: 0..70125)
-unsigned int twizy_max_pwr;         // CFG: max power (W: 0..17000)
+unsigned int twizy_max_pwr_lo;      // CFG: max power low speed (W: 0..17000)
+unsigned int twizy_max_pwr_hi;      // CFG: max power high speed (W: 0..17000)
 
 #endif // OVMS_TWIZY_CFG
 
@@ -815,21 +822,27 @@ UINT32 scale(UINT32 deflt, UINT32 from, UINT32 to, UINT32 min, UINT32 max)
 //  builds torque/speed curve (SDO 0x4611) for current max values...
 //  - twizy_max_rpm
 //  - twizy_max_trq
-//  - twizy_max_pwr
+//  - twizy_max_pwr_lo
+//  - twizy_max_pwr_hi
+// See "Twizy Powermap Calculator" spreadsheet for details.
 
 rom UINT8 pmap_fib[7] = { 1, 2, 3, 5, 8, 13, 21 };
 rom UINT pmap_defaults[18] = {
   880,0, 880,2115, 659,2700, 608,3000, 516,3500,
   421,4500, 360,5500, 307,6500, 273,7250 };
 
-UINT vehicle_twizy_cfg_makepowermap(void /* twizy_max_rpm, twizy_max_trq, twizy_max_pwr */)
+UINT vehicle_twizy_cfg_makepowermap(void
+  /* twizy_max_rpm, twizy_max_trq, twizy_max_pwr_lo, twizy_max_pwr_hi */)
 {
   UINT err;
   UINT8 i;
-  UINT rpm_0, rpm_d, rpm;
+  UINT rpm_0, rpm;
   UINT trq;
+  UINT pwr;
+  int rpm_d, pwr_d;
 
-  if (twizy_max_rpm == 7250 && twizy_max_trq == 55000 && twizy_max_pwr == 13000) {
+  if (twizy_max_rpm == 7250 && twizy_max_trq == 55000
+    && twizy_max_pwr_lo == 12182 && twizy_max_pwr_hi == 13000) {
 
     // restore default map:
 
@@ -843,8 +856,8 @@ UINT vehicle_twizy_cfg_makepowermap(void /* twizy_max_rpm, twizy_max_trq, twizy_
 
     // calculate constant torque part:
 
-    rpm_0 = (((UINT32)twizy_max_pwr * 9549) / twizy_max_trq);
-    trq = (twizy_max_trq * 16) / 1000;
+    rpm_0 = (((UINT32)twizy_max_pwr_lo * 9549 + (twizy_max_trq>>1)) / twizy_max_trq);
+    trq = (twizy_max_trq * 16 + 500) / 1000;
 
     if (err = writesdo(0x4611,0x01,trq))
       return err;
@@ -857,7 +870,12 @@ UINT vehicle_twizy_cfg_makepowermap(void /* twizy_max_rpm, twizy_max_trq, twizy_
 
     // calculate constant power part:
 
-    rpm_d = (twizy_max_rpm - rpm_0) / pmap_fib[6];
+    if (twizy_max_rpm > rpm_0)
+      rpm_d = (twizy_max_rpm - rpm_0 + (pmap_fib[6]>>1)) / pmap_fib[6];
+    else
+      rpm_d = 0;
+
+    pwr_d = ((int)twizy_max_pwr_hi - (int)twizy_max_pwr_lo + (pmap_fib[5]>>1)) / pmap_fib[5];
 
     for (i=0; i<7; i++) {
 
@@ -866,11 +884,16 @@ UINT vehicle_twizy_cfg_makepowermap(void /* twizy_max_rpm, twizy_max_trq, twizy_
       else
         rpm = twizy_max_rpm;
 
-      trq = ((((UINT32)twizy_max_pwr * 9549) / rpm) * 16) / 1000;
+      if (i<5)
+        pwr = twizy_max_pwr_lo + (pmap_fib[i] * pwr_d);
+      else
+        pwr = twizy_max_pwr_hi;
 
-      if (err = writesdo(0x4611,0x05+(i*2),trq))
+      trq = ((((UINT32)pwr * 9549 + (rpm>>1)) / rpm) * 16 + 500) / 1000;
+
+      if (err = writesdo(0x4611,0x05+(i<<1),trq))
         return err;
-      if (err = writesdo(0x4611,0x06+(i*2),rpm))
+      if (err = writesdo(0x4611,0x06+(i<<1),rpm))
         return err;
 
     }
@@ -913,18 +936,39 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
 
 
   // get max torque for map scaling:
-  if (err = readsdo(0x6076,0x00))
-    return err;
-  twizy_max_trq = twizy_sdo_data;
+
+  if (twizy_max_trq == 0) {
+    if (err = readsdo(0x6076,0x00))
+      return err;
+    twizy_max_trq = twizy_sdo_data;
+  }
 
   // get max power for map scaling:
-  //  the controller does not store max power, derive it from rpm:
-  if (err = readsdo(0x4611,0x04))
-    return err;
-  if (twizy_sdo_data == 2115 && twizy_max_trq == 55000)
-    twizy_max_pwr = 13000; // default
-  else
-    twizy_max_pwr = (UINT)((twizy_sdo_data * twizy_max_trq + (9549/2)) / 9549);
+  //  the controller does not store max power, derive it from rpm/trq:
+
+  if (twizy_max_pwr_lo == 0) {
+    if (err = readsdo(0x4611,0x04))
+      return err;
+    rpm = twizy_sdo_data;
+    if (err = readsdo(0x4611,0x03))
+      return err;
+    if (twizy_sdo_data == 880 && rpm == 2115)
+      twizy_max_pwr_lo = 12182; // default
+    else
+      twizy_max_pwr_lo = (UINT)((((twizy_sdo_data*1000)>>4) * rpm + (9549>>1)) / 9549);
+  }
+
+  if (twizy_max_pwr_hi == 0) {
+    if (err = readsdo(0x4611,0x12))
+      return err;
+    rpm = twizy_sdo_data;
+    if (err = readsdo(0x4611,0x11))
+      return err;
+    if (twizy_sdo_data == 273 && rpm == 7250)
+      twizy_max_pwr_hi = 13000; // default
+    else
+      twizy_max_pwr_hi = (UINT)((((twizy_sdo_data*1000)>>4) * rpm + (9549>>1)) / 9549);
+  }
 
   
   // references:
@@ -957,7 +1001,7 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
     return err;
 
   // rework torque/speed map:
-  twizy_max_rpm = LIMIT_MIN(rpm, 7250);
+  twizy_max_rpm = rpm;
   if (err = vehicle_twizy_cfg_makepowermap())
     return err;
 
@@ -965,11 +1009,14 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
 }
 
 
-UINT vehicle_twizy_cfg_torque(int trq_prc, int pwr_prc)
-// trq_prc: 10..100, -1=reset to default (78%)
-//    78%  = 55.000 Nm
-//    100% = 70.125 Nm
-// pwr_prc: 10..130, -1=reset to default (100%)
+UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc)
+// See "Twizy Powermap Calculator" spreadsheet.
+// trq_prc: 10..130, -1=reset to default (100%)
+//    100% = 55.000 Nm
+//    128% = 70.125 Nm (130 allowed for easy handling)
+// pwr_lo_prc: 10..130, -1=reset to default (100%)
+//    100% = 12182 W
+// pwr_hi_prc: 10..130, -1=reset to default (100%)
 //    100% = 13000 W
 {
   UINT err;
@@ -977,23 +1024,30 @@ UINT vehicle_twizy_cfg_torque(int trq_prc, int pwr_prc)
   // parameter validation:
 
   if (trq_prc == -1)
-    trq_prc = 78;
-  else if (trq_prc < 10 || trq_prc > 100)
+    trq_prc = 100;
+  else if (trq_prc < 10 || trq_prc > 130)
     return ERR_Range + 1;
 
-  if (pwr_prc == -1)
-    pwr_prc = 100;
-  else if (pwr_prc < 10 || pwr_prc > 130)
+  if (pwr_lo_prc == -1)
+    pwr_lo_prc = 100;
+  else if (pwr_lo_prc < 10 || pwr_lo_prc > 130)
     return ERR_Range + 2;
+
+  if (pwr_hi_prc == -1)
+    pwr_hi_prc = 100;
+  else if (pwr_hi_prc < 10 || pwr_hi_prc > 130)
+    return ERR_Range + 3;
 
   // we need pre-op state for the power map manipulation (0x4611):
   if (err = configmode(1))
     return err;
 
   // get max rpm for map scaling:
-  if (err = readsdo(0x4611,0x12))
-    return err;
-  twizy_max_rpm = twizy_sdo_data;
+  if (twizy_max_rpm == 0) {
+    if (err = readsdo(0x4611,0x12))
+      return err;
+    twizy_max_rpm = twizy_sdo_data;
+  }
 
 
   // references:
@@ -1002,18 +1056,19 @@ UINT vehicle_twizy_cfg_torque(int trq_prc, int pwr_prc)
   //    70.125 Nm (0x4610.0x11) = max motor torque according to flux map
 
   // calc peak use torque:
-  twizy_max_trq = scale(55000,78,trq_prc,10000,70125);
+  twizy_max_trq = scale(55000,100,trq_prc,10000,70125);
 
   // set peak use torque:
   if (err = writesdo(0x6076,0x00,twizy_max_trq))
     return err;
 
   // set rated torque too?
-  //if (err = writesdo(0x2916,0x01,scale(57000,78,max_prc,10000,70125)))
+  //if (err = writesdo(0x2916,0x01,scale(57000,100,max_prc,10000,70125)))
   //  return err;
 
   // calc peak use power:
-  twizy_max_pwr = scale(13000,100,pwr_prc,500,17000);
+  twizy_max_pwr_lo = scale(12182,100,pwr_lo_prc,500,17000);
+  twizy_max_pwr_hi = scale(13000,100,pwr_hi_prc,500,17000);
 
   // rework torque/speed map:
   if (err = vehicle_twizy_cfg_makepowermap())
@@ -1025,7 +1080,7 @@ UINT vehicle_twizy_cfg_torque(int trq_prc, int pwr_prc)
 
 UINT vehicle_twizy_cfg_tsmap(char map, int t1_prc, int t2_prc, int t3_prc, int t4_prc)
 // map: 'D'=Drive 'N'=Neutral 'B'=Footbrake
-// t1_prc: 1..100, -1=reset to default (D=100, N/B=100)
+// t1_prc: 0..100, -1=reset to default (D=100, N/B=100)
 // t2_prc: 0..100, -1=reset to default (D=100, N/B=80)
 // t3_prc: 0..100, -1=reset to default (D=100, N/B=50)
 // t4_prc: 0..100, -1=reset to default (D=100, N/B=20)
@@ -1039,7 +1094,7 @@ UINT vehicle_twizy_cfg_tsmap(char map, int t1_prc, int t2_prc, int t3_prc, int t
   if (map != 'D' && map != 'N' && map != 'B')
     return ERR_Range + 1;
 
-  if ((t1_prc != -1) && (t1_prc < 1 || t1_prc > 100))
+  if ((t1_prc != -1) && (t1_prc < 0 || t1_prc > 100))
     return ERR_Range + 2;
 
   if ((t2_prc != -1) && (t2_prc < 0 || t2_prc > 100))
@@ -1098,7 +1153,7 @@ UINT vehicle_twizy_cfg_tsmap(char map, int t1_prc, int t2_prc, int t3_prc, int t
 }
 
 
-UINT vehicle_twizy_cfg_power(int max_prc)
+UINT vehicle_twizy_cfg_drive(int max_prc)
 // max_prc: 10..100, -1=reset to default (100)
 {
   UINT err;
@@ -1279,7 +1334,7 @@ UINT vehicle_twizy_cfg_reset(void)
   // issue reset on every macro command:
   if (err = vehicle_twizy_cfg_speed(-1,-1))
     return err;
-  if (err = vehicle_twizy_cfg_torque(-1,-1))
+  if (err = vehicle_twizy_cfg_power(-1,-1,-1))
     return err;
   if (err = vehicle_twizy_cfg_tsmap('D',-1,-1,-1,-1))
     return err;
@@ -1287,7 +1342,7 @@ UINT vehicle_twizy_cfg_reset(void)
     return err;
   if (err = vehicle_twizy_cfg_tsmap('B',-1,-1,-1,-1))
     return err;
-  if (err = vehicle_twizy_cfg_power(-1))
+  if (err = vehicle_twizy_cfg_drive(-1))
     return err;
   if (err = vehicle_twizy_cfg_recup(-1,-1))
     return err;
@@ -1308,8 +1363,8 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   char *s;
   BOOL go_op_onexit = TRUE;
   
-  UINT arg[5];
-  UINT32 data;
+  int arg[5] = {-1,-1,-1,-1,-1};
+  long data;
   char maps[4] = {'D','N','B',0};
   UINT8 i;
 
@@ -1389,9 +1444,9 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   else if (strncmppgm2ram(cmd, "READ", 4) == 0) {
     // READ index_hex subindex_hex
     if (arguments = net_sms_nextarg(arguments))
-      arg[0] = axtoul(arguments);
+      arg[0] = (int)axtoul(arguments);
     if (arguments = net_sms_nextarg(arguments))
-      arg[1] = axtoul(arguments);
+      arg[1] = (int)axtoul(arguments);
 
     if (!arguments) {
       s = stp_rom(s, "ERROR: Too few args");
@@ -1414,11 +1469,11 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   else if (strncmppgm2ram(cmd, "WRITE", 5) == 0) {
     // WRITE index_hex subindex_hex data_dec
     if (arguments = net_sms_nextarg(arguments))
-      arg[0] = axtoul(arguments);
+      arg[0] = (int)axtoul(arguments);
     if (arguments = net_sms_nextarg(arguments))
-      arg[1] = axtoul(arguments);
+      arg[1] = (int)axtoul(arguments);
     if (arguments = net_sms_nextarg(arguments))
-      data = atoul(arguments);
+      data = atol(arguments);
 
     if (!arguments) {
       s = stp_rom(s, "ERROR: Too few args");
@@ -1453,7 +1508,6 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
   else if (strncmppgm2ram(cmd, "SPEED", 5) == 0) {
     // SPEED [max_kph] [warn_kph]
-    arg[0]=-1; arg[1]=-1;
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
@@ -1471,34 +1525,49 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // debug:
       if (readsdo(0x2920,0x05) == 0)
         s = stp_ul(s, " fwd=", twizy_sdo_data);
-      if (readsdo(0x3813,0x3c) == 0)
+      if (readsdo(0x3813,0x34) == 0)
         s = stp_ul(s, " wrn=", twizy_sdo_data);
 
-      if (readsdo(0x4611,0x04) == 0)
+      if (readsdo(0x4611,0x04) == 0) {
         s = stp_ul(s, " p2=", twizy_sdo_data);
-      if (readsdo(0x4611,0x03) == 0)
-        s = stp_ul(s, ":", twizy_sdo_data);
-      if (readsdo(0x4611,0x06) == 0)
+        if (readsdo(0x4611,0x03) == 0)
+          s = stp_ul(s, ":", twizy_sdo_data);
+      }
+      if (readsdo(0x4611,0x06) == 0) {
         s = stp_ul(s, " p3=", twizy_sdo_data);
-      if (readsdo(0x4611,0x05) == 0)
-        s = stp_ul(s, ":", twizy_sdo_data);
-      if (readsdo(0x4611,0x12) == 0)
+        if (readsdo(0x4611,0x05) == 0)
+          s = stp_ul(s, ":", twizy_sdo_data);
+      }
+      if (readsdo(0x4611,0x10) == 0) {
+        s = stp_ul(s, " p8=", twizy_sdo_data);
+        if (readsdo(0x4611,0x0f) == 0)
+          s = stp_ul(s, ":", twizy_sdo_data);
+      }
+      if (readsdo(0x4611,0x12) == 0) {
         s = stp_ul(s, " p9=", twizy_sdo_data);
-      if (readsdo(0x4611,0x11) == 0)
-        s = stp_ul(s, ":", twizy_sdo_data);
+        if (readsdo(0x4611,0x11) == 0)
+          s = stp_ul(s, ":", twizy_sdo_data);
+      }
     }
   }
 
-  else if (strncmppgm2ram(cmd, "TORQUE", 6) == 0) {
-    // TORQUE [trq_prc] [pwr_prc]
-    arg[0]=-1, arg[1]=-1;
+  else if (strncmppgm2ram(cmd, "POWER", 5) == 0) {
+    // POWER [trq_prc] [pwr_lo_prc] [pwr_hi_prc]
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
+
     if (arguments = net_sms_nextarg(arguments))
       arg[1] = atoi(arguments);
+    else
+      arg[1] = arg[0];
 
-    if (err = vehicle_twizy_cfg_torque(arg[0], arg[1])) {
+    if (arguments = net_sms_nextarg(arguments))
+      arg[2] = atoi(arguments);
+    else
+      arg[2] = arg[1];
+
+    if (err = vehicle_twizy_cfg_power(arg[0], arg[1], arg[2])) {
       s = stp_x(s, "ERROR ", err);
       if (ERROR_IN_SDO(err))
         s = vehicle_twizy_fmt_sdo(s);
@@ -1510,24 +1579,31 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       if (readsdo(0x6076,0x00) == 0)
         s = stp_ul(s, " trq=", twizy_sdo_data);
 
-      if (readsdo(0x4611,0x04) == 0)
+      if (readsdo(0x4611,0x04) == 0) {
         s = stp_ul(s, " p2=", twizy_sdo_data);
-      if (readsdo(0x4611,0x03) == 0)
-        s = stp_ul(s, ":", twizy_sdo_data);
-      if (readsdo(0x4611,0x06) == 0)
+        if (readsdo(0x4611,0x03) == 0)
+          s = stp_ul(s, ":", twizy_sdo_data);
+      }
+      if (readsdo(0x4611,0x06) == 0) {
         s = stp_ul(s, " p3=", twizy_sdo_data);
-      if (readsdo(0x4611,0x05) == 0)
-        s = stp_ul(s, ":", twizy_sdo_data);
-      if (readsdo(0x4611,0x12) == 0)
+        if (readsdo(0x4611,0x05) == 0)
+          s = stp_ul(s, ":", twizy_sdo_data);
+      }
+      if (readsdo(0x4611,0x10) == 0) {
+        s = stp_ul(s, " p8=", twizy_sdo_data);
+        if (readsdo(0x4611,0x0f) == 0)
+          s = stp_ul(s, ":", twizy_sdo_data);
+      }
+      if (readsdo(0x4611,0x12) == 0) {
         s = stp_ul(s, " p9=", twizy_sdo_data);
-      if (readsdo(0x4611,0x11) == 0)
-        s = stp_ul(s, ":", twizy_sdo_data);
+        if (readsdo(0x4611,0x11) == 0)
+          s = stp_ul(s, ":", twizy_sdo_data);
+      }
     }
   }
 
   else if (strncmppgm2ram(cmd, "TSMAP", 5) == 0) {
     // TSMAP [map] [t1_prc] [t2_prc] [t3_prc] [t4_prc]
-    arg[0]=-1, arg[1]=-1, arg[2]=-1, arg[3]=-1;
 
     if (arguments = net_sms_nextarg(arguments)) {
       for (i=0; i<3 && arguments[i]; i++)
@@ -1568,14 +1644,13 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     }
   }
 
-  else if (strncmppgm2ram(cmd, "POWER", 5) == 0) {
-    // POWER [max_prc]
-    arg[0]=-1;
+  else if (strncmppgm2ram(cmd, "DRIVE", 5) == 0) {
+    // DRIVE [max_prc]
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
 
-    if (err = vehicle_twizy_cfg_power(arg[0])) {
+    if (err = vehicle_twizy_cfg_drive(arg[0])) {
       s = stp_x(s, "ERROR ", err);
       if (ERROR_IN_SDO(err))
         s = vehicle_twizy_fmt_sdo(s);
@@ -1591,7 +1666,6 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
   else if (strncmppgm2ram(cmd, "RECUP", 5) == 0) {
     // RECUP [neutral_prc] [brake_prc]
-    arg[0]=-1, arg[1]=-1;
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
@@ -1619,7 +1693,6 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
   else if (strncmppgm2ram(cmd, "RAMPS", 5) == 0) {
     // RAMPS [start_prc] [accel_prc] [decel_prc] [neutral_prc] [brake_prc]
-    arg[0]=-1, arg[1]=-1, arg[2]=-1, arg[3]=-1, arg[4]=-1;
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
@@ -1652,7 +1725,6 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
   else if (strncmppgm2ram(cmd, "SMOOTH", 6) == 0) {
     // SMOOTH [prc]
-    arg[0]=-1;
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
@@ -1675,7 +1747,6 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
   else if (strncmppgm2ram(cmd, "BRAKELIGHT", 10) == 0) {
     // BRAKELIGHT [on_lev] [off_lev]
-    arg[0]=-1, arg[1]=-1;
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
@@ -5140,7 +5211,8 @@ BOOL vehicle_twizy_initialise(void)
 
     twizy_max_rpm = 0;
     twizy_max_trq = 0;
-    twizy_max_pwr = 0;
+    twizy_max_pwr_lo = 0;
+    twizy_max_pwr_hi = 0;
 #endif // OVMS_TWIZY_CFG
 
   }

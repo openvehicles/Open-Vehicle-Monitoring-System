@@ -599,6 +599,8 @@ char *stp_mode(char *dst, const rom char *prefix, unsigned char mode)
   }
 
 
+#ifdef OVMS_ACCMODULE
+
 #define GPSFromDeg(deg) ((long)((deg)*3600L*2048L))
 #define Rad14FromGPS(gps) ((int)((gps)/25783L))   // gives radians * 2^14
 
@@ -685,3 +687,5 @@ int IntCosine14(int rad)
 
  return cos;
 }
+
+#endif
