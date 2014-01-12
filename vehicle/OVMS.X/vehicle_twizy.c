@@ -157,6 +157,7 @@
     - new command: CFG WRITEO (write only)
     - Error counter hardening (counter reset by CFG command)
     - Code readability improvements
+    - SEVCON alerts (highest active fault) via SMS & MSG
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -211,13 +212,18 @@
 #define CMD_PowerUsageNotify        207 // (mode)
 #define CMD_PowerUsageStats         208 // ()
 
+// draft:
+#define CMD_QueryEventLogs          210 // (which)
+#define CMD_ResetEventLogs          211 // (which)
+
+
 // Twizy module version & capabilities:
 rom char vehicle_twizy_version[] = "3.1.1";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
 #else
-rom char vehicle_twizy_capabilities[] = "C6,C200-204,207-208";
+rom char vehicle_twizy_capabilities[] = "C6,C200-204,C207-208";
 #endif // OVMS_TWIZY_BATTMON
 
 
@@ -328,6 +334,8 @@ unsigned long twizy_max_trq;        // CFG: max torque (mNm: 0..70125)
 unsigned int twizy_max_pwr_lo;      // CFG: max power low speed (W: 0..17000)
 unsigned int twizy_max_pwr_hi;      // CFG: max power high speed (W: 0..17000)
 
+unsigned int twizy_sevcon_fault;    // SEVCON highest active fault
+
 #endif // OVMS_TWIZY_CFG
 
 
@@ -339,6 +347,7 @@ volatile UINT8 twizy_notify; // bit set of...
 #define SEND_DataUpdate             0x04  // regular data update (per minute)
 #define SEND_StreamUpdate           0x08  // stream data update (per second)
 #define SEND_BatteryStats           0x10  // separate battery stats (large)
+#define SEND_FaultsAlert            0x20  // text alert: SEVCON fault(s)
 
 
 // -----------------------------------------------
@@ -1997,6 +2006,62 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   return TRUE;
 }
 
+
+
+void vehicle_twizy_faults_prepmsg(void)
+{
+  char *s;
+  UINT8 len;
+
+  // append to net_scratchpad:
+  s = strchr(net_scratchpad, 0);
+
+  // ...fault code:
+  s = stp_x(s, "SEVCON ALERT 0x", twizy_sevcon_fault);
+
+  // ...fault description:
+  if (writesdo(0x5610,0x01,twizy_sevcon_fault) == 0) {
+    if (readsdo_buf(0x5610,0x02,s+1,(len=50,&len)) == 0) {
+      *s = ' ';
+      s += 51-len;
+      *s = 0;
+    }
+  }
+}
+
+
+//
+// CFG MSG COMMAND MAIN (DISPATCHER):
+//
+BOOL vehicle_twizy_cfg_cmd(BOOL msgmode, int cmd, char *arguments)
+{
+  char *s;
+
+  if (cmd == CMD_QueryEventLogs)
+  {
+    // ...todo...
+
+    if (msgmode) {
+      net_msg_encode_puts();
+
+      // msg command response:
+      s = stp_i(net_scratchpad, "MP-0 c", cmd);
+      s = stp_rom(s, ",0");
+      net_msg_encode_puts();
+    }
+    else {
+      net_msg_start();
+      net_msg_encode_puts();
+      net_msg_send();
+    }
+
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+
 #endif // OVMS_TWIZY_CFG
 
 
@@ -2751,6 +2816,33 @@ void vehicle_twizy_notify(void)
     notify_msg = 1;
 
 
+#ifdef OVMS_TWIZY_CFG
+  // Send SEVCON faults alert:
+  if ((twizy_notify & SEND_FaultsAlert))
+  {
+    if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
+    {
+      strcpypgm2ram(net_scratchpad, "MP-0 PA");
+      vehicle_twizy_faults_prepmsg();
+      net_msg_start();
+      net_msg_encode_puts();
+      net_msg_send();
+      twizy_notify &= ~SEND_FaultsAlert;
+    }
+
+    if (notify_sms)
+    {
+      net_scratchpad[0] = 0;
+      vehicle_twizy_faults_prepmsg();
+      net_send_sms_start(par_get(PARAM_REGPHONE));
+      net_puts_ram(net_scratchpad);
+      net_send_sms_finish();
+      twizy_notify &= ~SEND_FaultsAlert;
+    }
+  }
+#endif // OVMS_TWIZY_CFG
+
+
 #ifdef OVMS_TWIZY_BATTMON
   // Send battery alert:
   if ((twizy_notify & SEND_BatteryAlert))
@@ -3234,6 +3326,19 @@ BOOL vehicle_twizy_state_ticker10(void)
   {
     // Clear online flag to test for CAN activity:
     twizy_status &= ~CAN_STATUS_ONLINE;
+
+    // Check for new SEVCON fault:
+    if (readsdo(0x5320,0x00) == 0) {
+      if (twizy_sdo.data == 0) {
+        // reset fault status:
+        twizy_sevcon_fault = 0;
+      }
+      else if (twizy_sdo.data != twizy_sevcon_fault) {
+        // new fault:
+        twizy_sevcon_fault = twizy_sdo.data;
+        twizy_notify |= SEND_FaultsAlert;
+      }
+    }
   }
 
   return FALSE;
@@ -5129,6 +5234,12 @@ BOOL vehicle_twizy_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
   case CMD_PowerUsageStats:
     return vehicle_twizy_power_cmd(msgmode, cmd, msg);
 
+#ifdef OVMS_TWIZY_CFG
+  case CMD_QueryEventLogs:
+  case CMD_ResetEventLogs:
+    return vehicle_twizy_cfg_cmd(msgmode, cmd, msg);
+#endif // OVMS_TWIZY_CFG
+
   }
 
   // not handled
@@ -5356,12 +5467,16 @@ BOOL vehicle_twizy_initialise(void)
     car_parktime = 0;
 
 #ifdef OVMS_TWIZY_CFG
+
     twizy_button_cnt = 0;
 
     twizy_max_rpm = 0;
     twizy_max_trq = 0;
     twizy_max_pwr_lo = 0;
     twizy_max_pwr_hi = 0;
+
+    twizy_sevcon_fault = 0;
+
 #endif // OVMS_TWIZY_CFG
 
   }
