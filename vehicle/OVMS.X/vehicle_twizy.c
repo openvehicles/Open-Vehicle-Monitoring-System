@@ -151,6 +151,13 @@
     - Renamed command "POWER" to "DRIVE"
     - Renamed command "TORQUE" to "POWER", changed param handling
 
+ * 3.1.1  12 Jan 2014 (Michael Balzer)
+    - SDO segmented upload support (readsdo_buf)
+    - new command: CFG READS (read string)
+    - new command: CFG WRITEO (write only)
+    - Error counter hardening (counter reset by CFG command)
+    - Code readability improvements
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -205,7 +212,7 @@
 #define CMD_PowerUsageStats         208 // ()
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.1.0";
+rom char vehicle_twizy_version[] = "3.1.1";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-208";
@@ -448,11 +455,29 @@ volatile UINT8 twizy_batt_sensors_state;
  * Twizy CANopen SDO communication variables
  */
 
-// SDO request:
-volatile UINT8    twizy_sdo_control;      // control/status/command
-volatile UINT     twizy_sdo_index;        // index
-volatile UINT8    twizy_sdo_subindex;     // subindex
-volatile UINT32   twizy_sdo_data;         // payload
+// SDO request/response:
+
+// message structure:
+//    0 = control byte
+//    1+2 = index (little endian)
+//    3 = subindex
+//    4..7 = data (little endian)
+
+volatile union {
+
+  // raw / segment data:
+  UINT8   byte[8];
+
+  // request / expedited:
+  struct {
+    UINT8   control;
+    UINT    index;
+    UINT8   subindex;
+    UINT32  data;
+  };
+
+} twizy_sdo;
+
 
 /* NOTE:
  * the SDO comm could become common functionality by
@@ -461,21 +486,50 @@ volatile UINT32   twizy_sdo_data;         // payload
 
 // Convenience:
 #define readsdo       vehicle_twizy_readsdo
+#define readsdo_buf   vehicle_twizy_readsdo_buf
 #define writesdo      vehicle_twizy_writesdo
 #define login         vehicle_twizy_login
 #define configmode    vehicle_twizy_configmode
 
+// SDO communication codes:
+#define SDO_CommandMask             0b11100000
+#define SDO_ExpeditedUnusedMask     0b00001100
+#define SDO_Expedited               0b00000010
+#define SDO_Abort                   0b10000000
+
+#define SDO_Abort_SegMismatch       0x05030000
+#define SDO_Abort_Timeout           0x05040000
+#define SDO_Abort_OutOfMemory       0x05040005
+
+
+#define SDO_InitUploadRequest       0b01000000
+#define SDO_InitUploadResponse      0b01000000
+
+#define SDO_UploadSegmentRequest    0b01100000
+#define SDO_UploadSegmentResponse   0b00000000
+
+#define SDO_InitDownloadRequest     0b00100000
+#define SDO_InitDownloadResponse    0b01100000
+
+#define SDO_SegmentToggle           0b00010000
+#define SDO_SegmentUnusedMask       0b00001110
+#define SDO_SegmentEnd              0b00000001
+
+
+#define CAN_GeneralError            0x08000000
 
 // I/O level CAN error codes / classes:
 
-#define ERR_NoCANWrite          0x0001
+#define ERR_NoCANWrite              0x0001
+#define ERR_Timeout                 0x000a
 
-#define ERR_ReadSDO             0x0002
-#define ERR_ReadSDO_Timeout     0x0003
-#define ERR_ReadSDO_SegXfer     0x0004
+#define ERR_ReadSDO                 0x0002
+#define ERR_ReadSDO_Timeout         0x0003
+#define ERR_ReadSDO_SegXfer         0x0004
+#define ERR_ReadSDO_SegMismatch     0x0005
 
-#define ERR_WriteSDO            0x0008
-#define ERR_WriteSDO_Timeout    0x0009
+#define ERR_WriteSDO                0x0008
+#define ERR_WriteSDO_Timeout        0x0009
 
 
 // App level CAN error codes / classes:
@@ -523,6 +577,7 @@ vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char *arg
  * Twizy / CANopen SDO utilities
  */
 
+// asynchronous SDO request:
 void vehicle_twizy_sendsdoreq(void)
 {
   // wait for previous async send (if any) to finish:
@@ -539,42 +594,41 @@ void vehicle_twizy_sendsdoreq(void)
   TXB0SIDL = 0b00100000;
 
   // fill in from twizy_sdo:
-  TXB0D0 = twizy_sdo_control;
-  TXB0D1 = (twizy_sdo_index) & 0xff;
-  TXB0D2 = (twizy_sdo_index >> 8) & 0xff;
-  TXB0D3 = twizy_sdo_subindex;
-  TXB0D4 = (twizy_sdo_data) & 0xff;
-  TXB0D5 = (twizy_sdo_data >> 8) & 0xff;
-  TXB0D6 = (twizy_sdo_data >> 16) & 0xff;
-  TXB0D7 = (twizy_sdo_data >> 24) & 0xff;
+  TXB0D0 = twizy_sdo.byte[0];
+  TXB0D1 = twizy_sdo.byte[1];
+  TXB0D2 = twizy_sdo.byte[2];
+  TXB0D3 = twizy_sdo.byte[3];
+  TXB0D4 = twizy_sdo.byte[4];
+  TXB0D5 = twizy_sdo.byte[5];
+  TXB0D6 = twizy_sdo.byte[6];
+  TXB0D7 = twizy_sdo.byte[7];
 
   // data length (8):
   TXB0DLC = 0b00001000;
 
   // clear status to detect reply:
-  twizy_sdo_control = 0;
+  twizy_sdo.control = 0xff;
 
   // send:
   TXB0CON = 0b00001000;
   while (TXB0CONbits.TXREQ) {}
 }
 
-
-// read from SDO:
-UINT vehicle_twizy_readsdo(UINT index, UINT8 subindex)
+// synchronous SDO request (1000 ms timeout, 3 tries):
+UINT vehicle_twizy_sendsdoreq_sync(void)
 {
-  UINT8 timeout, tries;
+  UINT8 control, timeout, tries;
+  UINT32 data;
 
-  if (sys_features[FEATURE_CANWRITE] == 0)
-    return ERR_NoCANWrite;
+  control = twizy_sdo.control;
+  data = twizy_sdo.data;
 
   tries = 3;
   do {
 
-    // SDO init upload request:
-    twizy_sdo_control = 0b01000000;
-    twizy_sdo_index = index;
-    twizy_sdo_subindex = subindex;
+    // send request:
+    twizy_sdo.control = control;
+    twizy_sdo.data = data;
     vehicle_twizy_sendsdoreq();
 
     // wait for reply:
@@ -582,14 +636,14 @@ UINT vehicle_twizy_readsdo(UINT index, UINT8 subindex)
     timeout = 200; // ~1000 ms
     do {
       delay5b();
-    } while (twizy_sdo_control == 0 && --timeout);
+    } while (twizy_sdo.control == 0xff && --timeout);
 
     if (timeout != 0)
       break;
 
     // timeout, abort request:
-    twizy_sdo_control = 0b10000000; // abort
-    twizy_sdo_data = 0x05040000; // protocol timed out
+    twizy_sdo.control = SDO_Abort;
+    twizy_sdo.data = SDO_Abort_Timeout;
     vehicle_twizy_sendsdoreq();
 
     if (tries > 1)
@@ -598,96 +652,182 @@ UINT vehicle_twizy_readsdo(UINT index, UINT8 subindex)
   } while (--tries);
 
   if (timeout == 0)
+    return ERR_Timeout;
+
+  return 0; // ok, response in twizy_sdo_*
+}
+
+
+// read from SDO:
+UINT vehicle_twizy_readsdo(UINT index, UINT8 subindex)
+{
+  UINT8 control;
+
+  if (sys_features[FEATURE_CANWRITE] == 0)
+    return ERR_NoCANWrite;
+
+  // request upload:
+  twizy_sdo.control = SDO_InitUploadRequest;
+  twizy_sdo.index = index;
+  twizy_sdo.subindex = subindex;
+  twizy_sdo.data = 0;
+  if (vehicle_twizy_sendsdoreq_sync() != 0)
     return ERR_ReadSDO_Timeout;
 
-  // check reply status:
-  if ((twizy_sdo_control & 0b11100000) != 0b01000000) {
+  // check response:
+  if ((twizy_sdo.control & SDO_CommandMask) != SDO_InitUploadResponse) {
     // check for CANopen general error:
-    if (twizy_sdo_data == 0x08000000 && index != 0x5310) {
+    if (twizy_sdo.data == CAN_GeneralError && index != 0x5310) {
       // add SEVCON error code:
-      timeout = twizy_sdo_control;
+      control = twizy_sdo.control;
       readsdo(0x5310,0x00);
-      twizy_sdo_control = timeout;
-      twizy_sdo_index = index;
-      twizy_sdo_subindex = subindex;
-      twizy_sdo_data |= 0x08000000;
+      twizy_sdo.control = control;
+      twizy_sdo.index = index;
+      twizy_sdo.subindex = subindex;
+      twizy_sdo.data |= CAN_GeneralError;
     }
     return ERR_ReadSDO;
   }
 
-  // check if segmented xfer necessary (not supported yet):
-  if ((twizy_sdo_control & 0b00000010) != 0b00000010) {
-    // abort request:
-    twizy_sdo_control = 0b10000000; // abort
-    twizy_sdo_data = 0x05040005; // out of memory (for now)
-    vehicle_twizy_sendsdoreq();
-    return ERR_ReadSDO_SegXfer;
+  // if expedited xfer we're done now:
+  if (twizy_sdo.control & SDO_Expedited)
+    return 0;
+
+  // segmented xfer necessary:
+  twizy_sdo.control = SDO_Abort;
+  twizy_sdo.data = SDO_Abort_OutOfMemory;
+  vehicle_twizy_sendsdoreq();
+  return ERR_ReadSDO_SegXfer; // caller needs to use readsdo_buf
+}
+
+
+// read from SDO into buffer (supporting segmented xfer):
+UINT vehicle_twizy_readsdo_buf(UINT index, UINT8 subindex, BYTE *dst, BYTE *maxlen)
+{
+  UINT8 n, toggle, dlen;
+
+  if (sys_features[FEATURE_CANWRITE] == 0)
+    return ERR_NoCANWrite;
+
+  // request upload:
+  twizy_sdo.control = SDO_InitUploadRequest;
+  twizy_sdo.index = index;
+  twizy_sdo.subindex = subindex;
+  twizy_sdo.data = 0;
+  if (vehicle_twizy_sendsdoreq_sync() != 0)
+    return ERR_ReadSDO_Timeout;
+
+  // check response:
+  if ((twizy_sdo.control & SDO_CommandMask) != SDO_InitUploadResponse) {
+    // check for CANopen general error:
+    if (twizy_sdo.data == CAN_GeneralError && index != 0x5310) {
+      // add SEVCON error code:
+      n = twizy_sdo.control;
+      readsdo(0x5310,0x00);
+      twizy_sdo.control = n;
+      twizy_sdo.index = index;
+      twizy_sdo.subindex = subindex;
+      twizy_sdo.data |= CAN_GeneralError;
+    }
+    return ERR_ReadSDO;
   }
 
-  return 0;
+  // check for expedited xfer:
+  if (twizy_sdo.control & SDO_Expedited) {
+
+    // copy twizy_sdo.data to dst:
+    dlen = 8 - ((twizy_sdo.control & SDO_ExpeditedUnusedMask) >> 2);
+    for (n = 4; n < dlen && (*maxlen) > 0; n++, (*maxlen)--)
+      *dst++ = twizy_sdo.byte[n];
+
+    return 0;
+  }
+
+  // segmented xfer necessary:
+
+  toggle = 0;
+
+  do {
+
+    // request segment:
+    twizy_sdo.control = (SDO_UploadSegmentRequest|toggle);
+    twizy_sdo.index = 0;
+    twizy_sdo.subindex = 0;
+    twizy_sdo.data = 0;
+    if (vehicle_twizy_sendsdoreq_sync() != 0)
+      return ERR_ReadSDO_Timeout;
+
+    // check response:
+    if ((twizy_sdo.control & (SDO_CommandMask|SDO_SegmentToggle)) != (SDO_UploadSegmentResponse|toggle)) {
+      // mismatch:
+      twizy_sdo.control = SDO_Abort;
+      twizy_sdo.data = SDO_Abort_SegMismatch;
+      vehicle_twizy_sendsdoreq();
+      return ERR_ReadSDO_SegMismatch;
+    }
+
+    // ok, copy response data to dst:
+    dlen = 8 - ((twizy_sdo.control & SDO_SegmentUnusedMask) >> 1);
+    for (n = 1; n < dlen && (*maxlen) > 0; n++, (*maxlen)--)
+      *dst++ = twizy_sdo.byte[n];
+
+    // last segment fetched? => success!
+    if (twizy_sdo.control & SDO_SegmentEnd)
+      return 0;
+
+    // maxlen reached? => abort xfer
+    if ((*maxlen) == 0) {
+      twizy_sdo.control = SDO_Abort;
+      twizy_sdo.data = SDO_Abort_OutOfMemory;
+      vehicle_twizy_sendsdoreq();
+      return 0; // consider this as success, we read as much as we could
+    }
+
+    // toggle toggle bit:
+    toggle = toggle ? 0 : SDO_SegmentToggle;
+
+  } while(1);
+  // not reached
 }
 
 
 // write to SDO without size indication:
 UINT vehicle_twizy_writesdo(UINT index, UINT8 subindex, UINT32 data)
 {
-  UINT8 timeout, tries;
+  UINT8 control;
 
   if (sys_features[FEATURE_CANWRITE] == 0)
     return ERR_NoCANWrite;
 
-  tries = 3;
-  do {
-
-    // SDO init download request:
-    twizy_sdo_control = 0b00100010; // no size needed, server is smart
-    twizy_sdo_index = index;
-    twizy_sdo_subindex = subindex;
-    twizy_sdo_data = data;
-    vehicle_twizy_sendsdoreq();
-
-    // wait for reply:
-    ClrWdt();
-    timeout = 200; // ~1000 ms
-    do {
-      delay5b();
-    } while (twizy_sdo_control == 0 && --timeout);
-
-    if (timeout != 0)
-      break;
-
-    // timeout, abort request:
-    twizy_sdo_control = 0b10000000; // abort
-    twizy_sdo_data = 0x05040000; // protocol timed out
-    vehicle_twizy_sendsdoreq();
-
-    if (tries > 1)
-      delay5(4);
-
-  } while (--tries);
-
-  if (timeout == 0)
+  // request download:
+  twizy_sdo.control = SDO_InitDownloadRequest | SDO_Expedited; // no size needed, server is smart
+  twizy_sdo.index = index;
+  twizy_sdo.subindex = subindex;
+  twizy_sdo.data = data;
+  if (vehicle_twizy_sendsdoreq_sync() != 0)
     return ERR_WriteSDO_Timeout;
 
-  // check reply status:
-  if ((twizy_sdo_control & 0b11100000) != 0b01100000) {
+  // check response:
+  if ((twizy_sdo.control & SDO_CommandMask) != SDO_InitDownloadResponse) {
     // check for CANopen general error:
-    if (twizy_sdo_data == 0x08000000) {
+    if (twizy_sdo.data == CAN_GeneralError) {
       // add SEVCON error code:
-      timeout = twizy_sdo_control;
+      control = twizy_sdo.control;
       readsdo(0x5310,0x00);
-      twizy_sdo_control = timeout;
-      twizy_sdo_index = index;
-      twizy_sdo_subindex = subindex;
-      twizy_sdo_data |= 0x08000000;
+      twizy_sdo.control = control;
+      twizy_sdo.index = index;
+      twizy_sdo.subindex = subindex;
+      twizy_sdo.data |= CAN_GeneralError;
     }
     return ERR_WriteSDO;
   }
 
+  // success
   return 0;
 }
 
 
+// SEVCON login/logout (access level 4):
 UINT vehicle_twizy_login(BOOL on)
 {
   UINT err;
@@ -696,7 +836,7 @@ UINT vehicle_twizy_login(BOOL on)
   if (err = readsdo(0x5000,1))
     return ERR_LoginFailed + err;
 
-  if (on && twizy_sdo_data != 4) {
+  if (on && twizy_sdo.data != 4) {
     // login:
     writesdo(0x5000,3,0);
     if (err = writesdo(0x5000,2,0x4bdf))
@@ -705,11 +845,11 @@ UINT vehicle_twizy_login(BOOL on)
     // check new level:
     if (err = readsdo(0x5000,1))
       return ERR_LoginFailed + err;
-    if (twizy_sdo_data != 4)
+    if (twizy_sdo.data != 4)
       return ERR_LoginFailed;
   }
 
-  else if (!on && twizy_sdo_data != 0) {
+  else if (!on && twizy_sdo.data != 0) {
     // logout:
     writesdo(0x5000,3,0);
     if (err = writesdo(0x5000,2,0))
@@ -718,7 +858,7 @@ UINT vehicle_twizy_login(BOOL on)
     // check new level:
     if (err = readsdo(0x5000,1))
       return ERR_LoginFailed + err;
-    if (twizy_sdo_data != 0)
+    if (twizy_sdo.data != 0)
       return ERR_LoginFailed;
   }
 
@@ -726,6 +866,7 @@ UINT vehicle_twizy_login(BOOL on)
 }
 
 
+// SEVCON state change operational/pre-operational:
 UINT vehicle_twizy_configmode(BOOL on)
 {
   UINT err, cnt;
@@ -750,7 +891,7 @@ UINT vehicle_twizy_configmode(BOOL on)
     if (err = readsdo(0x5110,0))
       return ERR_CfgModeFailed + err;
 
-    if (twizy_sdo_data != 127) {
+    if (twizy_sdo.data != 127) {
 
       // request preoperational state:
       if (err = writesdo(0x2800,0,1))
@@ -763,7 +904,7 @@ UINT vehicle_twizy_configmode(BOOL on)
       if (err = readsdo(0x5110,0))
         return ERR_CfgModeFailed + err;
 
-      if (twizy_sdo_data != 127) {
+      if (twizy_sdo.data != 127) {
         // reset preop state request:
         if (err = writesdo(0x2800,0,0))
           return ERR_CfgModeFailed + err;
@@ -783,20 +924,6 @@ UINT vehicle_twizy_configmode(BOOL on)
  *  SMS: CFG [cmd]
  *
  */
-
-char *vehicle_twizy_fmt_sdo(char *s)
-{
-  s = stp_rom(s, " SDO ");
-  if ((twizy_sdo_control & 0b11100000) == 0b10000000)
-    s = stp_rom(s, "ABORT ");
-  s = stp_x(s, "0x", twizy_sdo_index);
-  s = stp_sx(s, ".", twizy_sdo_subindex);
-  if (twizy_sdo_data > 0x0ffff)
-    s = stp_lx(s, ": 0x", twizy_sdo_data);
-  else
-    s = stp_x(s, ": 0x", twizy_sdo_data);
-  return s;
-}
 
 
 UINT32 scale(UINT32 deflt, UINT32 from, UINT32 to, UINT32 min, UINT32 max)
@@ -940,7 +1067,7 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
   if (twizy_max_trq == 0) {
     if (err = readsdo(0x6076,0x00))
       return err;
-    twizy_max_trq = twizy_sdo_data;
+    twizy_max_trq = twizy_sdo.data;
   }
 
   // get max power for map scaling:
@@ -949,25 +1076,25 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
   if (twizy_max_pwr_lo == 0) {
     if (err = readsdo(0x4611,0x04))
       return err;
-    rpm = twizy_sdo_data;
+    rpm = twizy_sdo.data;
     if (err = readsdo(0x4611,0x03))
       return err;
-    if (twizy_sdo_data == 880 && rpm == 2115)
+    if (twizy_sdo.data == 880 && rpm == 2115)
       twizy_max_pwr_lo = 12182; // default
     else
-      twizy_max_pwr_lo = (UINT)((((twizy_sdo_data*1000)>>4) * rpm + (9549>>1)) / 9549);
+      twizy_max_pwr_lo = (UINT)((((twizy_sdo.data*1000)>>4) * rpm + (9549>>1)) / 9549);
   }
 
   if (twizy_max_pwr_hi == 0) {
     if (err = readsdo(0x4611,0x12))
       return err;
-    rpm = twizy_sdo_data;
+    rpm = twizy_sdo.data;
     if (err = readsdo(0x4611,0x11))
       return err;
-    if (twizy_sdo_data == 273 && rpm == 7250)
+    if (twizy_sdo.data == 273 && rpm == 7250)
       twizy_max_pwr_hi = 13000; // default
     else
-      twizy_max_pwr_hi = (UINT)((((twizy_sdo_data*1000)>>4) * rpm + (9549>>1)) / 9549);
+      twizy_max_pwr_hi = (UINT)((((twizy_sdo.data*1000)>>4) * rpm + (9549>>1)) / 9549);
   }
 
   
@@ -1046,7 +1173,7 @@ UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc)
   if (twizy_max_rpm == 0) {
     if (err = readsdo(0x4611,0x12))
       return err;
-    twizy_max_rpm = twizy_sdo_data;
+    twizy_max_rpm = twizy_sdo.data;
   }
 
 
@@ -1315,10 +1442,10 @@ UINT vehicle_twizy_cfg_brakelight(int on_lev, int off_lev)
   if (err = readsdo(0x2910,0x01))
     return err;
   if (on_lev != 100 || off_lev != 100)
-    twizy_sdo_data |= 0x2000;
+    twizy_sdo.data |= 0x2000;
   else
-    twizy_sdo_data &= ~0x2000;
-  if (err = writesdo(0x2910,0x01,twizy_sdo_data))
+    twizy_sdo.data &= ~0x2000;
+  if (err = writesdo(0x2910,0x01,twizy_sdo.data))
     return err;
 
   return 0;
@@ -1357,6 +1484,52 @@ UINT vehicle_twizy_cfg_reset(void)
 }
 
 
+// utility: output SDO to string:
+char *vehicle_twizy_fmt_sdo(char *s)
+{
+  s = stp_rom(s, " SDO ");
+  if ((twizy_sdo.control & 0b11100000) == 0b10000000)
+    s = stp_rom(s, "ABORT ");
+  s = stp_x(s, "0x", twizy_sdo.index);
+  s = stp_sx(s, ".", twizy_sdo.subindex);
+  if (twizy_sdo.data > 0x0ffff)
+    s = stp_lx(s, ": 0x", twizy_sdo.data);
+  else
+    s = stp_x(s, ": 0x", twizy_sdo.data);
+  return s;
+}
+
+
+// utility: output power map debug info to string:
+char *vehicle_twizy_fmt_powermap(char *s)
+{
+  if (readsdo(0x4611,0x04) == 0) {
+    s = stp_ul(s, " p2=", twizy_sdo.data);
+    if (readsdo(0x4611,0x03) == 0)
+      s = stp_ul(s, ":", twizy_sdo.data);
+  }
+  if (readsdo(0x4611,0x06) == 0) {
+    s = stp_ul(s, " p3=", twizy_sdo.data);
+    if (readsdo(0x4611,0x05) == 0)
+      s = stp_ul(s, ":", twizy_sdo.data);
+  }
+  if (readsdo(0x4611,0x10) == 0) {
+    s = stp_ul(s, " p8=", twizy_sdo.data);
+    if (readsdo(0x4611,0x0f) == 0)
+      s = stp_ul(s, ":", twizy_sdo.data);
+  }
+  if (readsdo(0x4611,0x12) == 0) {
+    s = stp_ul(s, " p9=", twizy_sdo.data);
+    if (readsdo(0x4611,0x11) == 0)
+      s = stp_ul(s, ":", twizy_sdo.data);
+  }
+  return s;
+}
+
+
+//
+// CFG SMS COMMAND MAIN (DISPATCHER):
+//
 BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments)
 {
   UINT err;
@@ -1443,6 +1616,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
   else if (strncmppgm2ram(cmd, "READ", 4) == 0) {
     // READ index_hex subindex_hex
+    // READS[TR] index_hex subindex_hex
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = (int)axtoul(arguments);
     if (arguments = net_sms_nextarg(arguments))
@@ -1452,14 +1626,31 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       s = stp_rom(s, "ERROR: Too few args");
     }
     else {
-      if (err = readsdo(arg[0], arg[1])) {
-        s = stp_x(s, "ERROR ", err);
-        if (ERROR_IN_SDO(err))
+      if (cmd[4] != 'S') {
+        // READ:
+        if (err = readsdo(arg[0], arg[1])) {
+          s = stp_x(s, "ERROR ", err);
+          if (ERROR_IN_SDO(err))
+            s = vehicle_twizy_fmt_sdo(s);
+        }
+        else {
           s = vehicle_twizy_fmt_sdo(s);
+          s = stp_ul(s, " = ", twizy_sdo.data);
+        }
       }
       else {
-        s = vehicle_twizy_fmt_sdo(s);
-        s = stp_ul(s, " = ", twizy_sdo_data);
+        // READS: SMS intro 'CFG READS: 0x1234.56=' = 21 chars, 139 remaining
+        if (err = readsdo_buf(arg[0], arg[1], net_msg_scratchpad, (i=139, &i))) {
+          s = stp_x(s, "ERROR ", err);
+          if (ERROR_IN_SDO(err))
+            s = vehicle_twizy_fmt_sdo(s);
+        }
+        else {
+          net_msg_scratchpad[139-i] = 0;
+          s = stp_x(s, "0x", arg[0]);
+          s = stp_sx(s, ".", arg[1]);
+          s = stp_s(s, "=", net_msg_scratchpad);
+        }
       }
     }
 
@@ -1468,6 +1659,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
   else if (strncmppgm2ram(cmd, "WRITE", 5) == 0) {
     // WRITE index_hex subindex_hex data_dec
+    // WRITEO[NLY] index_hex subindex_hex data_dec
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = (int)axtoul(arguments);
     if (arguments = net_sms_nextarg(arguments))
@@ -1479,17 +1671,9 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       s = stp_rom(s, "ERROR: Too few args");
     }
     else {
-      // read old value:
-      if (err = readsdo(arg[0], arg[1])) {
-        s = stp_x(s, "ERROR ", err);
-        if (ERROR_IN_SDO(err))
-          s = vehicle_twizy_fmt_sdo(s);
-      }
-      else {
-        // read ok:
-        s = stp_rom(s, "OLD:");
-        s = vehicle_twizy_fmt_sdo(s);
-        s = stp_ul(s, " = ", twizy_sdo_data);
+
+      if (cmd[5] == 'O') {
+        // WRITEONLY:
 
         // write new value:
         if (err = writesdo(arg[0], arg[1], data)) {
@@ -1498,7 +1682,35 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
             s = vehicle_twizy_fmt_sdo(s);
         }
         else {
-          s = stp_ul(s, " => NEW: ", data);
+          s = stp_rom(s, "OK: ");
+          s = vehicle_twizy_fmt_sdo(s);
+        }
+      }
+      
+      else {
+        // READ-WRITE:
+
+        // read old value:
+        if (err = readsdo(arg[0], arg[1])) {
+          s = stp_x(s, "ERROR ", err);
+          if (ERROR_IN_SDO(err))
+            s = vehicle_twizy_fmt_sdo(s);
+        }
+        else {
+          // read ok:
+          s = stp_rom(s, "OLD:");
+          s = vehicle_twizy_fmt_sdo(s);
+          s = stp_ul(s, " = ", twizy_sdo.data);
+
+          // write new value:
+          if (err = writesdo(arg[0], arg[1], data)) {
+            s = stp_x(s, " ERROR ", err);
+            if (ERROR_IN_SDO(err))
+              s = vehicle_twizy_fmt_sdo(s);
+          }
+          else {
+            s = stp_ul(s, " => NEW: ", data);
+          }
         }
       }
     }
@@ -1524,30 +1736,10 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x2920,0x05) == 0)
-        s = stp_ul(s, " fwd=", twizy_sdo_data);
+        s = stp_ul(s, " fwd=", twizy_sdo.data);
       if (readsdo(0x3813,0x34) == 0)
-        s = stp_ul(s, " wrn=", twizy_sdo_data);
-
-      if (readsdo(0x4611,0x04) == 0) {
-        s = stp_ul(s, " p2=", twizy_sdo_data);
-        if (readsdo(0x4611,0x03) == 0)
-          s = stp_ul(s, ":", twizy_sdo_data);
-      }
-      if (readsdo(0x4611,0x06) == 0) {
-        s = stp_ul(s, " p3=", twizy_sdo_data);
-        if (readsdo(0x4611,0x05) == 0)
-          s = stp_ul(s, ":", twizy_sdo_data);
-      }
-      if (readsdo(0x4611,0x10) == 0) {
-        s = stp_ul(s, " p8=", twizy_sdo_data);
-        if (readsdo(0x4611,0x0f) == 0)
-          s = stp_ul(s, ":", twizy_sdo_data);
-      }
-      if (readsdo(0x4611,0x12) == 0) {
-        s = stp_ul(s, " p9=", twizy_sdo_data);
-        if (readsdo(0x4611,0x11) == 0)
-          s = stp_ul(s, ":", twizy_sdo_data);
-      }
+        s = stp_ul(s, " wrn=", twizy_sdo.data);
+      s = vehicle_twizy_fmt_powermap(s);
     }
   }
 
@@ -1577,28 +1769,8 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x6076,0x00) == 0)
-        s = stp_ul(s, " trq=", twizy_sdo_data);
-
-      if (readsdo(0x4611,0x04) == 0) {
-        s = stp_ul(s, " p2=", twizy_sdo_data);
-        if (readsdo(0x4611,0x03) == 0)
-          s = stp_ul(s, ":", twizy_sdo_data);
-      }
-      if (readsdo(0x4611,0x06) == 0) {
-        s = stp_ul(s, " p3=", twizy_sdo_data);
-        if (readsdo(0x4611,0x05) == 0)
-          s = stp_ul(s, ":", twizy_sdo_data);
-      }
-      if (readsdo(0x4611,0x10) == 0) {
-        s = stp_ul(s, " p8=", twizy_sdo_data);
-        if (readsdo(0x4611,0x0f) == 0)
-          s = stp_ul(s, ":", twizy_sdo_data);
-      }
-      if (readsdo(0x4611,0x12) == 0) {
-        s = stp_ul(s, " p9=", twizy_sdo_data);
-        if (readsdo(0x4611,0x11) == 0)
-          s = stp_ul(s, ":", twizy_sdo_data);
-      }
+        s = stp_ul(s, " trq=", twizy_sdo.data);
+      s = vehicle_twizy_fmt_powermap(s);
     }
   }
 
@@ -1636,11 +1808,11 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x3813,0x24+6) == 0)
-        s = stp_ul(s, " D4=", twizy_sdo_data);
+        s = stp_ul(s, " D4=", twizy_sdo.data);
       if (readsdo(0x3813,0x1b+6) == 0)
-        s = stp_ul(s, " N4=", twizy_sdo_data);
+        s = stp_ul(s, " N4=", twizy_sdo.data);
       if (readsdo(0x3813,0x07+6) == 0)
-        s = stp_ul(s, " B4=", twizy_sdo_data);
+        s = stp_ul(s, " B4=", twizy_sdo.data);
     }
   }
 
@@ -1660,7 +1832,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x2920,0x01) == 0)
-        s = stp_ul(s, " pow=", twizy_sdo_data);
+        s = stp_ul(s, " pow=", twizy_sdo.data);
     }
   }
 
@@ -1685,9 +1857,9 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x2920,0x03) == 0)
-        s = stp_ul(s, " ntr=", twizy_sdo_data);
+        s = stp_ul(s, " ntr=", twizy_sdo.data);
       if (readsdo(0x2920,0x04) == 0)
-        s = stp_ul(s, " brk=", twizy_sdo_data);
+        s = stp_ul(s, " brk=", twizy_sdo.data);
     }
   }
 
@@ -1715,11 +1887,11 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x291c,0x02) == 0)
-        s = stp_ul(s, " rpst=", twizy_sdo_data);
+        s = stp_ul(s, " rpst=", twizy_sdo.data);
       if (readsdo(0x2920,0x07) == 0)
-        s = stp_ul(s, " rpac=", twizy_sdo_data);
+        s = stp_ul(s, " rpac=", twizy_sdo.data);
       if (readsdo(0x2920,0x0e) == 0)
-        s = stp_ul(s, " rpbk=", twizy_sdo_data);
+        s = stp_ul(s, " rpbk=", twizy_sdo.data);
     }
   }
 
@@ -1739,9 +1911,9 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x290a,0x01) == 0)
-        s = stp_ul(s, " scrv=", twizy_sdo_data);
+        s = stp_ul(s, " scrv=", twizy_sdo.data);
       if (readsdo(0x290a,0x03) == 0)
-        s = stp_ul(s, " srmp=", twizy_sdo_data);
+        s = stp_ul(s, " srmp=", twizy_sdo.data);
     }
   }
 
@@ -1766,9 +1938,9 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x3813,0x06) == 0)
-        s = stp_ul(s, " bon=", twizy_sdo_data);
+        s = stp_ul(s, " bon=", twizy_sdo.data);
       if (readsdo(0x2910,0x01) == 0)
-        s = stp_x(s, " flgs=", twizy_sdo_data);
+        s = stp_x(s, " flgs=", twizy_sdo.data);
     }
   }
 
@@ -1784,20 +1956,20 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x2920,0x05) == 0)
-        s = stp_ul(s, " fwd=", twizy_sdo_data);
+        s = stp_ul(s, " fwd=", twizy_sdo.data);
       if (readsdo(0x6076,0x00) == 0)
-        s = stp_ul(s, " trq=", twizy_sdo_data);
+        s = stp_ul(s, " trq=", twizy_sdo.data);
 
       if (readsdo(0x4611,0x04) == 0)
-        s = stp_ul(s, " p2=", twizy_sdo_data);
+        s = stp_ul(s, " p2=", twizy_sdo.data);
       if (readsdo(0x4611,0x03) == 0)
-        s = stp_ul(s, ":", twizy_sdo_data);
+        s = stp_ul(s, ":", twizy_sdo.data);
 
       if (readsdo(0x2920,0x03) == 0)
-        s = stp_ul(s, " ntr=", twizy_sdo_data);
+        s = stp_ul(s, " ntr=", twizy_sdo.data);
 
       if (readsdo(0x291c,0x02) == 0)
-        s = stp_ul(s, " rpst=", twizy_sdo_data);
+        s = stp_ul(s, " rpst=", twizy_sdo.data);
     }
   }
 
@@ -1811,6 +1983,9 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     configmode(0);
 
   // logout should not be needed here
+
+  // reset error counter to inhibit unwanted resets:
+  twizy_button_cnt = 0;
 
   if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
     return FALSE; // handled, but no SMS has been started
@@ -2052,7 +2227,6 @@ BOOL vehicle_twizy_poll0(void)
 {
   unsigned int t;
   unsigned char u;
-  unsigned long v;
 
 
 #ifdef OVMS_CANSIM
@@ -2171,37 +2345,12 @@ BOOL vehicle_twizy_poll0(void)
        * FILTER 1:
        * CAN ID 0x581: CANopen SDO reply from SEVCON (Node #1)
        */
-      // message structure:
-      //    0 = control byte
-      //    1+2 = index (little endian)
-      //    3 = subindex
-      //    4..7 = data (little endian)
 
-      // check if index/subindex match our request:
-      t = CAN_BYTE(1) + ((unsigned int)CAN_BYTE(2) << 8);
-      u = CAN_BYTE(3);
-
-      if (t == twizy_sdo_index && u == twizy_sdo_subindex)
-      {
-        // OK, get data:
-        v = 0;
-        switch (CAN_BYTE(0) & 0b00001100) // size / unused bytes
-        {
-        case 0b00000000:
-          v |= (unsigned long)CAN_BYTE(7) << 24;
-        case 0b00000100:
-          v |= (unsigned long)CAN_BYTE(6) << 16;
-        case 0b00001000:
-          v |= (unsigned long)CAN_BYTE(5) << 8;
-        case 0b00001100:
-          v |= (unsigned long)CAN_BYTE(4);
-        }
-        twizy_sdo_data = v;
-
-        // get status:
-        twizy_sdo_control = CAN_BYTE(0);
-      }
-
+      // copy message into twizy_sdo object:
+      for (u = 0; u < can_datalength; u++)
+        twizy_sdo.byte[u] = CAN_BYTE(u);
+      for (; u < 8; u++)
+        twizy_sdo.byte[u] = 0;
     }
 
   }
@@ -3047,8 +3196,8 @@ BOOL vehicle_twizy_state_ticker1(void)
   {
     // pre-op also sends a CAN error, so for button_cnt >= 1
     // check if we're stuck in pre-op state:
-    if ((readsdo(0x5110,0x00) == 0) && (twizy_sdo_data == 0x7f)
-      && (readsdo(0x5000,0x01) == 0) && (twizy_sdo_data != 4)) {
+    if ((readsdo(0x5110,0x00) == 0) && (twizy_sdo.data == 0x7f)
+      && (readsdo(0x5000,0x01) == 0) && (twizy_sdo.data != 4)) {
       // we're in pre-op but not logged in, try to solve:
       if ((login(1) == 0) && (configmode(0) == 0))
         twizy_button_cnt = 0; // solved
