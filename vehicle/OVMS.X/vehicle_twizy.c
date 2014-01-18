@@ -159,6 +159,10 @@
     - Code readability improvements
     - SEVCON alerts (highest active fault) via SMS & MSG
 
+ * 3.1.2  18 Jan 2014 (Michael Balzer)
+    - new command: MSG 209 = CMD_ResetLogs
+    - new command: MSG 210 = CMD_QueryLogs
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -211,19 +215,16 @@
 #define CMD_BatteryStatus           206 // ()
 #define CMD_PowerUsageNotify        207 // (mode)
 #define CMD_PowerUsageStats         208 // ()
-
-// draft:
-#define CMD_QueryEventLogs          210 // (which)
-#define CMD_ResetEventLogs          211 // (which)
-
+#define CMD_ResetLogs               209 // (which, start)
+#define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.1.1";
+rom char vehicle_twizy_version[] = "3.1.2";
 
 #ifdef OVMS_TWIZY_BATTMON
-rom char vehicle_twizy_capabilities[] = "C6,C200-208";
+rom char vehicle_twizy_capabilities[] = "C6,C200-210";
 #else
-rom char vehicle_twizy_capabilities[] = "C6,C200-204,C207-208";
+rom char vehicle_twizy_capabilities[] = "C6,C200-204,C207-210";
 #endif // OVMS_TWIZY_BATTMON
 
 
@@ -2030,35 +2031,324 @@ void vehicle_twizy_faults_prepmsg(void)
 }
 
 
-//
-// CFG MSG COMMAND MAIN (DISPATCHER):
-//
-BOOL vehicle_twizy_cfg_cmd(BOOL msgmode, int cmd, char *arguments)
+/**
+ * CMD_QueryLogs:
+ * 
+ * Arguments: which=1 [start=0]
+ * 
+ *  which: 1=Alerts, 2=Faults FIFO, 3=System FIFO, 4=Event counter, 5=Min/max monitor
+ *    default=1
+ *    reset: 1 cannot be reset, 99 = reset all
+ *
+ *  start: first entry to fetch, default=0 (returns max 10 entries per call)
+ *    reset: start irrelevant
+ * 
+ */
+
+
+// util: string-print SEVCON fault code + description:
+char *stp_sevcon_fault(char *s, const rom char *prefix, UINT code)
 {
-  char *s;
-
-  if (cmd == CMD_QueryEventLogs)
-  {
-    // ...todo...
-
-    if (msgmode) {
-      net_msg_encode_puts();
-
-      // msg command response:
-      s = stp_i(net_scratchpad, "MP-0 c", cmd);
-      s = stp_rom(s, ",0");
-      net_msg_encode_puts();
+  UINT8 len;
+  
+  // add fault code:
+  s = stp_x(s, prefix, code);
+  *s++ = ',';
+  
+  // add fault description (',' replaced by ';'):
+  if ((code > 0) && (writesdo(0x5610,0x01,code) == 0)) {
+    if (readsdo_buf(0x5610,0x02,s,(len=50,&len)) == 0) {
+      for (; len<50 && *s; len++, s++)
+        if (*s==',') *s=';';
     }
-    else {
-      net_msg_start();
-      net_msg_encode_puts();
-      net_msg_send();
-    }
+  }
+  
+  *s = 0;
+  return s;
+}
 
-    return TRUE;
+
+UINT vehicle_twizy_resetlogs_msgp(UINT8 which, UINT8 *retcnt)
+{
+  UINT err;
+  UINT8 n, cnt=0;
+
+  // login necessary:
+  if (which > 1) {
+    if (err = login(1))
+      return err;
   }
 
-  return FALSE;
+  /* Alerts (active faults):
+   * cannot be reset (just by power cycle)
+   */
+  if (which == 1 || which == 99) {
+    // get cnt anyway:
+    if (readsdo(0x5300,0x01) == 0)
+      cnt = twizy_sdo.data;
+  }
+
+  /* Faults FIFO: */
+  if (which == 2 || which == 99) {
+    err = writesdo(0x4110,0x01,1);
+    // get new cnt:
+    if (readsdo(0x4110,0x02) == 0)
+      cnt = twizy_sdo.data;
+  }
+
+  /* System FIFO: */
+  if ((!err) && (which == 3 || which == 99)) {
+    err = writesdo(0x4100,0x01,1);
+    // get new cnt:
+    if (readsdo(0x4100,0x02) == 0)
+      cnt = twizy_sdo.data;
+  }
+
+  /* Event counter: */
+  if ((!err) && (which == 4 || which == 99)) {
+    err = writesdo(0x4200,0x01,1);
+    cnt = 10;
+  }
+
+  /* Min / max monitor: */
+  if ((!err) && (which == 5 || which == 99)) {
+    err = writesdo(0x4300,0x01,1);
+    cnt = 2;
+  }
+
+  if (retcnt)
+    *retcnt = cnt;
+  return err;
+}
+
+
+UINT vehicle_twizy_querylogs_msgp(UINT8 which, UINT8 start, UINT8 *retcnt)
+{
+  char *s;
+  UINT err;
+  UINT8 n, len, cnt;
+
+  // login necessary for FIFOs and counters:
+  if (which > 1 && which < 5) {
+    if (err = login(1))
+      return err;
+  }
+
+
+  /* Key time:
+      MP-0 HRT-ENG-LogKeyTime
+	,0,86400
+	,<KeyHour>,<KeyMinSec>
+   */
+  s = stp_rom(net_scratchpad, "MP-0 HRT-ENG-LogKeyTime,0,86400");
+  if (err = readsdo(0x5200,0x01)) return err;
+  s = stp_i(s, ",", twizy_sdo.data);
+  if (err = readsdo(0x5200,0x02)) return err;
+  s = stp_i(s, ",", twizy_sdo.data);
+  net_msg_encode_puts();
+
+
+  /* Alerts (active faults):
+      MP-0 HRT-ENG-LogAlerts
+              ,<n>,86400
+              ,<Code>,<Description>
+   */
+  if (which == 1) {
+    if (readsdo(0x5300,0x01) == 0)
+    cnt = twizy_sdo.data;
+    for (n=start; n<cnt && n<(start+10); n++) {
+      if (err = writesdo(0x5300,0x02,n)) break;
+      if (err = readsdo(0x5300,0x03)) break;
+      s = stp_i(net_scratchpad, "MP-0 HRT-ENG-LogAlerts,", n);
+      s = stp_sevcon_fault(s, ",86400,", twizy_sdo.data);
+      net_msg_encode_puts();
+    }
+  }
+
+
+  /* Faults FIFO:
+      MP-0 HRT-ENG-LogFaults
+              ,<n>,86400
+              ,<Code>,<Description>
+              ,<TimeHour>,<TimeMinSec>
+              ,<Data1>,<Data2>,<Data3>
+   */
+  else if (which == 2) {
+    if (readsdo(0x4110,0x02) == 0)
+    cnt = twizy_sdo.data;
+    for (n=start; n<cnt && n<(start+10); n++) {
+      if (err = writesdo(0x4111,0x00,n)) break;
+      if (err = readsdo(0x4112,0x01)) break;
+      s = stp_i(net_scratchpad, "MP-0 HRT-ENG-LogFaults,", n);
+      s = stp_sevcon_fault(s, ",86400,", twizy_sdo.data);
+      readsdo(0x4112,0x02);
+      s = stp_i(s, ",", twizy_sdo.data);
+      readsdo(0x4112,0x03);
+      s = stp_i(s, ",", twizy_sdo.data);
+      readsdo(0x4112,0x04);
+      s = stp_sx(s, ",", twizy_sdo.data);
+      readsdo(0x4112,0x05);
+      s = stp_sx(s, ",", twizy_sdo.data);
+      readsdo(0x4112,0x06);
+      s = stp_sx(s, ",", twizy_sdo.data);
+      net_msg_encode_puts();
+    }
+  }
+
+
+  /* System FIFO:
+      MP-0 HRT-ENG-LogSystem
+              ,<n>,86400
+              ,<Code>,<Description>
+              ,<TimeHour>,<TimeMinSec>
+              ,<Data1>,<Data2>,<Data3>
+   */
+  else if (which == 3) {
+    if (readsdo(0x4100,0x02) == 0)
+    cnt = twizy_sdo.data;
+    for (n=start; n<cnt && n<(start+10); n++) {
+      if (err = writesdo(0x4101,0x00,n)) break;
+      if (err = readsdo(0x4102,0x01)) break;
+      s = stp_i(net_scratchpad, "MP-0 HRT-ENG-LogSystem,", n);
+      s = stp_sevcon_fault(s, ",86400,", twizy_sdo.data);
+      readsdo(0x4102,0x02);
+      s = stp_i(s, ",", twizy_sdo.data);
+      readsdo(0x4102,0x03);
+      s = stp_i(s, ",", twizy_sdo.data);
+      readsdo(0x4102,0x04);
+      s = stp_sx(s, ",", twizy_sdo.data);
+      readsdo(0x4102,0x05);
+      s = stp_sx(s, ",", twizy_sdo.data);
+      readsdo(0x4102,0x06);
+      s = stp_sx(s, ",", twizy_sdo.data);
+      net_msg_encode_puts();
+    }
+  }
+
+
+  /* Event counter:
+      MP-0 HRT-ENG-LogCounts
+	,<n>,86400
+	,<Code>,<Description>
+	,<LastTimeHour>,<LastTimeMinSec>
+	,<FirstTimeHour>,<FirstTimeMinSec>
+	,<Count>
+   */
+  else if (which == 4) {
+    if (start > 10)
+      start = 10;
+    cnt = 10;
+    for (n=start; n<10; n++) {
+      if (err = readsdo(0x4201+n,0x01)) break;
+      s = stp_i(net_scratchpad, "MP-0 HRT-ENG-LogCounts,", n);
+      s = stp_sevcon_fault(s, ",86400,", twizy_sdo.data);
+      readsdo(0x4201+n,0x04);
+      s = stp_i(s, ",", twizy_sdo.data);
+      readsdo(0x4201+n,0x05);
+      s = stp_i(s, ",", twizy_sdo.data);
+      readsdo(0x4201+n,0x02);
+      s = stp_i(s, ",", twizy_sdo.data);
+      readsdo(0x4201+n,0x03);
+      s = stp_i(s, ",", twizy_sdo.data);
+      readsdo(0x4201+n,0x06);
+      s = stp_i(s, ",", twizy_sdo.data);
+      net_msg_encode_puts();
+    }
+  }
+
+
+  /* Min / max monitor:
+      MP-0 HRT-ENG-LogMinMax
+	,<n>,86400
+	,<BatteryVoltageMin>,<BatteryVoltageMax>
+	,<CapacitorVoltageMin>,<CapacitorVoltageMax>
+	,<MotorCurrentMin>,<MotorCurrentMax>
+	,<MotorSpeedMin>,<MotorSpeedMax>
+	,<DeviceTempMin>,<DeviceTempMax>
+   */
+  else if (which == 5) {
+    if (start > 2)
+      start = 2;
+    cnt = 2;
+    for (n=start; n<2; n++) {
+      if (err = readsdo(0x4300+n,0x02)) break;
+      s = stp_i(net_scratchpad, "MP-0 HRT-ENG-LogMinMax,", n);
+      s = stp_i(s, ",86400,", (int)twizy_sdo.data);
+      readsdo(0x4300+n,0x03);
+      s = stp_i(s, ",", (int)twizy_sdo.data);
+      readsdo(0x4300+n,0x04);
+      s = stp_i(s, ",", (int)twizy_sdo.data);
+      readsdo(0x4300+n,0x05);
+      s = stp_i(s, ",", (int)twizy_sdo.data);
+      readsdo(0x4300+n,0x06);
+      s = stp_i(s, ",", (int)twizy_sdo.data);
+      readsdo(0x4300+n,0x07);
+      s = stp_i(s, ",", (int)twizy_sdo.data);
+      readsdo(0x4300+n,0x0a);
+      s = stp_i(s, ",", (int)twizy_sdo.data);
+      readsdo(0x4300+n,0x0b);
+      s = stp_i(s, ",", (int)twizy_sdo.data);
+      readsdo(0x4300+n,0x0c);
+      s = stp_i(s, ",", (int)twizy_sdo.data);
+      readsdo(0x4300+n,0x0d);
+      s = stp_i(s, ",", (int)twizy_sdo.data);
+      net_msg_encode_puts();
+    }
+  }
+
+  
+  if (retcnt)
+    *retcnt = cnt;
+  return err;
+}
+
+
+BOOL vehicle_twizy_logs_cmd(BOOL msgmode, int cmd, char *arguments)
+{
+  char *s;
+  UINT err;
+  UINT8 which=1, start=0, cnt;
+
+  // process arguments:
+  if (arguments && *arguments) {
+    if (arguments = strtokpgmram(arguments, ","))
+      which = atoi(arguments);
+    if (arguments = strtokpgmram(NULL, ","))
+      start = atoi(arguments);
+  }
+
+  if (!msgmode)
+    net_msg_start();
+
+  // execute:
+  if (cmd == CMD_ResetLogs)
+    err = vehicle_twizy_resetlogs_msgp(which, &cnt);
+  else if (cmd == CMD_QueryLogs)
+    err = vehicle_twizy_querylogs_msgp(which, start, &cnt);
+  else
+    err = ERR_Range;
+
+  if (msgmode) {
+    // msg command response:
+    s = stp_i(net_scratchpad, "MP-0 c", cmd);
+    if (err) {
+      s = stp_rom(s, ",1,");
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      // success: return which code + entry count
+      s = stp_i(s, ",0,", which);
+      s = stp_i(s, ",", cnt);
+    }
+    net_msg_encode_puts();
+  }
+
+  if (!msgmode)
+    net_msg_send();
+
+  return (err == 0);
 }
 
 
@@ -2818,14 +3108,17 @@ void vehicle_twizy_notify(void)
 
 #ifdef OVMS_TWIZY_CFG
   // Send SEVCON faults alert:
-  if ((twizy_notify & SEND_FaultsAlert))
+  if ((twizy_notify & SEND_FaultsAlert) && (twizy_sevcon_fault != 0))
   {
     if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
     {
+      net_msg_start();
+      // push alert:
       strcpypgm2ram(net_scratchpad, "MP-0 PA");
       vehicle_twizy_faults_prepmsg();
-      net_msg_start();
       net_msg_encode_puts();
+      // add active faults history data:
+      vehicle_twizy_querylogs_msgp(1, 0, NULL);
       net_msg_send();
       twizy_notify &= ~SEND_FaultsAlert;
     }
@@ -5235,9 +5528,9 @@ BOOL vehicle_twizy_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
     return vehicle_twizy_power_cmd(msgmode, cmd, msg);
 
 #ifdef OVMS_TWIZY_CFG
-  case CMD_QueryEventLogs:
-  case CMD_ResetEventLogs:
-    return vehicle_twizy_cfg_cmd(msgmode, cmd, msg);
+  case CMD_ResetLogs:
+  case CMD_QueryLogs:
+    return vehicle_twizy_logs_cmd(msgmode, cmd, msg);
 #endif // OVMS_TWIZY_CFG
 
   }
