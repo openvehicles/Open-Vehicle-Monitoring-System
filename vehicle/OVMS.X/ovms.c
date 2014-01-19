@@ -93,13 +93,13 @@ unsigned int car_idealrange = 0; // Ideal Range in miles
 unsigned int car_estrange = 0; // Estimated Range
 unsigned long car_time = 0; // UTC Time
 unsigned long car_parktime = 0; // UTC time car was parked (or 0 if not)
-signed char car_ambient_temp = -127; // Ambient Temperature (celcius)
+signed int car_ambient_temp = -127; // Ambient Temperature (celcius)
 unsigned char car_vin[18] = "-----------------"; // VIN
 unsigned char car_type[5]; // Car Type, intentionally uninitialised for vehicle init
-signed char car_tpem = 0; // Tpem
-unsigned char car_tmotor = 0; // Tmotor
+signed int car_tpem = 0; // Tpem
+unsigned int car_tmotor = 0; // Tmotor
 signed int car_tbattery = 0; // Tbattery
-signed char car_tpms_t[4] = {0,0,0,0}; // TPMS temperature
+signed int car_tpms_t[4] = {0,0,0,0}; // TPMS temperature
 unsigned char car_tpms_p[4] = {0,0,0,0}; // TPMS pressure
 unsigned int car_trip = 0; // ODO trip in miles /10
 unsigned long car_odometer = 0; //Odometer in miles /10
