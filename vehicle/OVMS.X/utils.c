@@ -33,10 +33,13 @@
 #include <string.h>
 #include "ovms.h"
 #include "utils.h"
+#include "vehicle.h"
 
 // replace these with globals that get set via PARAMS
 #define chDecimal '.'
 #define chSeparator ','
+
+BOOL utils_indelay100b = FALSE;
 
 // Reset the cpu
 void reset_cpu(void)
@@ -82,6 +85,18 @@ void delay100b(void)
     while (!PIR1bits.TMR2IF);
     PIR1bits.TMR2IF=0;
     count++;
+    if ((!utils_indelay100b)&&((count%10)==0))
+      {
+      utils_indelay100b = TRUE;
+      vehicle_idlepoll();
+      utils_indelay100b = FALSE;
+      }
+    }
+  if (!utils_indelay100b)
+    {
+    utils_indelay100b = TRUE;
+    vehicle_ticker10th();
+    utils_indelay100b = FALSE;
     }
   }
 
