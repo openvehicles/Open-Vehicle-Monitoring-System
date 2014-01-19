@@ -273,7 +273,7 @@ void net_poll(void)
   while (UARTIntPutChar(c)==0) ; \
   }
 
-void net_puts_rom(static const rom char *data)
+void net_puts_rom(const rom char *data)
   {
 #ifdef OVMS_DIAGMODULE
   // Help diag terminals with line breaks

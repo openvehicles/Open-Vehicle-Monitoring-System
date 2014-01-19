@@ -37,7 +37,7 @@
 
 void net_send_sms_start(char* number);
 void net_send_sms_finish(void);
-void net_send_sms_rom(char* number, static const rom char* message);
+void net_send_sms_rom(char* number, const rom char* message);
 char* net_sms_initargs(char* arguments);
 char* net_sms_nextarg(char *lastarg);
 void net_sms_params(char* number);

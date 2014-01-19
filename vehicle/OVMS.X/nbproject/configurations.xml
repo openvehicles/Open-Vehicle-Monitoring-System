@@ -150,10 +150,10 @@
         <property key="map-file" value="build/memorymap"/>
       </C18-LD>
       <C18LanguageToolchain>
-        <property key="extended-mode" value="false"/>
-        <property key="extended-mode-mcc18" value="false"/>
-        <property key="extended-mode-mpasm" value="false"/>
-        <property key="extended-mode-mplink" value="false"/>
+        <property key="extended-mode" value="true"/>
+        <property key="extended-mode-mcc18" value="true"/>
+        <property key="extended-mode-mpasm" value="true"/>
+        <property key="extended-mode-mplink" value="true"/>
         <property key="stack-analysis" value="false"/>
         <property key="stack-analysis-mcc18" value="false"/>
         <property key="stack-analysis-mplink" value="false"/>
@@ -412,10 +412,10 @@
         <property key="map-file" value="build/memorymap"/>
       </C18-LD>
       <C18LanguageToolchain>
-        <property key="extended-mode" value="false"/>
-        <property key="extended-mode-mcc18" value="false"/>
-        <property key="extended-mode-mpasm" value="false"/>
-        <property key="extended-mode-mplink" value="false"/>
+        <property key="extended-mode" value="true"/>
+        <property key="extended-mode-mcc18" value="true"/>
+        <property key="extended-mode-mpasm" value="true"/>
+        <property key="extended-mode-mplink" value="true"/>
         <property key="stack-analysis" value="false"/>
         <property key="stack-analysis-mcc18" value="false"/>
         <property key="stack-analysis-mplink" value="false"/>
@@ -574,10 +574,10 @@
         <property key="map-file" value="build/memorymap"/>
       </C18-LD>
       <C18LanguageToolchain>
-        <property key="extended-mode" value="false"/>
-        <property key="extended-mode-mcc18" value="false"/>
-        <property key="extended-mode-mpasm" value="false"/>
-        <property key="extended-mode-mplink" value="false"/>
+        <property key="extended-mode" value="true"/>
+        <property key="extended-mode-mcc18" value="true"/>
+        <property key="extended-mode-mpasm" value="true"/>
+        <property key="extended-mode-mplink" value="true"/>
         <property key="stack-analysis" value="false"/>
         <property key="stack-analysis-mcc18" value="false"/>
         <property key="stack-analysis-mplink" value="false"/>
@@ -836,10 +836,10 @@
         <property key="map-file" value="build/memorymap"/>
       </C18-LD>
       <C18LanguageToolchain>
-        <property key="extended-mode" value="false"/>
-        <property key="extended-mode-mcc18" value="false"/>
-        <property key="extended-mode-mpasm" value="false"/>
-        <property key="extended-mode-mplink" value="false"/>
+        <property key="extended-mode" value="true"/>
+        <property key="extended-mode-mcc18" value="true"/>
+        <property key="extended-mode-mpasm" value="true"/>
+        <property key="extended-mode-mplink" value="true"/>
         <property key="stack-analysis" value="false"/>
         <property key="stack-analysis-mcc18" value="false"/>
         <property key="stack-analysis-mplink" value="false"/>
@@ -1038,10 +1038,10 @@
         <property key="map-file" value="build/memorymap"/>
       </C18-LD>
       <C18LanguageToolchain>
-        <property key="extended-mode" value="false"/>
-        <property key="extended-mode-mcc18" value="false"/>
-        <property key="extended-mode-mpasm" value="false"/>
-        <property key="extended-mode-mplink" value="false"/>
+        <property key="extended-mode" value="true"/>
+        <property key="extended-mode-mcc18" value="true"/>
+        <property key="extended-mode-mpasm" value="true"/>
+        <property key="extended-mode-mplink" value="true"/>
         <property key="stack-analysis" value="false"/>
         <property key="stack-analysis-mcc18" value="false"/>
         <property key="stack-analysis-mplink" value="false"/>

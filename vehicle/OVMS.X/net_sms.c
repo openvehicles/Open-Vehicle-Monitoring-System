@@ -92,7 +92,7 @@ void net_send_sms_finish(void)
     }
   }
 
-void net_send_sms_rom(char* number, static const rom char* message)
+void net_send_sms_rom(char* number, const rom char* message)
   {
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
@@ -101,7 +101,7 @@ void net_send_sms_rom(char* number, static const rom char* message)
   net_send_sms_finish();
   }
 
-void net_send_sms_ram(char* number, static const char* message)
+void net_send_sms_ram(char* number, const char* message)
   {
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 

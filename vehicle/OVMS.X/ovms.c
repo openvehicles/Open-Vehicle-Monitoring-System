@@ -61,7 +61,7 @@
 #endif
 #pragma config OSC = HS
 #pragma	config LPT1OSC = OFF,    PBADEN = OFF
-#pragma	config XINST = OFF,      BBSIZ = 1024,     LVP = OFF,        STVREN = ON
+#pragma	config XINST = ON,       BBSIZ = 1024,     LVP = OFF,        STVREN = ON
 #pragma	config CP0 = OFF,        CP1 = OFF,        CP2 = OFF,        CP3 = OFF
 #pragma	config CPB = OFF,        CPD = OFF
 #pragma	config WRT0 = OFF,       WRT1 = OFF,       WRT2 = OFF,       WRT3 = OFF
