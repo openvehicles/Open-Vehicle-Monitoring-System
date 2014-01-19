@@ -39,8 +39,6 @@
 #define chDecimal '.'
 #define chSeparator ','
 
-BOOL utils_indelay100b = FALSE;
-
 // Reset the cpu
 void reset_cpu(void)
   {
@@ -85,13 +83,6 @@ void delay100b(void)
     while (!PIR1bits.TMR2IF);
     PIR1bits.TMR2IF=0;
     count++;
-    }
-  if (!utils_indelay100b)
-    {
-    utils_indelay100b = TRUE;
-    vehicle_idlepoll();
-    vehicle_ticker10th();
-    utils_indelay100b = FALSE;
     }
   }
 
