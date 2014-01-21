@@ -175,7 +175,7 @@ extern signed int car_ambient_temp; // Ambient Temperature (celcius)
 extern unsigned char car_vin[18]; // VIN
 extern unsigned char car_type[5]; // Car Type
 extern signed int car_tpem; // Tpem
-extern unsigned int car_tmotor; // Tmotor
+extern signed int car_tmotor; // Tmotor
 extern signed int car_tbattery; // Tbattery
 extern signed int car_tpms_t[4]; // TPMS temperature
 extern unsigned char car_tpms_p[4]; // TPMS pressure

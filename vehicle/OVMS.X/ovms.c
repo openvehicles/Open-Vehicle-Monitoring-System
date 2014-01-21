@@ -97,7 +97,7 @@ signed int car_ambient_temp = -127; // Ambient Temperature (celcius)
 unsigned char car_vin[18] = "-----------------"; // VIN
 unsigned char car_type[5]; // Car Type, intentionally uninitialised for vehicle init
 signed int car_tpem = 0; // Tpem
-unsigned int car_tmotor = 0; // Tmotor
+signed int car_tmotor = 0; // Tmotor
 signed int car_tbattery = 0; // Tbattery
 signed int car_tpms_t[4] = {0,0,0,0}; // TPMS temperature
 unsigned char car_tpms_p[4] = {0,0,0,0}; // TPMS pressure
