@@ -436,7 +436,7 @@ BOOL vehicle_mitsubishi_poll1(void)
 
     case 0x298: // Motor temp + 40C?
       {
-      //car_tmotor = (unsigned char)can_databuffer[3] - 40;
+      //car_tmotor = (signed int)can_databuffer[3] - 40;
       if (can_databuffer[3] > 40 && can_databuffer[3] < 0xf0)
         car_tmotor = can_databuffer[3] - 40;
       else
@@ -472,7 +472,7 @@ BOOL vehicle_mitsubishi_poll1(void)
 
     case 0x412: //Speed & Odo
       {
-      if (can_mileskm == 'K')
+      if (can_mileskm == 'M')
         {
         if (can_databuffer[1] > 200) //Speed
           car_speed = (unsigned char)((((unsigned long)can_databuffer[1] - 255) * 621) / 1000);
@@ -485,20 +485,11 @@ BOOL vehicle_mitsubishi_poll1(void)
         if (can_databuffer[1] > 200) //Speed
           car_speed = (unsigned char)((unsigned int)can_databuffer[1] - 255);
         else
-          car_speed = (unsigned char) can_databuffer[1];
+          car_speed = (unsigned char)can_databuffer[1];
         }
 
       car_odometer = MiFromKm((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
-      /* 
-      if (can_mileskm == 'K') // Odo
-        {
-        car_odometer = MiFromKm((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
-        }
-      else
-        {
-        car_odometer = ((((unsigned long) can_databuffer[2] << 16) + ((unsigned long) can_databuffer[3] << 8) + can_databuffer[4]) * 10);
-        }
-      */
+      
       break;
       }
     
@@ -507,7 +498,8 @@ BOOL vehicle_mitsubishi_poll1(void)
        // Calculate average battery pack temperature based on 24 of the 64 temperature values
        // Message 0x6e1 carries two temperatures for each of 12 banks, bank number (1..12) in byte 0,
        // temperatures in bytes 2 and 3, offset by 50C
-       int idx = can_databuffer[0];
+      
+       unsigned int idx = can_databuffer[0];
        if((idx >= 1) && (idx <= 12))
          {
          idx = ((idx << 1)-2);
@@ -515,6 +507,7 @@ BOOL vehicle_mitsubishi_poll1(void)
          mi_batttemps[idx + 1] = (signed char)(can_databuffer[3] - 50);
          car_stale_temps = 60; // Reset stale indicator
          }
+        
       break;
       }
     }
@@ -532,7 +525,7 @@ BOOL vehicle_mitsubishi_poll1(void)
 BOOL vehicle_mitsubishi_initialise(void)
   {
   char *p;
-  int i;
+  unsigned char i;
   
   car_type[0] = 'M'; // Car is type MI - Mitsubishi iMiev
   car_type[1] = 'I';
