@@ -295,14 +295,20 @@ void high_isr(void)
     can_databuffer[7] = RXB0D7;
     RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
 #ifdef OVMS_POLLER
-    if ((vehicle_poll_plist != NULL)&&
-        (can_id >= vehicle_poll_moduleid_low)&&
-        (can_id <= vehicle_poll_moduleid_high))
+    if (vehicle_poll_plist != NULL)
       {
-      if (vehicle_poll_poll0())
+      if ((can_id >= vehicle_poll_moduleid_low)&&
+          (can_id <= vehicle_poll_moduleid_high))
         {
-        vehicle_fn_poll0();
+        if (vehicle_poll_poll0())
+          {
+          vehicle_fn_poll0();
+          }
         }
+      }
+    else
+      {
+      vehicle_fn_poll0();
       }
 #else // #ifdef OVMS_POLLER
     vehicle_fn_poll0();
