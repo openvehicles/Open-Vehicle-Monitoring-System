@@ -23,6 +23,9 @@ echo "Fetch RT-PWR-UsageStats..."
 echo "Fetch RT-GPS-Log..."
 ./cmd.pl 32 "RT-GPS-Log" > "${NAME}-gpslog.csv"
 
+echo "Fetch RT-PWR-Log..."
+./cmd.pl 32 "RT-PWR-Log" > "${NAME}-pwrlog.csv"
+
 echo "Done."
 
 ls -l ${NAME}-*

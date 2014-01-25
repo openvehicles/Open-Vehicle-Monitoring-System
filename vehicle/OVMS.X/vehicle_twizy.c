@@ -163,6 +163,10 @@
     - new command: MSG 209 = CMD_ResetLogs
     - new command: MSG 210 = CMD_QueryLogs
 
+ * 3.1.3  25 Jan 2014 (Michael Balzer)
+    - CFG support for Twizy45
+    - new history msg RT-PWR-Log for long term logging of drives and charges
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -219,7 +223,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.1.2";
+rom char vehicle_twizy_version[] = "3.1.3";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-210";
@@ -277,6 +281,12 @@ typedef struct battery_cell
 
 } battery_cell;
 
+// Conversion utils:
+#define CONV_PackVolt(m) ((UINT)(m) * (100 / 10))
+#define CONV_CellVolt(m) ((UINT)(m) * (1000 / 200))
+#define CONV_CellVoltS(m) ((INT)(m) * (1000 / 200))
+#define CONV_Temp(m) ((INT)(m) - 40)
+
 #endif // OVMS_TWIZY_BATTMON
 
 
@@ -330,6 +340,7 @@ unsigned char twizy_status; // Car + charge status from CAN:
 
 volatile unsigned char twizy_button_cnt; // will count key presses in STOP mode (msg 081)
 
+unsigned char twizy_type;           // CFG: 0=Twizy80, 1=Twizy45
 unsigned int twizy_max_rpm;         // CFG: max speed (RPM: 0..11000)
 unsigned long twizy_max_trq;        // CFG: max torque (mNm: 0..70125)
 unsigned int twizy_max_pwr_lo;      // CFG: max power low speed (W: 0..17000)
@@ -349,6 +360,7 @@ volatile UINT8 twizy_notify; // bit set of...
 #define SEND_StreamUpdate           0x08  // stream data update (per second)
 #define SEND_BatteryStats           0x10  // separate battery stats (large)
 #define SEND_FaultsAlert            0x20  // text alert: SEVCON fault(s)
+#define SEND_PowerLog               0x40  // RT-PWR-Log history entry
 
 
 // -----------------------------------------------
@@ -544,9 +556,11 @@ volatile union {
 
 // App level CAN error codes / classes:
 
-#define ERR_LoginFailed         0x0010
-#define ERR_CfgModeFailed       0x0020
-#define ERR_Range               0x0030
+#define ERR_LoginFailed             0x0010
+#define ERR_CfgModeFailed           0x0020
+#define ERR_Range                   0x0030
+#define ERR_UnknownHardware         0x0040
+
 
 // check if SDO may contain relevant error info:
 #define ERROR_IN_SDO(c) (((c) & 0xfff0) != ERR_Range)
@@ -842,6 +856,18 @@ UINT vehicle_twizy_login(BOOL on)
 {
   UINT err;
 
+  // get SEVCON type (Twizy 80/45):
+  if (err = readsdo(0x1018,0x02))
+    return ERR_UnknownHardware + err;
+
+  if (twizy_sdo.data == 0x0712302d)
+    twizy_type = 0; // Twizy80
+  else if (twizy_sdo.data == 0x0712301b)
+    twizy_type = 1; // Twizy45
+  else
+    return ERR_UnknownHardware; // unknown controller type
+  
+
   // check login level:
   if (err = readsdo(0x5000,1))
     return ERR_LoginFailed + err;
@@ -935,7 +961,139 @@ UINT vehicle_twizy_configmode(BOOL on)
  *
  */
 
+struct twizy_cfg_params {
+  UINT8   DefaultKphMax;
+  UINT    DefaultRpmMax;
+  UINT    DeltaBrkStart;
+  UINT    DeltaBrkEnd;
+  UINT    DeltaBrkDown;
 
+  UINT8   DefaultKphWarn;
+  UINT    DefaultRpmWarn;
+  UINT    DeltaWarnOff;
+
+  UINT    DefaultTrq;
+  UINT32  DefaultTrqLim;
+  UINT    DeltaMapTrq;
+
+  UINT    DefaultPwrLo;
+  UINT    DefaultPwrLoLim;
+  UINT    DefaultPwrHi;
+  UINT    DefaultPwrHiLim;
+
+  UINT8   DefaultRecup;
+  UINT8   DefaultRecupPrc;
+
+  UINT    DefaultRampStart;
+  UINT8   DefaultRampStartPrc;
+  UINT    DefaultRampAccel;
+  UINT8   DefaultRampAccelPrc;
+
+  UINT    DefaultPMAP[18];
+};
+
+rom struct twizy_cfg_params twizy_cfg_params[2] =
+{
+  {
+    //
+    // CFG[0] = TWIZY80:
+    //
+    //    55 Nm (0x4611.0x01) = default max power map (PMAP) torque
+    //    55 Nm (0x6076.0x00) = default peak torque
+    //    57 Nm (0x2916.0x01) = rated torque (??? should be equal to 0x6076...)
+    //    70.125 Nm (0x4610.0x11) = max motor torque according to flux map
+    //
+    //    7250 rpm (0x2920.0x05) = default max fwd speed = ~80 kph
+    //    8050 rpm = default overspeed warning trigger (STOP lamp ON) = ~89 kph
+    //    8500 rpm = default overspeed brakedown trigger = ~94 kph
+    //    10000 rpm = max neutral speed (0x3813.2d) = ~110 kph
+    //    11000 rpm = severe overspeed fault (0x4624.00) = ~121 kph
+
+    80,     // DefaultKphMax
+    7250,   // DefaultRpmMax
+    400,    // DeltaBrkStart
+    800,    // DeltaBrkEnd
+    1250,   // DeltaBrkDown
+
+    89,     // DefaultKphWarn
+    8050,   // DefaultRpmWarn
+    550,    // DeltaWarnOff
+
+    55000,  // DefaultTrq
+    70125,  // DefaultTrqLim
+    0,      // DeltaMapTrq
+
+    12182,  // DefaultPwrLo
+    17000,  // DefaultPwrLoLim
+    13000,  // DefaultPwrHi
+    17000,  // DefaultPwrHiLim
+
+    182,    // DefaultRecup
+    18,     // DefaultRecupPrc
+
+    400,    // DefaultRampStart
+    4,      // DefaultRampStartPrc
+    2500,   // DefaultRampAccel
+    25,     // DefaultRampAccelPrc
+
+            // DefaultPMAP:
+    { 880,0, 880,2115, 659,2700, 608,3000, 516,3500,
+      421,4500, 360,5500, 307,6500, 273,7250 }
+  },
+  {
+    //
+    // CFG[1] = TWIZY45:
+    //
+    //    32.5 Nm (0x4611.0x01) = default max power map (PMAP) torque
+    //    33 Nm (0x6076.0x00) = default peak torque
+    //    33 Nm (0x2916.0x01) = rated torque (??? should be equal to 0x6076...)
+    //    36 Nm (0x4610.0x11) = max motor torque according to flux map
+    //
+    //    5814 rpm (0x2920.0x05) = default max fwd speed = ~45 kph
+    //    7200 rpm = default overspeed warning trigger (STOP lamp ON) = ~56 kph
+    //    8500 rpm = default overspeed brakedown trigger = ~66 kph
+    //    10000 rpm = max neutral speed (0x3813.2d) = ~77 kph
+    //    11000 rpm = severe overspeed fault (0x4624.00) = ~85 kph
+
+    45,     // DefaultKphMax
+    5814,   // DefaultRpmMax
+    686,    // DeltaBrkStart
+    1386,   // DeltaBrkEnd
+    2686,   // DeltaBrkDown
+
+    56,     // DefaultKphWarn
+    7200,   // DefaultRpmWarn
+    900,    // DeltaWarnOff
+
+    32500,  // DefaultTrq
+    36000,  // DefaultTrqLim
+    500,    // DeltaMapTrq
+
+    7050,   // DefaultPwrLo
+    10000,  // DefaultPwrLoLim
+    7650,   // DefaultPwrHi
+    10000,  // DefaultPwrHiLim
+
+    209,    // DefaultRecup
+    21,     // DefaultRecupPrc
+
+    300,    // DefaultRampStart
+    3,      // DefaultRampStartPrc
+    2083,   // DefaultRampAccel
+    21,     // DefaultRampAccelPrc
+
+            // DefaultPMAP:
+    { 520,0, 520,2050, 437,2500, 363,3000, 314,3500,
+      279,4000, 247,4500, 226,5000, 195,6000 }
+  }
+};
+
+// ROM parameter access macro:
+#define CFG twizy_cfg_params[twizy_type]
+
+
+// scale utility:
+//  returns <deflt> value scaled <from> <to> limited by <min> and <max>
 UINT32 scale(UINT32 deflt, UINT32 from, UINT32 to, UINT32 min, UINT32 max)
 {
   UINT32 val;
@@ -964,9 +1122,6 @@ UINT32 scale(UINT32 deflt, UINT32 from, UINT32 to, UINT32 min, UINT32 max)
 // See "Twizy Powermap Calculator" spreadsheet for details.
 
 rom UINT8 pmap_fib[7] = { 1, 2, 3, 5, 8, 13, 21 };
-rom UINT pmap_defaults[18] = {
-  880,0, 880,2115, 659,2700, 608,3000, 516,3500,
-  421,4500, 360,5500, 307,6500, 273,7250 };
 
 UINT vehicle_twizy_cfg_makepowermap(void
   /* twizy_max_rpm, twizy_max_trq, twizy_max_pwr_lo, twizy_max_pwr_hi */)
@@ -978,13 +1133,13 @@ UINT vehicle_twizy_cfg_makepowermap(void
   UINT pwr;
   int rpm_d, pwr_d;
 
-  if (twizy_max_rpm == 7250 && twizy_max_trq == 55000
-    && twizy_max_pwr_lo == 12182 && twizy_max_pwr_hi == 13000) {
+  if (twizy_max_rpm == CFG.DefaultRpmMax && twizy_max_trq == CFG.DefaultTrq
+    && twizy_max_pwr_lo == CFG.DefaultPwrLo && twizy_max_pwr_hi == CFG.DefaultPwrHi) {
 
     // restore default map:
 
     for (i=0; i<18; i++) {
-      if (err = writesdo(0x4611,0x01+i,pmap_defaults[i]))
+      if (err = writesdo(0x4611,0x01+i,CFG.DefaultPMAP[i]))
         return err;
     }
   }
@@ -1058,12 +1213,12 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
   // parameter validation:
 
   if (max_kph == -1)
-    max_kph = 80;
+    max_kph = CFG.DefaultKphMax;
   else if (max_kph < 6 || max_kph > 111)
     return ERR_Range + 1;
 
   if (warn_kph == -1)
-    warn_kph = 89;
+    warn_kph = CFG.DefaultKphWarn;
   else if (warn_kph < 6 || warn_kph > 111)
     return ERR_Range + 2;
 
@@ -1077,7 +1232,7 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
   if (twizy_max_trq == 0) {
     if (err = readsdo(0x6076,0x00))
       return err;
-    twizy_max_trq = twizy_sdo.data;
+    twizy_max_trq = twizy_sdo.data - CFG.DeltaMapTrq;
   }
 
   // get max power for map scaling:
@@ -1089,8 +1244,8 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
     rpm = twizy_sdo.data;
     if (err = readsdo(0x4611,0x03))
       return err;
-    if (twizy_sdo.data == 880 && rpm == 2115)
-      twizy_max_pwr_lo = 12182; // default
+    if (twizy_sdo.data == CFG.DefaultPMAP[2] && rpm == CFG.DefaultPMAP[3])
+      twizy_max_pwr_lo = CFG.DefaultPwrLo;
     else
       twizy_max_pwr_lo = (UINT)((((twizy_sdo.data*1000)>>4) * rpm + (9549>>1)) / 9549);
   }
@@ -1101,40 +1256,33 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
     rpm = twizy_sdo.data;
     if (err = readsdo(0x4611,0x11))
       return err;
-    if (twizy_sdo.data == 273 && rpm == 7250)
-      twizy_max_pwr_hi = 13000; // default
+    if (twizy_sdo.data == CFG.DefaultPMAP[16] && rpm == CFG.DefaultPMAP[17])
+      twizy_max_pwr_hi = CFG.DefaultPwrHi;
     else
       twizy_max_pwr_hi = (UINT)((((twizy_sdo.data*1000)>>4) * rpm + (9549>>1)) / 9549);
   }
 
   
-  // references:
-  //    7250 rpm = default max speed = ~80 kph
-  //    8050 rpm = default overspeed warning trigger (STOP lamp ON) = ~89 kph
-  //    8500 rpm = default overspeed brakedown trigger = ~94 kph
-  //    10000 rpm = max neutral speed (0x3813.2d) = ~110 kph
-  //    11000 rpm = severe overspeed fault (0x4624.00) = ~121 kph
-
   // set overspeed warning range (STOP lamp):
-  rpm = scale(8050,89,warn_kph,400,10900);
+  rpm = scale(CFG.DefaultRpmWarn,CFG.DefaultKphWarn,warn_kph,400,10900);
   if (err = writesdo(0x3813,0x34,rpm)) // lamp ON
     return err;
-  if (err = writesdo(0x3813,0x3c,rpm-550)) // lamp OFF
+  if (err = writesdo(0x3813,0x3c,rpm-CFG.DeltaWarnOff)) // lamp OFF
     return err;
 
   // calc fwd rpm:
-  rpm = scale(7250,80,max_kph,400,10000);
+  rpm = scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,max_kph,400,10000);
 
   // set fwd rpm:
   if (err = writesdo(0x2920,0x05,rpm))
     return err;
 
   // adjust overspeed braking points (using fixed offsets):
-  if (err = writesdo(0x3813,0x33,rpm+400)) // neutral braking start
+  if (err = writesdo(0x3813,0x33,rpm+CFG.DeltaBrkStart)) // neutral braking start
     return err;
-  if (err = writesdo(0x3813,0x35,rpm+800)) // neutral braking end
+  if (err = writesdo(0x3813,0x35,rpm+CFG.DeltaBrkEnd)) // neutral braking end
     return err;
-  if (err = writesdo(0x3813,0x3b,LIMIT_MAX(rpm+1250,10900))) // drive brakedown trigger
+  if (err = writesdo(0x3813,0x3b,LIMIT_MAX(rpm+CFG.DeltaBrkDown,10900))) // drive brakedown trigger
     return err;
 
   // rework torque/speed map:
@@ -1149,6 +1297,7 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
 UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc)
 // See "Twizy Powermap Calculator" spreadsheet.
 // trq_prc: 10..130, -1=reset to default (100%)
+// i.e. TWIZY80:
 //    100% = 55.000 Nm
 //    128% = 70.125 Nm (130 allowed for easy handling)
 // pwr_lo_prc: 10..130, -1=reset to default (100%)
@@ -1179,24 +1328,19 @@ UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc)
   if (err = configmode(1))
     return err;
 
-  // get max rpm for map scaling:
+  // get max fwd rpm for map scaling:
   if (twizy_max_rpm == 0) {
-    if (err = readsdo(0x4611,0x12))
+    if (err = readsdo(0x2920,0x05))
       return err;
     twizy_max_rpm = twizy_sdo.data;
   }
 
 
-  // references:
-  //    55 Nm (0x6076.0x00) = default peak torque to use (also in tq/speed map)
-  //    57 Nm (0x2916.0x01) = rated torque (??? should be equal to 0x6076...)
-  //    70.125 Nm (0x4610.0x11) = max motor torque according to flux map
-
   // calc peak use torque:
-  twizy_max_trq = scale(55000,100,trq_prc,10000,70125);
+  twizy_max_trq = scale(CFG.DefaultTrq,100,trq_prc,10000,CFG.DefaultTrqLim);
 
   // set peak use torque:
-  if (err = writesdo(0x6076,0x00,twizy_max_trq))
+  if (err = writesdo(0x6076,0x00,twizy_max_trq + CFG.DeltaMapTrq))
     return err;
 
   // set rated torque too?
@@ -1204,8 +1348,8 @@ UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc)
   //  return err;
 
   // calc peak use power:
-  twizy_max_pwr_lo = scale(12182,100,pwr_lo_prc,500,17000);
-  twizy_max_pwr_hi = scale(13000,100,pwr_hi_prc,500,17000);
+  twizy_max_pwr_lo = scale(CFG.DefaultPwrLo,100,pwr_lo_prc,500,CFG.DefaultPwrLoLim);
+  twizy_max_pwr_hi = scale(CFG.DefaultPwrHi,100,pwr_hi_prc,500,CFG.DefaultPwrHiLim);
 
   // rework torque/speed map:
   if (err = vehicle_twizy_cfg_makepowermap())
@@ -1319,19 +1463,19 @@ UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc)
   // parameter validation:
 
   if (neutral_prc == -1)
-    neutral_prc = 18;
+    neutral_prc = CFG.DefaultRecupPrc;
   else if (neutral_prc < 0 || neutral_prc > 100)
     return ERR_Range + 1;
 
   if (brake_prc == -1)
-    brake_prc = 18;
+    brake_prc = CFG.DefaultRecupPrc;
   else if (brake_prc < 0 || brake_prc > 100)
     return ERR_Range + 2;
 
   // set:
-  if (err = writesdo(0x2920,0x03,scale(182,18,neutral_prc,0,1000)))
+  if (err = writesdo(0x2920,0x03,scale(CFG.DefaultRecup,CFG.DefaultRecupPrc,neutral_prc,0,1000)))
     return err;
-  if (err = writesdo(0x2920,0x04,scale(182,18,brake_prc,0,1000)))
+  if (err = writesdo(0x2920,0x04,scale(CFG.DefaultRecup,CFG.DefaultRecupPrc,brake_prc,0,1000)))
     return err;
 
   return 0;
@@ -1350,12 +1494,12 @@ UINT vehicle_twizy_cfg_ramps(int start_prc, int accel_prc, int decel_prc, int ne
   // parameter validation:
 
   if (start_prc == -1)
-    start_prc = 4;
+    start_prc = CFG.DefaultRampStartPrc;
   else if (start_prc < 1 || start_prc > 100)
     return ERR_Range + 1;
 
   if (accel_prc == -1)
-    accel_prc = 25;
+    accel_prc = CFG.DefaultRampAccelPrc;
   else if (accel_prc < 1 || accel_prc > 100)
     return ERR_Range + 2;
 
@@ -1376,9 +1520,9 @@ UINT vehicle_twizy_cfg_ramps(int start_prc, int accel_prc, int decel_prc, int ne
 
   // set:
 
-  if (err = writesdo(0x291c,0x02,scale(400,4,start_prc,10,10000)))
+  if (err = writesdo(0x291c,0x02,scale(CFG.DefaultRampStart,CFG.DefaultRampStartPrc,start_prc,10,10000)))
     return err;
-  if (err = writesdo(0x2920,0x07,scale(2500,25,accel_prc,10,10000)))
+  if (err = writesdo(0x2920,0x07,scale(CFG.DefaultRampAccel,CFG.DefaultRampAccelPrc,accel_prc,10,10000)))
     return err;
   if (err = writesdo(0x2920,0x0b,scale(2000,20,decel_prc,10,10000)))
     return err;
@@ -1779,7 +1923,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       // debug:
       if (readsdo(0x6076,0x00) == 0)
-        s = stp_ul(s, " trq=", twizy_sdo.data);
+        s = stp_ul(s, " trq=", twizy_sdo.data - CFG.DeltaMapTrq);
       s = vehicle_twizy_fmt_powermap(s);
     }
   }
@@ -1968,7 +2112,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       if (readsdo(0x2920,0x05) == 0)
         s = stp_ul(s, " fwd=", twizy_sdo.data);
       if (readsdo(0x6076,0x00) == 0)
-        s = stp_ul(s, " trq=", twizy_sdo.data);
+        s = stp_ul(s, " trq=", twizy_sdo.data - CFG.DeltaMapTrq);
 
       if (readsdo(0x4611,0x04) == 0)
         s = stp_ul(s, " p2=", twizy_sdo.data);
@@ -2446,6 +2590,96 @@ char vehicle_twizy_gpslog_msgp(char stat)
   s = stp_ul(s, ",", (pwr_dist + 5) / 10);        // distance driven (m)
 
   return net_msg_encode_statputs(stat, &crc);
+}
+
+
+/**
+ * vehicle_twizy_pwrlog_msgp()
+ *  send RT-PWR-Log history entry
+ */
+char vehicle_twizy_pwrlog_msgp(char stat)
+{
+  //static WORD crc;
+  char *s;
+  unsigned long pwr_dist, pwr_use, pwr_rec;
+  UINT8 c;
+  UINT8 tmin, tmax;
+  UINT tact;
+
+  // Read power stats:
+
+  pwr_dist = twizy_speedpwr[CAN_SPEED_CONST].dist
+          + twizy_speedpwr[CAN_SPEED_ACCEL].dist
+          + twizy_speedpwr[CAN_SPEED_DECEL].dist;
+
+  pwr_use = twizy_speedpwr[CAN_SPEED_CONST].use
+          + twizy_speedpwr[CAN_SPEED_ACCEL].use
+          + twizy_speedpwr[CAN_SPEED_DECEL].use;
+
+  pwr_rec = twizy_speedpwr[CAN_SPEED_CONST].rec
+          + twizy_speedpwr[CAN_SPEED_ACCEL].rec
+          + twizy_speedpwr[CAN_SPEED_DECEL].rec;
+
+  
+  // Collect cell temperatures:
+
+  tmin = 255;
+  tmax = 0;
+  tact = 0;
+  for (c = 0; c < BATT_CMODS; c++)
+  {
+    tact += twizy_cmod[c].temp_act;
+    if (twizy_cmod[c].temp_min < tmin)
+      tmin = twizy_cmod[c].temp_min;
+    if (twizy_cmod[c].temp_max > tmax)
+      tmax = twizy_cmod[c].temp_max;
+  }
+
+  tact = (tact + BATT_CMODS/2) / BATT_CMODS;
+
+
+  // Format history msg:
+
+  s = stp_rom(net_scratchpad, "MP-0 HRT-PWR-Log,0,31536000");
+
+  s = stp_l2f(s, ",", twizy_odometer, 2);
+  s = stp_latlon(s, ",", car_latitude);
+  s = stp_latlon(s, ",", car_longitude);
+  s = stp_i(s, ",", car_altitude);
+
+  s = stp_i(s, ",", car_doors1bits.ChargePort ? car_chargestate : 0);
+  s = stp_i(s, ",", car_parktime ? (car_time-car_parktime+30)/60 : 0);
+
+  s = stp_l2f(s, ",", twizy_soc, 2);
+  s = stp_l2f(s, ",", twizy_soc_min, 2);
+  s = stp_l2f(s, ",", twizy_soc_max, 2);
+
+  s = stp_ul(s, ",", (pwr_use + 11250) / 22500);
+  s = stp_ul(s, ",", (pwr_rec + 11250) / 22500);
+  s = stp_ul(s, ",", (pwr_dist + 5) / 10);
+
+  s = stp_i(s, ",", KmFromMi(car_estrange));
+  s = stp_i(s, ",", KmFromMi(car_idealrange));
+
+  s = stp_l2f(s, ",", twizy_batt[0].volt_act, 1);
+  s = stp_l2f(s, ",", twizy_batt[0].volt_min, 1);
+  s = stp_l2f(s, ",", twizy_batt[0].volt_max, 1);
+
+  s = stp_i(s, ",", CONV_Temp(tact));
+  s = stp_i(s, ",", CONV_Temp(tmin));
+  s = stp_i(s, ",", CONV_Temp(tmax));
+
+  s = stp_i(s, ",", car_tmotor);
+  s = stp_i(s, ",", car_tpem);
+
+
+  // send:
+
+  if (stat == 2)
+    net_msg_start();
+  net_msg_encode_puts();
+
+  return (stat == 2) ? 1 : stat;
 }
 
 
@@ -3174,6 +3408,20 @@ void vehicle_twizy_notify(void)
   }
 
 
+  // Send power usage log?
+  if ((twizy_notify & SEND_PowerLog))
+  {
+    if ((net_msg_serverok) && (net_msg_sendpending == 0))
+    {
+      stat = vehicle_twizy_pwrlog_msgp(2);
+      if (stat != 2)
+        net_msg_send();
+      
+      twizy_notify &= ~SEND_PowerLog;
+    }
+  }
+
+
 #ifdef OVMS_TWIZY_BATTMON
   // Send battery status update:
   if ((twizy_notify & SEND_BatteryStats))
@@ -3363,7 +3611,7 @@ BOOL vehicle_twizy_state_ticker1(void)
       
       // send power statistics:
       if (twizy_speedpwr[CAN_SPEED_CONST].use > 22500)
-        twizy_notify |= SEND_PowerNotify;
+        twizy_notify |= (SEND_PowerNotify | SEND_PowerLog);
 
 #ifdef OVMS_TWIZY_CFG
       // reset button cnt:
@@ -4370,13 +4618,15 @@ BOOL vehicle_twizy_stat_sms(BOOL premsg, char *caller, char *command, char *argu
   return TRUE; // handled
 }
 
-BOOL vehicle_twizy_alert_cmd(BOOL msgmode, int cmd, char *arguments)
+BOOL vehicle_twizy_statalert_cmd(BOOL msgmode, int cmd, char *arguments)
 {
-  // prepare message:
+  // send text alert:
   strcpypgm2ram(net_scratchpad, (char const rom far*)"MP-0 PA");
   vehicle_twizy_stat_prepmsg();
-
   net_msg_encode_puts();
+
+  // send RT-PWR-Log entry:
+  vehicle_twizy_pwrlog_msgp(0);
 
   return TRUE;
 }
@@ -4718,12 +4968,6 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
  *      - output recorded max cell temperature deviations
  *
  */
-
-// Conversion utils:
-#define CONV_PackVolt(m) ((UINT)(m) * (100 / 10))
-#define CONV_CellVolt(m) ((UINT)(m) * (1000 / 200))
-#define CONV_CellVoltS(m) ((INT)(m) * (1000 / 200))
-#define CONV_Temp(m) ((INT)(m) - 40)
 
 
 // Wait max. 1.1 seconds for consistent sensor data:
@@ -5499,7 +5743,7 @@ BOOL vehicle_twizy_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
      */
 
   case CMD_Alert:
-    return vehicle_twizy_alert_cmd(msgmode, cmd, msg);
+    return vehicle_twizy_statalert_cmd(msgmode, cmd, msg);
 
 
     /************************************************************
@@ -5763,6 +6007,7 @@ BOOL vehicle_twizy_initialise(void)
 
     twizy_button_cnt = 0;
 
+    twizy_type = 0;
     twizy_max_rpm = 0;
     twizy_max_trq = 0;
     twizy_max_pwr_lo = 0;
