@@ -2621,6 +2621,7 @@ char vehicle_twizy_pwrlog_msgp(char stat)
           + twizy_speedpwr[CAN_SPEED_DECEL].rec;
 
   
+#ifdef OVMS_TWIZY_BATTMON
   // Collect cell temperatures:
 
   tmin = 255;
@@ -2636,6 +2637,7 @@ char vehicle_twizy_pwrlog_msgp(char stat)
   }
 
   tact = (tact + BATT_CMODS/2) / BATT_CMODS;
+#endif // OVMS_TWIZY_BATTMON
 
 
   // Format history msg:
@@ -2661,6 +2663,7 @@ char vehicle_twizy_pwrlog_msgp(char stat)
   s = stp_i(s, ",", KmFromMi(car_estrange));
   s = stp_i(s, ",", KmFromMi(car_idealrange));
 
+#ifdef OVMS_TWIZY_BATTMON
   s = stp_l2f(s, ",", twizy_batt[0].volt_act, 1);
   s = stp_l2f(s, ",", twizy_batt[0].volt_min, 1);
   s = stp_l2f(s, ",", twizy_batt[0].volt_max, 1);
@@ -2668,6 +2671,9 @@ char vehicle_twizy_pwrlog_msgp(char stat)
   s = stp_i(s, ",", CONV_Temp(tact));
   s = stp_i(s, ",", CONV_Temp(tmin));
   s = stp_i(s, ",", CONV_Temp(tmax));
+#else // OVMS_TWIZY_BATTMON
+  s = stp_rom(s, ",,,,,,");
+#endif // OVMS_TWIZY_BATTMON
 
   s = stp_i(s, ",", car_tmotor);
   s = stp_i(s, ",", car_tpem);
