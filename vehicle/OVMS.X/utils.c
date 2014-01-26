@@ -33,6 +33,7 @@
 #include <string.h>
 #include "ovms.h"
 #include "utils.h"
+#include "vehicle.h"
 
 // replace these with globals that get set via PARAMS
 #define chDecimal '.'

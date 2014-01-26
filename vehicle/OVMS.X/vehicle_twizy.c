@@ -3875,6 +3875,7 @@ BOOL vehicle_twizy_state_ticker10(void)
     twizy_status &= ~CAN_STATUS_ONLINE;
 
     // Check for new SEVCON fault:
+#ifdef OVMS_TWIZY_CFG
     if (readsdo(0x5320,0x00) == 0) {
       if (twizy_sdo.data == 0) {
         // reset fault status:
@@ -3886,6 +3887,7 @@ BOOL vehicle_twizy_state_ticker10(void)
         twizy_notify |= SEND_FaultsAlert;
       }
     }
+#endif // #ifdef #ifdef OVMS_TWIZY_CFG
   }
 
   return FALSE;
