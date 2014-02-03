@@ -51,8 +51,7 @@ extern unsigned char acc_timeout_goto;         // State to auto-transition to, a
 extern unsigned int  acc_timeout_ticks;        // Number of seconds before timeout auto-transition
 extern unsigned int  acc_granular_tick;        // An internal ticker used to generate 1min, 5min, etc, calls
 
-#define ACC_RANGE1 50
-#define ACC_RANGE2 100
+#define ACC_RANGE_DEFAULT 100
 
 #define ACC_RECVERSION 1
 
@@ -78,7 +77,7 @@ struct acc_record
   unsigned int acc_stoprange;       // Range to stop charge at
   unsigned char acc_stopsoc;        // SOC to stop charge at
   unsigned char acc_homelink;       // Homelink to activate
-  unsigned char acc_reserved1;
+  unsigned char acc_radius;         // Radius for geofence (metres)
   unsigned char acc_reserved2;
   };
 

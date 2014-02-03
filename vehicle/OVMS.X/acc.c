@@ -60,9 +60,10 @@ int acc_last_estimate = 0;
 
 rom char ACC_NOTHERE[] = "ACC not at this location";
 
-signed char acc_find(struct acc_record* ar, int range, BOOL enabledonly)
+signed char acc_find(struct acc_record* ar, BOOL enabledonly)
   {
   int k;
+  int radius;
 
   for (k=0;k<PARAM_ACC_COUNT;k++)
     {
@@ -70,7 +71,11 @@ signed char acc_find(struct acc_record* ar, int range, BOOL enabledonly)
     if ((ar->acc_latitude != 0)||(ar->acc_longitude != 0))
       {
       // We have a used location
-      if (FIsLatLongClose(ar->acc_latitude, ar->acc_longitude, car_latitude, car_longitude, range)>0)
+      if (ar->acc_radius != 0)
+        radius = ar->acc_radius;
+      else
+        radius = ACC_RANGE_DEFAULT;
+      if (FIsLatLongClose(ar->acc_latitude, ar->acc_longitude, car_latitude, car_longitude, radius)>0)
         {
         // This location matches...
         if (enabledonly && (!ar->acc_flags.AccEnabled)) return 0;
@@ -296,7 +301,7 @@ void acc_state_ticker1(void)
     {
     case ACC_STATE_FIRSTRUN:
       // First time run
-      acc_current_loc = acc_find(&acc_current_rec,ACC_RANGE2,TRUE);
+      acc_current_loc = acc_find(&acc_current_rec,TRUE);
       if (acc_current_loc == 0)
         { acc_state_enter(ACC_STATE_FREE); }
       else if (CAR_IS_ON)
@@ -478,7 +483,7 @@ void acc_state_ticker10(void)
       if (CAR_IS_ON)
         {
         // Poll to see if we're entering an ACC location
-        acc_current_loc = acc_find(&acc_current_rec,ACC_RANGE2,TRUE);
+        acc_current_loc = acc_find(&acc_current_rec,TRUE);
         if (acc_current_loc > 0)
           {
           acc_state_enter(ACC_STATE_DRIVINGIN);
@@ -488,7 +493,7 @@ void acc_state_ticker10(void)
     case ACC_STATE_DRIVINGIN:
       // Driving in a charge store area
       // Poll to see if we're leaving an ACC location
-      acc_current_loc = acc_find(&acc_current_rec,ACC_RANGE2,TRUE);
+      acc_current_loc = acc_find(&acc_current_rec,TRUE);
       if (acc_current_loc == 0)
         {
         acc_state_enter(ACC_STATE_FREE);
@@ -541,7 +546,7 @@ BOOL acc_cmd_here(BOOL sms, char* caller, char* arguments)
 
   net_send_sms_start(caller);
 
-  k = acc_find(&ar,ACC_RANGE1,FALSE);
+  k = acc_find(&ar,FALSE);
   if (k > 0)
     {
     // This location matches...
@@ -582,7 +587,7 @@ BOOL acc_cmd_nothere(BOOL sms, char* caller, char *arguments)
 
   s = stp_rom(net_scratchpad, "ACC cleared");
 
-  while ((k=acc_find(&ar,ACC_RANGE1,FALSE))>0)
+  while ((k=acc_find(&ar,FALSE))>0)
     {
     // Existing location matches...
     par_set((k+PARAM_ACC_S)-1,NULL);
@@ -631,7 +636,7 @@ BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
   char *s,*p;
   unsigned long r;
 
-  k = acc_find(&ar,ACC_RANGE1,FALSE);
+  k = acc_find(&ar,FALSE);
 
   net_send_sms_start(caller);
   s = stp_i(net_scratchpad,"ACC Status #",k);
@@ -743,7 +748,7 @@ BOOL acc_cmd_enable(BOOL sms, char* caller, char *arguments, unsigned char enabl
     }
   else
     {
-    k = acc_find(&ar,ACC_RANGE1,FALSE);
+    k = acc_find(&ar,FALSE);
     }
 
   net_send_sms_start(caller);
@@ -809,6 +814,20 @@ void acc_sms_params(int k, struct acc_record* ar)
         s = stp_rom(s, "km");
         }
       }
+    if (ar->acc_radius>0)
+      {
+      r = (unsigned long)ar->acc_radius;
+      if (can_mileskm=='M')
+        {
+        s = stp_l(s, "\r\n Radius ",r*3);
+        s = stp_rom(s, "'");
+        }
+      else
+        {
+        s = stp_l(s, "\r\n Radius ",r);
+        s = stp_rom(s, "m");
+        }
+      }
     }
   else
     {
@@ -832,7 +851,7 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
     if (k>0)
       arguments = net_sms_nextarg(arguments);
     else
-      k = acc_find(&ar,ACC_RANGE1,FALSE);
+      k = acc_find(&ar,FALSE);
     }
 
   net_send_sms_start(caller);
@@ -912,6 +931,17 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
         if (arguments != NULL)
           { ar.acc_stopsoc = atoi(arguments); }
         }
+      else if (strcmppgm2ram(arguments,"RADIUS")==0)
+        {
+        arguments = net_sms_nextarg(arguments);
+        if (arguments != NULL)
+          {
+          if (can_mileskm=='M')
+            ar.acc_radius = atoi(arguments)/3;
+          else
+            ar.acc_radius = atoi(arguments);
+          }
+        }
       if (arguments != NULL)
         arguments = net_sms_nextarg(arguments);
       }
@@ -938,7 +968,7 @@ BOOL acc_cmd_paramsq(BOOL sms, char* caller, char *arguments)
     }
   else
     {
-    k = acc_find(&ar,ACC_RANGE1,FALSE);
+    k = acc_find(&ar,FALSE);
     }
 
   net_send_sms_start(caller);
