@@ -1040,6 +1040,10 @@ BOOL acc_handle_sms(char *caller, char *command, char *arguments)
   return acc_cmd(caller,command,arguments,TRUE);
   }
 
+void acc_handle_msg(BOOL msgmode, int code, char* msg)
+  {
+  }
+
 void acc_ticker(void)            // ACC Ticker
   {
   // This ticker is called once every second
