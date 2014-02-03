@@ -43,6 +43,7 @@
 #define ACC_STATE_WAKEUPCIN  0x52  // Wake up and charge in a charge store area
 #define ACC_STATE_WAKEUPWC   0x53  // Wake up and then wait charge
 #define ACC_STATE_CHARGEDONE 0x60  // Completed charging in a charge store area
+#define ACC_STATE_OVERRIDE   0x70  // ACC overridden with a manual charge
 
 // ACC data
 extern unsigned char acc_state;                // The current state

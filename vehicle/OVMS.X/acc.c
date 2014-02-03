@@ -288,6 +288,9 @@ void acc_state_enter(unsigned char newstate)
       car_chargelimit_rangelimit = 0;
       car_chargelimit_soclimit = 0;
       break;
+    case ACC_STATE_OVERRIDE:
+      // ACC overridden with a manual charge
+      break;
     }
   }
 
@@ -463,6 +466,21 @@ void acc_state_ticker1(void)
         acc_state_enter(ACC_STATE_PARKEDIN);
         }
       break;
+    case ACC_STATE_OVERRIDE:
+      // ACC overridden with a manual charge
+      if (acc_timeout_ticks < 60)
+        {
+        // Stop timeout 1 minute into the 2 minutes
+        acc_timeout_ticks = 0;
+        acc_timeout_goto = 0;
+        }
+      if (! CAR_IS_CHARGING)
+        {
+        // Only monitor for charge done after 1 minute
+        if (acc_timeout_ticks==0)
+          acc_state_enter(ACC_STATE_CHARGEDONE);
+        }
+      break;
     }
   }
 
@@ -528,8 +546,77 @@ void acc_state_ticker10(void)
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
       break;
+    case ACC_STATE_OVERRIDE:
+      // ACC overridden with a manual charge
+      break;
     }
   
+  }
+
+void acc_handle_msg(BOOL msgmode, int code, char* msg)
+  {
+  CHECKPOINT(0x65)
+
+  switch (acc_state)
+    {
+    case ACC_STATE_FIRSTRUN:
+      // First time run
+      break;
+    case ACC_STATE_FREE:
+      // Outside a charge store area
+      break;
+    case ACC_STATE_DRIVINGIN:
+      // Driving in a charge store area
+      break;
+    case ACC_STATE_PARKEDIN:
+      // Parked in a charge store area
+      if (code == 11)
+        {
+        // Manual charge start
+        // A bit of a kludge, but we're going to set a state timeout transition
+        // so we can only monitor charge after a minute or so. We will never
+        // let this timeout actually happen...
+        acc_state_enter(ACC_STATE_OVERRIDE);
+        acc_timeout_goto = ACC_STATE_OVERRIDE;
+        acc_timeout_ticks = 120;
+        }
+      break;
+    case ACC_STATE_COOLDOWN:
+      // Cooldown in a charge store area
+      break;
+    case ACC_STATE_WAITCHARGE:
+      // Waiting for charge time in a charge store area
+      if (code == 11)
+        {
+        // Manual charge start
+        acc_state_enter(ACC_STATE_WAKEUPCIN);
+        }
+      else if (code == 25)
+        {
+        // Manual cooldown
+        acc_state_enter(ACC_STATE_COOLDOWN);
+        }
+      break;
+    case ACC_STATE_CHARGINGIN:
+      // Charging in a charge store area
+      break;
+    case ACC_STATE_CHARGEDONE:
+      // Completed charging in a charge store area
+      if (code == 11)
+        {
+        // Manual charge start
+        // A bit of a kludge, but we're going to set a state timeout transition
+        // so we can only monitor charge after a minute or so. We will never
+        // let this timeout actually happen...
+        acc_state_enter(ACC_STATE_OVERRIDE);
+        acc_timeout_goto = ACC_STATE_OVERRIDE;
+        acc_timeout_ticks = 120;
+        }
+      break;
+    case ACC_STATE_OVERRIDE:
+      // ACC overridden with a manual charge
+      break;
+    }
   }
 
 void acc_initialise(void)        // ACC Initialisation
@@ -707,6 +794,10 @@ BOOL acc_cmd_stat(BOOL sms, char* caller, char *arguments)
     case ACC_STATE_CHARGEDONE:
       // Completed charging in a charge store area
       s = stp_rom(s, "Charge Done");
+      break;
+    case ACC_STATE_OVERRIDE:
+      // ACC overridden with a manual charge
+      s = stp_rom(s, "Charge override");
       break;
     }
 
@@ -1038,10 +1129,6 @@ BOOL acc_cmd(char *caller, char *command, char *arguments, BOOL sms)
 BOOL acc_handle_sms(char *caller, char *command, char *arguments)
   {
   return acc_cmd(caller,command,arguments,TRUE);
-  }
-
-void acc_handle_msg(BOOL msgmode, int code, char* msg)
-  {
   }
 
 void acc_ticker(void)            // ACC Ticker
