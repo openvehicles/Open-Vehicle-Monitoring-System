@@ -45,6 +45,9 @@
 #ifdef OVMS_LOGGINGMODULE
 #include "logging.h"
 #endif // #ifdef OVMS_LOGGINGMODULE
+#ifdef OVMS_ACCMODULE
+#include "acc.h"
+#endif
 
 // NET_MSG data
 #define TOKEN_SIZE 22
@@ -895,6 +898,10 @@ void net_msg_cmd_do(void)
 
    // terminate IPSEND by Ctrl-Z (should this be disabled for commands 40-49 as well?)
    net_msg_send();
+
+#ifdef OVMS_ACCMODULE
+   acc_handle_msg(TRUE, net_msg_cmd_code, net_msg_cmd_msg);
+#endif
 
    // clear command
    net_msg_cmd_code = 0;

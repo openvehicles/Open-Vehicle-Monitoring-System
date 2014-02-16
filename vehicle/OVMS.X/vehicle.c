@@ -29,6 +29,9 @@
 #include <string.h>
 #include "ovms.h"
 #include "params.h"
+#ifdef OVMS_ACCMODULE
+#include "acc.h"
+#endif
 
 #pragma udata VEHICLE
 unsigned int  can_granular_tick;             // An internal ticker used to generate 1min, 5min, etc, calls
@@ -547,6 +550,9 @@ void vehicle_ticker(void)
         ((car_chargelimit_soclimit>0)&&(car_SOC>=car_chargelimit_soclimit)))
       {
       // Charge has hit the limit, so can be stopped
+#ifdef OVMS_ACCMODULE
+      acc_handle_msg(FALSE, 12, NULL);
+#endif
       vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
       }
     }
