@@ -28,6 +28,18 @@
 ; THE SOFTWARE.
 */
 
+2014-03-10 2.6.5       Firmware 2.6.5
+                       # Change car_tmotor to signed int
+                       # Call vehicle_fn_poll0() in OVMS_POLLER, if no poll list defined
+                       # Twizy release 3.2.0
+                       #   EEPROM CFG profile storage (3 custom profiles)
+                       #   CFG profile management commands: LOAD, SAVE, INFO
+                       #   CFG profile selection & display via simpl
+                       # Tesla Roadster: Treat TBattery as signed
+                       # ACC: Add a RADIUS parameter, supporting geo-fencing radiuses per acc locations
+                       # ACC: Route MSG commands through to ACC (for possible special handling)
+                       # ACC: Support charge, stop, and cooldown overrides
+
 2014-01-19 2.6.2       Firmware 2.6.2
                        # Remove duplicate car_stale_* decrements in individual vehicle modules (as done centrally in vehicle.c)
                        # Updates to vehicle_thinkcity
