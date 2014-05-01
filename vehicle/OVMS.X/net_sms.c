@@ -92,7 +92,7 @@ void net_send_sms_finish(void)
     }
   }
 
-void net_send_sms_rom(char* number, static const rom char* message)
+void net_send_sms_rom(char* number, const rom char* message)
   {
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
@@ -101,7 +101,7 @@ void net_send_sms_rom(char* number, static const rom char* message)
   net_send_sms_finish();
   }
 
-void net_send_sms_ram(char* number, static const char* message)
+void net_send_sms_ram(char* number, const char* message)
   {
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
 
@@ -810,6 +810,9 @@ BOOL net_sms_handle_chargestart(char *caller, char *command, char *arguments)
   net_notify_suppresscount = 0; // Enable notifications
   net_send_sms_start(caller);
   net_puts_rom(NET_MSG_CHARGESTART);
+#ifdef OVMS_ACCMODULE
+  acc_handle_msg(FALSE, 11, NULL);
+#endif
   return TRUE;
   }
 
@@ -820,6 +823,9 @@ BOOL net_sms_handle_chargestop(char *caller, char *command, char *arguments)
   net_notify_suppresscount = 30; // Suppress notifications for 30 seconds
   net_send_sms_start(caller);
   net_puts_rom(NET_MSG_CHARGESTOP);
+#ifdef OVMS_ACCMODULE
+  acc_handle_msg(FALSE, 12, NULL);
+#endif
   return TRUE;
   }
 
@@ -829,6 +835,9 @@ BOOL net_sms_handle_cooldown(char *caller, char *command, char *arguments)
     vehicle_fn_commandhandler(FALSE, 25, NULL);
   net_send_sms_start(caller);
   net_puts_rom(NET_MSG_COOLDOWN);
+#ifdef OVMS_ACCMODULE
+  acc_handle_msg(FALSE, 25, NULL);
+#endif
   return TRUE;
   }
 

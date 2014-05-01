@@ -28,6 +28,36 @@
 ; THE SOFTWARE.
 */
 
+2014-03-10 2.6.5       Firmware 2.6.5
+                       # Change car_tmotor to signed int
+                       # Call vehicle_fn_poll0() in OVMS_POLLER, if no poll list defined
+                       # Twizy release 3.2.0
+                       #   EEPROM CFG profile storage (3 custom profiles)
+                       #   CFG profile management commands: LOAD, SAVE, INFO
+                       #   CFG profile selection & display via simpl
+                       # Tesla Roadster: Treat TBattery as signed
+                       # ACC: Add a RADIUS parameter, supporting geo-fencing radiuses per acc locations
+                       # ACC: Route MSG commands through to ACC (for possible special handling)
+                       # ACC: Support charge, stop, and cooldown overrides
+
+2014-01-19 2.6.2       Firmware 2.6.2
+                       # Remove duplicate car_stale_* decrements in individual vehicle modules (as done centrally in vehicle.c)
+                       # Updates to vehicle_thinkcity
+                       # Mitsubishi: tbergo changes 1.5 ... 1.8
+                       # Move can bus low level register access to vehicle.c, out of individual vehicle modules
+                       # OBDII: Implementation using new vehicle polling framework
+                       # Structural changes to support new vehicle polling framework
+                       # Changes to crypt_md5 library to save 62 bytes of initialised ram
+                       # GSM clock polling, Request, and sync, GSM time
+                       # Fix to doors2 bits
+                       # Some work on nissan leaf
+                       # Fixed QC detection and 12V alarm issue
+                       # Twizy V3.0.2: CFG TSMAP allows 0..100 for levels 2..4
+                       # Twizy version 3.1.0:  - TSMAP: levels 1..4 now allow 0%  - Power map generator extended for pwr max lo/hi, added sanity check  - Renamed command "POWER" to "DRIVE", "TORQUE" to "POWER", changed param handling
+                       # Twizy 3.1.1: - SDO segmented upload support (readsdo_buf) - new command: CFG READS (read string), CFG WRITEO (write only) - Error counter hardening (counter reset by CFG command)
+                       # Twizy V3.1.2: access to SEVCON logs / monitoring - new command: MSG 209 = CMD_ResetLogs - new command: MSG 210 = CMD_QueryLogs - active faults log included with fault alert - added Twizy client scripts
+                       # Switch to extended mode compilation
+                       # Change car_ambient_temp, car_tpem, car_tmotor and car_tpms_t to signed int
 
 2013-11-28 2.5.5       Firmware 2.5.5
                        # Fix mode numnbers for display of range and performance charge modes

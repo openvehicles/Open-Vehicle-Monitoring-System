@@ -51,7 +51,7 @@ void par_initialise(void)
   {
   }
 
-char* par_get(unsigned char param)
+void par_read(unsigned char param)
   {
   int k;
   unsigned int eeaddress;
@@ -68,8 +68,6 @@ char* par_get(unsigned char param)
     par_value[k] = EEDATA;
     EEADR++;
     }
-
-  return par_value;
   }
 
 void par_write(unsigned char param)
@@ -100,9 +98,30 @@ void par_write(unsigned char param)
     }
   }
 
+char* par_get(unsigned char param)
+  {
+  par_value[0] = 0;
+
+  if (param >= PARAM_MAX) return par_value;
+
+#ifdef OVMS_TWIZY_CFG
+  // exclude binary params for CFG profiles:
+  if (param >= 16 && param <= 21) return par_value;
+#endif //OVMS_TWIZY_CFG
+
+  par_read(param);
+
+  return par_value;
+  }
+
 void par_set(unsigned char param, char* value)
   {
   if (param >= PARAM_MAX) return;
+
+#ifdef OVMS_TWIZY_CFG
+  // exclude binary params for CFG profiles:
+  if (param >= 16 && param <= 21) return;
+#endif //OVMS_TWIZY_CFG
 
   if (value)
     {
@@ -127,3 +146,45 @@ void par_setbase64(unsigned char param, void* source, size_t length)
   base64encode(source, length, par_value);
   par_write(param);
   }
+
+void par_getbin(unsigned char param, void *dest, size_t length)
+{
+  // clear dest:
+  memset(dest, 0, length);
+
+  // read param slots into dest:
+  while (param < PARAM_MAX) {
+    par_read(param);
+    if (length > PARAM_MAX_LENGTH) {
+      memcpy(dest, (const void *)par_value, PARAM_MAX_LENGTH);
+      length -= PARAM_MAX_LENGTH;
+      dest += PARAM_MAX_LENGTH;
+      param += 1;
+    } else {
+      // last chunk:
+      memcpy(dest, (const void *)par_value, length);
+      break;
+    }
+  }
+}
+
+void par_setbin(unsigned char param, void *source, size_t length)
+{
+  // write source to param slots:
+  while (param < PARAM_MAX) {
+    if (length > PARAM_MAX_LENGTH) {
+      memcpy(par_value, source, PARAM_MAX_LENGTH);
+      par_write(param);
+      length -= PARAM_MAX_LENGTH;
+      source += PARAM_MAX_LENGTH;
+      param += 1;
+    } else {
+      // last chunk:
+      memset(par_value, 0, PARAM_MAX_LENGTH);
+      memcpy(par_value, source, length);
+      par_write(param);
+      break;
+    }
+  }
+}
+

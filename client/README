@@ -1,0 +1,49 @@
+Open Vehicle Monitoring System
+
+
+The clients
+===========
+
+The scripts "client_app.pl" and "cmd.pl" can be used to access the OVMS server from the command line.
+
+Both will read "ovms_client.conf" for the server and login configuration. Change to your vehicle id,
+server and module password.
+
+"client_app.pl" will connect to the server, listen and output any protocol lines received forever
+until stopped (Ctrl-C).
+
+"cmd.pl" can be used to send single commands to the server/car. It will output only server responses
+that match the command issued and terminate after having received no more command results for a
+defined time.
+
+"cmd.pl" can be used to query historical record entries from the server or to automate car communication.
+
+Examples:
+
+Query stored historical records:
+	#> ./cmd.pl 31
+
+Retrieve all records of type "*-OVM-DebugCrash":
+	#> ./cmd.pl 32 "*-OVM-DebugCrash"
+
+Send USSD code to query SIM account balance:
+	#> ./cmd.pl 41 "*100#"
+There's also the "querybalance.sh" script to do this.
+
+
+Renault Twizy scripts
+=====================
+
+"rt_fetchdata.sh" will fetch all Twizy specific track telemetry records and save them using a
+common filename prefix.
+
+"rt_querylogs.sh" will query all SEVCON logs, i.e. ask the module to query them and send
+the history records to the server.
+
+"rt_fetchlogs.sh" can then be used to fetch all logs records from the server into local
+files (similar to rt_fetchdata).
+
+"rt_resetlogs.sh" will reset all SEVCON logs. Please note: not all log entries
+may be clearable, query and fetch again to check the log contents after reset.
+
+

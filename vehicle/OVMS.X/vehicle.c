@@ -29,6 +29,9 @@
 #include <string.h>
 #include "ovms.h"
 #include "params.h"
+#ifdef OVMS_ACCMODULE
+#include "acc.h"
+#endif
 
 #pragma udata VEHICLE
 unsigned int  can_granular_tick;             // An internal ticker used to generate 1min, 5min, etc, calls
@@ -58,7 +61,7 @@ rom BOOL (*vehicle_fn_smshandler)(BOOL premsg, char *caller, char *command, char
 rom BOOL (*vehicle_fn_smsextensions)(char *caller, char *command, char *arguments);
 rom int  (*vehicle_fn_minutestocharge)(unsigned char chgmod, int wAvail, int imStart, int imTarget, int pctTarget, int cac100, signed char degAmbient, int *pimExpect);
 
-#ifdef OVMS_HW_V2
+#ifdef OVMS_POLLER
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_poller
@@ -79,11 +82,11 @@ unsigned int vehicle_poll_ml_frame;      // Frame number for vehicle poll
 
 rom BOOL (*vehicle_fn_pollpid)(void);
 
-#endif //#ifdef OVMS_HW_V2
+#endif //#ifdef OVMS_POLLER
 
 #pragma udata
 
-#ifdef OVMS_HW_V2
+#ifdef OVMS_POLLER
 
 void vehicle_poll_setpidlist(rom vehicle_pid_t *plist)
   {
@@ -256,7 +259,7 @@ BOOL vehicle_poll_poll0(void)
   return FALSE; // Don't call vehicle poller
   }
 
-#endif //#ifdef OVMS_HW_V2
+#endif //#ifdef OVMS_POLLER
 
 ////////////////////////////////////////////////////////////////////////
 // CAN Interrupt Service Routine (High Priority)
@@ -273,10 +276,11 @@ void can_int_service(void)
   }
 
 #pragma code
-#pragma	interrupt high_isr
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata high_isr_tmpdata
+#pragma	interrupt high_isr nosave=section(".tmpdata")
 void high_isr(void)
   {
-  char *s;
   // High priority CAN interrupt
   if ((RXB0CONbits.RXFUL)&&(vehicle_fn_poll0 != NULL))
     {
@@ -293,25 +297,31 @@ void high_isr(void)
     can_databuffer[6] = RXB0D6;
     can_databuffer[7] = RXB0D7;
     RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
-#ifdef OVMS_HW_V2
-    if ((vehicle_poll_plist != NULL)&&
-        (can_id >= vehicle_poll_moduleid_low)&&
-        (can_id <= vehicle_poll_moduleid_high))
+#ifdef OVMS_POLLER
+    if (vehicle_poll_plist != NULL)
       {
-      if (vehicle_poll_poll0())
+      if ((can_id >= vehicle_poll_moduleid_low)&&
+          (can_id <= vehicle_poll_moduleid_high))
         {
-        vehicle_fn_poll0();
+        if (vehicle_poll_poll0())
+          {
+          vehicle_fn_poll0();
+          }
         }
       }
-#else // #ifdef OVMS_HW_V2
+    else
+      {
+      vehicle_fn_poll0();
+      }
+#else // #ifdef OVMS_POLLER
     vehicle_fn_poll0();
-#endif //#ifdef OVMS_HW_V2
+#endif //#ifdef OVMS_POLLER
     }
   if ((RXB1CONbits.RXFUL)&&(vehicle_fn_poll1 != NULL))
     {
-#ifdef OVMS_HW_V2
+#ifdef OVMS_POLLER
     vehicle_poll_busactive = 60; // Reset countdown timer for passive bus activity
-#endif //#ifdef OVMS_HW_V2
+#endif //#ifdef OVMS_POLLER
     can_id = ((unsigned int)RXB1SIDL >>5)
            + ((unsigned int)RXB1SIDH <<3);
     can_filter = RXB1CON & 0x07;
@@ -329,6 +339,7 @@ void high_isr(void)
     }
   PIR3=0;     // Clear Interrupt flags
   }
+#pragma tmpdata
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_initialise()
@@ -343,7 +354,7 @@ void vehicle_initialise(void)
   can_minSOCnotified = 0;
   can_capabilities = NULL;
 
-#ifdef OVMS_HW_V2
+#ifdef OVMS_POLLER
   vehicle_poll_state = 0;
   vehicle_poll_plist = NULL;
   vehicle_poll_plcur = NULL;
@@ -354,7 +365,7 @@ void vehicle_initialise(void)
   vehicle_poll_pid = 0;
   vehicle_poll_busactive = 0;
   vehicle_fn_pollpid = NULL;
-#endif //#ifdef OVMS_HW_V2
+#endif //#ifdef OVMS_POLLER
 
   vehicle_version = NULL;
   vehicle_fn_init = NULL;
@@ -481,13 +492,13 @@ void vehicle_ticker(void)
   // This ticker is called once every second
   can_granular_tick++;
 
-#ifdef OVMS_HW_V2
+#ifdef OVMS_POLLER
   if ((vehicle_poll_busactive>0)&&(vehicle_poll_plist != NULL))
     {
     vehicle_poll_poller();
     vehicle_poll_busactive--; // Count down...
     }
-#endif //#ifdef OVMS_HW_V2
+#endif //#ifdef OVMS_POLLER
 
   // The one-second work...
   if (car_stale_ambient>0) car_stale_ambient--;
@@ -539,6 +550,9 @@ void vehicle_ticker(void)
         ((car_chargelimit_soclimit>0)&&(car_SOC>=car_chargelimit_soclimit)))
       {
       // Charge has hit the limit, so can be stopped
+#ifdef OVMS_ACCMODULE
+      acc_handle_msg(FALSE, 12, NULL);
+#endif
       vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
       }
     }

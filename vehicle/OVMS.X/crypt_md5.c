@@ -153,10 +153,7 @@ void MD5_Final(uint8_t *digest, MD5_CTX *ctx)
 {
     uint8_t bits[8];
     uint32_t x, padLen;
-    uint8_t PADDING[2];
-
-    PADDING[0] = 0x80;
-    PADDING[1] = 0x00;
+    uint8_t PADDING;
 
     /* Save number of bits */
     Encode(bits, ctx->count, 8);
@@ -166,9 +163,13 @@ void MD5_Final(uint8_t *digest, MD5_CTX *ctx)
     x = (uint32_t)((ctx->count[0] >> 3) & 0x3f);
     padLen = (x < 56) ? (56 - x) : (120 - x);
     if (padLen>0)
-      MD5_Update(ctx, (const uint8_t*)PADDING, 1);
+      {
+      PADDING = 0x80;
+      MD5_Update(ctx, (const uint8_t*)&PADDING, 1);
+      }
+    PADDING = 0x00;
     for (padLen--;padLen>0;padLen--)
-      MD5_Update(ctx, (const uint8_t*)PADDING+1, 1);
+      MD5_Update(ctx, (const uint8_t*)&PADDING, 1);
 
     /* Append length (before padding) */
     MD5_Update(ctx, bits, 8);

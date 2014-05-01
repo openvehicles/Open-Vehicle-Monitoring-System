@@ -355,6 +355,10 @@ if ((tc_bit_chrgen == 0) && (tc_bit_dischgenbl == 0)) // Is charge_enable_bit (b
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
 //
+
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata high_isr_tmpdata
+
 BOOL vehicle_thinkcity_poll0(void)
   {
   switch (can_id)
@@ -473,6 +477,9 @@ BOOL vehicle_thinkcity_poll1(void)
 
   return TRUE;
   }
+
+#pragma tmpdata
+
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_thinkcity_idlepoll()

@@ -71,6 +71,10 @@ BOOL vehicle_teslaroadster_ticker60(void);
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
 //
+
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata high_isr_tmpdata
+
 BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
   {
   unsigned char k;
@@ -279,7 +283,7 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
       case 0xA3: // Temperatures
         car_tpem = (signed char)can_databuffer[1]; // Tpem
         car_tmotor = (unsigned char)can_databuffer[2]; // Tmotor
-        car_tbattery = (signed int)can_databuffer[6]; // Tbattery
+        car_tbattery = (signed char)can_databuffer[6]; // Tbattery
         car_stale_temps = 120; // Reset stale indicator
         break;
       case 0xA4: // 7 VIN bytes i.e. "SFZRE2B"
@@ -400,6 +404,9 @@ BOOL vehicle_teslaroadster_poll1(void)                // CAN ID 344 and 402
 
   return TRUE;
 }
+
+#pragma tmpdata
+
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_teslaroadster_ticker10th()

@@ -78,5 +78,7 @@ char* par_get(unsigned char param);
 void par_set(unsigned char param, char* value);
 void par_getbase64(unsigned char param, void* dest, size_t length);
 void par_setbase64(unsigned char param, void* source, size_t length);
+void par_getbin(unsigned char param, void* dest, size_t length);
+void par_setbin(unsigned char param, void* source, size_t length);
 
 #endif // #ifndef __OVMS_PARAMS_H

@@ -24,32 +24,3 @@ The server also includes a web interface for basic functions such as setting the
 the car and checking status.
 
 
-The clients
-===========
-
-The scripts "client_app.pl" and "cmd.pl" can be used to access the OVMS server from the command line.
-
-Both will read "ovms_client.conf" for the server and login configuration. Change to your vehicle id,
-server and module password.
-
-"client_app.pl" will connect to the server, listen and output any protocol lines received forever
-until stopped (Ctrl-C).
-
-"cmd.pl" can be used to send single commands to the server/car. It will output only server responses
-that match the command issued and terminate after having received no more command results for a
-defined time.
-
-"cmd.pl" can be used to query historical record entries from the server or to automate car communication.
-
-Examples:
-
-Query stored historical records:
-	#> ./cmd.pl 31
-
-Retrieve all records of type "*-OVM-DebugCrash":
-	#> ./cmd.pl 32 "*-OVM-DebugCrash"
-
-Send USSD code to query SIM account balance:
-	#> ./cmd.pl 41 "*100#"
-
-

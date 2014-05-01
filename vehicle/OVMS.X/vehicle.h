@@ -83,7 +83,7 @@ void vehicle_ticker(void);
 void vehicle_ticker10th(void);
 void vehicle_idlepoll(void);
 
-#ifdef OVMS_HW_V2
+#ifdef OVMS_POLLER
 // Vehicle Poller functions and data
 
 #define VEHICLE_POLL_NSTATES 3
@@ -118,6 +118,6 @@ extern unsigned int vehicle_poll_ml_frame;      // Frame number for vehicle poll
 void vehicle_poll_setpidlist(rom vehicle_pid_t *plist);
 void vehicle_poll_setstate(unsigned char state);
 
-#endif //#ifdef OVMS_HW_V2
+#endif //#ifdef OVMS_POLLER
 
 #endif // #ifndef __OVMS_VEHICLE_H

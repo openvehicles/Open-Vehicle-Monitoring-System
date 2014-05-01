@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 2,6,1
+#define OVMS_FIRMWARE_VERSION 2,6,5
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -118,9 +118,9 @@ typedef struct {
   unsigned :1;                  // 0x04
   unsigned CarLocked:1;         // 0x08
   unsigned ValetMode:1;         // 0x10
-  unsigned Bonnet:1;            // 0x20
-  unsigned Trunk:1;             // 0x40
-  unsigned :1;                  // 0x80
+  unsigned Headlights:1;        // 0x20
+  unsigned Bonnet:1;            // 0x40
+  unsigned Trunk:1;             // 0x80
 } car_doors2bits_t;
 #define car_doors2bits (*((car_doors2bits_t*)&car_doors2))
 
@@ -171,13 +171,13 @@ extern unsigned int car_idealrange; // Ideal Range in miles
 extern unsigned int car_estrange; // Estimated Range
 extern unsigned long car_time; // UTC Time
 extern unsigned long car_parktime; // UTC time car was parked (or 0 if not)
-extern signed char car_ambient_temp; // Ambient Temperature (celcius)
+extern signed int car_ambient_temp; // Ambient Temperature (celcius)
 extern unsigned char car_vin[18]; // VIN
 extern unsigned char car_type[5]; // Car Type
-extern signed char car_tpem; // Tpem
-extern unsigned char car_tmotor; // Tmotor
+extern signed int car_tpem; // Tpem
+extern signed int car_tmotor; // Tmotor
 extern signed int car_tbattery; // Tbattery
-extern signed char car_tpms_t[4]; // TPMS temperature
+extern signed int car_tpms_t[4]; // TPMS temperature
 extern unsigned char car_tpms_p[4]; // TPMS pressure
 extern unsigned int car_trip; // ODO trip in miles /10
 extern unsigned long car_odometer; //Odometer in miles /10

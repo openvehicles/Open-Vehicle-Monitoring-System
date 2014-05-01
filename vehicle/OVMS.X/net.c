@@ -96,14 +96,14 @@ rom char NET_INIT1[] = "AT+CSMINS?\r";
 #endif
 
 rom char NET_INIT2[] = "AT+CCID;+CPBF=\"O-\";+CPIN?\r";
-rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E0\r";
-//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;E1\r";
+rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;+CLTS=1;E0\r";
+//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;+CLTS=1;E1\r";
 // NOTE: changing IP mode to QSEND=0 needs handling change for "SEND OK"/"DATA ACCEPT" in net_state_activity()
 rom char NET_COPS[] = "AT+COPS=0,1;+COPS?\r";
 
 rom char NET_WAKEUP[] = "AT\r";
 rom char NET_HANGUP[] = "ATH\r";
-rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CSQ\r";
+rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CCLK?;+CSQ\r";
 rom char NET_IPR_SET[] = "AT+IPR=9600\r"; // sets fixed baud rate for the modem
 
 ////////////////////////////////////////////////////////////////////////
@@ -122,14 +122,17 @@ void uart_int_service(void)
   }
 #pragma code
 
-//#pragma	interruptlow low_isr save=section(".tmpdata")
-#pragma	interruptlow low_isr
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata low_isr_tmpdata
+#pragma	interruptlow low_isr nosave=section(".tmpdata")
 void low_isr(void)
   {
   // call of library module function, MUST
   UARTIntISR();
   led_isr();
   }
+#pragma tmpdata
+
 
 ////////////////////////////////////////////////////////////////////////
 // net_reset_async()
@@ -270,7 +273,7 @@ void net_poll(void)
   while (UARTIntPutChar(c)==0) ; \
   }
 
-void net_puts_rom(static const rom char *data)
+void net_puts_rom(const rom char *data)
   {
 #ifdef OVMS_DIAGMODULE
   // Help diag terminals with line breaks
@@ -689,6 +692,14 @@ void net_state_activity()
     return;
     }
 
+  if ((net_buf_pos >= 8)&&
+      (memcmppgm2ram(net_buf, (char const rom far*)"*PSUTTZ:", 8) == 0))
+    {
+    // We have a time source from the GSM provider
+    // e.g.; *PSUTTZ: 2013, 12, 16, 15, 45, 17, "+32", 1
+    return;
+    }
+
   switch (net_state)
     {
 #ifdef OVMS_DIAGMODULE
@@ -913,6 +924,11 @@ void net_state_activity()
           }
         delay100(1);
         net_puts_rom(NET_HANGUP);
+        }
+      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CCLK", 5) == 0)
+        {
+        // local clock update
+        // e.g.; +CCLK: "13/12/16,22:01:39+32"
         }
 #ifdef OVMS_INTERNALGPS
       else if ((memcmppgm2ram(net_buf, (char const rom far*)"2,", 2) == 0)&&
@@ -1727,7 +1743,7 @@ void net_initialise(void)
 //
 // supported string format:
 // +CCLK: "yy/mm/dd,hh:mm:ss+00"
-unsigned long datestring_to_timestamp(const rom char *arg)
+unsigned long datestring_to_timestamp(const char *arg)
   {
   char aval[6];
   int ival = -1;
