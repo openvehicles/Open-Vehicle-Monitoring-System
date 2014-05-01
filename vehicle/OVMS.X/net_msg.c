@@ -1218,53 +1218,6 @@ char *net_prep_ctp(char *s, char *argument)
     s = stp_i(s, "error: ", minRemain);
     }
 
-  // temp testing code
-    {
-	static rom char *s_papszTimeGSM[] =
-	{
-	  "+CCLK: \"00/01/01,00:00:00+00\"",
-	  "+CCLK: \"38/01/19,03:14:07+00\"",
-	  "+CCLK: \"38/01/19,03:14:08+00\"",
-	  "+CCLK: \"99/12/31,23:59:59+00\""
-	};
-	unsigned long datestring_to_timestamp(const rom char *arg);
-
-    extern unsigned long tr_cartime_cac_last; // time when we last got a CAC reading
-    extern unsigned long tr_cartime_cac_request;        // time when we next want to request CAC
-
-    char *p = par_get(PARAM_TIMEZONE);
-    signed long dsecTimeZone = timestring_to_mins(p)*60L;
-    unsigned long timestamp;
-    int i;
-
-    s = stp_l2f_h(s, "\rCAC: ", (unsigned long)car_cac100, 2);
-
-    timestamp = tr_cartime_cac_last + dsecTimeZone;
-    s = stp_date(s, "\rread ", timestamp);
-    s = stp_time(s, " ", timestamp);
-
-    if (tr_cartime_cac_request != 0)
-      {
-      timestamp = tr_cartime_cac_request + dsecTimeZone;
-      s = stp_date(s, "\rrequest ", timestamp);
-      s = stp_time(s, " ", timestamp);
-      }
-    else
-      {
-      s = stp_rom(s, "\rrequest: none");
-      }
-
-    timestamp = car_time + dsecTimeZone;
-    s = stp_date(s, "\rcurrent ", timestamp);
-    s = stp_time(s, " ", timestamp);
-
-    for (i = 0; i < DIM(s_papszTimeGSM); ++i)
-      {
-      timestamp = datestring_to_timestamp(s_papszTimeGSM[i]);
-      s = stp_ul(s, "\r", timestamp);
-      }
-    }
-
   return s;
 }
 
