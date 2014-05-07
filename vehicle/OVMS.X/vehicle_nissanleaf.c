@@ -92,7 +92,9 @@ BOOL vehicle_nissanleaf_poll1(void)
         }
     case 0x5b3:
       // Rough and kludgy
-      car_SOC = ((((int)can_databuffer[5]&0x01)<<1) + ((int)can_databuffer[6])) / 3;
+      car_idealrange = (((int)can_databuffer[4]&0x01)<<8) + can_databuffer[5]; // raw Gids
+      car_SOC = (car_idealrange * 100 + 140) / 281; // convert Gids to percent
+      car_idealrange = (car_idealrange * 84 + 140) / 281;
       break;
     }
   return TRUE;
