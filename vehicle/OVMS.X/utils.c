@@ -321,12 +321,14 @@ WORD crc16(char *data, int length)
 
 
 // cr2lf: replace \r by \n in s (to convert msg text to sms)
+//   and '^' by '/' to prevent '?' (SIM908 SMS bug?)
 
 void cr2lf(char *s)
 {
   while (s && *s)
   {
     if (*s == '\r') *s = '\n';
+    else if (*s == '^') *s = '/';
     ++s;
   }
 }
