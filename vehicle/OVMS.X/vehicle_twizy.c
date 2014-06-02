@@ -181,6 +181,9 @@
     - New CFG RAMPL command to set ramp rpm/s limits
     - CFG TSMAP extended by speed coordinates
 
+ * 3.2.2  02 Jun 2014 (Michael Balzer)
+    - Bugfix: Trip report recuperation percentage calculation fixed
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -246,7 +249,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.2.1";
+rom char vehicle_twizy_version[] = "3.2.2";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-210";
@@ -4788,7 +4791,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     if ((pwr_use > 0) && (dist > 0))
     {
       s = stp_l(s, " ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
-      s = stp_i(s, "Wpk/", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
 
@@ -4807,7 +4810,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     {
       s = stp_i(s, "\r=== ", prc_const);
       s = stp_l(s, "% ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
-      s = stp_i(s, "Wpk/", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
 
@@ -4821,7 +4824,7 @@ void vehicle_twizy_power_prepmsg(char mode)
       s = stp_l2f(s, "% ", ((twizy_speedpwr[CAN_SPEED_ACCEL].spdsum * 10)
               / twizy_speedpwr[CAN_SPEED_ACCEL].spdcnt + 5) / 10, 1); // avg accel kph/s
       s = stp_l(s, "kps ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
-      s = stp_i(s, "Wpk/", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
 
@@ -4835,7 +4838,7 @@ void vehicle_twizy_power_prepmsg(char mode)
       s = stp_l2f(s, "% ", ((twizy_speedpwr[CAN_SPEED_DECEL].spdsum * 10)
               / twizy_speedpwr[CAN_SPEED_DECEL].spdcnt + 5) / 10, 1); // avg decel kph/s
       s = stp_l(s, "kps ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
-      s = stp_i(s, "Wpk/", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
 
@@ -4849,7 +4852,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     {
       s = stp_i(s, "\r^^^ ", twizy_levelpwr[CAN_LEVEL_UP].hsum);
       s = stp_l(s, "m ", (pwr / dist * 1000 + ((pwr>=0)?11250:-11250)) / 22500);
-      s = stp_i(s, "Wpk/", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
 
@@ -4861,7 +4864,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     {
       s = stp_i(s, "\rvvv ", twizy_levelpwr[CAN_LEVEL_DOWN].hsum);
       s = stp_l(s, "m ", (pwr / dist * 1000 + ((pwr>=0)?11250:-11250)) / 22500);
-      s = stp_i(s, "Wpk/", (pwr_rec * 1000 / pwr_use + 5) / 10);
+      s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
 
