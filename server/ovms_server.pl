@@ -2020,7 +2020,14 @@ sub http_request_in_api
 
   my $cookie = $headers->{'cookie'};
   my $session = '-';
-  $session = $1 if ($cookie =~ /^ovmsapisession=(.+)/);
+  COOKIEJAR: foreach (split /;\s+/,$cookie)
+    {
+    if (/^ovmsapisession=(.+)/)
+      {
+      $session = $1;
+      last COOKIEJAR;
+      }
+    }
 
   if ($paths[0] eq '')
     {
