@@ -994,7 +994,7 @@ char *net_prep_stat(char *s)
     unit = " km";
   }
 
-  if (car_time != 0)
+  if (car_time > 315360000)
     {
     char *p = par_get(PARAM_TIMEZONE);
     s = stp_time(s, NULL, car_time + timestring_to_mins(p)*60L);
