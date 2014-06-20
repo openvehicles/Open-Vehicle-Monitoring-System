@@ -184,6 +184,12 @@
  * 3.2.2  02 Jun 2014 (Michael Balzer)
     - Bugfix: Trip report recuperation percentage calculation fixed
 
+ * 3.2.3  20 Jun 2014 (Michael Balzer)
+    - Added battery max drive/recup power from PDO 424 to RT-PWR-BattPack
+    - Motor temperature now also available below zero (signed)
+    - SEVCON auto-login on every switch-on (for SDO reads)
+    - SDO functions now check component status
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -249,7 +255,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.2.2";
+rom char vehicle_twizy_version[] = "3.2.3";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C200-210";
@@ -282,6 +288,9 @@ typedef struct battery_pack
   // => watch/alert bit #15 (1<<15)
   UINT8 cmod_temp_stddev_max; // max cmod temperature std deviation
   // => watch/alert bit #7 (1<<7)
+
+  UINT8 max_drive_pwr; // in 500 W
+  UINT8 max_recup_pwr; // in 500 W
 
 } battery_pack;
 
@@ -607,6 +616,7 @@ volatile union {
 
 #define ERR_NoCANWrite              0x0001
 #define ERR_Timeout                 0x000a
+#define ERR_ComponentOffline        0x000b
 
 #define ERR_ReadSDO                 0x0002
 #define ERR_ReadSDO_Timeout         0x0003
@@ -750,8 +760,13 @@ UINT vehicle_twizy_readsdo(UINT index, UINT8 subindex)
 {
   UINT8 control;
 
+  // check for CAN write access:
   if (sys_features[FEATURE_CANWRITE] == 0)
     return ERR_NoCANWrite;
+
+  // check component status (currently only SEVCON):
+  if ((twizy_status & CAN_STATUS_KEYON) == 0)
+    return ERR_ComponentOffline;
 
   // request upload:
   twizy_sdo.control = SDO_InitUploadRequest;
@@ -793,8 +808,13 @@ UINT vehicle_twizy_readsdo_buf(UINT index, UINT8 subindex, BYTE *dst, BYTE *maxl
 {
   UINT8 n, toggle, dlen;
 
+  // check for CAN write access:
   if (sys_features[FEATURE_CANWRITE] == 0)
     return ERR_NoCANWrite;
+
+  // check component status (currently only SEVCON):
+  if ((twizy_status & CAN_STATUS_KEYON) == 0)
+    return ERR_ComponentOffline;
 
   // request upload:
   twizy_sdo.control = SDO_InitUploadRequest;
@@ -883,8 +903,13 @@ UINT vehicle_twizy_writesdo(UINT index, UINT8 subindex, UINT32 data)
 {
   UINT8 control;
 
+  // check for CAN write access:
   if (sys_features[FEATURE_CANWRITE] == 0)
     return ERR_NoCANWrite;
+
+  // check component status (currently only SEVCON):
+  if ((twizy_status & CAN_STATUS_KEYON) == 0)
+    return ERR_ComponentOffline;
 
   // request download:
   twizy_sdo.control = SDO_InitDownloadRequest | SDO_Expedited; // no size needed, server is smart
@@ -3524,7 +3549,7 @@ BOOL vehicle_twizy_poll1(void)
 
   if (can_filter == 2)
   {
-    // Filter 2 = CAN ID GROUP 0x59_:
+    // Filter 2 = CAN ID GROUP 0x_9_:
 
     switch (can_id)
     {
@@ -3562,23 +3587,9 @@ BOOL vehicle_twizy_poll1(void)
 
       // PEM temperature:
       if (CAN_BYTE(7) > 0 && CAN_BYTE(7) < 0xf0)
-        car_tpem = (signed char) CAN_BYTE(7) - 40;
-
-      break;
-
-
-      /*****************************************************
-       * FILTER 2:
-       * CAN ID 0x59B: sent every 100 ms (10 per second)
-       */
-    case 0x59B:
-      
-      // twizy_status low nibble:
-      twizy_status = (twizy_status & 0xF0) | (CAN_BYTE(1) & 0x09);
-      if (CAN_BYTE(0) == 0x80)
-        twizy_status |= CAN_STATUS_MODE_D;
-      else if (CAN_BYTE(0) == 0x08)
-        twizy_status |= CAN_STATUS_MODE_R;
+        car_tpem = (signed int) CAN_BYTE(7) - 40;
+      else
+        car_tpem = 0;
 
       break;
 
@@ -3637,6 +3648,22 @@ BOOL vehicle_twizy_poll1(void)
 
       /*****************************************************
        * FILTER 2:
+       * CAN ID 0x59B: sent every 100 ms (10 per second)
+       */
+    case 0x59B:
+
+      // twizy_status low nibble:
+      twizy_status = (twizy_status & 0xF0) | (CAN_BYTE(1) & 0x09);
+      if (CAN_BYTE(0) == 0x80)
+        twizy_status |= CAN_STATUS_MODE_D;
+      else if (CAN_BYTE(0) == 0x08)
+        twizy_status |= CAN_STATUS_MODE_R;
+
+      break;
+
+
+      /*****************************************************
+       * FILTER 2:
        * CAN ID 0x59E: sent every 100 ms (10 per second)
        */
     case 0x59E:
@@ -3645,25 +3672,17 @@ BOOL vehicle_twizy_poll1(void)
       twizy_dist = ((UINT) CAN_BYTE(0) << 8) + CAN_BYTE(1);
 
       // MOTOR TEMPERATURE:
-      if (CAN_BYTE(5) > 40 && CAN_BYTE(5) < 0xf0)
-        car_tmotor = CAN_BYTE(5) - 40;
+      if (CAN_BYTE(5) > 0 && CAN_BYTE(5) < 0xf0)
+        car_tmotor = (signed int) CAN_BYTE(5) - 40;
       else
-        car_tmotor = 0; // unsigned, no negative temps allowed...
+        car_tmotor = 0;
 
 
       break;
-    }
 
-  }
 
-  else if (can_filter == 3)
-  {
-    // Filter 3 = CAN ID GROUP 0x69_:
-
-    switch (can_id)
-    {
       /*****************************************************
-       * FILTER 3:
+       * FILTER 2:
        * CAN ID 0x69F: sent every 1000 ms (1 per second)
        */
     case 0x69f:
@@ -3682,15 +3701,38 @@ BOOL vehicle_twizy_poll1(void)
       }
 
       break;
+
     }
+
   }
 
 #ifdef OVMS_TWIZY_BATTMON
+  else if (can_filter == 3)
+  {
+    // Filter 3 = CAN ID GROUP 0x_2_:
+
+    switch (can_id)
+    {
+      /*****************************************************
+       * FILTER 3:
+       * CAN ID 0x424: sent every 100 ms (10 per second)
+       */
+    case 0x424:
+      // max drive (discharge) + recup (charge) power:
+      if (CAN_BYTE(2) != 0xff)
+        twizy_batt[0].max_recup_pwr = CAN_BYTE(2);
+      if (CAN_BYTE(3) != 0xff)
+        twizy_batt[0].max_drive_pwr = CAN_BYTE(3);
+
+      break;
+    }
+  }
+
   else if (can_filter == 4)
   {
     UINT8 i, state;
 
-    // Filter 4 = CAN ID GROUP 0x55_: battery sensors.
+    // Filter 4 = CAN ID GROUP 0x_5_: battery sensors.
     //
     // This group really needs to be processed as fast as possible;
     // though only delivered once per second (except 556), the complete
@@ -3706,6 +3748,24 @@ BOOL vehicle_twizy_poll1(void)
 
     switch (can_id)
     {
+    case 0x554:
+      // CAN ID 0x554: Battery cell module temperatures
+      // (1000 ms = 1 per second)
+      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
+      {
+        for (i = 0; i < BATT_CMODS; i++)
+          twizy_cmod[i].temp_act = CAN_BYTE(i);
+
+        state |= BATT_SENSORS_GOT554;
+
+        // detect fetch completion:
+        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+          state = BATT_SENSORS_READY;
+
+        twizy_batt_sensors_state = state;
+      }
+      break;
+
     case 0x556:
       // CAN ID 0x556: Battery cell voltages 1-5
       // 100 ms = 10 per second
@@ -3748,24 +3808,6 @@ BOOL vehicle_twizy_poll1(void)
 
       }
 
-      break;
-
-    case 0x554:
-      // CAN ID 0x554: Battery cell module temperatures
-      // (1000 ms = 1 per second)
-      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
-      {
-        for (i = 0; i < BATT_CMODS; i++)
-          twizy_cmod[i].temp_act = CAN_BYTE(i);
-
-        state |= BATT_SENSORS_GOT554;
-
-        // detect fetch completion:
-        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
-          state = BATT_SENSORS_READY;
-
-        twizy_batt_sensors_state = state;
-      }
       break;
 
     case 0x557:
@@ -3850,7 +3892,7 @@ BOOL vehicle_twizy_poll1(void)
 
   else if (can_filter == 5)
   {
-    // Filter 5 = CAN ID GROUP 0x5D_: exact speed & odometer
+    // Filter 5 = CAN ID GROUP 0x_D_: exact speed & odometer
 
     switch (can_id)
     {
@@ -4171,6 +4213,8 @@ BOOL vehicle_twizy_state_ticker1(void)
 #ifdef OVMS_TWIZY_CFG
       // reset button cnt:
       twizy_button_cnt = 0;
+      // login to SEVCON:
+      login(1);
 #endif // OVMS_TWIZY_CFG
 
     }
@@ -6126,6 +6170,7 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
       //  ,<volt_max>,<volt_max_cellnom>
       //  ,<temp_act>,<temp_min>,<temp_max>
       //  ,<cell_volt_stddev_max>,<cmod_temp_stddev_max>
+      //  ,<max_drive_pwr>,<max_recup_pwr>
 
       s = stp_rom(net_scratchpad, "MP-0 H");
       s = stp_i(s, "RT-PWR-BattPack,", p + 1);
@@ -6147,8 +6192,11 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
       s = stp_i(s, ",", CONV_Temp(tmax));
       s = stp_i(s, ",", CONV_CellVolt(twizy_batt[p].cell_volt_stddev_max));
       s = stp_i(s, ",", twizy_batt[p].cmod_temp_stddev_max);
+      s = stp_i(s, ",", (int) twizy_batt[0].max_drive_pwr * 500);
+      s = stp_i(s, ",", (int) twizy_batt[0].max_recup_pwr * 500);
 
       stat = net_msg_encode_statputs(stat, &crc_pack[p]);
+
 
       // Output cell status:
       for (c = 0; c < BATT_CELLS; c++)
@@ -6737,6 +6785,12 @@ BOOL vehicle_twizy_initialise(void)
 
   // Setup Filter0 and Mask for CAN ID 0x155
 
+  /*
+  Mask0		010 1111 1111
+  Filter0	x0x 0101 0101 		_55		155
+  Filter1	x0x 1000 0001 		_81		081 581
+  */
+
   // Mask0 =
   RXM0SIDH = 0b01011111;
   RXM0SIDL = 0b11100000;
@@ -6753,24 +6807,32 @@ BOOL vehicle_twizy_initialise(void)
   // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
   RXB1CON = 0b00000000;
 
-  // Mask1 = 0x7f0 = group filters for low volume IDs
-  RXM1SIDH = 0b11111110;
+  /*
+  Mask1         100 1111 0000 
+  Filter2	1xx 1001 xxxx		_9_		597 599 59B 59E 69F
+  Filter3	1xx 0010 xxxx		_2_		424 (423) (425) (426) (627) (628) (629)
+  Filter4	1xx 0101 xxxx		_5_		554 556 557 55E 55F (659)
+  Filter5	1xx 1101 xxxx		_D_		5D7
+  */
+
+  // Mask1 = 
+  RXM1SIDH = 0b10011110;
   RXM1SIDL = 0b00000000;
 
-  // Filter2 = GROUP 0x59_:
-  RXF2SIDH = 0b10110010;
+  // Filter2 = GROUP 0x_9_:
+  RXF2SIDH = 0b10010010;
   RXF2SIDL = 0b00000000;
 
-  // Filter3 = GROUP 0x69_:
-  RXF3SIDH = 0b11010010;
+  // Filter3 = GROUP 0x_2_:
+  RXF3SIDH = 0b10000100;
   RXF3SIDL = 0b00000000;
 
-  // Filter4 = GROUP 0x55_:
-  RXF4SIDH = 0b10101010;
+  // Filter4 = GROUP 0x_5_:
+  RXF4SIDH = 0b10001010;
   RXF4SIDL = 0b00000000;
 
-  // Filter5 = GROUP 0x5D_:
-  RXF5SIDH = 0b10111010;
+  // Filter5 = GROUP 0x_D_:
+  RXF5SIDH = 0b10011010;
   RXF5SIDL = 0b00000000;
 
 
