@@ -84,6 +84,12 @@ void net_msg_cmd_do(void);
 #define CMD_Reboot              5   // ()
 #define CMD_Alert               6   // ()
 
+#define CMD_Lock                20  // (pin)
+#define CMD_UnLock              22  // (pin)
+#define CMD_ValetOn             21  // (pin)
+#define CMD_ValetOff            23  // (pin)
+#define CMD_Homelink            24  // (button_nr)
+
 #define CMD_SendSMS             40  // (phone number, SMS message)
 #define CMD_SendUSSD            41  // (USSD_CODE)
 #define CMD_SendRawAT           42  // (raw AT command)
