@@ -7,20 +7,14 @@ The Server
 The server is a simple open source server which talks two protocols - one to the car and the other to
 the cellphone App.
 
-The car protocol is built on UDP using encrypted communication packets. Two passwords are used - one to
-talk to the server and the other to talk to the App.
+The car protocol is built on TCP using encrypted communication packets. See the documentation
+directory on github for further details on the protocol itself.
 
-If the car module wants to send a message to the server, it uses the first password. Once the server
-receives the message, it can decrypt and act on the instruction contained. Communications of this type
-are used for network registration and PUSH notification messages to Apple/Android phones, or other alerts.
+The drupal server also includes a web interface for basic functions such as setting the password,
+registering the car and checking status (see 'drupal' directory in github).
 
-If the car module wants to send a message to the user, it uses the second password. The server has no
-ability to decrypt such messages, so merely passes them on to the cellphone App transparently. The
-cellphone App itself decrypts and acts on the message. In this way, as only the car module and cellphone
-App have the password, the server has no way to spy/eavesdrop on these messages. Communications of this
-type are used for such things as car GPS location updates.
+To deploy an OVMS server, you will need the ovms_server.pl script, the ovms_server.conf configuration
+file suitably configured, the ovms_server.sql database tables in a mysql database, and optionally
+the *.vece files (to convert error code to messages for different vehicle types).
 
-The server also includes a web interface for basic functions such as setting the password, registering
-the car and checking status.
-
-
+The other scripts are purely for development and testing purposes.
