@@ -55,6 +55,12 @@ signed char tr_cooldown_recycle;             // Ticker counter for cooldown recy
 unsigned char can_lastspeedmsg[8];           // A buffer to store the last speed message
 unsigned char can_lastspeedrpt;              // A mechanism to repeat the tx of last speed message
 unsigned char tr_requestcac;                 // Request CAC
+unsigned long tr_cartime_cac_request;        // time when we next want to request CAC
+unsigned long tr_cartime_cac_last;           // time when we last got a CAC reading
+
+// the CAC updates 10 minutes after a charging or driving session ends,
+// so wait a bit longer than that to query the CAC
+#define seconds_cac_request_delay (11*60L)
 
 #pragma udata
 
@@ -103,6 +109,11 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
                    + ((unsigned long) can_databuffer[5] << 8)
                    + ((unsigned long) can_databuffer[6] << 16)
                    + ((unsigned long) can_databuffer[7] << 24);
+        if (tr_cartime_cac_request != 0 && car_time >= tr_cartime_cac_request)
+          {
+          tr_cartime_cac_request = 0;
+          tr_requestcac = 2;
+          }
         break;
       case 0x82: // Ambient Temperature
         car_ambient_temp = (signed char)can_databuffer[1];
@@ -213,8 +224,6 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
             (can_databuffer[2] != car_chargesubstate))
           { // If the state or sub-state has changed, notify it
           net_req_notification(NET_NOTIFY_STAT);
-          if (can_databuffer[1]==1)
-            tr_requestcac=2; // Request CAC when charge starts
           }
         car_chargestate = can_databuffer[1];
         car_chargesubstate = can_databuffer[2];
@@ -252,23 +261,24 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
             (car_parktime == 0)&&       // Parktime was not previously set
             (car_time != 0))            // We know the car time
           {
-          tr_requestcac=2; // Request CAC when car stops
           car_parktime = car_time-1;    // Record it as 1 second ago, so non zero report
           net_req_notification(NET_NOTIFY_ENV);
           }
         else if ((car_doors1 & 0x80)&&  // Car is ON
                  (car_parktime != 0))   // Parktime was previously set
           {
-          tr_requestcac=2; // Request CAC when car starts
           car_parktime = 0;
           net_req_notification(NET_NOTIFY_ENV);
           }
+        if (car_doors1bits.Charging || car_doors1bits.CarON)
+          tr_cartime_cac_request = car_time + seconds_cac_request_delay;
         break;
       case 0x9E: // CAC
         if (tr_requestcac == 1)
           tr_requestcac = 3; // Turn off CAC streaming
         car_cac100 = ((unsigned int)can_databuffer[3]*100)+
                      ((((unsigned int)can_databuffer[2]*100)+128)/256);
+        tr_cartime_cac_last = car_time;
         break;
       case 0xA3: // Temperatures
         car_tpem = (signed char)can_databuffer[1]; // Tpem
@@ -1314,7 +1324,7 @@ void vehicle_teslaroadster_initialise(void)
   car_cooldown_wascharging = 0;
   can_lastspeedmsg[0] = 0;
   can_lastspeedrpt = 0;
-  tr_requestcac = 0;
+  tr_requestcac = 2;
   tr_cooldown_recycle = -1;
 
   net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor

@@ -1051,7 +1051,9 @@ char *net_prep_stat(char *s)
       fShowVA = FALSE;
       break;
     }
-    car_doors1bits.ChargePort = 0; // MJ Close ChargePort, will open next CAN Reading
+//  this causes ACC to think the charge port door has been closed and opened,
+//  which then causes it to do something that makes the coolant pump come on
+//  car_doors1bits.ChargePort = 0; // MJ Close ChargePort, will open next CAN Reading
     if (fShowVA)
     {
       s = stp_i(s, "\r ", car_linevoltage);
@@ -1127,7 +1129,7 @@ char *net_prep_ctp(char *s, char *argument)
     return stp_rom(s, "CTP not available");
   }
   
-  // CTP 90s 150e 70% 16800w 160a 24d
+  // CTP 90s 150e 70% 16800w 160a 24d [S|R|P]
   while (argument != NULL)
   {
     int cch = strlen(argument);
@@ -1215,6 +1217,7 @@ char *net_prep_ctp(char *s, char *argument)
     {
     s = stp_i(s, "error: ", minRemain);
     }
+
   return s;
 }
 
