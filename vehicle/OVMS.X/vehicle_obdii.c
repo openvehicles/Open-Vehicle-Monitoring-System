@@ -44,15 +44,15 @@ signed char obdii_cooldown_recycle;             // Ticker counter for cooldown r
 rom  vehicle_pid_t vehicle_obdii_polls[]
   =
   {
-    { 0x7df, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x05, {  0, 30, 30 } }, // Engine coolant temp
-    { 0x7df, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x0c, { 10, 10, 10 } }, // Engine RPM
-    { 0x7df, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x0d, {  0, 10, 10 } }, // Speed
-    { 0x7df, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x0f, {  0, 30, 30 } }, // Engine air intake temp
-    { 0x7df, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x2f, {  0, 30, 30 } }, // Fuel level
-    { 0x7df, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x46, {  0, 30, 30 } }, // Ambiant temp
-    { 0x7df, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x5c, {  0, 30, 30 } }, // Engine oil temp
-    { 0x7df, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {999,999,999 } }, // VIN
-    { 0, 0x00, 0x00, { 0, 0, 0 } }
+    { 0x7df, 0, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x05, {  0, 30, 30 } }, // Engine coolant temp
+    { 0x7df, 0, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x0c, { 10, 10, 10 } }, // Engine RPM
+    { 0x7df, 0, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x0d, {  0, 10, 10 } }, // Speed
+    { 0x7df, 0, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x0f, {  0, 30, 30 } }, // Engine air intake temp
+    { 0x7df, 0, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x2f, {  0, 30, 30 } }, // Fuel level
+    { 0x7df, 0, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x46, {  0, 30, 30 } }, // Ambiant temp
+    { 0x7df, 0, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x5c, {  0, 30, 30 } }, // Engine oil temp
+    { 0x7df, 0, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {999,999,999 } }, // VIN
+    { 0, 0, 0x00, 0x00, { 0, 0, 0 } }
   };
 
 ////////////////////////////////////////////////////////////////////////
