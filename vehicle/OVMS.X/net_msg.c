@@ -1051,7 +1051,7 @@ char *net_prep_stat(char *s)
       fShowVA = FALSE;
       break;
     }
-    car_doors1bits.ChargePort = 0; // MJ Close ChargePort, will open next CAN Reading
+//    car_doors1bits.ChargePort = 0; // MJ Close ChargePort, will open next CAN Reading
     if (fShowVA)
     {
       s = stp_i(s, "\r ", car_linevoltage);
