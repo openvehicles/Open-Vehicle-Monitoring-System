@@ -249,6 +249,11 @@ void diag_handle_diag(char *command, char *arguments)
   s = stp_rom(s, " est miles)\r\n");
   net_puts_ram(net_scratchpad);
 
+  s = stp_i(net_scratchpad, "#  CHARGE:   ", car_chargestate);
+  s = stp_i(s, " / ", car_chargesubstate);
+  s = stp_rom(s, "\r\n");
+  net_puts_ram(net_scratchpad);
+
   if (canwrite_state>=0)
     {
     s = stp_i(net_scratchpad, "#  Sim Tx: ", canwrite_state);
