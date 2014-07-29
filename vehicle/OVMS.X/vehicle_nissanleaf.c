@@ -35,7 +35,21 @@
 
 #pragma udata overlay vehicle_overlay_data
 
+unsigned char nl_busactive;   // An indication that bus is active
+
 #pragma udata
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_polls
+// This rom table records the PIDs that need to be polled
+
+rom  vehicle_pid_t vehicle_nissanleaf_polls[]
+  =
+  {
+    { 0x797, 0x79a, VEHICLE_POLL_TYPE_OBDIICURRENT, 0x0d, {  10, 10, 0 } }, // Speed
+    { 0x797, 0x79a, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {  10, 10, 0 } }, // VIN
+    { 0, 0, 0x00, 0x00, { 0, 0, 0 } }
+  };
 
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
@@ -48,27 +62,54 @@
 
 BOOL vehicle_nissanleaf_poll0(void)
   {
+  unsigned char value1;
+  unsigned int value2;
+
+  value1 = can_databuffer[3];
+  value2 = ((unsigned int)can_databuffer[3]<<8) + (unsigned int)can_databuffer[4];
+
+  switch (vehicle_poll_pid)
+    {
+    case 0x02:  // VIN (multi-line response)
+      for (value1=0;value1<can_datalength;value1++)
+        {
+        car_vin[value1+(vehicle_poll_ml_offset-can_datalength)] = can_databuffer[value1];
+        }
+      if (vehicle_poll_ml_remain==0)
+        car_vin[value1+vehicle_poll_ml_offset] = 0;
+      break;
+    case 0x0d:  // Speed
+      if (can_mileskm == 'K')
+        car_speed = value1;
+      else
+        car_speed = (unsigned char) MiFromKm((unsigned long )value1);
+      break;
+    }
+
   return TRUE;
   }
 
 BOOL vehicle_nissanleaf_poll1(void)
   {
+  nl_busactive = 10;   // Reset the per-second charge timer
+
   switch (can_id)
     {
-    case 0x280:
-      if (can_mileskm=='M')
-        car_speed = (((int)can_databuffer[4]<<8)+((int)can_databuffer[5]))/160;
+    case 0x56e:
+      if (can_databuffer[0] == 0x86)
+        { // Car is driving
+//        vehicle_poll_setstate(1);
+        car_doors1 &= ~0x40;    // NOT PARK
+        car_doors1 |= 0x80;     // CAR ON
+        if (car_parktime != 0)
+          {
+          car_parktime = 0; // No longer parking
+          net_req_notification(NET_NOTIFY_ENV);
+          }
+        }
       else
-        car_speed = (((int)can_databuffer[4]<<8)+((int)can_databuffer[5]))/100;
-      break;
-    case 0x358:
-      car_doors2bits.Headlights = (can_databuffer[0] & 0x80);
-      break;
-    case 0x58a:
-      if ((can_databuffer[0]&0x10) != 0)
-        {
-        // Car is parked
-        vehicle_poll_setstate(0);
+        { // Car is not driving
+//        vehicle_poll_setstate(0);
         car_doors1 |= 0x40;     // PARK
         car_doors1 &= ~0x80;    // CAR OFF
         car_speed = 0;
@@ -78,23 +119,43 @@ BOOL vehicle_nissanleaf_poll1(void)
           net_req_notification(NET_NOTIFY_ENV);
           }
         }
-      else
-        {
-        // Car is not parked
-        vehicle_poll_setstate(1);
-        car_doors1 &= ~0x40;    // NOT PARK
-        car_doors1 |= 0x80;     // CAR ON
-        if (car_parktime != 0)
-          {
-          car_parktime = 0; // No longer parking
-          net_req_notification(NET_NOTIFY_ENV);
-          }
-        }
-    case 0x5b3:
-      // Rough and kludgy
-      car_idealrange = (((int)can_databuffer[4]&0x01)<<8) + can_databuffer[5]; // raw Gids
+      break;
+    case 0x5bc:
+      car_idealrange = ((int)can_databuffer[0]<<2) +
+                       ((can_databuffer[1]&0xc0)>>6);
       car_SOC = (car_idealrange * 100 + 140) / 281; // convert Gids to percent
       car_idealrange = (car_idealrange * 84 + 140) / 281;
+      break;
+    case 0x5bf:
+      car_chargelimit = can_databuffer[2] / 5;
+      if ((car_chargelimit != 0)&&(can_databuffer[3] != 0))
+        { // Car is charging
+        if (car_chargestate != 1)
+          {
+          car_doors1bits.ChargePort = 1;
+          car_doors1bits.Charging = 1;
+          car_doors1bits.PilotSignal = 1;
+          car_chargemode = 0;     // Standard charge mode
+          car_charge_b4 = 0;      // Not required
+          car_chargestate = 1;    // Charging state
+          car_chargesubstate = 3; // Charging by request
+          car_chargeduration = 0; // Reset charge duration
+          car_chargekwh = 0;      // Reset charge kWh
+          net_req_notification(NET_NOTIFY_STAT);
+          }
+        }
+/*      else if ((car_chargelimit==0)&&(car_chargestate==1))
+        { // Charge has been interrupted
+        car_doors1bits.ChargePort = 0;
+        car_doors1bits.Charging = 0;
+        car_doors1bits.PilotSignal = 0;
+        car_chargemode = 0;     // Standard charge mode
+        car_charge_b4 = 0;      // Not required
+        car_chargestate = 21;    // Charge STOPPED
+        car_chargesubstate = 14; // Charge INTERRUPTED
+        net_req_notification(NET_NOTIFY_CHARGE);
+        net_req_notification(NET_NOTIFY_STAT);
+        } */
       break;
     }
   return TRUE;
@@ -102,6 +163,25 @@ BOOL vehicle_nissanleaf_poll1(void)
 
 #pragma tmpdata
 
+BOOL vehicle_nissanleaf_ticker1(void)
+  {
+  car_time++;
+  if (nl_busactive>0) nl_busactive--;
+  if (nl_busactive==0)
+    {
+    if (car_chargestate == 1)
+      { // Charge has completed
+      car_doors1bits.ChargePort = 0;
+      car_doors1bits.Charging = 0;
+      car_doors1bits.PilotSignal = 0;
+      car_chargemode = 0;     // Standard charge mode
+      car_charge_b4 = 0;      // Not required
+      car_chargestate = 4;    // Charge DONE
+      car_chargesubstate = 3; // Leave it as is
+      net_req_notification(NET_NOTIFY_STAT);
+      }
+    }
+  }
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_nissanleaf_initialise()
@@ -137,8 +217,8 @@ BOOL vehicle_nissanleaf_initialise(void)
   RXM0SIDL = 0b00000000;        // Mask   11111111000
   RXM0SIDH = 0b11111111;
 
-  RXF0SIDL = 0b00000000;        // Filter 11111101000 (0x7e8 .. 0x7ef)
-  RXF0SIDH = 0b11111101;
+  RXF0SIDL = 0b00000000;        // Filter 11111101000 (0x798 .. 0x79f)
+  RXF0SIDH = 0b11110011;
 
   // Buffer 1 (filters 2, 3, 4 and 5) for direct can bus messages
   RXB1CON  = 0b00000000;	// RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
@@ -174,9 +254,15 @@ BOOL vehicle_nissanleaf_initialise(void)
     CANCON = 0b01100000; // Listen only mode, Receive bufer 0
     }
 
+  nl_busactive = 10;
+
   // Hook in...
   vehicle_fn_poll0 = &vehicle_nissanleaf_poll0;
   vehicle_fn_poll1 = &vehicle_nissanleaf_poll1;
+  vehicle_fn_ticker1 = &vehicle_nissanleaf_ticker1;
+  if (sys_features[FEATURE_CANWRITE]>0)
+    vehicle_poll_setpidlist(vehicle_nissanleaf_polls);
+  vehicle_poll_setstate(0);
 
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor

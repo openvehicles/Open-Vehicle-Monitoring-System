@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include "ovms.h"
 #include "led.h"
+#include "inputs.h"
 #include "net.h"
 #include "net_sms.h"
 #include "net_msg.h"
@@ -510,7 +511,9 @@ BOOL net_sms_handle_gprsq(char *caller, char *command, char *arguments)
   s = stp_s(s, "\r\n Password:", par_get(PARAM_GPRSPASS));
   s = stp_s(s, "\r\n GSM:", car_gsmcops);
 
-  if (net_msg_serverok)
+  if (!inputs_gsmgprs())
+    s = stp_rom(s, "\r\n GPRS: DISABLED");
+  else if (net_msg_serverok)
     s = stp_rom(s, "\r\n GPRS: OK\r\n Server: Connected OK");
   else if (net_state == NET_STATE_READY)
     s = stp_rom(s, "\r\n GSM: OK\r\n Server: Not connected");
@@ -932,11 +935,11 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "3DIAG",
     "3FEATURES?",
     "2FEATURE ",
-    "2HOMELINK ",
-    "2LOCK ",
-    "2UNLOCK ",
-    "2VALET ",
-    "2UNVALET ",
+    "2HOMELINK",
+    "2LOCK",
+    "2UNLOCK",
+    "2VALET",
+    "2UNVALET",
     "2CHARGEMODE ",
     "2CHARGESTART",
     "2CHARGESTOP",

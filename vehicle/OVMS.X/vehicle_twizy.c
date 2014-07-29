@@ -195,6 +195,11 @@
     - Homelink = profile switch
     - Speed limit below default reverse speed also limits reverse
 
+ * 3.3.1  22 Jun 2014 (Michael Balzer)
+    - Bugfix: RT-PWR-Log speed/accel stats output fixed for 0 distances (charge/onoff)
+    - Now checking for carbits vehicle alert & (new) info suppression
+      (info suppression applies to trip reports)
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -260,7 +265,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.3.0";
+rom char vehicle_twizy_version[] = "3.3.1";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -401,6 +406,10 @@ struct {
   unsigned keystate:1;              // CFG: key state change detection
 } twizy_cfg;
 
+
+// SEVCON macro configuration profile:
+// 1 kept in RAM (working set)
+// 3 stored in binary EEPROM param slots PARAM_PROFILE1 /2 /3
 struct twizy_cfg_profile {
   UINT8       checksum;
   UINT8       speed, warn;
@@ -416,10 +425,15 @@ struct twizy_cfg_profile {
   UINT8       ramplimit_accel, ramplimit_decel;
 } twizy_cfg_profile;
 
+// EEPROM memory usage info:
+// sizeof twizy_cfg_profile = 19 + 8x3 = 43 byte
+// Maximum size = 2 x PARAM_MAX_LENGTH = 64 byte
+
 // Macros for converting profile values:
 // shift values by 1 (-1.. => 0..) to map param range to UINT8
 #define cfgparam(NAME)  (((int)(twizy_cfg_profile.NAME))-1)
 #define cfgvalue(VAL)   ((UINT8)((VAL)+1))
+
 
 unsigned int twizy_max_rpm;         // CFG: max speed (RPM: 0..11000)
 unsigned long twizy_max_trq;        // CFG: max torque (mNm: 0..70125)
@@ -427,6 +441,8 @@ unsigned int twizy_max_pwr_lo;      // CFG: max power low speed (W: 0..17000)
 unsigned int twizy_max_pwr_hi;      // CFG: max power high speed (W: 0..17000)
 
 unsigned int twizy_sevcon_fault;    // SEVCON highest active fault
+
+
 
 #endif // OVMS_TWIZY_CFG
 
@@ -3438,12 +3454,15 @@ char vehicle_twizy_pwrlog_msgp(char stat)
   s = stp_l2f(s, ",", ABS((long)twizy_soc_tripstart - (long)twizy_soc), 2);
 
   // trip speed/delta statistics:
-  s = stp_l2f(s, ",", twizy_speedpwr[CAN_SPEED_CONST].spdsum
-          / twizy_speedpwr[CAN_SPEED_CONST].spdcnt, 2); // avg speed kph
-  s = stp_l2f(s, ",", (twizy_speedpwr[CAN_SPEED_ACCEL].spdsum * 10)
-          / twizy_speedpwr[CAN_SPEED_ACCEL].spdcnt, 2); // avg accel kph/s
-  s = stp_l2f(s, ",", (twizy_speedpwr[CAN_SPEED_DECEL].spdsum * 10)
-          / twizy_speedpwr[CAN_SPEED_DECEL].spdcnt, 2); // avg decel kph/s
+  s = stp_l2f(s, ",", (twizy_speedpwr[CAN_SPEED_CONST].spdcnt > 0)
+          ? twizy_speedpwr[CAN_SPEED_CONST].spdsum / twizy_speedpwr[CAN_SPEED_CONST].spdcnt
+          : 0, 2); // avg speed kph
+  s = stp_l2f(s, ",", (twizy_speedpwr[CAN_SPEED_ACCEL].spdcnt > 0)
+          ? (twizy_speedpwr[CAN_SPEED_ACCEL].spdsum * 10) / twizy_speedpwr[CAN_SPEED_ACCEL].spdcnt
+          : 0, 2); // avg accel kph/s
+  s = stp_l2f(s, ",", (twizy_speedpwr[CAN_SPEED_DECEL].spdcnt > 0)
+          ? (twizy_speedpwr[CAN_SPEED_DECEL].spdsum * 10) / twizy_speedpwr[CAN_SPEED_DECEL].spdcnt
+          : 0, 2); // avg decel kph/s
 
 
   // send:
@@ -4156,7 +4175,8 @@ void vehicle_twizy_notify(void)
 
   // Read user config: notification channels
   notify_channels = par_get(PARAM_NOTIFIES);
-  if (strstrrampgm(notify_channels, "SMS"))
+  if (strstrrampgm(notify_channels, "SMS")
+           && ((sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)==0))
     notify_sms = 1;
   if (strstrrampgm(notify_channels, "IP"))
     notify_msg = 1;
@@ -4164,7 +4184,8 @@ void vehicle_twizy_notify(void)
 
 #ifdef OVMS_TWIZY_CFG
   // Send SEVCON faults alert:
-  if ((twizy_notify & SEND_FaultsAlert) && (twizy_sevcon_fault != 0))
+  if ((twizy_notify & SEND_FaultsAlert) && (twizy_sevcon_fault != 0)
+          && ((sys_features[FEATURE_CARBITS] & FEATURE_CB_SVALERTS)==0))
   {
     if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
     {
@@ -5047,8 +5068,10 @@ void vehicle_twizy_power_prepmsg(char mode)
     //   vvv 123m 123Wpk/12%
 
     s = stp_l2f(s, "Trip ", (twizy_odometer - twizy_odometer_tripstart + 5) / 10, 1);
-    s = stp_l2f(s, "km ", (twizy_speedpwr[CAN_SPEED_CONST].spdsum
-            / twizy_speedpwr[CAN_SPEED_CONST].spdcnt + 5) / 10, 1); // avg speed kph
+    s = stp_l2f(s, "km ", (twizy_speedpwr[CAN_SPEED_CONST].spdcnt > 0)
+            ? (twizy_speedpwr[CAN_SPEED_CONST].spdsum
+             / twizy_speedpwr[CAN_SPEED_CONST].spdcnt + 5) / 10
+            : 0, 1); // avg speed kph
     s = stp_rom(s, "kph");
 
     dist = pwr_dist;
@@ -5086,8 +5109,10 @@ void vehicle_twizy_power_prepmsg(char mode)
     if ((pwr_use > 0) && (dist > 0))
     {
       s = stp_i(s, "\r+++ ", prc_accel);
-      s = stp_l2f(s, "% ", ((twizy_speedpwr[CAN_SPEED_ACCEL].spdsum * 10)
-              / twizy_speedpwr[CAN_SPEED_ACCEL].spdcnt + 5) / 10, 1); // avg accel kph/s
+      s = stp_l2f(s, "% ", (twizy_speedpwr[CAN_SPEED_ACCEL].spdcnt > 0)
+              ? ((twizy_speedpwr[CAN_SPEED_ACCEL].spdsum * 10)
+                / twizy_speedpwr[CAN_SPEED_ACCEL].spdcnt + 5) / 10
+              : 0, 1); // avg accel kph/s
       s = stp_l(s, "kps ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
       s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
@@ -5100,8 +5125,10 @@ void vehicle_twizy_power_prepmsg(char mode)
     if ((pwr_use > 0) && (dist > 0))
     {
       s = stp_i(s, "\r--- ", prc_decel);
-      s = stp_l2f(s, "% ", ((twizy_speedpwr[CAN_SPEED_DECEL].spdsum * 10)
-              / twizy_speedpwr[CAN_SPEED_DECEL].spdcnt + 5) / 10, 1); // avg decel kph/s
+      s = stp_l2f(s, "% ", (twizy_speedpwr[CAN_SPEED_DECEL].spdcnt > 0)
+              ? ((twizy_speedpwr[CAN_SPEED_DECEL].spdsum * 10)
+                / twizy_speedpwr[CAN_SPEED_DECEL].spdcnt + 5) / 10
+              : 0, 1); // avg decel kph/s
       s = stp_l(s, "kps ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
       s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
@@ -5207,8 +5234,8 @@ BOOL vehicle_twizy_power_sms(BOOL premsg, char *caller, char *command, char *arg
   if (!premsg)
     return FALSE;
 
-  // check SMS notifies:
-  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+  // SMS / info notifies suppressed?
+  if (sys_features[FEATURE_CARBITS] & (FEATURE_CB_SOUT_SMS | FEATURE_CB_SVINFOS))
     return FALSE;
 
   if (!caller || !*caller)
@@ -5278,7 +5305,9 @@ BOOL vehicle_twizy_power_cmd(BOOL msgmode, int cmd, char *arguments)
       s = stp_rom(s, ",0");
       net_msg_encode_puts();
     }
-    else
+    
+    // not msgmode; only send if info notifies not suppressed:
+    else if ((sys_features[FEATURE_CARBITS] & FEATURE_CB_SVINFOS) == 0)
     {
       net_msg_start();
       net_msg_encode_puts();
@@ -5550,8 +5579,8 @@ BOOL vehicle_twizy_stat_sms(BOOL premsg, char *caller, char *command, char *argu
   if (!premsg)
     return FALSE;
 
-  // check SMS notifies:
-  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+  // SMS or vehicle alerts suppressed?
+  if (sys_features[FEATURE_CARBITS] & (FEATURE_CB_SOUT_SMS | FEATURE_CB_SVALERTS))
     return FALSE;
 
   if (!caller || !*caller)
@@ -5576,6 +5605,10 @@ BOOL vehicle_twizy_stat_sms(BOOL premsg, char *caller, char *command, char *argu
 
 BOOL vehicle_twizy_statalert_cmd(BOOL msgmode, int cmd, char *arguments)
 {
+  // Vehicle alerts suppressed?
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SVALERTS)
+    return TRUE;
+
   // send text alert:
   strcpypgm2ram(net_scratchpad, (char const rom far*)"MP-0 PA");
   vehicle_twizy_stat_prepmsg();
@@ -6325,7 +6358,10 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
 
   if (cmd == CMD_BatteryAlert)
   {
-
+    // alerts suppressed?
+    if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SVALERTS)
+      return stat;
+    
     // Output battery packs (just one for Twizy up to now):
     for (p = 0; p < BATT_PACKS; p++)
     {
@@ -6661,6 +6697,10 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
 
   default:
     // Battery alert status:
+
+    // alerts suppressed?
+    if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SVALERTS)
+      return FALSE;
 
     net_scratchpad[0] = 0;
     vehicle_twizy_battstatus_prepalert(0, 1);

@@ -119,14 +119,25 @@ void vehicle_poll_poller(void)
       while (TXB0CONbits.TXREQ) {} // Loop until TX is done
       vehicle_poll_type = vehicle_poll_plcur->type;
       vehicle_poll_pid = vehicle_poll_plcur->pid;
+      if (vehicle_poll_plcur->rmoduleid != 0)
+        {
+        vehicle_poll_moduleid_low = vehicle_poll_plcur->rmoduleid;
+        vehicle_poll_moduleid_high = vehicle_poll_plcur->rmoduleid;
+        TXB0CON = 0;
+        TXB0SIDL = (vehicle_poll_plcur->moduleid & 0x07)<<5;
+        TXB0SIDH = (vehicle_poll_plcur->moduleid >>3);
+        }
+      else
+        {
+        vehicle_poll_moduleid_low = 0x7e8;
+        vehicle_poll_moduleid_high = 0x7ef;
+        TXB0CON = 0;
+        TXB0SIDL = 0b11100000;  // 0x07df
+        TXB0SIDH = 0b11111011;
+        }
       switch (vehicle_poll_plcur->type)
         {
         case VEHICLE_POLL_TYPE_OBDIICURRENT:
-          vehicle_poll_moduleid_low = 0x7e8;
-          vehicle_poll_moduleid_high = 0x7ef;
-          TXB0CON = 0;
-          TXB0SIDL = 0b11100000;  // 0x07df
-          TXB0SIDH = 0b11111011;
           TXB0D0 = 0x02;
           TXB0D1 = vehicle_poll_type;
           TXB0D2 = vehicle_poll_pid;
@@ -139,12 +150,7 @@ void vehicle_poll_poller(void)
           TXB0CON = 0b00001000; // mark for transmission
           break;
         case VEHICLE_POLL_TYPE_OBDIIVEHICLE:
-          vehicle_poll_moduleid_low = 0x7e8;
-          vehicle_poll_moduleid_high = 0x7ef;
           vehicle_poll_ml_remain = 0;
-          TXB0CON = 0;
-          TXB0SIDL = 0b11100000;  // 0x07df
-          TXB0SIDH = 0b11111011;
           TXB0D0 = 0x02;
           TXB0D1 = vehicle_poll_type;
           TXB0D2 = vehicle_poll_pid;
@@ -159,11 +165,6 @@ void vehicle_poll_poller(void)
         case VEHICLE_POLL_TYPE_OBDIIGROUP:
           break;
         case VEHICLE_POLL_TYPE_OBDIIEXTENDED:
-          vehicle_poll_moduleid_low = vehicle_poll_plcur->moduleid+8;
-          vehicle_poll_moduleid_high = vehicle_poll_plcur->moduleid+8;
-          TXB0CON = 0;
-          TXB0SIDL = (vehicle_poll_moduleid_low & 0x07)<<5;
-          TXB0SIDH = (vehicle_poll_moduleid_low>>3);
           TXB0D0 = 0x03;
           TXB0D1 = VEHICLE_POLL_TYPE_OBDIIEXTENDED;    // Get extended PID
           TXB0D2 = vehicle_poll_pid >> 8;
