@@ -49,6 +49,8 @@
 // DIAG data
 #pragma udata
 
+#ifdef OVMS_CAR_TESLAROADSTER
+
 #define DATA_COUNT 17u
 
 char orig_canwrite = 0;
@@ -77,6 +79,8 @@ rom unsigned char DummyData[DATA_COUNT * 9]
 0x03, 0xFA, 0x03, 0xC4, 0x5E, 0x97, 0x00, 0xC6, 0x01    //      402?? Odometer (miles: 3875.0 km: 6236.2) (trip 45.4miles)
 };
 
+#endif //OVMS_CAR_TESLAROADSTER
+
 void diag_initialise(void)
   {
   led_set(OVMS_LED_GRN,NET_LED_ERRDIAGMODE);
@@ -85,12 +89,16 @@ void diag_initialise(void)
   net_timeout_ticks = 0;
   net_timeout_goto = 0;
   net_puts_rom("\x1B[2J\x1B[01;01H\r# OVMS DIAGNOSTICS MODE\r\n\n");
+
+#ifdef OVMS_CAR_TESLAROADSTER
   orig_canwrite = sys_features[FEATURE_CANWRITE];
   canwrite_state = -1;
+#endif //OVMS_CAR_TESLAROADSTER
   }
 
 void diag_ticker(void)
   {
+#ifdef OVMS_CAR_TESLAROADSTER
   if (canwrite_state>=0)
     {
     // re-map DummyData's 8-bit field 0 into an 11-bit CAN ID
@@ -117,6 +125,7 @@ void diag_ticker(void)
 
     canwrite_state = (canwrite_state+1)%DATA_COUNT;
     }
+#endif //OVMS_CAR_TESLAROADSTER
 
   if (net_notify & (NET_NOTIFY_NET_CHARGE|NET_NOTIFY_SMS_CHARGE))
     {
@@ -249,6 +258,7 @@ void diag_handle_diag(char *command, char *arguments)
   s = stp_rom(s, " est miles)\r\n");
   net_puts_ram(net_scratchpad);
 
+#ifdef OVMS_CAR_TESLAROADSTER
   if (canwrite_state>=0)
     {
     s = stp_i(net_scratchpad, "#  Sim Tx: ", canwrite_state);
@@ -256,6 +266,7 @@ void diag_handle_diag(char *command, char *arguments)
     s = stp_rom(s, "\r\n");
     net_puts_ram(net_scratchpad);
     }
+#endif //OVMS_CAR_TESLAROADSTER
 
   net_puts_rom("\n");
 
@@ -272,6 +283,7 @@ void diag_handle_csq(char *command, char *arguments)
   net_sq = atoi(arguments);
   }
 
+#ifdef OVMS_CAR_TESLAROADSTER
 void diag_handle_cantxstart(char *command, char *arguments)
   {
   // We're going to initialise ourselves as a CAN bus transmitter
@@ -307,6 +319,7 @@ void diag_handle_t2(char *command, char *arguments)
 void diag_handle_t3(char *command, char *arguments)
   {
   }
+#endif //OVMS_CAR_TESLAROADSTER
 
 // This is the DIAG command table
 //
@@ -322,11 +335,13 @@ rom char diag_cmdtable[][27] =
     "RESET",
     "DIAG",
     "+CSQ:",
+#ifdef OVMS_CAR_TESLAROADSTER
     "CANTXSTART",
     "CANTXSTOP",
     "T1",
     "T2",
     "T3",
+#endif //OVMS_CAR_TESLAROADSTER
     "" };
 
 rom void (*diag_hfntable[])(char *command, char *arguments) =
@@ -335,12 +350,14 @@ rom void (*diag_hfntable[])(char *command, char *arguments) =
   &diag_handle_help,
   &diag_handle_reset,
   &diag_handle_diag,
-  &diag_handle_csq,
-  &diag_handle_cantxstart,
+  &diag_handle_csq
+#ifdef OVMS_CAR_TESLAROADSTER
+  ,&diag_handle_cantxstart,
   &diag_handle_cantxstop,
   &diag_handle_t1,
   &diag_handle_t2,
   &diag_handle_t3
+#endif //OVMS_CAR_TESLAROADSTER
   };
 
 // net_sms_in handles reception of an SMS message
