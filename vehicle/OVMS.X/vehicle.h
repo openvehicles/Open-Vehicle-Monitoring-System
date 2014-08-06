@@ -97,6 +97,7 @@ void vehicle_idlepoll(void);
 typedef struct
 {
   unsigned int moduleid;
+  unsigned int rmoduleid;
   unsigned char type;
   unsigned int pid;
   unsigned int polltime[VEHICLE_POLL_NSTATES];
