@@ -4,6 +4,9 @@
 ;
 ;
 ;    Changes:
+;    3.0  12.08.2014 (Nikolay)
+;         - Bugfix, airbag lamp control
+;
 ;    2.9  14.11.2013 (Haakon)
 ;         - Bugfix, charger symbol in app disappared at end of charge and at 80% ocvm
 ;         - False 12V alerts solved by setting car_doors1bits.CarON and car_doors5bits.Charging12V
@@ -146,6 +149,8 @@ signed int    tc_slibatt_temp = 0;
 unsigned int  tc_charger_pwm;
 unsigned int  tc_sys_voltmaxgen;
 unsigned char tc_srs_stat;
+unsigned int  tc_srs_nr_err;
+unsigned long tc_srs_tm;
 signed int    tc_heater_count = 0;
 
 //Status flags:
@@ -196,12 +201,16 @@ unsigned int tc_bit_chgovercurr;
 
 BOOL vehicle_thinkcity_state_ticker1(void)
   {
-  if (tc_srs_stat == 0)
+  // put the airbag lamp on if we have not recieved srs module message
+  // in the past 6 seconds or if the srs module has sent at least 10
+  // "defective" messages
+  if ((tc_srs_nr_err > 9) || (car_time - tc_srs_tm > 6))
   {
-    output_gpo0(1); // Set digital out RC0 high, pin2 header 9X2.
+    tc_srs_nr_err = 10;
+    output_gpo0(0); // Set digital out RC0 low, pin2 header 9X2.
   }
   else
-    output_gpo0(0); // Set digital out RC0 low, pin2 header 9X2.
+    output_gpo0(1); // Set digital out RC0 high, pin2 header 9X2.
 
   car_time++;
 
@@ -355,6 +364,10 @@ if ((tc_bit_chrgen == 0) && (tc_bit_dischgenbl == 0)) // Is charge_enable_bit (b
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
 //
+
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata high_isr_tmpdata
+
 BOOL vehicle_thinkcity_poll0(void)
   {
   switch (can_id)
@@ -442,7 +455,23 @@ BOOL vehicle_thinkcity_poll1(void)
     break;
 
     case 0x460:
-	  tc_srs_stat = (unsigned char) can_databuffer[4] ;
+          // store the message time for checking
+	  tc_srs_tm = car_time;
+	  tc_srs_stat = (unsigned char)(
+                  (can_databuffer[0] == 0x03) &&
+                  (can_databuffer[1] == 0xE0) &&
+                  (can_databuffer[2] == 0) &&
+                  (can_databuffer[3] == 0) &&
+                  (can_databuffer[4] == 0) &&
+                  (can_databuffer[5] == 0) &&
+                  (can_databuffer[6] == 0) &&
+                  (can_databuffer[7] == 0));
+
+          if (tc_srs_stat != 0)
+              tc_srs_nr_err = 0;
+          else
+              tc_srs_nr_err++;
+          
 	break;
 
     case 0x75B:
@@ -466,13 +495,16 @@ BOOL vehicle_thinkcity_poll1(void)
     break;
 
     default:
-        tc_srs_stat = 34;
+        
     break;
 
     }
 
   return TRUE;
   }
+
+#pragma tmpdata
+
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_thinkcity_idlepoll()
@@ -1147,5 +1179,8 @@ BOOL vehicle_thinkcity_initialise(void)
   net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
   net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
 
+  tc_srs_nr_err = 0;
+  tc_srs_stat = 0;
+  tc_srs_tm = 0;
   return TRUE;
   }
