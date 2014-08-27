@@ -248,5 +248,6 @@
 1463=HVAC: Compressor OverTemp
 1465=HVAC: Low current pump fault
 1469=HVAC: Compressor comms timeout
+1533:Software Problem Service Required
 1471=HVAC: Compressor DTC comms timeout
 2078=There was a problem processing your request
