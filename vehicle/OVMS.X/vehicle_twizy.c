@@ -210,6 +210,9 @@
     - Preop mode safety check in configmode() to protect against delayed SMS
     - Accel/decel stats now based on running average of speed changes
 
+ * 3.5.0  24 Sep 2014 (Michael Balzer)
+    - Kickdown function with configurable pedal sensibility and compensation
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -247,13 +250,20 @@
  * Twizy definitions
  */
 
+
 // Twizy specific features:
+
+#define FEATURE_KICKDOWN_THRESHOLD  0x01 // Kickdown threshold (pedal change)
+#define FEATURE_KICKDOWN_COMPZERO   0x02 // Kickdown pedal compensation zero point
+
 #define FEATURE_SUFFSOC             0x0A // Sufficient SOC
 #define FEATURE_SUFFRANGE           0x0B // Sufficient range
 #define FEATURE_MAXRANGE            0x0C // Maximum ideal range
 
+
 // Twizy specific params:
 // (Note: these collide with ACC params, but ACC module will not be used for Twizy)
+
 #define PARAM_PROFILE               0x0F // current cfg profile nr (0..3)
 #define PARAM_PROFILE_S             0x10 // custom profiles base
 #define PARAM_PROFILE1              0x10 // custom profile #1 (binary, 2 slots)
@@ -275,7 +285,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.4.0";
+rom char vehicle_twizy_version[] = "3.5.0";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -463,6 +473,29 @@ unsigned int twizy_sevcon_fault;    // SEVCON highest active fault
 
 UINT8 last_max_recup_pwr;           // change detection for autorecup function
 UINT twizy_autorecup_level;         // autorecup: current recup level (per mille)
+
+
+#pragma udata overlay vehicle_overlay_data2
+
+volatile UINT8 twizy_accel_pedal;           // accelerator pedal (running avg)
+volatile UINT8 twizy_kickdown_level;        // kickdown detection & pedal max level
+UINT8 twizy_kickdown_hold;                  // kickdown hold countdown (1/10 seconds)
+
+#define CAN_KICKDOWN_HOLDTIME   50          // kickdown hold time (1/10 seconds)
+
+#define CAN_KICKDOWN_THRESHOLD  35          // default kickdown threshold
+#define CAN_KICKDOWN_COMPZERO   120         // default kickdown compensation zero point
+
+// pedal nonlinearity compensation:
+//    constant threshold up to pedal=compzero,
+//    then linear reduction by factor 1/8
+#define KICKDOWN_THRESHOLD(pedal) \
+  ((int)sys_features[FEATURE_KICKDOWN_THRESHOLD] - \
+    (((int)(pedal) <= (int)sys_features[FEATURE_KICKDOWN_COMPZERO]) \
+    ? 0 \
+    : (((int)(pedal) - (int)sys_features[FEATURE_KICKDOWN_COMPZERO]) >> 3)))
+
+#pragma udata overlay vehicle_overlay_data
 
 
 #endif // OVMS_TWIZY_CFG
@@ -2111,6 +2144,10 @@ UINT vehicle_twizy_cfg_switchprofile(char key)
   // reset error cnt:
   twizy_button_cnt = 0;
 
+  // reset kickdown detection:
+  twizy_kickdown_hold = 0;
+  twizy_kickdown_level = 0;
+
   return err;
 }
 
@@ -2581,10 +2618,16 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   }
 
   else if (strncmppgm2ram(cmd, "DRIVE", 5) == 0) {
-    // DRIVE [max_prc]
+    // DRIVE [max_prc] [kickdown_threshold] [kickdown_compzero]
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
+
+    // kickdown global settings:
+    if (arguments = net_sms_nextarg(arguments))
+      sys_features[FEATURE_KICKDOWN_THRESHOLD] = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      sys_features[FEATURE_KICKDOWN_COMPZERO] = atoi(arguments);
 
     if (err = vehicle_twizy_cfg_drive(arg[0])) {
       s = stp_x(s, "ERROR ", err);
@@ -2595,6 +2638,10 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // update profile:
       twizy_cfg_profile.drive = cfgvalue(arg[0]);
       twizy_cfg.unsaved = 1;
+
+      // reset kickdown detection:
+      twizy_kickdown_hold = 0;
+      twizy_kickdown_level = 0;
 
       // success message:
       s = stp_rom(s, "OK");
@@ -3908,7 +3955,8 @@ BOOL vehicle_twizy_poll0(void)
 
 BOOL vehicle_twizy_poll1(void)
 {
-  unsigned int new_speed;
+  unsigned int u;
+  int s;
 
 #ifdef OVMS_CANSIM
   unsigned char i;
@@ -4001,10 +4049,10 @@ BOOL vehicle_twizy_poll1(void)
       }
 
       // SPEED:
-      new_speed = ((unsigned int) can_databuffer[6] << 8) + can_databuffer[7];
-      if (new_speed != 0xffff)
+      u = ((unsigned int) can_databuffer[6] << 8) + can_databuffer[7];
+      if (u != 0xffff)
       {
-        int delta = (int) new_speed - (int) twizy_speed;
+        int delta = (int) u - (int) twizy_speed;
 
         // set min/max:
         if (delta < twizy_accel_min)
@@ -4014,8 +4062,8 @@ BOOL vehicle_twizy_poll1(void)
 
         // running average over 4 samples:
         twizy_accel_avg = twizy_accel_avg * 3 + delta;
-        twizy_accel_avg += twizy_accel_avg < 0 ? -2 : 2;
-        twizy_accel_avg /= 4;
+        twizy_accel_avg += (twizy_accel_avg < 0) ? -2 : 2;
+        twizy_accel_avg /= 4; // C18: no ANSI >> on negative ints
 
         // switch speed state:
         if (twizy_accel_avg >= CAN_ACCEL_THRESHOLD)
@@ -4026,11 +4074,11 @@ BOOL vehicle_twizy_poll1(void)
           twizy_speed_state = CAN_SPEED_CONST;
 
         // speed/delta sum statistics while driving:
-        if (new_speed >= CAN_SPEED_THRESHOLD)
+        if (u >= CAN_SPEED_THRESHOLD)
         {
           // overall speed avg:
           twizy_speedpwr[0].spdcnt++;
-          twizy_speedpwr[0].spdsum += new_speed;
+          twizy_speedpwr[0].spdsum += u;
           
           // accel/decel speed avg:
           if (twizy_speed_state != 0)
@@ -4040,7 +4088,7 @@ BOOL vehicle_twizy_poll1(void)
           }
         }
 
-        twizy_speed = new_speed;
+        twizy_speed = u;
         // car value derived in ticker1()
       }
 
@@ -4059,6 +4107,25 @@ BOOL vehicle_twizy_poll1(void)
         twizy_status |= CAN_STATUS_MODE_D;
       else if (CAN_BYTE(0) == 0x08)
         twizy_status |= CAN_STATUS_MODE_R;
+
+#ifdef OVMS_TWIZY_CFG
+
+      // accelerator pedal:
+      u = CAN_BYTE(3);
+
+      // running average over 2 samples:
+      u = (twizy_accel_pedal + u + 1) >> 1;
+
+      // kickdown detection:
+      s = KICKDOWN_THRESHOLD(twizy_accel_pedal);
+      if ( ((s > 0) && (u > ((unsigned int)twizy_accel_pedal + s)))
+              || ((twizy_kickdown_level > 0) && (u > twizy_kickdown_level)) ) {
+        twizy_kickdown_level = u;
+      }
+      
+      twizy_accel_pedal = u;
+
+#endif // OVMS_TWIZY_CFG
 
       break;
 
@@ -4494,10 +4561,141 @@ void vehicle_twizy_notify(void)
  */
 BOOL vehicle_twizy_idlepoll(void)
 {
+
+#ifdef OVMS_TWIZY_CFG
+
+  //
+  // Kickdown detection:
+  //
+  
+  if ((twizy_kickdown_hold == 0) && (twizy_kickdown_level > 0)
+          && (sys_features[FEATURE_KICKDOWN_THRESHOLD] > 0)
+          && (cfgparam(drive) != -1) && (cfgparam(drive) != 100)
+          ) {
+    // set drive level to boost (100%):
+    if (vehicle_twizy_cfg_drive(100) == 0) {
+      twizy_kickdown_hold = CAN_KICKDOWN_HOLDTIME;
+      PORTC |= 1; // switch on LED
+    }
+  }
+
+#endif // OVMS_TWIZY_CFG
+
+
+  //
   // Send notifications and data updates:
+  //
+
   vehicle_twizy_notify();
 
   return TRUE;
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// twizy_state_ticker10th()
+// State Model: 1/10 second ticker
+// This function is called approximately 10 times per second
+//
+
+BOOL vehicle_twizy_state_ticker10th(void)
+{
+
+#ifdef OVMS_TWIZY_CFG
+
+  BYTE bits, key, kickdown_led=0;
+  char buf[2];
+  UINT err;
+
+  //
+  // Kickdown release handling:
+  //
+
+  if (twizy_kickdown_hold > 0) {
+
+    // kickdown release?
+    if ((int)twizy_accel_pedal <= ((int)twizy_kickdown_level
+            - (KICKDOWN_THRESHOLD(twizy_kickdown_level) / 2))) {
+      // releasing, count down:
+      if (--twizy_kickdown_hold == 0) {
+        // reset drive level to normal:
+        if (vehicle_twizy_cfg_drive(cfgparam(drive)) != 0)
+          twizy_kickdown_hold = 2; // error: retry
+        else
+          twizy_kickdown_level = 0; // ok, reset kickdown detection
+      }
+    } else {
+      // not relasing, reset counter:
+      twizy_kickdown_hold = CAN_KICKDOWN_HOLDTIME;
+    }
+
+    // show kickdown state on SimpleConsole, flash last 2 hold seconds:
+    if (twizy_kickdown_hold > 20)
+      kickdown_led = 1;
+    else
+      kickdown_led = (twizy_kickdown_hold & 2) >> 1;
+  }
+
+
+  //
+  // SimpleConsole input & LED handling:
+  //
+
+  if (!car_doors1bits.CarON || car_doors1bits.Charging) {
+    // Twizy off or charging: switch off LEDs
+    PORTC = (PORTC & 0b11110000);
+  }
+  else {
+    // LED control:
+    // TMR0H 0..0x4c = ~1 sec, so 0x13 = ~ 1/4 sec
+    if (TMR0H < 0x13) {
+      // flash cfgmode profile LED if it differs:
+      if (twizy_cfg.profile_cfgmode != twizy_cfg.profile_user)
+        PORTC |= (1 << twizy_cfg.profile_cfgmode);
+      // clear user profile LED if unsaved:
+      if (twizy_cfg.unsaved)
+        PORTC &= ~(1 << twizy_cfg.profile_user);
+    }
+    else {
+      // show user profile status and kickdown status:
+      PORTC = (PORTC & 0b11110000) | (1 << twizy_cfg.profile_user) | kickdown_led;
+    }
+
+    // Read input port:
+    bits = (PORTA & 0b00111100) >> 2;
+
+    if (bits == 0) {
+      twizy_cfg.keystate = 0;
+    }
+    else if (twizy_cfg.keystate == 0) {
+      twizy_cfg.keystate = 1;
+
+      // determine new key press:
+      for (key=0; (bits&1)==0; key++)
+        bits >>= 1;
+
+      // User feedback for key press:
+      PORTC |= (1 << key);
+
+      // Switch profile?
+      if ((twizy_cfg.profile_user != key) || (twizy_cfg.profile_cfgmode != key) || (twizy_cfg.unsaved)) {
+        if (vehicle_twizy_cfg_switchprofile(key) != 0)
+          // Error: flash all LEDs for 1/10 sec
+          PORTC |= 0b00001111;
+
+        // store selection:
+        buf[0] = '0' + twizy_cfg.profile_user;
+        buf[1] = 0;
+        par_set(PARAM_PROFILE, buf);
+      }
+    }
+
+  }
+
+
+#endif // OVMS_TWIZY_CFG
+
+  return FALSE;
 }
 
 
@@ -4512,6 +4710,11 @@ BOOL vehicle_twizy_state_ticker1(void)
 {
   int suffSOC, suffRange, maxRange;
   UINT8 i;
+
+
+  // ticker10th() is not called on full seconds by the framework
+  // so we do this ourselves:
+  vehicle_twizy_state_ticker10th();
 
 
   /***************************************************************************
@@ -4899,77 +5102,6 @@ BOOL vehicle_twizy_state_ticker1(void)
 
 #endif // OVMS_TWIZY_CFG
 
-
-  return FALSE;
-}
-
-
-////////////////////////////////////////////////////////////////////////
-// twizy_state_ticker10th()
-// State Model: 1/10 second ticker
-// This function is called approximately 10 times per second
-//
-
-BOOL vehicle_twizy_state_ticker10th(void)
-{
-
-#ifdef OVMS_TWIZY_CFG
-
-  BYTE bits, key;
-  char buf[2];
-
-  if (!car_doors1bits.CarON || car_doors1bits.Charging) {
-    // Twizy off or charging: switch off LEDs
-    PORTC = (PORTC & 0b11110000);
-  }
-  else {
-    // LED control:
-    // TMR0H 0..0x4c = ~1 sec, so 0x13 = ~ 1/4 sec
-    if (TMR0H < 0x13) {
-      // flash cfgmode profile LED if it differs:
-      if (twizy_cfg.profile_cfgmode != twizy_cfg.profile_user)
-        PORTC |= (1 << twizy_cfg.profile_cfgmode);
-      // clear user profile LED if unsaved:
-      if (twizy_cfg.unsaved)
-        PORTC &= ~(1 << twizy_cfg.profile_user);
-    }
-    else {
-      // show user profile status:
-      PORTC = (PORTC & 0b11110000) | (1 << twizy_cfg.profile_user);
-    }
-
-    // Read input port:
-    bits = (PORTA & 0b00111100) >> 2;
-
-    if (bits == 0) {
-      twizy_cfg.keystate = 0;
-    }
-    else if (twizy_cfg.keystate == 0) {
-      twizy_cfg.keystate = 1;
-
-      // determine new key press:
-      for (key=0; (bits&1)==0; key++)
-        bits >>= 1;
-
-      // User feedback for key press:
-      PORTC |= (1 << key);
-
-      // Switch profile?
-      if ((twizy_cfg.profile_user != key) || (twizy_cfg.profile_cfgmode != key) || (twizy_cfg.unsaved)) {
-        if (vehicle_twizy_cfg_switchprofile(key) != 0)
-          // Error: flash all LEDs for 1/10 sec
-          PORTC |= 0b00001111;
-
-        // store selection:
-        buf[0] = '0' + twizy_cfg.profile_user;
-        buf[1] = 0;
-        par_set(PARAM_PROFILE, buf);
-      }
-    }
-
-  }
-
-#endif // OVMS_TWIZY_CFG
 
   return FALSE;
 }
@@ -7261,6 +7393,13 @@ BOOL vehicle_twizy_initialise(void)
 
     twizy_lock_speed = 6;
     twizy_valet_odo = 0;
+
+    // kickdown init:
+    twizy_accel_pedal = 0;
+    twizy_kickdown_hold = 0;
+    twizy_kickdown_level = 0;
+    sys_features[FEATURE_KICKDOWN_THRESHOLD] = CAN_KICKDOWN_THRESHOLD;
+    sys_features[FEATURE_KICKDOWN_COMPZERO] = CAN_KICKDOWN_COMPZERO;
 
 #endif // OVMS_TWIZY_CFG
 
