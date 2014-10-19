@@ -994,13 +994,6 @@ char *net_prep_stat(char *s)
     unit = " km";
   }
 
-  if (car_time > 315360000)
-    {
-    char *p = par_get(PARAM_TIMEZONE);
-    s = stp_time(s, NULL, car_time + timestring_to_mins(p)*60L);
-    s = stp_rom(s, "\r ");
-    }
-
   if (car_coolingdown>=0)
     {
     s = stp_i(s, "Cooldown: ", car_tbattery);

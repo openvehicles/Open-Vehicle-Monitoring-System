@@ -79,6 +79,13 @@ void net_send_sms_start(char* number)
     net_puts_rom("\"\r\n");
     delay100(2);
     }
+  if (car_time > 315360000)
+    {
+    char *p = par_get(PARAM_TIMEZONE);
+    char *s = stp_time(net_scratchpad, NULL, car_time + timestring_to_mins(p)*60L);
+    s = stp_rom(s, "\r ");
+    net_puts_ram(net_scratchpad);
+    }
   }
 
 void net_send_sms_finish(void)
