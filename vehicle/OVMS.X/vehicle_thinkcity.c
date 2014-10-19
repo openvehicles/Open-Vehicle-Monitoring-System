@@ -639,26 +639,26 @@ BOOL vehicle_thinkcity_commandhandler(BOOL msgmode, int code, char* msg)
   switch (code)
     {
     case 20: // Lock car (params pin)
-        vehicle_thinkcity_tx_lockunlockcar(2, net_msg_cmd_msg);
+        vehicle_thinkcity_tx_lockunlockcar(2, msg);
         STP_OK(net_scratchpad, code);
       sendenv=TRUE;
       break;
 
 
     case 22: // Unlock car (params pin)
-        vehicle_thinkcity_tx_lockunlockcar(3, net_msg_cmd_msg);
+        vehicle_thinkcity_tx_lockunlockcar(3, msg);
         STP_OK(net_scratchpad, code);
       sendenv=TRUE;
       break;
 
     case 21: // Activate valet mode (params pin)
-        vehicle_thinkcity_tx_lockunlockcar(0, net_msg_cmd_msg);
+        vehicle_thinkcity_tx_lockunlockcar(0, msg);
         STP_OK(net_scratchpad, code);
       sendenv=TRUE;
       break;
 
     case 23: // Deactivate valet mode (params pin)
-        vehicle_thinkcity_tx_lockunlockcar(1, net_msg_cmd_msg);
+        vehicle_thinkcity_tx_lockunlockcar(1, msg);
         STP_OK(net_scratchpad, code);
       sendenv=TRUE;
       break;
