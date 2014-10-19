@@ -84,7 +84,8 @@ struct acc_record
 
 void acc_initialise(void);        // ACC Initialisation
 void acc_ticker(void);            // ACC Ticker
+void acc_state_enter(unsigned char newstate);
 BOOL acc_handle_sms(char *caller, char *command, char *arguments);
-void acc_handle_msg(BOOL msgmode, int code, char* msg);
+BOOL acc_handle_msg(BOOL msgmode, int code, char* msg);
 
 #endif // #ifndef __OVMS_ACC_H

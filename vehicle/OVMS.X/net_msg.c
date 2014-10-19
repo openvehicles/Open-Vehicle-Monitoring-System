@@ -798,6 +798,11 @@ BOOL net_msg_cmd_exec(void)
           par_set(k, p);
           STP_OK(net_scratchpad, net_msg_cmd_code);
           if ((k==PARAM_MILESKM) || (k==PARAM_VEHICLETYPE)) vehicle_initialise();
+#ifdef OVMS_ACCMODULE
+          // Reset the ACC state it an ACC parameter is changed
+          if ((k>=PARAM_ACC_S)&&(k<(PARAM_ACC_S+PARAM_ACC_COUNT)))
+            acc_state_enter(ACC_STATE_FIRSTRUN);
+#endif
           }
         else
           {
@@ -883,10 +888,16 @@ void net_msg_cmd_do(void)
   if ((net_msg_cmd_code < 40) || (net_msg_cmd_code > 49))
     net_msg_start();
 
-    // Execute cmd: ask car module to execute first:
+#ifdef OVMS_ACCMODULE
+   if (! acc_handle_msg(TRUE, net_msg_cmd_code, net_msg_cmd_msg))
+   {
+#endif
+
+   // Execute cmd: ask car module to execute first:
    if ((vehicle_fn_commandhandler == NULL)||
        (! vehicle_fn_commandhandler(TRUE, net_msg_cmd_code,net_msg_cmd_msg)))
      {
+
      // Car module does not feel responsible, fall back to standard:
      if( !net_msg_cmd_exec() )
        {
@@ -896,12 +907,12 @@ void net_msg_cmd_do(void)
        }
      }
 
+#ifdef OVMS_ACCMODULE
+   }
+#endif
+
    // terminate IPSEND by Ctrl-Z (should this be disabled for commands 40-49 as well?)
    net_msg_send();
-
-#ifdef OVMS_ACCMODULE
-   acc_handle_msg(TRUE, net_msg_cmd_code, net_msg_cmd_msg);
-#endif
 
    // clear command
    net_msg_cmd_code = 0;
