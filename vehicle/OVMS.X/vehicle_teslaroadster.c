@@ -812,7 +812,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       else
         {
-        vehicle_teslaroadster_tx_setchargecurrent(atoi(net_msg_cmd_msg));
+        vehicle_teslaroadster_tx_setchargecurrent(atoi(msg));
         STP_OK(net_scratchpad, code);
         }
       break;
@@ -824,13 +824,13 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       else
         {
-        for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
+        for (p=msg;(*p != 0)&&(*p != ',');p++) ;
         // check if a value exists and is separated by a comma
         if (*p == ',')
           {
           *p++ = 0;
-          // At this point, <net_msg_cmd_msg> points to the mode, and p to the current
-          vehicle_teslaroadster_tx_setchargemode(atoi(net_msg_cmd_msg));
+          // At this point, <msg> points to the mode, and p to the current
+          vehicle_teslaroadster_tx_setchargemode(atoi(msg));
           vehicle_teslaroadster_tx_setchargecurrent(atoi(p));
           STP_OK(net_scratchpad, code);
           }
@@ -848,13 +848,13 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       else
         {
-        for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
+        for (p=msg;(*p != 0)&&(*p != ',');p++) ;
         // check if a value exists and is separated by a comma
         if (*p == ',')
           {
           *p++ = 0;
-          // At this point, <net_msg_cmd_msg> points to the mode, and p to the time
-          vehicle_teslaroadster_tx_timermode(atoi(net_msg_cmd_msg),atoi(p));
+          // At this point, <msg> points to the mode, and p to the time
+          vehicle_teslaroadster_tx_timermode(atoi(msg),atoi(p));
           STP_OK(net_scratchpad, code);
           }
         else
@@ -896,7 +896,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       else
         {
-        vehicle_teslaroadster_tx_lockunlockcar(2, net_msg_cmd_msg);
+        vehicle_teslaroadster_tx_lockunlockcar(2, msg);
         STP_OK(net_scratchpad, code);
         }
       sendenv=TRUE;
@@ -909,7 +909,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       else
         {
-        vehicle_teslaroadster_tx_lockunlockcar(0, net_msg_cmd_msg);
+        vehicle_teslaroadster_tx_lockunlockcar(0, msg);
         STP_OK(net_scratchpad, code);
         }
       sendenv=TRUE;
@@ -922,7 +922,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       else
         {
-        vehicle_teslaroadster_tx_lockunlockcar(3, net_msg_cmd_msg);
+        vehicle_teslaroadster_tx_lockunlockcar(3, msg);
         STP_OK(net_scratchpad, code);
         }
       sendenv=TRUE;
@@ -935,7 +935,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       else
         {
-        vehicle_teslaroadster_tx_lockunlockcar(1, net_msg_cmd_msg);
+        vehicle_teslaroadster_tx_lockunlockcar(1, msg);
         STP_OK(net_scratchpad, code);
         }
       sendenv=TRUE;
@@ -948,7 +948,7 @@ BOOL vehicle_teslaroadster_commandhandler(BOOL msgmode, int code, char* msg)
         }
       else
         {
-        vehicle_teslaroadster_tx_homelink(atoi(net_msg_cmd_msg));
+        vehicle_teslaroadster_tx_homelink(atoi(msg));
         STP_OK(net_scratchpad, code);
         }
       break;
