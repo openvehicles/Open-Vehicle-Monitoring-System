@@ -83,6 +83,7 @@ void net_send_sms_start(char* number)
     {
     char *p = par_get(PARAM_TIMEZONE);
     char *s = stp_time(net_scratchpad, NULL, car_time + timestring_to_mins(p)*60L);
+    s = stp_s(s, " ", p);
     s = stp_rom(s, "\r ");
     net_puts_ram(net_scratchpad);
     }
