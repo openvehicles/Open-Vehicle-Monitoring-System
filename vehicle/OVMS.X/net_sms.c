@@ -459,7 +459,10 @@ BOOL net_sms_handle_module(char *caller, char *command, char *arguments)
   vehicle_initialise();
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return moduleq_result;
   }
@@ -492,7 +495,10 @@ BOOL net_sms_handle_vehicle(char *caller, char *command, char *arguments)
   vehicle_initialise();
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return vehicleq_result;
   }
@@ -553,7 +559,10 @@ BOOL net_sms_handle_gprs(char *caller, char *command, char *arguments)
   gprsq_result = net_sms_handle_gprsq(caller, command, arguments);
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return gprsq_result;
   }
@@ -602,7 +611,10 @@ BOOL net_sms_handle_gsmlock(char *caller, char *command, char *arguments)
   gsmlockq_result = net_sms_handle_gsmlockq(caller, command, arguments);
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return gsmlockq_result;
   }
@@ -644,7 +656,10 @@ BOOL net_sms_handle_server(char *caller, char *command, char *arguments)
   serverq_result = net_sms_handle_serverq(caller, command, arguments);
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return serverq_result;
 }
