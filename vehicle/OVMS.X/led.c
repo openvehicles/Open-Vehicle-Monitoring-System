@@ -37,6 +37,7 @@ unsigned char led_code[OVMS_LED_N] = {0,0};
 signed char   led_stat[OVMS_LED_N] = {0,0};
 signed char   led_tick = -10;
 unsigned char led_k;
+unsigned int  led_carticker = 0;
 
 // Set LED
 void led_set(unsigned char led, signed char digit)
@@ -62,6 +63,8 @@ void led_initialise(void)
   {
   PORTC &= 0b11001111; // Turn off both LEDs
 
+  led_carticker = 0;
+
   // Timer 1 enabled, Fosc/4, 16 bit mode, prescaler 1:8
   T1CON = 0b10110101; // @ 5Mhz => 51.2uS / 256
   IPR1bits.TMR1IP = 0; // Low priority interrupt
@@ -78,6 +81,17 @@ void led_isr(void)
   {
   if(PIR1bits.TMR1IF)
     {
+    if ((net_fnbits & NET_FN_CARTIME)>0)
+      {
+      // 104.8576ms ticks per interrupt is close to 105
+      // Let's increment car_time, as necessary
+      led_carticker += 105;
+      if (led_carticker > 1000)
+        {
+        led_carticker -= 1000;
+        car_time++;
+        }
+      }
     if (led_tick < 0)
       {
       // Idle count down, with leds off as necessary

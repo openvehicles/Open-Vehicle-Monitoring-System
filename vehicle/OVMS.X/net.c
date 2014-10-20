@@ -929,6 +929,26 @@ void net_state_activity()
         {
         // local clock update
         // e.g.; +CCLK: "13/12/16,22:01:39+32"
+        if ((net_fnbits & NET_FN_CARTIME)>0)
+          {
+          unsigned long newtime = datestring_to_timestamp(net_buf+7);
+          if (newtime != car_time)
+            {
+            // Need to adjust the car_time
+            if (newtime > car_time)
+              {
+              unsigned long diff = newtime - car_time;
+              if (car_parktime!=0) { car_parktime += diff; }
+              car_time += diff;
+              }
+            else
+              {
+              unsigned long diff = car_time - newtime;
+              if (car_parktime!=0) { car_parktime -= diff; }
+              car_time -= diff;
+              }
+            }
+          }
         }
 #ifdef OVMS_INTERNALGPS
       else if ((memcmppgm2ram(net_buf, (char const rom far*)"2,", 2) == 0)&&
@@ -1736,47 +1756,3 @@ void net_initialise(void)
   net_reg = 0;
   net_state_enter(NET_STATE_FIRSTRUN);
   }
-
-////////////////////////////////////////////////////////////////////////
-// convert GSM clock response string to timestamp
-// timezone string must be set correctly to convert local time to UTC
-//
-// supported string format:
-// +CCLK: "yy/mm/dd,hh:mm:ss+00"
-unsigned long datestring_to_timestamp(const char *arg)
-  {
-  char aval[6];
-  int ival = -1;
-  char ch;
-  char *ptimezone = par_get(PARAM_TIMEZONE);
-
-  aval[0] = 0; // the rest get handled as we go
-  while ((ch = *arg++) != 0 && ival < (int)DIM(aval))
-    {
-    switch (ch)
-      {
-      case '/':
-      case ':':
-      case ',':
-        if (ival != -1)
-          aval[++ival] = 0;
-        break;
-      case '+':
-        if (ival != -1)
-          ++ival;
-        break;
-      case '"':
-        ++ival;
-        break;
-      default:
-        if (0 <= ival && ival < DIM(aval))
-          aval[ival] = aval[ival] * 10 + ch - '0';
-        break;
-      }
-    }
-
-  return (JdFromYMD(2000+aval[0], aval[1], aval[2]) - JDEpoch) * (24L * 3600);
-              + ((aval[3] * 60L + aval[4]) * 60) + aval[5]
-              - timestring_to_mins(ptimezone) * 60L;
-  }
-
