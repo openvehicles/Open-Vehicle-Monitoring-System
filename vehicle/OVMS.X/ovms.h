@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 2,6,6
+#define OVMS_FIRMWARE_VERSION 2,6,7
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -67,6 +67,7 @@
 #define FEATURE_CB_SOUT_SMS  0x04 // Set to 1 to suppress all outbound SMS
 #define FEATURE_CB_SVALERTS  0x08 // Set to 1 to suppress vehicle alerts
 #define FEATURE_CB_SVINFOS   0x10 // Set to 1 to suppress vehicle info notifies
+#define FEATURE_CB_SSMSTIME  0x20 // Set to 1 to suppress times in SMS responses
 
 // The FEATURE_CANWRITE feature controls the CAN mode of the OVMS system
 // Leaving it 0 (the default) will put the CAN bus in LISTEN mode. It

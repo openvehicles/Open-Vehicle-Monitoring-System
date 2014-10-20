@@ -79,11 +79,12 @@ void net_send_sms_start(char* number)
     net_puts_rom("\"\r\n");
     delay100(2);
     }
-  if (car_time > 315360000)
+  if ((car_time > 315360000)&&
+      ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SSMSTIME)==0))
     {
+    // Car time is valid, and sms time is not disabled
     char *p = par_get(PARAM_TIMEZONE);
     char *s = stp_time(net_scratchpad, NULL, car_time + timestring_to_mins(p)*60L);
-    s = stp_s(s, " ", p);
     s = stp_rom(s, "\r ");
     net_puts_ram(net_scratchpad);
     }
