@@ -66,7 +66,14 @@ void led_initialise(void)
   led_carticker = 0;
 
   // Timer 1 enabled, Fosc/4, 16 bit mode, prescaler 1:8
-  T1CON = 0b10110101; // @ 5Mhz => 51.2uS / 256
+  // Crystal specified as 20 MHz. In HS mode, the main oscillator runs at FOSC = 20 MHz.
+  // (#pragma config OSC = HS)
+  // Starting with 20 MHz, FOSC/4 = 5 MHz
+  // The 1:8 prescaler takes that down to 625 kHz
+  // TMR1H:TMR1L of 0x0000 is effectively 0x10000, or 65,536, bringing the frequency down to 9.5367431640625 Hz
+  // The reciprocal is exactly 104.8576 ms
+  // Conclusion: This is going to give us one interrupt every 104.8576ms
+  T1CON = 0b10110101;
   IPR1bits.TMR1IP = 0; // Low priority interrupt
   PIE1bits.TMR1IE = 1; // Enable interrupt
   TMR1L = 0;
