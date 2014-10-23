@@ -83,12 +83,19 @@ void led_isr(void)
     {
     if ((net_fnbits & NET_FN_CARTIME)>0)
       {
-      // 104.8576ms ticks per interrupt is close to 105
-      // Let's increment car_time, as necessary
-      led_carticker += 105;
-      if (led_carticker > 1000)
+      // 104.8576ms ticks per interrupt
+      // Using a marksec of 1/45681 means there would be 4790.000026 marksecs per
+      // interrupt. Rounding that to 4790 for the counter increment value
+      // introduces an error of -0.00000000056 seconds per interrupt, which works
+      // out to losing -0.00046 seconds per day.
+      // So, each interrupt, increment the counter by 4790. When the total is equal
+      // to or greater than 45681, increment car_time and subtract 45681 from the
+      // counter.
+      // (45681/4790)*104.8576 = 1000.0000053411
+      led_carticker += 4790;
+      if (led_carticker >= 45681)
         {
-        led_carticker -= 1000;
+        led_carticker -= 45681;
         car_time++;
         }
       }
