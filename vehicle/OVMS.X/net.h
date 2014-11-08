@@ -121,6 +121,7 @@ extern unsigned char net_fnbits;               // Net functionality bits
 #define NET_FN_INTERNALGPS    0x01             // Internal GPS Required
 #define NET_FN_12VMONITOR     0x02             // Monitoring of 12V line Required
 #define NET_FN_SOCMONITOR     0x04             // Monitoring of SOC Required
+#define NET_FN_CARTIME        0x08             // Control of car_time required
 
 // The NET/SMS notification system
 // We have a bitmap net_notify with bits set to request a particular notification

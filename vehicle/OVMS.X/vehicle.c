@@ -478,6 +478,11 @@ void vehicle_initialise(void)
     }
 #endif
 
+  if ((net_fnbits & NET_FN_CARTIME)>0)
+    {
+    car_time = 1;
+    }
+
   RCONbits.IPEN = 1; // Enable Interrupt Priority
   PIE3bits.RXB1IE = 1; // CAN Receive Buffer 1 Interrupt Enable bit
   PIE3bits.RXB0IE = 1; // CAN Receive Buffer 0 Interrupt Enable bit

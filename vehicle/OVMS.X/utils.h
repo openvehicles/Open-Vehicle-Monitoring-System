@@ -61,6 +61,7 @@ float myatof(char *s);             // builtin atof() does not work
 unsigned long axtoul(char *s);     // hex string decode
 long gps2latlon(char *gpscoord);   // convert GPS coordinate to latlon value
 WORD crc16(char *data, int length);  // Calculate a 16bit CRC and return it
+unsigned long datestring_to_timestamp(const char *arg); // convert GSM clock response string to timestamp
 void cr2lf(char *s);                // replace \r by \n in s (to convert msg text to sms)
 void ltox(unsigned long i, char *s, unsigned int len); // format hexadecimal numbers
 

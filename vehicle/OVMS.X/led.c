@@ -37,6 +37,7 @@ unsigned char led_code[OVMS_LED_N] = {0,0};
 signed char   led_stat[OVMS_LED_N] = {0,0};
 signed char   led_tick = -10;
 unsigned char led_k;
+unsigned int  led_carticker = 0;
 
 // Set LED
 void led_set(unsigned char led, signed char digit)
@@ -62,8 +63,17 @@ void led_initialise(void)
   {
   PORTC &= 0b11001111; // Turn off both LEDs
 
+  led_carticker = 0;
+
   // Timer 1 enabled, Fosc/4, 16 bit mode, prescaler 1:8
-  T1CON = 0b10110101; // @ 5Mhz => 51.2uS / 256
+  // Crystal specified as 20 MHz. In HS mode, the main oscillator runs at FOSC = 20 MHz.
+  // (#pragma config OSC = HS)
+  // Starting with 20 MHz, FOSC/4 = 5 MHz
+  // The 1:8 prescaler takes that down to 625 kHz
+  // TMR1H:TMR1L of 0x0000 is effectively 0x10000, or 65,536, bringing the frequency down to 9.5367431640625 Hz
+  // The reciprocal is exactly 104.8576 ms
+  // Conclusion: This is going to give us one interrupt every 104.8576ms
+  T1CON = 0b10110101;
   IPR1bits.TMR1IP = 0; // Low priority interrupt
   PIE1bits.TMR1IE = 1; // Enable interrupt
   TMR1L = 0;
@@ -78,6 +88,24 @@ void led_isr(void)
   {
   if(PIR1bits.TMR1IF)
     {
+    if ((net_fnbits & NET_FN_CARTIME)>0)
+      {
+      // 104.8576ms ticks per interrupt
+      // Using a marksec of 1/45681 means there would be 4790.000026 marksecs per
+      // interrupt. Rounding that to 4790 for the counter increment value
+      // introduces an error of -0.00000000056 seconds per interrupt, which works
+      // out to losing -0.00046 seconds per day.
+      // So, each interrupt, increment the counter by 4790. When the total is equal
+      // to or greater than 45681, increment car_time and subtract 45681 from the
+      // counter.
+      // (45681/4790)*104.8576 = 1000.0000053411
+      led_carticker += 4790;
+      if (led_carticker >= 45681)
+        {
+        led_carticker -= 45681;
+        car_time++;
+        }
+      }
     if (led_tick < 0)
       {
       // Idle count down, with leds off as necessary

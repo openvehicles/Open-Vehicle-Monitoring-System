@@ -70,7 +70,6 @@ BOOL vehicle_obdii_ticker1(void)
     {
     car_doors3 |= 0x01;       // Car is awake
     }
-  car_time++;
 
   vehicle_poll_busactive = 60; // Force bus active
 
@@ -179,7 +178,6 @@ BOOL vehicle_obdii_initialise(void)
 
   // Vehicle specific data initialisation
   car_stale_timer = -1; // Timed charging is not supported for OVMS OBDII
-  car_time = 0;
 
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
@@ -223,6 +221,7 @@ BOOL vehicle_obdii_initialise(void)
 
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
+  net_fnbits |= NET_FN_CARTIME;       // Require car_time support
 
   return TRUE;
   }

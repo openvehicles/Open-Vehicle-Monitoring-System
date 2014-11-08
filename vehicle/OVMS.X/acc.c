@@ -553,7 +553,7 @@ void acc_state_ticker10(void)
   
   }
 
-void acc_handle_msg(BOOL msgmode, int code, char* msg)
+BOOL acc_handle_msg(BOOL msgmode, int code, char* msg)
   {
   CHECKPOINT(0x65)
 
@@ -617,6 +617,8 @@ void acc_handle_msg(BOOL msgmode, int code, char* msg)
       // ACC overridden with a manual charge
       break;
     }
+
+  return FALSE;
   }
 
 void acc_initialise(void)        // ACC Initialisation

@@ -79,6 +79,15 @@ void net_send_sms_start(char* number)
     net_puts_rom("\"\r\n");
     delay100(2);
     }
+  if ((car_time > 315360000)&&
+      ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SSMSTIME)==0))
+    {
+    // Car time is valid, and sms time is not disabled
+    char *p = par_get(PARAM_TIMEZONE);
+    char *s = stp_time(net_scratchpad, NULL, car_time + timestring_to_mins(p)*60L);
+    s = stp_rom(s, "\r ");
+    net_puts_ram(net_scratchpad);
+    }
   }
 
 void net_send_sms_finish(void)
@@ -459,7 +468,10 @@ BOOL net_sms_handle_module(char *caller, char *command, char *arguments)
   vehicle_initialise();
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return moduleq_result;
   }
@@ -492,7 +504,10 @@ BOOL net_sms_handle_vehicle(char *caller, char *command, char *arguments)
   vehicle_initialise();
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return vehicleq_result;
   }
@@ -553,7 +568,10 @@ BOOL net_sms_handle_gprs(char *caller, char *command, char *arguments)
   gprsq_result = net_sms_handle_gprsq(caller, command, arguments);
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return gprsq_result;
   }
@@ -602,7 +620,10 @@ BOOL net_sms_handle_gsmlock(char *caller, char *command, char *arguments)
   gsmlockq_result = net_sms_handle_gsmlockq(caller, command, arguments);
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return gsmlockq_result;
   }
@@ -644,7 +665,10 @@ BOOL net_sms_handle_server(char *caller, char *command, char *arguments)
   serverq_result = net_sms_handle_serverq(caller, command, arguments);
 
   if (net_state != NET_STATE_DIAGMODE)
-    net_state_enter(NET_STATE_DONETINIT);
+    {
+    net_state_vint = NET_GPRS_RETRIES;
+    net_state_enter(NET_STATE_NETINITP);
+    }
 
   return serverq_result;
 }
