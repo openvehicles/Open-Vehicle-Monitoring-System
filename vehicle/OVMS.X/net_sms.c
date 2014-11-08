@@ -425,9 +425,9 @@ BOOL net_sms_handle_moduleq(char *caller, char *command, char *arguments)
 
   s = stp_rom(net_scratchpad, "Module:");
   s = stp_s(s, "\r\n VehicleID:", par_get(PARAM_VEHICLEID));
-  s = stp_s(s, "\r\n VehicleType:", par_get(PARAM_VEHICLETYPE));
   s = stp_s(s, "\r\n Units:", par_get(PARAM_MILESKM));
   s = stp_s(s, "\r\n Notifications:", par_get(PARAM_NOTIFIES));
+  s = stp_s(s, "\r\n VehicleType:", par_get(PARAM_VEHICLETYPE));
 
   net_puts_ram(net_scratchpad);
 
