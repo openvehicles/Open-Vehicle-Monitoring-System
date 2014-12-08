@@ -948,7 +948,7 @@ BOOL acc_cmd_params(BOOL sms, char* caller, char *arguments)
     }
 
   net_send_sms_start(caller);
-  if (k<0)
+  if (k<=0)
     {
     s = stp_rom(net_scratchpad,ACC_NOTHERE);
     }
