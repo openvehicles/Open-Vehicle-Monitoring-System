@@ -1485,26 +1485,37 @@ void net_state_ticker60(void)
     can_minSOCnotified &= ~CAN_MINSOC_ALERT_12V;
   }
 
-  // Check voltage if ref is valid and car is off:
-  if ((car_12vline_ref > BATT_12V_CALMDOWN_TIME) && !car_doors1bits.CarON)
+  // Check voltage if ref is valid:
+  if (car_12vline_ref > BATT_12V_CALMDOWN_TIME)
   {
-    // Info: healthy lead/acid discharge depth is ~ nom - 1.0 V
-    //        ref is ~ nom + 0.5 V
-
-    // Trigger 12V alert if voltage <= ref - 1.5 V:
-    if (!(can_minSOCnotified & CAN_MINSOC_ALERT_12V)
-            && (car_12vline <= (car_12vline_ref - 15)))
+    if (car_doors1bits.CarON)
     {
-      can_minSOCnotified |= CAN_MINSOC_ALERT_12V;
-      net_req_notification(NET_NOTIFY_12VLOW);
-    }
-
-    // Reset 12V alert if voltage >= ref - 1.3 V:
-    else if ((can_minSOCnotified & CAN_MINSOC_ALERT_12V)
-            && (car_12vline >= (car_12vline_ref - 13)))
-    {
+      // Reset 12V alert if car is on
+      // because DC/DC system charges 12V from main battery
       can_minSOCnotified &= ~CAN_MINSOC_ALERT_12V;
-      net_req_notification(NET_NOTIFY_12VLOW);
+    }
+    else
+    {
+      // Car is off, trigger alert if necessary
+
+      // Info: healthy lead/acid discharge depth is ~ nom - 1.0 V
+      //        ref is ~ nom + 0.5 V
+
+      // Trigger 12V alert if voltage <= ref - 1.6 V:
+      if (!(can_minSOCnotified & CAN_MINSOC_ALERT_12V)
+              && (car_12vline <= (car_12vline_ref - 16)))
+      {
+        can_minSOCnotified |= CAN_MINSOC_ALERT_12V;
+        net_req_notification(NET_NOTIFY_12VLOW);
+      }
+
+      // Reset 12V alert if voltage >= ref - 1.0 V:
+      else if ((can_minSOCnotified & CAN_MINSOC_ALERT_12V)
+              && (car_12vline >= (car_12vline_ref - 10)))
+      {
+        can_minSOCnotified &= ~CAN_MINSOC_ALERT_12V;
+        net_req_notification(NET_NOTIFY_12VLOW);
+      }
     }
   }
 
