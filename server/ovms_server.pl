@@ -22,6 +22,8 @@ use URI::Escape;
 use Data::UUID;
 use HTTP::Parser::XS qw(parse_http_request);
 use Socket qw(SOL_SOCKET SO_KEEPALIVE);
+use Email::MIME;
+use Email::Sender::Simple qw(sendmail);
 
 use constant SOL_TCP => 6;
 use constant TCP_KEEPIDLE => 4;
@@ -57,6 +59,7 @@ my @c2dm_queue;
 my $c2dm_handle;
 my $c2dm_auth;
 my $c2dm_running=0;
+my @mail_queue;
 
 # Auto-flush
 select STDERR; $|=1;
@@ -107,6 +110,15 @@ my $apnstim = AnyEvent->timer (after => 1, interval => 1, cb => \&apns_tim);
 
 # A C2DM ticker
 my $c2dmtim = AnyEvent->timer (after => 1, interval => 1, cb => \&c2dm_tim);
+
+# A MAIL ticker
+my $mail_enabled = $config->val('mail','enabled',0);
+my $mail_sender = $config->val('mail','sender','notifications@openvehicles.com');
+my $mail_interval = $config->val('mail','interval',10);
+if ($mail_enabled eq 1)
+  {
+  my $mailtim = AnyEvent->timer (after => $mail_interval, interval => $mail_interval, cb => \&mail_tim);
+  }
 
 # A utilisation ticker
 my $utiltim = AnyEvent->timer (after => 60, interval => 60, cb => \&util_tim);
@@ -1210,6 +1222,11 @@ sub push_queuenotify
       push @c2dm_queue,\%rec;
       AE::log info => "- - $vehicleid msg queued c2dm notification for $rec{'pushkeytype'}:$rec{'appid'}";
       }
+    if ($row->{'pushtype'} eq 'mail' && $mail_enabled eq 1)
+      {
+      push @mail_queue,\%rec;
+      AE::log info => "- - $vehicleid msg queued mail notification for $rec{'pushkeyvalue'}";
+      }
     }
   }
 
@@ -1433,6 +1450,35 @@ sub c2dm_tim
     @c2dm_queue = ();
     $c2dm_running = 0;
     }
+  }
+
+sub mail_tim
+  {
+  foreach my $rec (@mail_queue)
+    {
+    my $vehicleid = $rec->{'vehicleid'};
+    my $alerttype = $rec->{'alerttype'};
+    my $alertmsg = $rec->{'alertmsg'};
+    my $pushkeyvalue = $rec->{'pushkeyvalue'};
+    if ($pushkeyvalue =~ /@/)
+      {
+      AE::log info => "#$fn - $vehicleid msg mail '$alertmsg' => '$pushkeyvalue'";
+      my $message = Email::MIME->create(
+        header_str => [
+          From    => $mail_sender,
+          To      => $pushkeyvalue,
+          Subject => "OVMS notification from $vehicleid",
+        ],
+        attributes => {
+          encoding => 'quoted-printable',
+          charset  => 'ISO-8859-1',
+        },
+        body_str => $alertmsg,
+      );
+      sendmail($message);
+      }
+    }
+  @mail_queue = ();
   }
 
 sub http_request_in_root

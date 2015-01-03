@@ -62,6 +62,22 @@ Send USSD code to query SIM account balance:
 There's also the "querybalance.sh" script to do this.
 
 
+Push notifications & subscriptions
+==================================
+
+Use "notify.pl" to send a push notification alert text message to your Apps:
+
+	#> ./notify.pl 'Hello World!'
+
+If the server has mail notification support enabled you can use "subscribe.pl" to
+manage your email subscriptions.
+
+Subscribe:
+	#> ./subscribe.pl joe joe@email.com
+Unsubscribe:
+	#> ./subscribe.pl joe -
+
+
 Renault Twizy scripts
 =====================
 
