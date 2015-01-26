@@ -81,6 +81,11 @@
 428=SWP: Aux Battery SUpply Low / 12V Battery Service Required
 429=SWP: Eeprom checksum error
 430=SWP: CAN Rx OverFlow
+527=Check right front high beam bulb
+528=Check left front high beam bulb
+529=Check right front low beam bulb
+530=Check left front low beam bulb
+
 600=APS: Cooling issue; power limiting in effect
 601=ESS: MaxT brick too hot; power limiting in effect
 602=SHUTDOWN IMMINENT Power limited
@@ -228,6 +233,7 @@
 1074=DMC FW: PhaseA Temp Diff warning
 1078=DMC FW: PhaseC Temp Diff warning
 1084=External Charger Problem
+1087=DMC FW: Line Current or Voltage Offset Too Large warning
 1092=Do not plug in charge cable while driving
 1095=Press brake pedal before shift
 1103=ABS & Traction Control Problems. Service Required.
@@ -240,14 +246,22 @@
 1162=Trunk ajar
 1165=Key in Key Switch Door Ajar
 1166=Release Parking Brake
+1167=Headlights still on
 1169=Charge port open
 1170=Tow Mode is not available while car is on
 1174=Fasten Seatbelt
 1416=Low Power System Service Required
 1426=HVAC: High current pump failure
+1452=HVAC: Low pressure
 1463=HVAC: Compressor OverTemp
 1465=HVAC: Low current pump fault
 1469=HVAC: Compressor comms timeout
-1533:Software Problem Service Required
 1471=HVAC: Compressor DTC comms timeout
+1493=ESS: Extremely Low. Begin Charging ASAP.
+1533=Software Problem Service Required
+1553=VMS: VMS firmware version doesn't match car wide release
+1554=VMS: Not receiving VDS version number
+1664=PM: Lost VMS comms warning
+1900=Communication Problem: Service Required / VMS-VDS comms fault
+1901=Not available
 2078=There was a problem processing your request
