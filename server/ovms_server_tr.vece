@@ -85,7 +85,8 @@
 528=Check left front high beam bulb
 529=Check right front low beam bulb
 530=Check left front low beam bulb
-
+538=Check Left Front Indicator Bulb
+539=Check Right Front Indicator Bulb
 600=APS: Cooling issue; power limiting in effect
 601=ESS: MaxT brick too hot; power limiting in effect
 602=SHUTDOWN IMMINENT Power limited
@@ -231,6 +232,9 @@
 999=DMC FW: CAN Overrun
 1073=DMC FW: PhaseA OverTemp warning. Torque limited
 1074=DMC FW: PhaseA Temp Diff warning
+1075=DMC FW: PhaseB OverTemp warning. Torque limited
+1076=DMC FW: PhaseB Temp Diff warning
+1077=DMC FW: PhaseC OverTemp warning. Torque limited
 1078=DMC FW: PhaseC Temp Diff warning
 1084=External Charger Problem
 1087=DMC FW: Line Current or Voltage Offset Too Large warning
