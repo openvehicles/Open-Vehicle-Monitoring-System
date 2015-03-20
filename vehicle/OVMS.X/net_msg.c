@@ -827,6 +827,34 @@ BOOL net_msg_cmd_exec(void)
       net_msg_encode_puts();
       break;
 
+    case 7: // SMS command wrapper
+
+      // process command:
+      net_msg_bufpos = net_msg_scratchpad;
+      k = net_sms_in(par_get(PARAM_REGPHONE), net_msg_cmd_msg);
+      net_msg_bufpos = NULL;
+      // output is now in net_msg_scratchpad
+
+      // create return string:
+      s = stp_i(net_scratchpad, NET_MSG_CMDRESP, net_msg_cmd_code);
+      s = stp_i(s, ",", 1-k); // 0=ok 1=error
+      if (k)
+        {
+        *s++ = ',';
+        for (p = net_msg_scratchpad; *p; p++)
+          {
+            if (*p == '\n')
+              *s++ = '\r'; // translate LF to CR
+            else
+              *s++ = *p;
+          }
+        *s = 0;
+        }
+
+      // send return string:
+      net_msg_encode_puts();
+      break;
+
     case 40: // Send SMS (params: phone number, SMS message)
       for (p=net_msg_cmd_msg;(*p != 0)&&(*p != ',');p++) ;
       // check if a value exists and is separated by a comma
@@ -872,7 +900,8 @@ BOOL net_msg_cmd_exec(void)
       net_msg_encode_puts();
       delay100(2);
       break;
-    default:
+
+  default:
       return FALSE;
     }
 

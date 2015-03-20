@@ -275,9 +275,17 @@ void net_poll(void)
 
 void net_puts_rom(const rom char *data)
   {
+  
+  if (net_msg_bufpos)
+    {
+    // NET SMS wrapper mode: (189 byte = max MP payload)
+    for (;*data && (net_msg_bufpos < (net_msg_scratchpad+189));data++)
+      *net_msg_bufpos++ = *data;
+    }
+
 #ifdef OVMS_DIAGMODULE
   // Help diag terminals with line breaks
-  if ( net_state == NET_STATE_DIAGMODE )
+  else if ( net_state == NET_STATE_DIAGMODE )
     {
     char lastdata = 0;
 
@@ -297,12 +305,14 @@ void net_puts_rom(const rom char *data)
       lastdata = *data++;
       }
     }
-  else
 #endif // OVMS_DIAGMODULE
 
-  // Send characters up to the null
-  for (;*data;data++)
-    UART_WAIT_PUTC(*data)
+  else
+    {
+    // Send characters up to the null
+    for (;*data;data++)
+      UART_WAIT_PUTC(*data)
+    }
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -312,9 +322,17 @@ void net_puts_rom(const rom char *data)
 //
 void net_puts_ram(const char *data)
   {
+
+  if (net_msg_bufpos)
+    {
+    // NET SMS wrapper mode: (189 byte = max MP payload)
+    for (;*data && (net_msg_bufpos < (net_msg_scratchpad+189));data++)
+      *net_msg_bufpos++ = *data;
+    }
+
 #ifdef OVMS_DIAGMODULE
   // Help diag terminals with line breaks
-  if( net_state == NET_STATE_DIAGMODE )
+  else if( net_state == NET_STATE_DIAGMODE )
     {
     char lastdata = 0;
 
@@ -334,12 +352,14 @@ void net_puts_ram(const char *data)
       lastdata = *data++;
       }
     }
-  else
 #endif // OVMS_DIAGMODULE
 
-  // Send characters up to the null
-  for (;*data;data++)
-    UART_WAIT_PUTC(*data)
+  else
+    {
+    // Send characters up to the null
+    for (;*data;data++)
+      UART_WAIT_PUTC(*data)
+    }
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -348,8 +368,17 @@ void net_puts_ram(const char *data)
 // N.B. This may block if the transmit buffer is full.
 void net_putc_ram(const char data)
   {
-  // Send one character
-  UART_WAIT_PUTC(data)
+  if (net_msg_bufpos)
+    {
+    // NET SMS wrapper mode: (189 byte = max MP payload)
+    if (net_msg_bufpos < (net_msg_scratchpad+189))
+      *net_msg_bufpos++ = data;
+    }
+  else
+    {
+    // Send one character
+    UART_WAIT_PUTC(data)
+    }
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -677,7 +706,7 @@ void net_state_activity()
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
     }
     CHECKPOINT(0x36)
-    net_sms_in(net_caller,net_buf,net_buf_pos);
+    net_sms_in(net_caller,net_buf);
     CHECKPOINT(0x35)
     return;
     }
@@ -1145,6 +1174,7 @@ void net_state_ticker1(void)
   {
   char stat;
   char *p;
+  char cmd[5];
 
   CHECKPOINT(0x38)
 
@@ -1269,6 +1299,7 @@ void net_state_ticker1(void)
               {
               // execute CHARGE ALERT command:
               net_msg_cmd_code = 6;
+              net_msg_cmd_msg = cmd;
               net_msg_cmd_msg[0] = 0;
               net_msg_cmd_do();
               }
@@ -1326,9 +1357,8 @@ void net_state_ticker1(void)
             net_notify &= ~(NET_NOTIFY_SMS_CHARGE); // Clear notification flag
             if (net_notify_suppresscount==0)
               {
-                char cmd[5];
                 strcpypgm2ram(cmd, "STAT");
-                net_sms_in(p, cmd, 4);
+                net_sms_in(p, cmd);
               }
             return;
             }

@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 2,6,7
+#define OVMS_FIRMWARE_VERSION 2,7,1
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -129,7 +129,7 @@ typedef struct {
 extern unsigned char car_doors3;
 typedef struct {
   unsigned :1;                  // 0x01
-  unsigned CoolingPump:1;       // 0x02
+  unsigned CarAwake:1;          // 0x02
   unsigned :1;                  // 0x04
   unsigned :1;                  // 0x08
   unsigned :1;                  // 0x10
@@ -138,12 +138,13 @@ typedef struct {
   unsigned :1;                  // 0x80
 } car_doors3bits_t;
 #define car_doors3bits (*((car_doors3bits_t*)&car_doors3))
+#define CoolingPump CarAwake
 
 extern unsigned char car_doors4;
 typedef struct {
   unsigned :1;                  // 0x01
-  unsigned :1;                  // 0x02
-  unsigned AlarmSounds:1;       // 0x04
+  unsigned AlarmSounds:1;       // 0x02
+  unsigned :1;                  // 0x04
   unsigned :1;                  // 0x08
   unsigned :1;                  // 0x10
   unsigned :1;                  // 0x20

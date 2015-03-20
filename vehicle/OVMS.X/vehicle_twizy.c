@@ -213,6 +213,12 @@
  * 3.5.0  24 Sep 2014 (Michael Balzer)
     - Kickdown function with configurable pedal sensibility and compensation
 
+ * 3.5.1  20 Mar 2015 (Michael Balzer)
+    - Clearing watchdog on initial SEVCON login retries
+    - Fixed logs command return code
+    - Support for doors3.CarAwake (ignition)
+    - Trip start references taken from first valid data after switch-on
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -285,7 +291,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.5.0";
+rom char vehicle_twizy_version[] = "3.5.1";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -413,8 +419,8 @@ unsigned char twizy_status; // Car + charge status from CAN:
 #define CAN_STATUS_MODE_D       0x02        //  bit 1 = 0x02: 1 = Forward mode "D"
 #define CAN_STATUS_MODE_R       0x04        //  bit 2 = 0x04: 1 = Reverse mode "R"
 #define CAN_STATUS_MODE         0x06        //  mask
-#define CAN_STATUS_GO           0x08        //  bit 3 = 0x08: 1 = Motor ON / "GO"
-#define CAN_STATUS_KEYON        0x10        //  bit 4 = 0x10: 1 = Car ON (key turned)
+#define CAN_STATUS_GO           0x08        //  bit 3 = 0x08: 1 = "GO" = Motor ON (Ignition)
+#define CAN_STATUS_KEYON        0x10        //  bit 4 = 0x10: 1 = Car awake (key turned)
 #define CAN_STATUS_CHARGING     0x20        //  bit 5 = 0x20: 1 = Charging
 #define CAN_STATUS_OFFLINE      0x40        //  bit 6 = 0x40: 1 = Switch-ON/-OFF phase / 0 = normal operation
 #define CAN_STATUS_ONLINE       0x80        //  bit 7 = 0x80: 1 = CAN-Bus online (test flag to detect offline)
@@ -3445,10 +3451,13 @@ BOOL vehicle_twizy_logs_cmd(BOOL msgmode, int cmd, char *arguments)
     net_msg_encode_puts();
   }
 
-  if (!msgmode)
+  if (!msgmode) {
     net_msg_send();
-
-  return (err == 0);
+    return (err == 0); // info for caller: success
+  }
+  else {
+    return TRUE; // info for framework: cmd handled
+  }
 }
 
 
@@ -4015,12 +4024,20 @@ BOOL vehicle_twizy_poll1(void)
       //  [1] bit 4 = 0x10 CAN_STATUS_KEYON: 1 = Car ON (key switch)
       //  [1] bit 5 = 0x20 CAN_STATUS_CHARGING: 1 = Charging
       //  [1] bit 6 = 0x40 CAN_STATUS_OFFLINE: 1 = Switch-ON/-OFF phase
+      //
+      // low nibble: taken from 59B, clear GO flag while OFFLINE
+      // to prevent sticky GO after switch-off
+      // (597 comes before/after 59B in init/exit phase)
 
-      twizy_status = (twizy_status & 0x0F) | (CAN_BYTE(1) & 0xF0);
+      if (CAN_BYTE(1) & CAN_STATUS_OFFLINE)
+        twizy_status = (twizy_status & 0x07) | (CAN_BYTE(1) & 0xF0);
+      else
+        twizy_status = (twizy_status & 0x0F) | (CAN_BYTE(1) & 0xF0);
+
       // Translation to car_doors1 done in ticker1()
 
-      // init cyclic distance counter on switch-on:
-      if ((twizy_status & CAN_STATUS_KEYON) && (!car_doors1bits.CarON))
+      // init cyclic distance counter on ignition:
+      if ((twizy_status & CAN_STATUS_GO) && (!car_doors1bits.CarON))
         twizy_dist = twizy_speed_distref = 0;
 
       // PEM temperature:
@@ -4569,6 +4586,7 @@ BOOL vehicle_twizy_idlepoll(void)
   //
   
   if ((twizy_kickdown_hold == 0) && (twizy_kickdown_level > 0)
+          && (sys_features[FEATURE_CANWRITE])
           && (sys_features[FEATURE_KICKDOWN_THRESHOLD] > 0)
           && (cfgparam(drive) != -1) && (cfgparam(drive) != 100)
           ) {
@@ -4641,7 +4659,7 @@ BOOL vehicle_twizy_state_ticker10th(void)
   // SimpleConsole input & LED handling:
   //
 
-  if (!car_doors1bits.CarON || car_doors1bits.Charging) {
+  if (!car_doors3bits.CarAwake || car_doors1bits.Charging) {
     // Twizy off or charging: switch off LEDs
     PORTC = (PORTC & 0b11110000);
   }
@@ -4757,17 +4775,20 @@ BOOL vehicle_twizy_state_ticker1(void)
     car_speed = (twizy_speed + 50) / 100; // km/hour
 
 
-  // STATUS: convert Twizy flags to car_doors1:
+  // STATUS: convert Twizy flags to car_doors:
   // Door state #1
   //	bit2 = 0x04 Charge port (open=1/closed=0)
   //    bit3 = 0x08 Pilot signal present (able to charge)
   //	bit4 = 0x10 Charging (true=1/false=0)
   //	bit6 = 0x40 Hand brake applied (true=1/false=0)
-  //	bit7 = 0x80 Car ON (true=1/false=0)
+  //	bit7 = 0x80 Car ON (ignition true=1/false=0)
+  // Door state #3
+  //    bit1 = 0x02 CarAwake (switched on)
   //
-  // ATT: bit 2 = 0x04 = needs to be set for net_sms_stat()!
+  // ATT: #1 bit 2 = 0x04 = needs to be set for net_sms_stat()!
   //
   // Twizy message: twizy_status
+  //  bit 3 = 0x08 CAN_STATUS_GO: 1 = "GO" = Motor ON (Ignition)
   //  bit 4 = 0x10 CAN_STATUS_KEYON: 1 = Car ON (key switch)
   //  bit 5 = 0x20 CAN_STATUS_CHARGING: 1 = Charging
   //  bit 6 = 0x40 CAN_STATUS_OFFLINE: 1 = Switch-ON/-OFF phase
@@ -4794,33 +4815,39 @@ BOOL vehicle_twizy_state_ticker1(void)
     // Port will be closed on next use start
   }
 
-  if (twizy_status & CAN_STATUS_KEYON)
+
+  // Ignition status:
+  car_doors1bits.CarON = (twizy_status & CAN_STATUS_GO) ? TRUE : FALSE;
+
+
+  // Power status change?
+  if ((twizy_status & CAN_STATUS_KEYON)
+          && !(twizy_status & CAN_STATUS_OFFLINE)
+          && !car_doors3bits.CarAwake)
   {
-    if (!car_doors1bits.CarON)
-    {
-      // CAR has just been turned ON
-      car_doors1bits.CarON = 1;
+    // CAR has just been turned ON & CAN bus is online
+    car_doors3bits.CarAwake = 1;
 
-      car_parktime = 0; // No longer parking
-      
-      // set trip references:
-      twizy_odometer_tripstart = twizy_odometer;
-      twizy_soc_tripstart = twizy_soc;
-      twizy_accel_avg = 0;
-      twizy_accel_min = 0;
-      twizy_accel_max = 0;
+    car_parktime = 0; // No longer parking
 
-      net_req_notification(NET_NOTIFY_ENV);
+    // set trip references:
+    twizy_soc_tripstart = twizy_soc;
+    twizy_odometer_tripstart = twizy_odometer;
+    twizy_accel_avg = 0;
+    twizy_accel_min = 0;
+    twizy_accel_max = 0;
 
-#ifdef OVMS_TWIZY_BATTMON
+    net_req_notification(NET_NOTIFY_ENV);
+
+    #ifdef OVMS_TWIZY_BATTMON
       // reset battery monitor:
       vehicle_twizy_battstatus_reset();
-#endif // OVMS_TWIZY_BATTMON
+    #endif // OVMS_TWIZY_BATTMON
 
-      // reset power statistics:
-      vehicle_twizy_power_reset();
+    // reset power statistics:
+    vehicle_twizy_power_reset();
 
-#ifdef OVMS_TWIZY_CFG
+    #ifdef OVMS_TWIZY_CFG
       // reset button cnt:
       twizy_button_cnt = 0;
 
@@ -4831,33 +4858,31 @@ BOOL vehicle_twizy_state_ticker1(void)
         {
           if (login(1) == 0)
             break;
+          ClrWdt();
           delay100(5);
         }
       }
-#endif // OVMS_TWIZY_CFG
+    #endif // OVMS_TWIZY_CFG
 
-    }
   }
-  else
+  else if (!(twizy_status & CAN_STATUS_KEYON) && car_doors3bits.CarAwake)
   {
-    if (car_doors1bits.CarON)
-    {
-      // CAR has just been turned OFF
-      car_doors1bits.CarON = 0;
+    // CAR has just been turned OFF
+    car_doors3bits.CarAwake = 0;
 
-      car_parktime = car_time-1; // Record it as 1 second ago, so non zero report
-      net_req_notification(NET_NOTIFY_ENV);
-      
-      // send power statistics if 25+ Wh used:
-      if (twizy_speedpwr[CAN_SPEED_CONST].use > (22500L*25))
-        twizy_notify |= (SEND_PowerNotify | SEND_PowerLog);
+    car_parktime = car_time-1; // Record it as 1 second ago, so non zero report
 
-#ifdef OVMS_TWIZY_CFG
+    net_req_notification(NET_NOTIFY_ENV);
+
+    // send power statistics if 25+ Wh used:
+    if (twizy_speedpwr[CAN_SPEED_CONST].use > (22500L*25))
+      twizy_notify |= (SEND_PowerNotify | SEND_PowerLog);
+
+    #ifdef OVMS_TWIZY_CFG
       // reset button cnt:
       twizy_button_cnt = 0;
-#endif // OVMS_TWIZY_CFG
+    #endif // OVMS_TWIZY_CFG
 
-    }
   }
 
 
@@ -5014,9 +5039,9 @@ BOOL vehicle_twizy_state_ticker1(void)
       // We'll keep the flag until next car use.
     }
 
-    else if (car_doors1bits.CarON && !car_doors1bits.Charging && car_doors1bits.ChargePort)
+    else if (car_doors3bits.CarAwake && !car_doors1bits.Charging && car_doors1bits.ChargePort)
     {
-      // Car on, not charging, charge port open:
+      // Car awake, not charging, charge port open:
       // beginning the next car usage cycle:
 
       // Close charging port:
@@ -5047,57 +5072,62 @@ BOOL vehicle_twizy_state_ticker1(void)
 
 #ifdef OVMS_TWIZY_CFG
 
-  /***************************************************************************
-   * Check for button presses in STOP mode => CFG RESET:
-   */
-
-  if (twizy_button_cnt >= 3)
+  if ((car_doors3bits.CarAwake) && (sys_features[FEATURE_CANWRITE]))
   {
-    char cmd[6];
 
-    // do CFG RESET with SMS reply:
-    strcpypgm2ram(cmd, "RESET");
-    if (vehicle_twizy_cfg_sms(TRUE, NULL, NULL, cmd))
-      net_send_sms_finish();
+    /***************************************************************************
+     * Check for button presses in STOP mode => CFG RESET:
+     */
 
-    // reset button cnt:
-    twizy_button_cnt = 0;
-  }
+    if (twizy_button_cnt >= 3)
+    {
+      char cmd[6];
 
-  else if (twizy_button_cnt >= 1)
-  {
-    // pre-op also sends a CAN error, so for button_cnt >= 1
-    // check if we're stuck in pre-op state:
-    if ((readsdo(0x5110,0x00) == 0) && (twizy_sdo.data == 0x7f)
-      && (readsdo(0x5000,0x01) == 0) && (twizy_sdo.data != 4)) {
-      // we're in pre-op but not logged in, try to solve:
-      if ((login(1) == 0) && (configmode(0) == 0))
-        twizy_button_cnt = 0; // solved
+      // do CFG RESET with SMS reply:
+      strcpypgm2ram(cmd, "RESET");
+      if (vehicle_twizy_cfg_sms(TRUE, NULL, NULL, cmd))
+        net_send_sms_finish();
+
+      // reset button cnt:
+      twizy_button_cnt = 0;
     }
-  }
+
+    else if (twizy_button_cnt >= 1)
+    {
+      // pre-op also sends a CAN error, so for button_cnt >= 1
+      // check if we're stuck in pre-op state:
+      if ((readsdo(0x5110,0x00) == 0) && (twizy_sdo.data == 0x7f)
+          // we should be logged in from CarOn autologin
+          // && (readsdo(0x5000,0x01) == 0) && (twizy_sdo.data != 4)
+              ) {
+        // we're in pre-op, try to solve:
+        if (configmode(0) == 0)
+          twizy_button_cnt = 0; // solved
+      }
+    }
 
 
-  /***************************************************************************
-   * Valet mode: lock speed if valet max odometer reached:
-   */
+    /***************************************************************************
+     * Valet mode: lock speed if valet max odometer reached:
+     */
 
-  if ((car_doors1bits.CarON) && (car_doors2bits.ValetMode)
-          && (!car_doors2bits.CarLocked) && (twizy_odometer > twizy_valet_odo))
-  {
-    vehicle_twizy_cfg_restrict_cmd(FALSE, CMD_Lock, NULL);
-  }
-
+    if ((car_doors2bits.ValetMode)
+            && (!car_doors2bits.CarLocked) && (twizy_odometer > twizy_valet_odo))
+    {
+      vehicle_twizy_cfg_restrict_cmd(FALSE, CMD_Lock, NULL);
+    }
 
 #ifdef OVMS_TWIZY_BATTMON
 
-  /***************************************************************************
-   * Auto recuperation adjustment:
-   */
+    /***************************************************************************
+     * Auto recuperation adjustment (if enabled):
+     */
 
-  if (twizy_status & CAN_STATUS_KEYON)
     vehicle_twizy_cfg_autorecup();
 
 #endif //OVMS_TWIZY_BATTMON
+
+  }
 
 
 #endif // OVMS_TWIZY_CFG
@@ -5671,6 +5701,8 @@ char vehicle_twizy_debug_msgp(char stat, int cmd)
 
   s = stp_rom(net_scratchpad, "MP-0 ");
   s = stp_i(s, "c", cmd ? cmd : CMD_Debug);
+  
+  /*
   s = stp_x(s, ",0,", twizy_status);
   s = stp_x(s, ",", car_doors1);
   s = stp_x(s, ",", car_doors5);
@@ -5686,6 +5718,7 @@ char vehicle_twizy_debug_msgp(char stat, int cmd)
   s = stp_i(s, ",", car_estrange);
   s = stp_i(s, ",", car_idealrange);
   s = stp_i(s, ",", can_minSOCnotified);
+  */
 
   // V3.4.0:
   s = stp_i(s, ",", twizy_power_min * 16);
@@ -5791,6 +5824,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
   // ...MORE IN DIAG MODE (serial port):
   if (net_state == NET_STATE_DIAGMODE)
   {
+    /*
     s = net_scratchpad;
     s = stp_i(s, "\n# FIX=", car_gpslock);
     s = stp_lx(s, " LAT=", car_latitude);
@@ -5798,9 +5832,11 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
     s = stp_i(s, " ALT=", car_altitude);
     s = stp_i(s, " DIR=", car_direction);
     net_puts_ram(net_scratchpad);
+    */
 
 #ifdef OVMS_TWIZY_BATTMON
     // battery bit fields:
+    /*
     s = net_scratchpad;
     s = stp_x(s, "\n# vw=", twizy_batt[0].volt_watches);
     s = stp_x(s, " va=", twizy_batt[0].volt_alerts);
@@ -5810,6 +5846,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
     s = stp_x(s, " lta=", twizy_batt[0].last_temp_alerts);
     s = stp_x(s, " ss=", twizy_batt_sensors_state);
     net_puts_ram(net_scratchpad);
+    */
 #endif // OVMS_TWIZY_BATTMON
 
   }
