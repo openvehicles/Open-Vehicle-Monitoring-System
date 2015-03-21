@@ -344,13 +344,20 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", car_stale_timer);
   s = stp_l2f(s, ",", (unsigned long)car_cac100, 2);
   s = stp_i(s, ",", car_chargefull_minsremaining);
-  s = stp_i(s, ",", car_chargelimit_minsremaining);
+  s = stp_i(s, ",",
+            ((car_chargelimit_minsremaining_range >= 0)
+          && (car_chargelimit_minsremaining_range < car_chargelimit_minsremaining_soc))
+          ? car_chargelimit_minsremaining_range
+          : car_chargelimit_minsremaining_soc); // ETR for first limit reached
   s = stp_i(s, ",", car_chargelimit_rangelimit);
   s = stp_i(s, ",", car_chargelimit_soclimit);
   s = stp_i(s, ",", car_coolingdown);
   s = stp_i(s, ",", car_cooldown_tbattery);
   s = stp_i(s, ",", car_cooldown_timelimit);
   s = stp_i(s, ",", car_chargeestimate);
+  s = stp_i(s, ",", car_chargelimit_minsremaining_range);
+  s = stp_i(s, ",", car_chargelimit_minsremaining_soc);
+  s = stp_i(s, ",", car_max_idealrange);
 
   return net_msg_encode_statputs(stat, &crc_stat);
 }
@@ -1098,14 +1105,14 @@ char *net_prep_stat(char *s)
       if (car_chargelimit_soclimit > 0)
         {
         s = stp_i(s, "\r ", car_chargelimit_soclimit);
-        s = stp_i(s,"%: ",car_chargelimit_minsremaining);
+        s = stp_i(s,"%: ",car_chargelimit_minsremaining_soc);
         s = stp_rom(s," mins");
         }
       if (car_chargelimit_rangelimit > 0)
         {
         s = stp_i(s, "\r ", (can_mileskm == 'K')?KmFromMi(car_chargelimit_rangelimit):car_chargelimit_rangelimit);
         s = stp_rom(s, unit);
-        s = stp_i(s,": ",car_chargelimit_minsremaining);
+        s = stp_i(s,": ",car_chargelimit_minsremaining_range);
         s = stp_rom(s," mins");
         }
     }

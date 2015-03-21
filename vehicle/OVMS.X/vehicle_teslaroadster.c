@@ -1175,8 +1175,6 @@ BOOL vehicle_teslaroadster_ticker1(void)
 
 BOOL vehicle_teslaroadster_ticker60(void)
   {
-  int remain;
-
   if (car_doors1 & 0x10)
     {
     // Vehicle is charging
@@ -1190,10 +1188,10 @@ BOOL vehicle_teslaroadster_ticker60(void)
         car_ambient_temp,           // ambient temperature in degrees C
         NULL
         );
-    car_chargelimit_minsremaining = -1;
+    car_chargelimit_minsremaining_range = -1;
     if (car_chargelimit_rangelimit>0)
       {
-      car_chargelimit_minsremaining = vehicle_teslaroadster_minutestocharge(
+      car_chargelimit_minsremaining_range = vehicle_teslaroadster_minutestocharge(
           car_chargemode,             // charge mode, Standard, Range and Performance are supported
           car_linevoltage*car_chargelimit, // watts available from the wall
           car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
@@ -1204,9 +1202,10 @@ BOOL vehicle_teslaroadster_ticker60(void)
           NULL
           );
       }
+    car_chargelimit_minsremaining_soc = -1;
     if (car_chargelimit_soclimit>0)
       {
-      remain = vehicle_teslaroadster_minutestocharge(
+      car_chargelimit_minsremaining_soc = vehicle_teslaroadster_minutestocharge(
           car_chargemode,             // charge mode, Standard, Range and Performance are supported
           car_linevoltage*car_chargelimit, // watts available from the wall
           car_idealrange,             // ideal mi at start of charge (units determined by can_mileskm)
@@ -1216,8 +1215,6 @@ BOOL vehicle_teslaroadster_ticker60(void)
           car_ambient_temp,           // ambient temperature in degrees C
           NULL
           );
-      if ((remain<car_chargelimit_minsremaining)||(car_chargelimit_minsremaining<0))
-        car_chargelimit_minsremaining = remain;
       }
 
     if (car_coolingdown>=0)

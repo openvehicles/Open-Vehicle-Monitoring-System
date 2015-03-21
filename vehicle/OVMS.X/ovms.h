@@ -205,19 +205,27 @@ extern unsigned char net_sq; // GSM Network Signal Quality
 extern unsigned char car_12vline; // 12V line level
 extern unsigned char car_12vline_ref; // 12V line level reference
 extern unsigned char car_gsmcops[9]; // GSM provider
+
 extern unsigned int car_cac100; // CAC (x100)
-extern signed int car_chargefull_minsremaining;  // Minutes of charge remaining
-extern signed int car_chargelimit_minsremaining; // Minutes of charge remaining
-extern unsigned int car_chargelimit_rangelimit;  // Range limit (in vehicle units)
-extern unsigned char car_chargelimit_soclimit;   // SOC% limit
+
+extern signed int car_chargefull_minsremaining;  // ETR for 100%
+extern signed int car_chargelimit_minsremaining_range; // ETR for range limit
+extern signed int car_chargelimit_minsremaining_soc; // ETR for SOC limit
+extern unsigned int car_chargelimit_rangelimit;   // Range limit (in vehicle units)
+extern unsigned char car_chargelimit_soclimit;    // SOC% limit
+
+extern unsigned int car_max_idealrange; // Maximum ideal range in miles
+
 extern signed char car_coolingdown;              // >=0 if car is cooling down
 extern unsigned char car_cooldown_chargemode;    // 0=standard, 1=storage, 3=range, 4=performance
 extern unsigned char car_cooldown_chargelimit;   // Charge Limit (amps)
 extern signed int car_cooldown_tbattery;         // Cooldown temperature limit
 extern unsigned int car_cooldown_timelimit;      // Cooldown time limit (minutes) remaining
 extern unsigned char car_cooldown_wascharging;   // TRUE if car was charging when cooldown started
-extern int car_chargeestimate;                   // Charge minute estimate
-extern unsigned char car_SOCalertlimit;          // Limit of SOC at which alert should be raised
+
+extern int car_chargeestimate;                   // ACC: charge time estimation for current charger capabilities (min.)
+
+extern unsigned char car_SOCalertlimit;           // Low limit of SOC at which alert should be raised
 
 // Helpers
 

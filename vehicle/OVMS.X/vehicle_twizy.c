@@ -218,6 +218,7 @@
     - Fixed logs command return code
     - Support for doors3.CarAwake (ignition)
     - Trip start references taken from first valid data after switch-on
+    - Support car_chargeduration & framework chargetime ETR variables
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -761,6 +762,7 @@ BOOL vehicle_twizy_battstatus_cmd(BOOL msgmode, int cmd, char *arguments);
 BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char *arguments);
 #endif // OVMS_TWIZY_BATTMON
 
+void vehicle_twizy_calculate_chargetimes(void);
 
 
 #ifdef OVMS_TWIZY_CFG
@@ -4916,6 +4918,8 @@ BOOL vehicle_twizy_state_ticker1(void)
     
     unsigned char twizy_curr_SOC = twizy_soc / 100; // unrounded SOC% for charge alerts
 
+    car_chargeduration++;
+
 
     // Calculate range during charging:
     // scale twizy_soc_min_range to twizy_soc
@@ -5046,6 +5050,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 
       // Close charging port:
       car_doors1bits.ChargePort = 0;
+      car_chargeduration = 0;
 
       // Set charge state to "done":
       car_chargestate = 4;
@@ -5192,6 +5197,9 @@ BOOL vehicle_twizy_state_ticker10(void)
 
 BOOL vehicle_twizy_state_ticker60(void)
 {
+  // calculate current ETR values:
+  vehicle_twizy_calculate_chargetimes();
+
   // Queue regular data update:
   twizy_notify |= SEND_DataUpdate;
 
@@ -5908,7 +5916,7 @@ void vehicle_twizy_stat_prepmsg(void)
     if (car_chargestate != 4)
     {
       // Not done yet; estimated time remaining for 100%:
-      s = stp_i(s, "\r Full: ", vehicle_twizy_chargetime(10000));
+      s = stp_i(s, "\r Full: ", car_chargefull_minsremaining);
       s = stp_rom(s, " min.");
     }
 
@@ -5921,7 +5929,7 @@ void vehicle_twizy_stat_prepmsg(void)
     // Estimated charge time for 100%:
     if (twizy_soc < 10000)
     {
-      s = stp_i(s, "\r Full charge: ", vehicle_twizy_chargetime(10000));
+      s = stp_i(s, "\r Full charge: ", car_chargefull_minsremaining);
       s = stp_rom(s, " min.");
     }
   }
@@ -6051,6 +6059,9 @@ BOOL vehicle_twizy_range_cmd(BOOL msgmode, int cmd, char *arguments)
     par_set(PARAM_FEATURE_BASE + FEATURE_MAXRANGE, arguments);
   }
 
+  // calculate new ETR values:
+  vehicle_twizy_calculate_chargetimes();
+
   // CMD_QueryRange
   if (msgmode)
     vehicle_twizy_range_msgp(0, cmd);
@@ -6082,6 +6093,9 @@ BOOL vehicle_twizy_range_sms(BOOL premsg, char *caller, char *command, char *arg
 
     par_set(PARAM_FEATURE_BASE + FEATURE_MAXRANGE, arguments);
   }
+
+  // calculate new ETR values:
+  vehicle_twizy_calculate_chargetimes();
 
   // RANGE?
   if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
@@ -6123,42 +6137,104 @@ BOOL vehicle_twizy_range_sms(BOOL premsg, char *caller, char *command, char *arg
  *
  */
 
+
+void vehicle_twizy_calculate_chargetimes(void)
+{
+  int rangelimit, maxrange;
+
+
+  // set max ideal range:
+
+  if (sys_features[FEATURE_MAXRANGE] > 0)
+  {
+    // max range defined by user (in user units):
+    maxrange = sys_features[FEATURE_MAXRANGE];
+
+    if (can_mileskm == 'M')
+    {
+      car_max_idealrange = maxrange;
+      maxrange = KmFromMi(maxrange);
+    }
+    else
+    {
+      car_max_idealrange = MiFromKm(maxrange);
+    }
+  }
+  else
+  {
+    // estimate max range:
+    if (twizy_soc_min && twizy_soc_min_range)
+      maxrange = ((long) twizy_soc_min_range * 10000) / twizy_soc_min;
+    else
+      maxrange = 0;
+
+    car_max_idealrange = MiFromKm(maxrange);
+  }
+
+
+  // calculate ETR for SUFFSOC:
+
+  car_chargelimit_soclimit = sys_features[FEATURE_SUFFSOC];
+
+  if (car_chargelimit_soclimit == 0)
+  {
+    car_chargelimit_minsremaining_soc = -1;
+  }
+  else
+  {
+    car_chargelimit_minsremaining_soc = vehicle_twizy_chargetime(
+            (int) car_chargelimit_soclimit * 100);
+  }
+
+
+  // calculate ETR for SUFFRANGE:
+
+  rangelimit = sys_features[FEATURE_SUFFRANGE];
+  
+  if (can_mileskm == 'M')
+  {
+    car_chargelimit_rangelimit = rangelimit;
+    rangelimit = KmFromMi(car_chargelimit_rangelimit);
+  }
+  else
+  {
+    car_chargelimit_rangelimit = MiFromKm(rangelimit);
+  }
+
+  if (car_chargelimit_rangelimit == 0)
+  {
+    car_chargelimit_minsremaining_range = -1;
+  }
+  else
+  {
+    car_chargelimit_minsremaining_range = (maxrange > 0)
+            ? vehicle_twizy_chargetime(
+                ((long) rangelimit * 10000) / maxrange)
+            : 0;
+  }
+
+
+  // calculate ETR for full charge:
+  car_chargefull_minsremaining = vehicle_twizy_chargetime(10000);
+
+  // signal framework to send update:
+  net_req_notification(NET_NOTIFY_STAT);
+}
+
 char vehicle_twizy_ca_msgp(char stat, int cmd)
 {
   //static WORD crc; // diff crc for push msgs
   char *s;
   int etr_soc = 0, etr_range = 0, maxrange;
 
-  // calculate ETR for SUFFSOC:
-  etr_soc = vehicle_twizy_chargetime((int) sys_features[FEATURE_SUFFSOC]*100);
-
-  // calculate ETR for SUFFRANGE:
-
-  if (sys_features[FEATURE_MAXRANGE] > 0)
-  {
-    maxrange = sys_features[FEATURE_MAXRANGE];
-  }
-  else
-  {
-    if (twizy_soc_min && twizy_soc_min_range)
-      maxrange = (((float) twizy_soc_min_range) / twizy_soc_min) * 10000;
-    else
-      maxrange = 0;
-    if (can_mileskm == 'M')
-      maxrange = MiFromKm(maxrange);
-  }
-
-  etr_range = (maxrange) ? vehicle_twizy_chargetime(
-          (long) sys_features[FEATURE_SUFFRANGE] * 10000 / maxrange) : 0;
-
   // Send command reply:
   s = stp_rom(net_scratchpad, "MP-0 ");
   s = stp_i(s, "c", cmd ? cmd : CMD_QueryChargeAlerts);
   s = stp_i(s, ",0,", sys_features[FEATURE_SUFFRANGE]);
   s = stp_i(s, ",", sys_features[FEATURE_SUFFSOC]);
-  s = stp_i(s, ",", etr_range);
-  s = stp_i(s, ",", etr_soc);
-  s = stp_i(s, ",", vehicle_twizy_chargetime(10000));
+  s = stp_i(s, ",", car_chargelimit_minsremaining_range);
+  s = stp_i(s, ",", car_chargelimit_minsremaining_soc);
+  s = stp_i(s, ",", car_chargefull_minsremaining);
 
   //return net_msg_encode_statputs( stat, &crc );
   net_msg_encode_puts();
@@ -6184,6 +6260,9 @@ BOOL vehicle_twizy_ca_cmd(BOOL msgmode, int cmd, char *arguments)
     par_set(PARAM_FEATURE_BASE + FEATURE_SUFFRANGE, range);
     par_set(PARAM_FEATURE_BASE + FEATURE_SUFFSOC, soc);
   }
+
+  // calculate new ETR values:
+  vehicle_twizy_calculate_chargetimes();
 
   // CMD_QueryChargeAlerts
   if (msgmode)
@@ -6245,6 +6324,10 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
   }
 
 
+  // calculate new ETR values:
+  vehicle_twizy_calculate_chargetimes();
+
+
   // REPLY current charge alerts and estimated charge time remaining:
 
   if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
@@ -6260,13 +6343,8 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
   }
   else
   {
-    int etr_soc = 0, etr_range = 0, maxrange;
-
     if (sys_features[FEATURE_SUFFSOC] > 0)
     {
-      // calculate ETR for SUFFSOC:
-      etr_soc = vehicle_twizy_chargetime((int) sys_features[FEATURE_SUFFSOC]*100);
-
       // output SUFFSOC:
       s = stp_i(s, NULL, sys_features[FEATURE_SUFFSOC]);
       s = stp_rom(s, "%");
@@ -6274,43 +6352,22 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
 
     if (sys_features[FEATURE_SUFFRANGE] > 0)
     {
-      // calculate ETR for SUFFRANGE:
-
-      if (sys_features[FEATURE_MAXRANGE] > 0)
-      {
-        maxrange = sys_features[FEATURE_MAXRANGE];
-      }
-      else
-      {
-        if (twizy_soc_min && twizy_soc_min_range)
-          maxrange = (((float) twizy_soc_min_range) / twizy_soc_min) * 10000;
-        else
-          maxrange = 0;
-        if (can_mileskm == 'M')
-          maxrange = MiFromKm(maxrange);
-      }
-
-      etr_range = (maxrange) ? vehicle_twizy_chargetime(
-              (long) sys_features[FEATURE_SUFFRANGE] * 10000 / maxrange) : 0;
-
       // output SUFFRANGE:
-      if (sys_features[FEATURE_SUFFSOC] > 0)
-        s = stp_rom(s, " or ");
-      s = stp_i(s, NULL, sys_features[FEATURE_SUFFRANGE]);
+      s = stp_i(s, (sys_features[FEATURE_SUFFSOC] > 0) ? " or " : NULL,
+                sys_features[FEATURE_SUFFRANGE]);
       s = stp_rom(s, (can_mileskm == 'M') ? " mi" : " km");
     }
 
     // output smallest ETR:
-    if ((etr_range > 0) && ((etr_soc == 0) || (etr_range < etr_soc)))
-      s = stp_i(s, "\n Time: ", etr_range);
-    else if (etr_soc > 0)
-      s = stp_i(s, "\n Time: ", etr_soc);
+    s = stp_i(s, "\n Time: ", ((car_chargelimit_minsremaining_range >= 0)
+          && (car_chargelimit_minsremaining_range < car_chargelimit_minsremaining_soc))
+          ? car_chargelimit_minsremaining_range
+          : car_chargelimit_minsremaining_soc);
     s = stp_rom(s, " min.");
-
   }
 
   // Estimated time for 100%:
-  s = stp_i(s, "\n Full charge: ", vehicle_twizy_chargetime(10000));
+  s = stp_i(s, "\n Full charge: ", car_chargefull_minsremaining);
   s = stp_rom(s, " min.");
 
   net_puts_ram(net_scratchpad);
@@ -7361,6 +7418,8 @@ BOOL vehicle_twizy_initialise(void)
     twizy_range = 50;
     twizy_soc_min_range = 100;
     twizy_last_idealrange = 0;
+
+    vehicle_twizy_calculate_chargetimes();
 
     twizy_speed = 0;
     twizy_power = 0;

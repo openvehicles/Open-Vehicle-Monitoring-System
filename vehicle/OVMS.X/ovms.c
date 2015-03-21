@@ -124,23 +124,32 @@ unsigned char net_sq = 0; // GSM Network Signal Quality
 unsigned char car_12vline = 0; // 12V line level
 unsigned char car_12vline_ref = 0; // 12V line level reference
 unsigned char car_gsmcops[9] = ""; // GSM provider
-unsigned int car_cac100 = 0; // CAC (x100)
-signed int car_chargefull_minsremaining = -1;  // Minutes of charge remaining
-signed int car_chargelimit_minsremaining = -1; // Minutes of charge remaining
+
+unsigned int car_cac100 = 0; // CAC = Calculated Amphour Capacity (Ah x 100)
+
+signed int car_chargefull_minsremaining = -1;  // ETR for 100%
+signed int car_chargelimit_minsremaining_range = -1; // ETR for range limit
+signed int car_chargelimit_minsremaining_soc = -1; // ETR for SOC limit
 unsigned int car_chargelimit_rangelimit = 0;   // Range limit (in vehicle units)
 unsigned char car_chargelimit_soclimit = 0;    // SOC% limit
+
+unsigned int car_max_idealrange = 0; // Maximum ideal range in miles
+
 signed char car_coolingdown = -1;              // >=0 if car is cooling down
 unsigned char car_cooldown_chargemode = 0;     // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_cooldown_chargelimit = 0;    // Charge Limit (amps)
 signed int car_cooldown_tbattery = 0;          // Cooldown temperature limit
 unsigned int car_cooldown_timelimit = 0;       // Cooldown time limit (minutes) remaining
 unsigned char car_cooldown_wascharging = 0;    // TRUE if car was charging when cooldown started
-int car_chargeestimate = -1;                   // Charge minute estimate
-unsigned char car_SOCalertlimit = 5;           // Limit of SOC at which alert should be raised
+
+int car_chargeestimate = -1;                   // ACC: charge time estimation for current charger capabilities (min.)
+
+unsigned char car_SOCalertlimit = 5;           // Low limit of SOC at which alert should be raised
 
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 UINT8 debug_crashreason;        // last saved reset reason (bit set)
 UINT8 debug_checkpoint;         // number of last checkpoint before crash
+
 
 void main(void)
 {
