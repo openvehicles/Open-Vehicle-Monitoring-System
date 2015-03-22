@@ -451,9 +451,9 @@ char net_msgp_environment(char stat)
   s = stp_i(s, ",", car_tpem);
   s = stp_i(s, ",", car_tmotor);
   s = stp_i(s, ",", car_tbattery);
-  s = stp_i(s, ",", car_trip);
-  s = stp_ul(s, ",", car_odometer);
-  s = stp_i(s, ",", car_speed);
+  s = stp_i(s, ",", (can_mileskm=='M') ? car_trip : KmFromMi(car_trip));
+  s = stp_ul(s, ",", (can_mileskm=='M') ? car_odometer : KmFromMi(car_odometer));
+  s = stp_i(s, ",", car_speed); // no conversion, stored in user unit
   s = stp_ul(s, ",", park);
   s = stp_i(s, ",", car_ambient_temp);
   s = stp_i(s, ",", car_doors3);
