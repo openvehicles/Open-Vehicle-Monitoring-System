@@ -803,9 +803,9 @@ sub io_message
     if (($m_code eq $code)&&($data =~ /^(\d+)(,(.+))?$/)&&($1 == 30))
       {
       # Special case of an app requesting (non-paranoid) the GPRS data
-      my $sth = $db->prepare('SELECT vehicleid,left(h_timestamp,10) AS u_date,group_concat(h_data) AS data FROM ovms_historicalmessages '
-                           . 'WHERE vehicleid=? AND h_recordtype="*-OVM-Utilisation" '
-                           . 'GROUP BY vehicleid,u_date,h_recordtype ORDER BY h_timestamp desc,h_recordnumber LIMIT 90');
+      my $sth = $db->prepare('SELECT vehicleid,left(h_timestamp,10) AS u_date,group_concat(h_data ORDER BY h_recordnumber) AS data '
+                           . 'FROM ovms_historicalmessages WHERE vehicleid=? AND h_recordtype="*-OVM-Utilisation" '
+                           . 'GROUP BY vehicleid,u_date,h_recordtype ORDER BY h_timestamp desc LIMIT 90');
       $sth->execute($vehicleid);
       my $rows = $sth->rows;
       my $k = 0;
