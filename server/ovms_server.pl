@@ -824,9 +824,11 @@ sub io_message
     elsif (($m_code eq $code)&&($data =~ /^(\d+)(,(.+))?$/)&&($1 == 31))
       {
       # Special case of an app requesting (non-paranoid) the historical data summary
+      my ($h_since) = $3;
+      $h_since='0000-00-00' if (!defined $h_since);
       my $sth = $db->prepare('SELECT h_recordtype,COUNT(DISTINCT h_recordnumber) AS distinctrecs, COUNT(*) AS recs,SUM(LENGTH(h_recordtype)+LENGTH(h_data)+LENGTH(vehicleid)+20) AS tsize, MIN(h_timestamp) AS first, MAX(h_timestamp) AS last '
-                           . 'FROM ovms_historicalmessages WHERE vehicleid=? GROUP BY h_recordtype ORDER BY h_recordtype;');
-      $sth->execute($vehicleid);
+                           . 'FROM ovms_historicalmessages WHERE vehicleid=? AND h_timestamp>? GROUP BY h_recordtype ORDER BY h_recordtype;');
+      $sth->execute($vehicleid,$h_since);
       my $rows = $sth->rows;
       my $k = 0;
       while (my $row = $sth->fetchrow_hashref())
@@ -849,9 +851,10 @@ sub io_message
     elsif (($m_code eq $code)&&($data =~ /^(\d+)(,(.+))?$/)&&($1 == 32))
       {
       # Special case of an app requesting (non-paranoid) the GPRS data
-      my ($h_recordtype) = $3;
-      my $sth = $db->prepare('SELECT * FROM ovms_historicalmessages WHERE vehicleid=? AND h_recordtype=? ORDER BY h_timestamp,h_recordnumber');
-      $sth->execute($vehicleid,$h_recordtype);
+      my ($h_recordtype,$h_since) = split /,/,$3,2;
+      $h_since='0000-00-00' if (!defined $h_since);
+      my $sth = $db->prepare('SELECT * FROM ovms_historicalmessages WHERE vehicleid=? AND h_recordtype=? AND h_timestamp>? ORDER BY h_timestamp,h_recordnumber');
+      $sth->execute($vehicleid,$h_recordtype,$h_since);
       my $rows = $sth->rows;
       my $k = 0;
       while (my $row = $sth->fetchrow_hashref())
