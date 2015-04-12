@@ -18,25 +18,25 @@ echo "Fetch *-OVM-DebugCrash..."
 	./cmd.pl 32 "*-OVM-DebugCrash"
 ) > "${NAME}-debugcrash.csv"
 
-echo "Fetch RT-PWR-BattPack..."
+echo "Fetch RT-BAT-P..."
 (
-	HEAD="${MPHEAD},packnr,nr_of_cells,cell_startnr,volt_alertstatus,temp_alertstatus"
+	HEAD="${MPHEAD},packnr,volt_alertstatus,temp_alertstatus"
 	HEAD+=",soc,soc_min,soc_max"
-	HEAD+=",volt_act,volt_act_cellnom,volt_min,volt_min_cellnom,volt_max,volt_max_cellnom"
+	HEAD+=",volt_act,volt_min,volt_max"
 	HEAD+=",temp_act,temp_min,temp_max"
 	HEAD+=",cell_volt_stddev_max,cmod_temp_stddev_max"
 	HEAD+=",max_drive_pwr,max_recup_pwr"
 	echo $HEAD
-	./cmd.pl 32 "RT-PWR-BattPack"
+	./cmd.pl 32 "RT-BAT-P"
 ) > "${NAME}-battpack.csv"
 
-echo "Fetch RT-PWR-BattCell..."
+echo "Fetch RT-BAT-C..."
 (
-	HEAD="${MPHEAD},cellnr,packnr,volt_alertstatus,temp_alertstatus"
+	HEAD="${MPHEAD},cellnr,volt_alertstatus,temp_alertstatus"
 	HEAD+=",volt_act,volt_min,volt_max,volt_maxdev"
 	HEAD+=",temp_act,temp_min,temp_max,temp_maxdev"
 	echo $HEAD
-	./cmd.pl 32 "RT-PWR-BattCell"
+	./cmd.pl 32 "RT-BAT-C"
 ) > "${NAME}-battcell.csv"
 
 echo "Fetch RT-PWR-UsageStats..."
@@ -59,6 +59,7 @@ echo "Fetch RT-GPS-Log..."
 	HEAD="${MPHEAD},odometer_mi_10th,latitude,longitude,altitude,direction,speed"
 	HEAD+=",gps_fix,gps_stale_cnt,gsm_signal"
 	HEAD+=",current_power_w,power_used_wh,power_recd_wh,power_distance,min_power_w,max_power_w"
+	HEAD+=",car_status"
 	echo $HEAD
 	./cmd.pl 32 "RT-GPS-Log"
 ) > "${NAME}-gpslog.csv"
