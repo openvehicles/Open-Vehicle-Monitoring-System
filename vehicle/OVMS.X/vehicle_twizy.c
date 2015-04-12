@@ -220,6 +220,13 @@
     - Trip start references taken from first valid data after switch-on
     - Support car_chargeduration & framework chargetime ETR variables
 
+ * 3.5.2  5 Apr 2015 (Michael Balzer)
+    - STAT odometer output precision 10th km/mi
+    - Reset battery monitor on charge start
+    - Battery monitor MTU optimization (RT-BAT-P/C messages)
+    - GPS log extended by twizy_status
+    - Fixed cyclic distance counter init at switch-on
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -292,7 +299,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.5.1";
+rom char vehicle_twizy_version[] = "3.5.2";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -3558,12 +3565,12 @@ char vehicle_twizy_gpslog_msgp(char stat)
   
   // V3.4.0:
   if (twizy_power_min == 32767) {
-    s = stp_rom(s, ",0,0");
+    s = stp_rom(s, ",0,0"); // no min/max collected in section
   } else {
     s = stp_l(s, ",", (long) twizy_power_min * 16); // section min power (W)
     s = stp_l(s, ",", (long) twizy_power_max * 16); // section max power (W)
   }
-  
+
   // reset power min/max:
   PIE3bits.RXB0IE = 0; // disable interrupts
   {
@@ -3572,6 +3579,9 @@ char vehicle_twizy_gpslog_msgp(char stat)
   }
   PIE3bits.RXB0IE = 1; // enable interrupt
 
+  // V3.5.2:
+  s = stp_x(s, ",", (unsigned int) twizy_status);
+  
   return net_msg_encode_statputs(stat, &crc);
 }
 
@@ -4031,16 +4041,16 @@ BOOL vehicle_twizy_poll1(void)
       // to prevent sticky GO after switch-off
       // (597 comes before/after 59B in init/exit phase)
 
+      // init cyclic distance counter on switch-on:
+      if ((CAN_BYTE(1) & CAN_STATUS_KEYON) && (!(twizy_status & CAN_STATUS_KEYON)))
+        twizy_dist = twizy_speed_distref = 0;
+
       if (CAN_BYTE(1) & CAN_STATUS_OFFLINE)
         twizy_status = (twizy_status & 0x07) | (CAN_BYTE(1) & 0xF0);
       else
         twizy_status = (twizy_status & 0x0F) | (CAN_BYTE(1) & 0xF0);
 
       // Translation to car_doors1 done in ticker1()
-
-      // init cyclic distance counter on ignition:
-      if ((twizy_status & CAN_STATUS_GO) && (!car_doors1bits.CarON))
-        twizy_dist = twizy_speed_distref = 0;
 
       // PEM temperature:
       if (CAN_BYTE(7) > 0 && CAN_BYTE(7) < 0xf0)
@@ -4956,6 +4966,11 @@ BOOL vehicle_twizy_state_ticker1(void)
       // reset SOC max:
       twizy_soc_max = twizy_soc;
 
+      #ifdef OVMS_TWIZY_BATTMON
+        // reset battery monitor:
+        vehicle_twizy_battstatus_reset();
+      #endif // OVMS_TWIZY_BATTMON
+
       // reset power sums:
       vehicle_twizy_power_reset();
 
@@ -5810,8 +5825,8 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
   //s = stp_i(s, " SPD=", twizy_speed);
   //s = stp_i(s, " PWR=", twizy_power);
   //s = stp_ul(s, " ODO=", twizy_odometer);
-  //s = stp_ul(s, " di=", twizy_dist);
-  //s = stp_ul(s, " dr=", twizy_speed_distref);
+  s = stp_ul(s, " di=", twizy_dist);
+  s = stp_ul(s, " dr=", twizy_speed_distref);
   //s = stp_i(s, " SOC=", twizy_soc);
   //s = stp_i(s, " SMIN=", twizy_soc_min);
   //s = stp_i(s, " SMAX=", twizy_soc_max);
@@ -5959,12 +5974,12 @@ void vehicle_twizy_stat_prepmsg(void)
   // ODOMETER:
   if (can_mileskm == 'M')
   {
-    s = stp_ul(s, "\r ODO: ", car_odometer / 10);
+    s = stp_l2f(s, "\r ODO: ", car_odometer, 1);
     s = stp_rom(s, " mi");
   }
   else
   {
-    s = stp_ul(s, "\r ODO: ", KmFromMi(car_odometer / 10));
+    s = stp_l2f(s, "\r ODO: ", KmFromMi(car_odometer), 1);
     s = stp_rom(s, " km");
   }
 
@@ -6864,39 +6879,29 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
         temp_alert = 1;
 
       // Output pack STATUS:
-      // MP-0 HRT-PWR-BattPack,<packnr>,86400
-      //  ,<nr_of_cells>,<cell_startnr>
+      // MP-0 HRT-BAT-P,0,86400
       //  ,<volt_alertstatus>,<temp_alertstatus>
       //  ,<soc>,<soc_min>,<soc_max>
-      //  ,<volt_act>,<volt_act_cellnom>
-      //  ,<volt_min>,<volt_min_cellnom>
-      //  ,<volt_max>,<volt_max_cellnom>
+      //  ,<volt_act>,<volt_min>,<volt_max>
       //  ,<temp_act>,<temp_min>,<temp_max>
       //  ,<cell_volt_stddev_max>,<cmod_temp_stddev_max>
       //  ,<max_drive_pwr>,<max_recup_pwr>
 
-      s = stp_rom(net_scratchpad, "MP-0 H");
-      s = stp_i(s, "RT-PWR-BattPack,", p + 1);
-      s = stp_i(s, ",86400,", BATT_CELLS);
-      s = stp_i(s, ",", 1);
-      s = stp_i(s, ",", volt_alert);
+      s = stp_i(net_scratchpad, "MP-0 HRT-BAT-P,0,86400,", volt_alert);
       s = stp_i(s, ",", temp_alert);
       s = stp_i(s, ",", twizy_soc);
       s = stp_i(s, ",", twizy_soc_min);
       s = stp_i(s, ",", twizy_soc_max);
-      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_act));
-      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_act) / BATT_CELLS);
-      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_min));
-      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_min) / BATT_CELLS);
-      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_max));
-      s = stp_i(s, ",", CONV_PackVolt(twizy_batt[p].volt_max) / BATT_CELLS);
+      s = stp_i(s, ",", twizy_batt[p].volt_act);
+      s = stp_i(s, ",", twizy_batt[p].volt_min);
+      s = stp_i(s, ",", twizy_batt[p].volt_max);
       s = stp_i(s, ",", CONV_Temp(tact));
       s = stp_i(s, ",", CONV_Temp(tmin));
       s = stp_i(s, ",", CONV_Temp(tmax));
       s = stp_i(s, ",", CONV_CellVolt(twizy_batt[p].cell_volt_stddev_max));
       s = stp_i(s, ",", twizy_batt[p].cmod_temp_stddev_max);
-      s = stp_i(s, ",", (int) twizy_batt[0].max_drive_pwr * 500);
-      s = stp_i(s, ",", (int) twizy_batt[0].max_recup_pwr * 500);
+      s = stp_i(s, ",", (int) twizy_batt[0].max_drive_pwr * 5);
+      s = stp_i(s, ",", (int) twizy_batt[0].max_recup_pwr * 5);
 
       stat = net_msg_encode_statputs(stat, &crc_pack[p]);
 
@@ -6918,16 +6923,13 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
         else
           temp_alert = 1;
 
-        // MP-0 HRT-PWR-BattCell,<cellnr>,86400
-        //  ,<packnr>
+        // MP-0 HRT-BAT-C,<cellnr>,86400
         //  ,<volt_alertstatus>,<temp_alertstatus>,
         //  ,<volt_act>,<volt_min>,<volt_max>,<volt_maxdev>
         //  ,<temp_act>,<temp_min>,<temp_max>,<temp_maxdev>
 
-        s = stp_rom(net_scratchpad, "MP-0 H");
-        s = stp_i(s, "RT-PWR-BattCell,", c + 1);
-        s = stp_i(s, ",86400,", p + 1);
-        s = stp_i(s, ",", volt_alert);
+        s = stp_i(net_scratchpad, "MP-0 HRT-BAT-C,", c+1);
+        s = stp_i(s, ",86400,", volt_alert);
         s = stp_i(s, ",", temp_alert);
         s = stp_i(s, ",", CONV_CellVolt(twizy_cell[c].volt_act));
         s = stp_i(s, ",", CONV_CellVolt(twizy_cell[c].volt_min));
@@ -6953,6 +6955,7 @@ BOOL vehicle_twizy_battstatus_cmd(BOOL msgmode, int cmd, char *arguments)
 
   if (msgmode)
   {
+    // manual command call:
     vehicle_twizy_battstatus_msgp(0, cmd);
 
     s = stp_i(net_scratchpad, "MP-0 c", cmd ? cmd : CMD_BatteryStatus);
@@ -6961,6 +6964,7 @@ BOOL vehicle_twizy_battstatus_cmd(BOOL msgmode, int cmd, char *arguments)
   }
   else
   {
+    // automatic data update:
     if (vehicle_twizy_battstatus_msgp(2, cmd) != 2)
       net_msg_send();
   }
