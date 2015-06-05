@@ -242,6 +242,7 @@
 1095=Press brake pedal before shift
 1103=ABS & Traction Control Problems. Service Required.
 1124=Unsafe Gear Shift Transition Denied
+1138=Voltage on Charge Port Line2 during drive with charge door open
 1144=Powertrain Problem Service Required
 1146=DMC: Motor Fan Problem
 1152=DMC: WARNING Charge Thermal Limit
@@ -258,6 +259,7 @@
 1416=Low Power System Service Required
 1426=HVAC: High current pump failure
 1452=HVAC: Low pressure
+1453=HVAC: Refrigerant High Pressure / Coolant System Problem Service Required
 1463=HVAC: Compressor OverTemp
 1465=HVAC: Low current pump fault
 1469=HVAC: Compressor comms timeout
@@ -276,3 +278,6 @@
 2070=No response to request to get keyfob function 
 2078=There was a problem processing your request / No response to request to enter Tow Mode
 2096=No response to Pin submission
+3011=Drive Button Failure Vehicle May not be Able to Enter Drive
+3021=SHFT: Neutral switch Stuck Down
+3022=SHFT: DRIVE switch Stuck Down	
