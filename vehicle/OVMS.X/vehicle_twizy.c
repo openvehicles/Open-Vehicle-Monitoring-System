@@ -227,6 +227,11 @@
     - GPS log extended by twizy_status
     - Fixed cyclic distance counter init at switch-on
 
+ * 3.5.3  1 May 2015 (Michael Balzer)
+    - CA? SMS output extended by charge status
+    - CFG TSMAP rework to avoid "Param dyn range" alert
+    - OP mode after profile switch: 5 tries with 100 ms timeout
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -299,7 +304,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.5.2";
+rom char vehicle_twizy_version[] = "3.5.3";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -1613,7 +1618,8 @@ UINT vehicle_twizy_cfg_tsmap(
 {
   UINT err;
   UINT8 base;
-  UINT val;
+  UINT val, bndlo, bndhi;
+  UINT8 todo;
 
   // parameter validation:
 
@@ -1656,70 +1662,143 @@ UINT vehicle_twizy_cfg_tsmap(
     base = 0x24;
 
   // set:
+  // we need to adjust point by point to avoid the "Param dyn range" alert,
+  // ensuring a new speed has no conflict with the previous surrounding points
 
-  // point 1:
+  todo = 0x0f;
 
-  if (t1_prc >= 0)
-    val = scale(32767,100,t1_prc,0,32767);
-  else
-    val = 32767;
-  if (err = writesdo(0x3813,base+0,val))
-    return err;
+  while (todo) {
 
-  if (t1_spd >= 0)
-    val = scale(CFG.DefaultMapSpd[0],33,t1_spd,0,65535);
-  else
-    val = (map=='D') ? 3000 : CFG.DefaultMapSpd[0];
-  if (err = writesdo(0x3813,base+1,val))
-    return err;
+    // point 1:
+    if (todo & 0x01) {
 
-  // point 2:
+      // get speed boundaries:
+      bndlo = 0;
+      if (err = readsdo(0x3813,base+3))
+        return err;
+      bndhi = twizy_sdo.data;
 
-  if (t2_prc >= 0)
-    val = scale(32767,100,t2_prc,0,32767);
-  else
-    val = (map=='D') ? 32767 : 26214;
-  if (err = writesdo(0x3813,base+2,val))
-    return err;
+      // calc new speed:
+      if (t1_spd >= 0)
+        val = scale(CFG.DefaultMapSpd[0],33,t1_spd,0,65535);
+      else
+        val = (map=='D') ? 3000 : CFG.DefaultMapSpd[0];
 
-  if (t2_spd >= 0)
-    val = scale(CFG.DefaultMapSpd[1],39,t2_spd,0,65535);
-  else
-    val = (map=='D') ? 3500 : CFG.DefaultMapSpd[1];
-  if (err = writesdo(0x3813,base+3,val))
-    return err;
+      if (val >= bndlo && val <= bndhi) {
+        // ok, change:
+        if (err = writesdo(0x3813,base+1,val))
+          return err;
 
-  // point 3:
+        if (t1_prc >= 0)
+          val = scale(32767,100,t1_prc,0,32767);
+        else
+          val = 32767;
+        if (err = writesdo(0x3813,base+0,val))
+          return err;
 
-  if (t3_prc >= 0)
-    val = scale(32767,100,t3_prc,0,32767);
-  else
-    val = (map=='D') ? 32767 : 16383;
-  if (err = writesdo(0x3813,base+4,val))
-    return err;
+        todo &= ~0x01;
+      }
+    }
 
-  if (t3_spd >= 0)
-    val = scale(CFG.DefaultMapSpd[2],50,t3_spd,0,65535);
-  else
-    val = (map=='D') ? 4500 : CFG.DefaultMapSpd[2];
-  if (err = writesdo(0x3813,base+5,val))
-    return err;
+    // point 2:
+    if (todo & 0x02) {
 
-  // point 4:
+      // get speed boundaries:
+      if (err = readsdo(0x3813,base+1))
+        return err;
+      bndlo = twizy_sdo.data;
+      if (err = readsdo(0x3813,base+5))
+        return err;
+      bndhi = twizy_sdo.data;
 
-  if (t4_prc >= 0)
-    val = scale(32767,100,t4_prc,0,32767);
-  else
-    val = (map=='D') ? 32767 : 6553;
-  if (err = writesdo(0x3813,base+6,val))
-    return err;
+      // calc new speed:
+      if (t2_spd >= 0)
+        val = scale(CFG.DefaultMapSpd[1],39,t2_spd,0,65535);
+      else
+        val = (map=='D') ? 3500 : CFG.DefaultMapSpd[1];
 
-  if (t4_spd >= 0)
-    val = scale(CFG.DefaultMapSpd[3],66,t4_spd,0,65535);
-  else
-    val = (map=='D') ? 6000 : CFG.DefaultMapSpd[3];
-  if (err = writesdo(0x3813,base+7,val))
-    return err;
+      if (val >= bndlo && val <= bndhi) {
+        // ok, change:
+        if (err = writesdo(0x3813,base+3,val))
+          return err;
+
+        if (t2_prc >= 0)
+          val = scale(32767,100,t2_prc,0,32767);
+        else
+          val = (map=='D') ? 32767 : 26214;
+        if (err = writesdo(0x3813,base+2,val))
+          return err;
+
+        todo &= ~0x02;
+      }
+    }
+
+    // point 3:
+    if (todo & 0x04) {
+
+      // get speed boundaries:
+      if (err = readsdo(0x3813,base+3))
+        return err;
+      bndlo = twizy_sdo.data;
+      if (err = readsdo(0x3813,base+7))
+        return err;
+      bndhi = twizy_sdo.data;
+
+      // calc new speed:
+      if (t3_spd >= 0)
+        val = scale(CFG.DefaultMapSpd[2],50,t3_spd,0,65535);
+      else
+        val = (map=='D') ? 4500 : CFG.DefaultMapSpd[2];
+
+      if (val >= bndlo && val <= bndhi) {
+        // ok, change:
+        if (err = writesdo(0x3813,base+5,val))
+          return err;
+
+        if (t3_prc >= 0)
+          val = scale(32767,100,t3_prc,0,32767);
+        else
+          val = (map=='D') ? 32767 : 16383;
+        if (err = writesdo(0x3813,base+4,val))
+          return err;
+
+        todo &= ~0x04;
+      }
+    }
+
+    // point 4:
+    if (todo & 0x08) {
+
+      // get speed boundaries:
+      if (err = readsdo(0x3813,base+5))
+        return err;
+      bndlo = twizy_sdo.data;
+      bndhi = 65535;
+
+      // calc new speed:
+      if (t4_spd >= 0)
+        val = scale(CFG.DefaultMapSpd[3],66,t4_spd,0,65535);
+      else
+        val = (map=='D') ? 6000 : CFG.DefaultMapSpd[3];
+
+      if (val >= bndlo && val <= bndhi) {
+        // ok, change:
+        if (err = writesdo(0x3813,base+7,val))
+          return err;
+
+        if (t4_prc >= 0)
+          val = scale(32767,100,t4_prc,0,32767);
+        else
+          val = (map=='D') ? 32767 : 6553;
+        if (err = writesdo(0x3813,base+6,val))
+          return err;
+
+        todo &= ~0x08;
+      }
+    }
+
+  } // while (todo)
+
 
   return 0;
 }
@@ -2081,7 +2160,7 @@ BOOL vehicle_twizy_cfg_writeprofile(char key)
 //    sets: twizy_cfg.profile_cfgmode, twizy_cfg.profile_user
 UINT vehicle_twizy_cfg_switchprofile(char key)
 {
-  UINT err;
+  UINT err, cnt;
 
   // check key:
 
@@ -2148,12 +2227,18 @@ UINT vehicle_twizy_cfg_switchprofile(char key)
     if (!err)
       err = vehicle_twizy_cfg_brakelight(cfgparam(brakelight_on),cfgparam(brakelight_off));
 
-    delay5(10);
-    configmode(0);
-
     // update cfgmode profile status:
     if (err == 0)
       twizy_cfg.profile_cfgmode = key;
+
+    // switch back to op-mode (5 tries):
+    cnt = 5;
+    while (configmode(0) != 0) {
+      if (--cnt == 0)
+        break;
+      delay5(20); // 100 ms
+    }
+
   }
 
   // reset error cnt:
@@ -5744,12 +5829,16 @@ char vehicle_twizy_debug_msgp(char stat, int cmd)
   */
 
   // V3.4.0:
+#ifdef OVMS_TWIZY_CFG
+#ifdef OVMS_TWIZY_BATTMON
   s = stp_i(s, ",", twizy_power_min * 16);
   s = stp_i(s, ",", twizy_power_max * 16);
   s = stp_i(s, ",", (int) twizy_batt[0].max_recup_pwr * 500);
   s = stp_i(s, ",", (int) last_max_recup_pwr * 500);
   s = stp_i(s, ",", cfgparam(autorecup_min));
   s = stp_l2f(s, ",", twizy_autorecup_level, 1);
+#endif
+#endif
 
   net_msg_encode_puts();
   return (stat == 2) ? 1 : stat;
@@ -6383,7 +6472,54 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
 
   // Estimated time for 100%:
   s = stp_i(s, "\n Full charge: ", car_chargefull_minsremaining);
-  s = stp_rom(s, " min.");
+  s = stp_rom(s, " min.\n");
+
+
+  // Charge status:
+  if (car_doors1bits.ChargePort)
+  {
+    // Charge port door is open, we are charging
+    switch (car_chargestate)
+    {
+    case 0x01:
+      s = stp_rom(s, "Charging");
+      break;
+    case 0x02:
+      s = stp_rom(s, "Charging, Topping off");
+      break;
+    case 0x04:
+      s = stp_rom(s, "Charging Done");
+      break;
+    default:
+      s = stp_rom(s, "Charging Stopped");
+    }
+  }
+  else
+  {
+    // Charge port door is closed, not charging
+    s = stp_rom(s, "Not charging");
+  }
+
+
+  // Estimated + Ideal Range:
+  if (can_mileskm == 'M')
+  {
+    s = stp_i(s, "\n Range: ", car_estrange);
+    s = stp_i(s, " - ", car_idealrange);
+    s = stp_rom(s, " mi");
+  }
+  else
+  {
+    s = stp_i(s, "\n Range: ", KmFromMi(car_estrange));
+    s = stp_i(s, " - ", KmFromMi(car_idealrange));
+    s = stp_rom(s, " km");
+  }
+
+
+  // SOC:
+  s = stp_l2f(s, "\n SOC: ", twizy_soc, 2);
+  s = stp_rom(s, "%");
+
 
   net_puts_ram(net_scratchpad);
 

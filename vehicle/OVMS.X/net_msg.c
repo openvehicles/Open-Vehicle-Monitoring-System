@@ -856,6 +856,8 @@ BOOL net_msg_cmd_exec(void)
           {
             if (*p == '\n')
               *s++ = '\r'; // translate LF to CR
+            else if (*p == ',')
+              *s++ = ';'; // translate , to ;
             else
               *s++ = *p;
           }
