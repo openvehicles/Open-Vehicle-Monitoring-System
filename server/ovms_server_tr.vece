@@ -230,6 +230,7 @@
 997=DMC FW: CAN Rx
 998=DMC FW: CAN Tx
 999=DMC FW: CAN Overrun
+1070=DMC FW: Motor sensor 2 OverTemp warning. Torque limited	
 1073=DMC FW: PhaseA OverTemp warning. Torque limited
 1074=DMC FW: PhaseA Temp Diff warning
 1075=DMC FW: PhaseB OverTemp warning. Torque limited
