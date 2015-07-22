@@ -47,6 +47,7 @@ char *net_sms_argend;
 char *net_msg_bufpos = NULL; // buffer write position for net_put*
 
 rom char NET_MSG_DENIED[] = "Permission denied";
+rom char NET_MSG_INVALID[] = "Invalid command";
 rom char NET_MSG_REGISTERED[] = "Your phone has been registered as the owner.";
 rom char NET_MSG_PASSWORD[] = "Module password has been changed.";
 rom char NET_MSG_PARAMS[] = "Parameters have been set.";
@@ -234,7 +235,7 @@ void net_sms_12v_alert(char* number)
 unsigned char net_sms_checkcaller(char *caller)
   {
   char *p = par_get(PARAM_REGPHONE);
-  if (strncmp(p,caller,strlen(p)) == 0)
+  if (*p && strncmp(p,caller,strlen(p)) == 0)
     return 1;
   else
     {
@@ -248,7 +249,7 @@ unsigned char net_sms_checkpassarg(char *caller, char *arguments)
   {
   char *p = par_get(PARAM_MODULEPASS);
 
-  if ((arguments != NULL)&&(strncmp(p,arguments,strlen(p))==0))
+  if ((arguments != NULL)&&(*p && strncmp(p,arguments,strlen(p))==0))
     return 1;
   else
     {
@@ -331,6 +332,14 @@ BOOL net_sms_handle_passq(char *caller, char *command, char *arguments)
 
 BOOL net_sms_handle_pass(char *caller, char *command, char *arguments)
   {
+  // Password may not be empty:
+  if (*arguments == 0)
+  {
+    net_send_sms_start(caller);
+    net_puts_rom(NET_MSG_INVALID);
+    return TRUE;
+  }
+  
   par_set(PARAM_MODULEPASS, arguments);
 
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
@@ -823,6 +832,8 @@ BOOL net_sms_handle_unvalet(char *caller, char *command, char *arguments)
   return TRUE;
   }
 
+#ifndef OVMS_NO_CHARGECONTROL
+
 // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance) and optional current limit
 BOOL net_sms_handle_chargemode(char *caller, char *command, char *arguments)
   {
@@ -883,6 +894,9 @@ BOOL net_sms_handle_cooldown(char *caller, char *command, char *arguments)
 #endif
   return TRUE;
   }
+
+#endif // OVMS_NO_CHARGECONTROL
+
 
 BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
   {
@@ -980,10 +994,12 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "2UNLOCK",
     "2VALET",
     "2UNVALET",
+#ifndef OVMS_NO_CHARGECONTROL
     "2CHARGEMODE ",
     "2CHARGESTART",
     "2CHARGESTOP",
     "2COOLDOWN",
+#endif // OVMS_NO_CHARGECONTROL
     "3VERSION",
     "3RESET",
     "3CTP",
@@ -1023,10 +1039,12 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_unlock,
   &net_sms_handle_valet,
   &net_sms_handle_unvalet,
+#ifndef OVMS_NO_CHARGECONTROL
   &net_sms_handle_chargemode,
   &net_sms_handle_chargestart,
   &net_sms_handle_chargestop,
   &net_sms_handle_cooldown,
+#endif // OVMS_NO_CHARGECONTROL
   &net_sms_handle_version,
   &net_sms_handle_reset,
   &net_sms_handle_ctp,

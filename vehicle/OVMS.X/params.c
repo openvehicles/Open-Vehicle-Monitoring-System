@@ -76,6 +76,10 @@ void par_write(unsigned char param)
   char savint;
   unsigned int eeaddress;
 
+  // Protect PARAM_REGPHONE & PARAM_MODULEPASS against empty writes:
+  if ((param <= PARAM_MODULEPASS) && (par_value[0] == 0))
+      return;
+  
   // Write parameter to EEprom
   eeaddress = (int)param;
   eeaddress = eeaddress*PARAM_MAX_LENGTH;

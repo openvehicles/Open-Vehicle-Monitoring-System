@@ -92,8 +92,10 @@ rom char NET_MSG_CMDOK[] = ",0";
 rom char NET_MSG_CMDINVALIDSYNTAX[] = ",1,Invalid syntax";
 rom char NET_MSG_CMDNOCANWRITE[] = ",1,No write access to CAN";
 rom char NET_MSG_CMDINVALIDRANGE[] = ",1,Parameter out of range";
+#ifndef OVMS_NO_CHARGECONTROL
 rom char NET_MSG_CMDNOCANCHARGE[] = ",1,Cannot charge (charge port closed)";
 rom char NET_MSG_CMDNOCANSTOPCHARGE[] = ",1,Cannot stop charge (charge not in progress)";
+#endif // OVMS_NO_CHARGECONTROL
 rom char NET_MSG_CMDUNIMPLEMENTED[] = ",3";
 
 
@@ -804,7 +806,9 @@ BOOL net_msg_cmd_exec(void)
         *p++ = 0;
         // At this point, <net_msg_cmd_msg> points to the command, and <p> to the param value
         k = atoi(net_msg_cmd_msg);
-        if ((k>=0)&&(k<PARAM_FEATURE_S))
+        // Check validity of param key and value (no empty value allowed for auth params):
+        if ( (k>=0) && (k<PARAM_FEATURE_S)
+                && ((k>PARAM_MODULEPASS) || (*p!=0)) )
           {
           par_set(k, p);
           STP_OK(net_scratchpad, net_msg_cmd_code);
