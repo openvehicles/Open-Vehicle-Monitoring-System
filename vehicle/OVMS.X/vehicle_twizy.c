@@ -232,6 +232,12 @@
     - CFG TSMAP rework to avoid "Param dyn range" alert
     - OP mode after profile switch: 5 tries with 100 ms timeout
 
+ * 3.5.4  21 Jul 2015 (Michael Balzer)
+    - CFG button reset still possible with active auto preop resolution
+    - Kickdown feature config init on every reset/crash
+    - New compile switches for DEBUG cmd & CFG BRAKELIGHT
+      (=> DIAG mode can be re-included without)
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -263,6 +269,28 @@
 #include "utils.h"
 #include "net_sms.h"
 #include "net_msg.h"
+
+
+/***************************************************************
+ * Twizy mandatory compile switches:
+ * 
+ *  OVMS_CAR_RENAULTTWIZY -- enable this module
+ *  OVMS_INTERNALGPS -- enable SIM908 GPS
+ * 
+ * Twizy optional compile switches:
+ * 
+ *  OVMS_TWIZY_DEBUG -- enable DEBUG cmd
+ *  OVMS_CANSIM -- include CAN simulation data (needs DEBUG cmd)
+ *  OVMS_TWIZY_BATTMON -- enable battery pack/cell monitoring
+ *  OVMS_TWIZY_CFG -- enable SEVCON configuration
+ *  OVMS_TWIZY_CFG_BRAKELIGHT -- enable CFG BRAKELIGHT
+ * 
+ * Compile switches to exclude unused framework features:
+ * 
+ *  OVMS_NO_CHARGECONTROL -- excludes CHARGEMODE, CHARGESTART, CHARGESTOP, COOLDOWN
+ * 
+ */
+
 
 
 /***************************************************************
@@ -304,7 +332,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.5.3";
+rom char vehicle_twizy_version[] = "3.5.4";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -441,7 +469,7 @@ unsigned char twizy_status; // Car + charge status from CAN:
 
 #ifdef OVMS_TWIZY_CFG
 
-volatile unsigned char twizy_button_cnt; // will count key presses in STOP mode (msg 081)
+volatile signed char twizy_button_cnt; // will count key presses in STOP mode (msg 081)
 
 struct {
   unsigned type:1;                  // CFG: 0=Twizy80, 1=Twizy45
@@ -1117,8 +1145,15 @@ UINT vehicle_twizy_configmode(BOOL on)
     if (err = writesdo(0x2800,0,0))
       return ERR_CfgModeFailed + err;
 
-    // no need to check the new state if the write succeeded,
-    // the SEVCON will go operational ASAP
+    // give controller some time:
+    delay5(2);
+
+    // check new status:
+    if (err = readsdo(0x5110,0))
+      return ERR_CfgModeFailed + err;
+
+    if (twizy_sdo.data != 5)
+      return ERR_CfgModeFailed;
   }
   
   else {
@@ -2040,6 +2075,8 @@ UINT vehicle_twizy_cfg_smoothing(int prc)
 }
 
 
+#ifdef OVMS_TWIZY_CFG_BRAKELIGHT
+
 UINT vehicle_twizy_cfg_brakelight(int on_lev, int off_lev)
 // *** NOT FUNCTIONAL WITHOUT HARDWARE MODIFICATION ***
 // *** SEVCON cannot control Twizy brake lights ***
@@ -2087,6 +2124,8 @@ UINT vehicle_twizy_cfg_brakelight(int on_lev, int off_lev)
 
   return 0;
 }
+
+#endif // OVMS_TWIZY_CFG_BRAKELIGHT
 
 
 // vehicle_twizy_cfg_calc_checksum: get checksum for twizy_cfg_profile
@@ -2224,8 +2263,10 @@ UINT vehicle_twizy_cfg_switchprofile(char key)
               cfgparam(tsmap[2].prc1),cfgparam(tsmap[2].prc2),cfgparam(tsmap[2].prc3),cfgparam(tsmap[2].prc4),
               cfgparam(tsmap[2].spd1),cfgparam(tsmap[2].spd2),cfgparam(tsmap[2].spd3),cfgparam(tsmap[2].spd4));
 
+#ifdef OVMS_TWIZY_CFG_BRAKELIGHT
     if (!err)
       err = vehicle_twizy_cfg_brakelight(cfgparam(brakelight_on),cfgparam(brakelight_off));
+#endif // OVMS_TWIZY_CFG_BRAKELIGHT
 
     // update cfgmode profile status:
     if (err == 0)
@@ -2295,8 +2336,10 @@ UINT vehicle_twizy_cfg_reset(void)
   if (err = vehicle_twizy_cfg_smoothing(-1))
     return err;
 
+#ifdef OVMS_TWIZY_CFG_BRAKELIGHT
   if (err = vehicle_twizy_cfg_brakelight(-1,-1))
     return err;
+#endif // OVMS_TWIZY_CFG_BRAKELIGHT
 
   twizy_cfg.profile_cfgmode = twizy_cfg.profile_user;
 
@@ -2888,6 +2931,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     }
   }
 
+#ifdef OVMS_TWIZY_CFG_BRAKELIGHT
   else if (strncmppgm2ram(cmd, "BRAKELIGHT", 10) == 0) {
     // BRAKELIGHT [on_lev] [off_lev]
 
@@ -2920,6 +2964,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
         s = stp_x(s, " flgs=", twizy_sdo.data);
     }
   }
+#endif // OVMS_TWIZY_CFG_BRAKELIGHT
 
   else if (strncmppgm2ram(cmd, "RESET", 5) == 0) {
     // RESET all macro commands to defaults
@@ -3019,12 +3064,21 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
   // go operational?
   if (go_op_onexit)
+  {
     configmode(0);
+    
+    // reset error counter to inhibit unwanted resets:
+    twizy_button_cnt = 0;
+  }
+  else
+  {
+    // anticipate preop error:
+    twizy_button_cnt = -1;
+  }
+
 
   // logout should not be needed here
 
-  // reset error counter to inhibit unwanted resets:
-  twizy_button_cnt = 0;
 
   if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
     return FALSE; // handled, but no SMS has been started
@@ -5800,6 +5854,8 @@ BOOL vehicle_twizy_power_cmd(BOOL msgmode, int cmd, char *arguments)
  *
  */
 
+#ifdef OVMS_TWIZY_DEBUG
+
 char vehicle_twizy_debug_msgp(char stat, int cmd)
 {
   //static WORD crc; // diff crc for push msgs
@@ -5968,6 +6024,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
   return TRUE;
 }
 
+#endif // OVMS_TWIZY_DEBUG
 
 
 /***********************************************************************
@@ -7347,8 +7404,10 @@ BOOL vehicle_twizy_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
      * CAR SPECIFIC COMMANDS:
      */
 
+#ifdef OVMS_TWIZY_DEBUG
   case CMD_Debug:
     return vehicle_twizy_debug_cmd(msgmode, cmd, msg);
+#endif // OVMS_TWIZY_DEBUG
 
   case CMD_QueryRange:
   case CMD_SetRange /*(maxrange)*/:
@@ -7393,7 +7452,11 @@ BOOL vehicle_twizy_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
 BOOL vehicle_twizy_help_sms(BOOL premsg, char *caller, char *command, char *arguments);
 
 rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] = {
+
+#ifdef OVMS_TWIZY_DEBUG
   "3DEBUG",       // Twizy: output internal state dump for debug
+#endif // OVMS_TWIZY_DEBUG
+
   "3STAT",        // override standard STAT
   "3RANGE",       // Twizy: set/query max ideal range
   "3CA",          // Twizy: set/query charge alerts
@@ -7412,7 +7475,10 @@ rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] = {
 };
 
 rom far BOOL(*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *command, char *arguments) = {
+#ifdef OVMS_TWIZY_DEBUG
   &vehicle_twizy_debug_sms,
+#endif // OVMS_TWIZY_DEBUG
+
   &vehicle_twizy_stat_sms,
   &vehicle_twizy_range_sms,
   &vehicle_twizy_ca_sms,
@@ -7634,12 +7700,14 @@ BOOL vehicle_twizy_initialise(void)
     twizy_accel_pedal = 0;
     twizy_kickdown_hold = 0;
     twizy_kickdown_level = 0;
-    sys_features[FEATURE_KICKDOWN_THRESHOLD] = CAN_KICKDOWN_THRESHOLD;
-    sys_features[FEATURE_KICKDOWN_COMPZERO] = CAN_KICKDOWN_COMPZERO;
 
 #endif // OVMS_TWIZY_CFG
 
   }
+
+  // Init temporary feature slot defaults on each start:
+  sys_features[FEATURE_KICKDOWN_THRESHOLD] = CAN_KICKDOWN_THRESHOLD;
+  sys_features[FEATURE_KICKDOWN_COMPZERO] = CAN_KICKDOWN_COMPZERO;
 
 #ifdef OVMS_TWIZY_BATTMON
   twizy_batt_sensors_state = BATT_SENSORS_START;
