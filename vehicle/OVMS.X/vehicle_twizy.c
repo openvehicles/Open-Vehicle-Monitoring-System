@@ -1913,7 +1913,7 @@ UINT vehicle_twizy_cfg_drive(int max_prc, int autodrive_ref, int autodrive_minpr
     return ERR_Range + 2;
 
   if (autodrive_minprc == -1)
-    ;
+    autodrive_minprc = 0;
   else if (autodrive_minprc < 0 || autodrive_minprc > 100)
     return ERR_Range + 3;
 
@@ -1977,7 +1977,7 @@ UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc, int autorecup_ref, 
     return ERR_Range + 3;
 
   if (autorecup_minprc == -1)
-    ;
+    autorecup_minprc = 0;
   else if (autorecup_minprc < 0 || autorecup_minprc > 100)
     return ERR_Range + 4;
 
