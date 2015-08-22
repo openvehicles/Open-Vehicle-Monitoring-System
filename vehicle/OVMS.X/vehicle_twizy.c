@@ -238,6 +238,25 @@
     - New compile switches for DEBUG cmd & CFG BRAKELIGHT
       (=> DIAG mode can be re-included without)
 
+ * 3.6.0  22 Aug 2015 (Michael Balzer)
+    - New: All power values now based on real battery power (current * voltage)
+    - Battery current sums + min/max moved to separate fields
+    - STAT command extended by grid energy drain estimation
+    - RT-GPS-Log extended by BMS limits, auto power levels and battery current min/max
+    - RT-PWR-Log extended by battery coulomb counts (Ah)
+    - "RT-PWR-UsageStats" is now "RT-PWR-Stats", fields reordered and units converted
+      (to save space), coulomb count discharge/charge sums added (Ah)
+    - Rework & bug fixes in auto power adjustment
+    - Auto RECUP power adjustment extended by 100% reference power
+      (ATT: CFG RECUP parameters changed!)
+    - New: auto DRIVE power adjustment
+      (ATT: CFG DRIVE parameters changed!)
+    - New: CFG CLEAR = clear SEVCON diagnostic logs
+    - Now using GSM time (NET_FN_CARTIME) for more accurate parking times
+    - New: feature #14 & 64 = send notification on charge starts
+    - Fixed charge time estimation for SOC > 94%
+    - ISR performance optimization
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -276,6 +295,7 @@
  * 
  *  OVMS_CAR_RENAULTTWIZY -- enable this module
  *  OVMS_INTERNALGPS -- enable SIM908 GPS
+ *  OVMS_NO_SMSTIME -- disable automatic SMS time stamps
  * 
  * Twizy optional compile switches:
  * 
@@ -288,6 +308,8 @@
  * Compile switches to exclude unused framework features:
  * 
  *  OVMS_NO_CHARGECONTROL -- excludes CHARGEMODE, CHARGESTART, CHARGESTOP, COOLDOWN
+ *  OVMS_NO_CTP -- excludes framework charge time prediction
+ *  OVMS_NO_VEHICLE_ALERTS -- excludes cabin & trunk alerts
  * 
  */
 
@@ -332,7 +354,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.5.4";
+rom char vehicle_twizy_version[] = "3.6.0";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -451,9 +473,20 @@ unsigned long twizy_valet_odo; // if Valet mode: reduce speed if odometer > this
 //       an estimation, as the value more likely is the electrical current (A).
 //       So all W/Wh data should probably better be read as A/Ah data.
 //       A possible translation is: current[A] = power[W] / 64
-signed int twizy_power; // current "power" in 16*W, negative=charging
+
+// twizy_power = ( twizy_current * twizy_batt[0].volt_act ) / 40
+
+signed int twizy_power; // momentary battery power in 16 W, negative=charging
 signed int twizy_power_min; // min "power" in current GPS log section
 signed int twizy_power_max; // max "power" in current GPS log section
+
+// power is collected in 6.4 W & 1/100 s resolution
+// to convert power sums to Wh:
+//  Wh = power_sum * 6.4 * 1/100 * 1/3600
+//  Wh = power_sum / 56250
+#define WH_DIV (56250L)
+#define WH_RND (28125L)
+
 
 unsigned char twizy_status; // Car + charge status from CAN:
 #define CAN_STATUS_FOOTBRAKE    0x01        //  bit 0 = 0x01: 1 = Footbrake
@@ -498,11 +531,15 @@ struct twizy_cfg_profile {
   // V3.2.1 additions:
   UINT8       ramplimit_accel, ramplimit_decel;
   // V3.4.0 additions:
-  UINT8       autorecup_min;
+  UINT8       autorecup_minprc;
+  // V3.6.0 additions:
+  UINT8       autorecup_ref;
+  UINT8       autodrive_minprc;
+  UINT8       autodrive_ref;
 } twizy_cfg_profile;
 
 // EEPROM memory usage info:
-// sizeof twizy_cfg_profile = 19 + 8x3 = 43 byte
+// sizeof twizy_cfg_profile = 22 + 8x3 = 46 byte
 // Maximum size = 2 x PARAM_MAX_LENGTH = 64 byte
 
 // Macros for converting profile values:
@@ -518,11 +555,23 @@ unsigned int twizy_max_pwr_hi;      // CFG: max power high speed (W: 0..17000)
 
 unsigned int twizy_sevcon_fault;    // SEVCON highest active fault
 
-UINT8 last_max_recup_pwr;           // change detection for autorecup function
+#pragma udata overlay vehicle_overlay_data2
+
+UINT8 twizy_autorecup_checkpoint;   // change detection for autorecup function
 UINT twizy_autorecup_level;         // autorecup: current recup level (per mille)
 
+UINT8 twizy_autodrive_checkpoint;   // change detection for autopower function
+UINT twizy_autodrive_level;         // autopower: current drive level (per mille)
 
-#pragma udata overlay vehicle_overlay_data2
+signed int twizy_current;           // momentary battery current in 1/4 A, negative=charging
+signed int twizy_current_min;       // min battery current in GPS log section
+signed int twizy_current_max;       // max battery current in GPS log section
+
+volatile UINT32 twizy_charge_use;   // coulomb count: batt current used (discharged) 1/400 As
+volatile UINT32 twizy_charge_rec;   // coulomb count: batt current recovered (charged) 1/400 As
+// cAh = [1/400 As] / 400 / 3600 * 100
+#define CAH_DIV (14400L)
+#define CAH_RND (7200L)
 
 volatile UINT8 twizy_accel_pedal;           // accelerator pedal (running avg)
 volatile UINT8 twizy_kickdown_level;        // kickdown detection & pedal max level
@@ -808,6 +857,7 @@ void vehicle_twizy_calculate_chargetimes(void);
 #ifdef OVMS_TWIZY_CFG
 
 char *vehicle_twizy_fmt_sdo(char *s);
+UINT vehicle_twizy_resetlogs_msgp(UINT8 which, UINT8 *retcnt);
 
 
 /***************************************************************
@@ -1839,8 +1889,12 @@ UINT vehicle_twizy_cfg_tsmap(
 }
 
 
-UINT vehicle_twizy_cfg_drive(int max_prc)
+UINT vehicle_twizy_cfg_drive(int max_prc, int autodrive_ref, int autodrive_minprc)
 // max_prc: 10..100, -1=reset to default (100)
+// autodrive_ref: 0..250, -1=default (off) (not a direct SEVCON control)
+//      sets power 100% ref point to <autodrive_ref> * 100 W
+// autodrive_minprc: 0..100, -1=default (off) (not a direct SEVCON control)
+//      sets lower limit on auto power adjustment
 {
   UINT err;
 
@@ -1851,21 +1905,57 @@ UINT vehicle_twizy_cfg_drive(int max_prc)
   else if (max_prc < 10 || max_prc > 100)
     return ERR_Range + 1;
 
+#ifdef OVMS_TWIZY_BATTMON
+
+  if (autodrive_ref == -1)
+    ;
+  else if (autodrive_ref < 0 || autodrive_ref > 250)
+    return ERR_Range + 2;
+
+  if (autodrive_minprc == -1)
+    ;
+  else if (autodrive_minprc < 0 || autodrive_minprc > 100)
+    return ERR_Range + 3;
+
+  if (autodrive_ref > 0)
+  {
+    // calculate max drive level:
+    twizy_autodrive_level = LIMIT_MAX(((long) twizy_batt[0].max_drive_pwr * 5L * 1000L)
+            / autodrive_ref, 1000);
+    twizy_autodrive_level = LIMIT_MIN(twizy_autodrive_level, autodrive_minprc * 10);
+
+    // set autopower checkpoint:
+    twizy_autodrive_checkpoint = (twizy_batt[0].max_drive_pwr + autodrive_ref + autodrive_minprc);
+  }
+  else
+  {
+    twizy_autodrive_level = 1000;
+  }
+
+#else
+
+  twizy_autodrive_level = 1000;
+  
+#endif //OVMS_TWIZY_BATTMON
+
   // set:
-  if (err = writesdo(0x2920,0x01,max_prc*10))
+  if (err = writesdo(0x2920,0x01,LIMIT_MAX(max_prc*10, twizy_autodrive_level)))
     return err;
 
   return 0;
 }
 
 
-UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc, int autorecup_min)
+UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc, int autorecup_ref, int autorecup_minprc)
 // neutral_prc: 0..100, -1=reset to default (18)
 // brake_prc: 0..100, -1=reset to default (18)
-// autorecup_min: 0..100, -1=default (off) (not a direct SEVCON control)
+// autorecup_ref: 0..250, -1=default (off) (not a direct SEVCON control)
+//      ATT: parameter function changed in V3.6.0!
+//      now sets power 100% ref point to <autorecup_ref> * 100 W
+// autorecup_minprc: 0..100, -1=default (off) (not a direct SEVCON control)
+//      sets lower limit on auto power adjustment
 {
   UINT err;
-  UINT default_recup;
 
   // parameter validation:
 
@@ -1880,94 +1970,77 @@ UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc, int autorecup_min)
     return ERR_Range + 2;
 
 #ifdef OVMS_TWIZY_BATTMON
-  if (autorecup_min == -1)
+
+  if (autorecup_ref == -1)
     ;
-  else if (autorecup_min < 0 || autorecup_min > 100)
+  else if (autorecup_ref < 0 || autorecup_ref > 250)
     return ERR_Range + 3;
 
-  if (autorecup_min != -1)
+  if (autorecup_minprc == -1)
+    ;
+  else if (autorecup_minprc < 0 || autorecup_minprc > 100)
+    return ERR_Range + 4;
+
+  if (autorecup_ref > 0)
   {
-    // calculate current max recuperation level:
-    // use 16 = 8000 W as 100%, as 8500 W only occur in a very narrow SOC range
-    // (if at all, ~82% SOC)
-    twizy_autorecup_level = ((long) twizy_batt[0].max_recup_pwr * 1000) / 16;
-    if (twizy_autorecup_level < ((int)autorecup_min * 10))
-      twizy_autorecup_level = ((int)autorecup_min * 10);
+    // calculate max recuperation level:
+    twizy_autorecup_level = LIMIT_MAX(((long) twizy_batt[0].max_recup_pwr * 5L * 1000L)
+            / autorecup_ref, 1000);
+    twizy_autorecup_level = LIMIT_MIN(twizy_autorecup_level, autorecup_minprc * 10);
+    
+    // set autopower checkpoint:
+    twizy_autorecup_checkpoint = (twizy_batt[0].max_recup_pwr + autorecup_ref + autorecup_minprc);
   }
   else
   {
     twizy_autorecup_level = 1000;
   }
+
+#else
+
+  twizy_autorecup_level = 1000;
+  
 #endif //OVMS_TWIZY_BATTMON
 
   // set:
-  default_recup = ((long) CFG.DefaultRecup * twizy_autorecup_level) / 1000;
-  if (err = writesdo(0x2920,0x03,scale(default_recup,CFG.DefaultRecupPrc,neutral_prc,0,1000)))
+  if (err = writesdo(0x2920,0x03,scale(CFG.DefaultRecup,CFG.DefaultRecupPrc,neutral_prc,0,twizy_autorecup_level)))
     return err;
-  if (err = writesdo(0x2920,0x04,scale(default_recup,CFG.DefaultRecupPrc,brake_prc,0,1000)))
+  if (err = writesdo(0x2920,0x04,scale(CFG.DefaultRecup,CFG.DefaultRecupPrc,brake_prc,0,twizy_autorecup_level)))
     return err;
-
-#ifdef OVMS_TWIZY_BATTMON
-  if (autorecup_min != -1)
-  {
-    last_max_recup_pwr = twizy_batt[0].max_recup_pwr;
-  }
-#endif //OVMS_TWIZY_BATTMON
 
   return 0;
 }
 
 
-// Autorecup update function:
-// check for BMS max recup pwr change, update SEVCON settings accordingly
+// Auto recup & drive power update function:
+// check for BMS max pwr change, update SEVCON settings accordingly
 // this is called by vehicle_twizy_state_ticker1() = approx. once per second
-UINT vehicle_twizy_cfg_autorecup(void)
+void vehicle_twizy_cfg_autopower(void)
 {
-  UINT err;
-  INT8 autorecup_min;
-  INT8 neutral_prc, brake_prc;
-  UINT default_recup;
+  int ref, minprc;
 
-  // check for CAN write access:
-  if (sys_features[FEATURE_CANWRITE] == 0)
-    return 0;
+  // check for SEVCON write access:
+  if ((sys_features[FEATURE_CANWRITE] == 0) || ((twizy_status & CAN_STATUS_KEYON) == 0))
+    return;
 
-  // check for SEVCON access:
-  if ((twizy_status & CAN_STATUS_KEYON) == 0)
-    return 0;
-
-  // check for BMS power change:
-  if (twizy_batt[0].max_recup_pwr == last_max_recup_pwr)
-    return 0;
-
-  // read RECUP config:
-
-  if ((autorecup_min = cfgparam(autorecup_min)) == -1)
-    return 0;
-
-  if ((neutral_prc = cfgparam(neutral)) == -1)
-    neutral_prc = CFG.DefaultRecupPrc;
-  if ((brake_prc = cfgparam(brake)) == -1)
-    brake_prc = CFG.DefaultRecupPrc;
-
-  // calculate new max recuperation level:
-  // use 16 = 8000 W as 100%, as 8500 W only occur in a very narrow SOC range
-  // (if at all, ~82% SOC)
-  twizy_autorecup_level = ((long) twizy_batt[0].max_recup_pwr * 1000) / 16;
-  if (twizy_autorecup_level < ((int)autorecup_min * 10))
-    twizy_autorecup_level = ((int)autorecup_min * 10);
-
-  // set:
-  default_recup = ((long) CFG.DefaultRecup * twizy_autorecup_level) / 1000;
-  if (err = writesdo(0x2920,0x03,scale(default_recup,CFG.DefaultRecupPrc,neutral_prc,0,1000)))
-    return err;
-  if (err = writesdo(0x2920,0x04,scale(default_recup,CFG.DefaultRecupPrc,brake_prc,0,1000)))
-    return err;
-
-  // done:
-  last_max_recup_pwr = twizy_batt[0].max_recup_pwr;
-
-  return 0;
+  // adjust recup levels?
+  ref = cfgparam(autorecup_ref);
+  minprc = cfgparam(autorecup_minprc);
+  if ((ref > 0)
+    && ((twizy_batt[0].max_recup_pwr + ref + minprc) != twizy_autorecup_checkpoint))
+  {
+    vehicle_twizy_cfg_recup(cfgparam(neutral), cfgparam(brake), ref, minprc);
+  }
+  
+  // adjust drive level?
+  ref = cfgparam(autodrive_ref);
+  minprc = cfgparam(autodrive_minprc);
+  if ((ref > 0)
+    && ((twizy_batt[0].max_drive_pwr + ref + minprc) != twizy_autodrive_checkpoint)
+    && (twizy_kickdown_hold == 0))
+  {
+    vehicle_twizy_cfg_drive(cfgparam(drive), ref, minprc);
+  }
 }
 
 
@@ -2219,10 +2292,10 @@ UINT vehicle_twizy_cfg_switchprofile(char key)
   
   // update op (user) mode params:
 
-  if (err = vehicle_twizy_cfg_drive(cfgparam(drive)))
+  if (err = vehicle_twizy_cfg_drive(cfgparam(drive),cfgparam(autodrive_ref),cfgparam(autodrive_minprc)))
     return err;
 
-  if (err = vehicle_twizy_cfg_recup(cfgparam(neutral),cfgparam(brake),cfgparam(autorecup_min)))
+  if (err = vehicle_twizy_cfg_recup(cfgparam(neutral),cfgparam(brake),cfgparam(autorecup_ref),cfgparam(autorecup_minprc)))
     return err;
 
   if (err = vehicle_twizy_cfg_ramps(cfgparam(ramp_start),cfgparam(ramp_accel),cfgparam(ramp_decel),cfgparam(ramp_neutral),cfgparam(ramp_brake)))
@@ -2324,9 +2397,9 @@ UINT vehicle_twizy_cfg_reset(void)
   if (err = vehicle_twizy_cfg_tsmap('B',-1,-1,-1,-1,-1,-1,-1,-1))
     return err;
 
-  if (err = vehicle_twizy_cfg_drive(-1))
+  if (err = vehicle_twizy_cfg_drive(-1,-1,-1))
     return err;
-  if (err = vehicle_twizy_cfg_recup(-1,-1,-1))
+  if (err = vehicle_twizy_cfg_recup(-1,-1,-1,-1))
     return err;
 
   if (err = vehicle_twizy_cfg_ramps(-1,-1,-1,-1,-1))
@@ -2419,9 +2492,12 @@ char *vehicle_twizy_fmt_switchprofileresult(char *s, char profilenr, UINT err)
     }
 
     s = stp_i(s, " DRIVE ", cfgparam(drive));
+    s = stp_i(s, " ", cfgparam(autodrive_ref));
+    s = stp_i(s, " ", cfgparam(autodrive_minprc));
     s = stp_i(s, " RECUP ", cfgparam(neutral));
     s = stp_i(s, " ", cfgparam(brake));
-    s = stp_i(s, " ", cfgparam(autorecup_min));
+    s = stp_i(s, " ", cfgparam(autorecup_ref));
+    s = stp_i(s, " ", cfgparam(autorecup_minprc));
   }
 
   return s;
@@ -2490,7 +2566,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   // cmd dispatcher:
   //
 
-  if (strncmppgm2ram(cmd, "PRE", 3) == 0) {
+  if (starts_with(cmd, "PRE")) {
     // PRE: enter config mode
     if (err = configmode(1)) {
       s = stp_x(s, "ERROR ", err);
@@ -2503,7 +2579,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     go_op_onexit = FALSE;
   }
 
-  else if (strncmppgm2ram(cmd, "OP", 2) == 0) {
+  else if (starts_with(cmd, "OP")) {
     // OP: leave config mode
     if (err = configmode(0)) {
       s = stp_x(s, "ERROR ", err);
@@ -2516,7 +2592,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     go_op_onexit = FALSE;
   }
 
-  else if (strncmppgm2ram(cmd, "READ", 4) == 0) {
+  else if (starts_with(cmd, "READ")) {
     // READ index_hex subindex_hex
     // READS[TR] index_hex subindex_hex
     if (arguments = net_sms_nextarg(arguments))
@@ -2559,7 +2635,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     go_op_onexit = FALSE;
   }
 
-  else if (strncmppgm2ram(cmd, "WRITE", 5) == 0) {
+  else if (starts_with(cmd, "WRITE")) {
     // WRITE index_hex subindex_hex data_dec
     // WRITEO[NLY] index_hex subindex_hex data_dec
     if (arguments = net_sms_nextarg(arguments))
@@ -2620,7 +2696,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     go_op_onexit = FALSE;
   }
 
-  else if (strncmppgm2ram(cmd, "SPEED", 5) == 0) {
+  else if (starts_with(cmd, "SPEED")) {
     // SPEED [max_kph] [warn_kph]
 
     if (arguments = net_sms_nextarg(arguments))
@@ -2654,7 +2730,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     }
   }
 
-  else if (strncmppgm2ram(cmd, "POWER", 5) == 0) {
+  else if (starts_with(cmd, "POWER")) {
     // POWER [trq_prc] [pwr_lo_prc] [pwr_hi_prc]
 
     if (arguments = net_sms_nextarg(arguments))
@@ -2695,7 +2771,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     }
   }
 
-  else if (strncmppgm2ram(cmd, "TSMAP", 5) == 0) {
+  else if (starts_with(cmd, "TSMAP")) {
     // TSMAP [maps] [t1_prc[@t1_spd]] [t2_prc[@t2_spd]] [t3_prc[@t3_spd]] [t4_prc[@t4_spd]]
 
     if (arguments = net_sms_nextarg(arguments)) {
@@ -2760,19 +2836,25 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     }
   }
 
-  else if (strncmppgm2ram(cmd, "DRIVE", 5) == 0) {
-    // DRIVE [max_prc] [kickdown_threshold] [kickdown_compzero]
+  else if (starts_with(cmd, "DRIVE")) {
+    // DRIVE [max_prc] [autopower_ref] [autopower_minprc] [kickdown_threshold] [kickdown_compzero]
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
 
+    // autopower drive 100% reference & min prc:
+    if (arguments = net_sms_nextarg(arguments))
+      arg[1] = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      arg[2] = atoi(arguments);
+    
     // kickdown global settings:
     if (arguments = net_sms_nextarg(arguments))
       sys_features[FEATURE_KICKDOWN_THRESHOLD] = atoi(arguments);
     if (arguments = net_sms_nextarg(arguments))
       sys_features[FEATURE_KICKDOWN_COMPZERO] = atoi(arguments);
 
-    if (err = vehicle_twizy_cfg_drive(arg[0])) {
+    if (err = vehicle_twizy_cfg_drive(arg[0], arg[1], arg[2])) {
       s = stp_x(s, "ERROR ", err);
       if (ERROR_IN_SDO(err))
         s = vehicle_twizy_fmt_sdo(s);
@@ -2780,6 +2862,8 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     else {
       // update profile:
       twizy_cfg_profile.drive = cfgvalue(arg[0]);
+      twizy_cfg_profile.autodrive_ref = cfgvalue(arg[1]);
+      twizy_cfg_profile.autodrive_minprc = cfgvalue(arg[2]);
       twizy_cfg.unsaved = 1;
 
       // reset kickdown detection:
@@ -2792,11 +2876,12 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // debug:
       if (readsdo(0x2920,0x01) == 0)
         s = stp_ul(s, " pow=", twizy_sdo.data);
+      s = stp_l2f(s, " auto%=", twizy_autodrive_level, 1);
     }
   }
 
-  else if (strncmppgm2ram(cmd, "RECUP", 5) == 0) {
-    // RECUP [neutral_prc] [brake_prc] [autorecup_minprc]
+  else if (starts_with(cmd, "RECUP")) {
+    // RECUP [neutral_prc] [brake_prc] [autopower_ref] [autopower_minprc]
 
     if (arguments = net_sms_nextarg(arguments))
       arg[0] = atoi(arguments);
@@ -2808,8 +2893,10 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
     if (arguments = net_sms_nextarg(arguments))
       arg[2] = atoi(arguments);
+    if (arguments = net_sms_nextarg(arguments))
+      arg[3] = atoi(arguments);
 
-    if (err = vehicle_twizy_cfg_recup(arg[0], arg[1], arg[2])) {
+    if (err = vehicle_twizy_cfg_recup(arg[0], arg[1], arg[2], arg[3])) {
       s = stp_x(s, "ERROR ", err);
       if (ERROR_IN_SDO(err))
         s = vehicle_twizy_fmt_sdo(s);
@@ -2818,7 +2905,8 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // update profile:
       twizy_cfg_profile.neutral = cfgvalue(arg[0]);
       twizy_cfg_profile.brake = cfgvalue(arg[1]);
-      twizy_cfg_profile.autorecup_min = cfgvalue(arg[2]);
+      twizy_cfg_profile.autorecup_ref = cfgvalue(arg[2]);
+      twizy_cfg_profile.autorecup_minprc = cfgvalue(arg[3]);
       twizy_cfg.unsaved = 1;
 
       // success message:
@@ -2829,11 +2917,11 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
         s = stp_ul(s, " ntr=", twizy_sdo.data);
       if (readsdo(0x2920,0x04) == 0)
         s = stp_ul(s, " brk=", twizy_sdo.data);
-      s = stp_i(s, " auto=", cfgparam(autorecup_min));
+      s = stp_l2f(s, " auto%=", twizy_autorecup_level, 1);
     }
   }
 
-  else if (strncmppgm2ram(cmd, "RAMPS", 5) == 0) {
+  else if (starts_with(cmd, "RAMPS")) {
     // RAMPS [start_prc] [accel_prc] [decel_prc] [neutral_prc] [brake_prc]
 
     if (arguments = net_sms_nextarg(arguments))
@@ -2874,7 +2962,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     }
   }
 
-  else if (strncmppgm2ram(cmd, "RAMPL", 5) == 0) {
+  else if (starts_with(cmd, "RAMPL")) {
     // RAMPL [accel_prc] [decel_prc]
 
     if (arguments = net_sms_nextarg(arguments))
@@ -2904,7 +2992,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     }
   }
 
-  else if (strncmppgm2ram(cmd, "SMOOTH", 6) == 0) {
+  else if (starts_with(cmd, "SMOOTH")) {
     // SMOOTH [prc]
 
     if (arguments = net_sms_nextarg(arguments))
@@ -2932,7 +3020,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   }
 
 #ifdef OVMS_TWIZY_CFG_BRAKELIGHT
-  else if (strncmppgm2ram(cmd, "BRAKELIGHT", 10) == 0) {
+  else if (starts_with(cmd, "BRAKELIGHT")) {
     // BRAKELIGHT [on_lev] [off_lev]
 
     if (arguments = net_sms_nextarg(arguments))
@@ -2966,7 +3054,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   }
 #endif // OVMS_TWIZY_CFG_BRAKELIGHT
 
-  else if (strncmppgm2ram(cmd, "RESET", 5) == 0) {
+  else if (starts_with(cmd, "RESET")) {
     // RESET all macro commands to defaults
     if (err = vehicle_twizy_cfg_reset()) {
       s = stp_x(s, "ERROR ", err);
@@ -2995,7 +3083,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     }
   }
 
-  else if (strncmppgm2ram(cmd, "SAVE", 4) == 0) {
+  else if (starts_with(cmd, "SAVE")) {
     // SAVE [nr]: save profile to EEPROM
 
     if (arguments = net_sms_nextarg(arguments))
@@ -3017,7 +3105,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     }
   }
 
-  else if (strncmppgm2ram(cmd, "LOAD", 4) == 0) {
+  else if (starts_with(cmd, "LOAD")) {
     // LOAD [nr]: load/restore profile from EEPROM
 
     if (arguments = net_sms_nextarg(arguments))
@@ -3030,7 +3118,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     s = vehicle_twizy_fmt_switchprofileresult(s, arg[0], err);
   }
 
-  else if (strncmppgm2ram(cmd, "INFO", 4) == 0) {
+  else if (starts_with(cmd, "INFO")) {
     // INFO: output main params
 
     s = stp_i(s, "#", twizy_cfg.profile_user);
@@ -3043,10 +3131,13 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     s = stp_i(s, " ", cfgparam(power_high));
 
     s = stp_i(s, " DRIVE ", cfgparam(drive));
+    s = stp_i(s, " ", cfgparam(autodrive_ref));
+    s = stp_i(s, " ", cfgparam(autodrive_minprc));
     
     s = stp_i(s, " RECUP ", cfgparam(neutral));
     s = stp_i(s, " ", cfgparam(brake));
-    s = stp_i(s, " ", cfgparam(autorecup_min));
+    s = stp_i(s, " ", cfgparam(autorecup_ref));
+    s = stp_i(s, " ", cfgparam(autorecup_minprc));
 
     s = stp_i(s, " RAMPS ", cfgparam(ramp_start));
     s = stp_i(s, " ", cfgparam(ramp_accel));
@@ -3055,6 +3146,19 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     s = stp_i(s, " ", cfgparam(ramp_brake));
 
     s = stp_i(s, " SMOOTH ", cfgparam(smooth));
+  }
+
+  else if (starts_with(cmd, "CLEAR")) {
+    // CLEARLOGS: clear SEVCON diagnostic logs
+
+    if (err = vehicle_twizy_resetlogs_msgp(99, NULL)) {
+      s = stp_x(s, "ERROR ", err);
+      if (ERROR_IN_SDO(err))
+        s = vehicle_twizy_fmt_sdo(s);
+    }
+    else {
+      s = stp_rom(s, "OK");
+    }
   }
 
   else {
@@ -3622,9 +3726,9 @@ BOOL vehicle_twizy_logs_cmd(BOOL msgmode, int cmd, char *arguments)
 
 // Charge time approximation constants:
 // @ ~13 °C  -- temperature compensation needed?
-#define CHARGETIME_CVSOC    9400    // CV phase normally begins at 93..95%
-#define CHARGETIME_CC       180     // CC phase time (160..180 min.)
-#define CHARGETIME_CV       40      // CV phase time (topoff) (20..40 min.)
+#define CHARGETIME_CVSOC    9400L    // CV phase normally begins at 93..95%
+#define CHARGETIME_CC       180L     // CC phase time (160..180 min.)
+#define CHARGETIME_CV       40L      // CV phase time (topoff) (20..40 min.)
 
 int vehicle_twizy_chargetime(int dstsoc)
 {
@@ -3642,10 +3746,10 @@ int vehicle_twizy_chargetime(int dstsoc)
   {
     // CV phase
     if (twizy_soc < CHARGETIME_CVSOC)
-      minutes += ((long) (dstsoc - CHARGETIME_CVSOC) * CHARGETIME_CV
+      minutes += (((long) dstsoc - CHARGETIME_CVSOC) * CHARGETIME_CV
               + ((10000-CHARGETIME_CVSOC)/2)) / (10000-CHARGETIME_CVSOC);
     else
-      minutes += ((long) (dstsoc - twizy_soc) * CHARGETIME_CV
+      minutes += (((long) dstsoc - twizy_soc) * CHARGETIME_CV
               + ((10000-CHARGETIME_CVSOC)/2)) / (10000-CHARGETIME_CVSOC);
 
     dstsoc = CHARGETIME_CVSOC;
@@ -3653,7 +3757,7 @@ int vehicle_twizy_chargetime(int dstsoc)
 
   // CC phase
   if (twizy_soc < dstsoc)
-    minutes += ((long) (dstsoc - twizy_soc) * CHARGETIME_CC
+    minutes += (((long) dstsoc - twizy_soc) * CHARGETIME_CC
             + (CHARGETIME_CVSOC/2)) / CHARGETIME_CVSOC;
 
   return minutes;
@@ -3669,6 +3773,7 @@ char vehicle_twizy_gpslog_msgp(char stat)
   static WORD crc;
   char *s;
   unsigned long pwr_dist, pwr_use, pwr_rec;
+  signed int pwr_min, pwr_max, curr_min, curr_max;
 
   // Read power stats:
 
@@ -3685,6 +3790,18 @@ char vehicle_twizy_gpslog_msgp(char stat)
           + twizy_speedpwr[CAN_SPEED_DECEL].rec;
 
 
+  // read & reset GPS section power & current min/max:
+  PIE3bits.RXB0IE = 0; // disable interrupts
+  {
+    pwr_min = twizy_power_min;
+    pwr_max = twizy_power_max;
+    curr_min = twizy_current_min;
+    curr_max = twizy_current_max;
+    twizy_power_min = twizy_current_min = 32767;
+    twizy_power_max = twizy_current_max = -32768;
+  }
+  PIE3bits.RXB0IE = 1; // enable interrupt
+
   // H type "RT-GPS-Log", recno = odometer, keep for 1 day
   s = stp_ul(net_scratchpad, "MP-0 HRT-GPS-Log,", car_odometer); // in 1/10 mi
   s = stp_latlon(s, ",86400,", car_latitude);
@@ -3697,30 +3814,40 @@ char vehicle_twizy_gpslog_msgp(char stat)
   s = stp_i(s, ",", net_sq); // GPRS signal quality
 
   // Twizy specific (standard model candidates):
-  s = stp_l(s, ",", (long) twizy_power * 16);     // current power (W)
-  s = stp_ul(s, ",", (pwr_use + 11250) / 22500);  // power usage sum (Wh)
-  s = stp_ul(s, ",", (pwr_rec + 11250) / 22500);  // recuperation sum (Wh)
+  s = stp_l(s, ",", ((long) twizy_power * 64L + 5) / 10);     // current power (W)
+  s = stp_ul(s, ",", (pwr_use + WH_RND) / WH_DIV);  // power usage sum (Wh)
+  s = stp_ul(s, ",", (pwr_rec + WH_RND) / WH_DIV);  // recuperation sum (Wh)
   s = stp_ul(s, ",", (pwr_dist + 5) / 10);        // distance driven (m)
   
-  // V3.4.0:
-  if (twizy_power_min == 32767) {
+  // V3.4.0: GPS section power min+max
+  if (pwr_min == 32767) {
     s = stp_rom(s, ",0,0"); // no min/max collected in section
   } else {
-    s = stp_l(s, ",", (long) twizy_power_min * 16); // section min power (W)
-    s = stp_l(s, ",", (long) twizy_power_max * 16); // section max power (W)
+    s = stp_l(s, ",", ((long) pwr_min * 64L + 5) / 10); // section min power (W)
+    s = stp_l(s, ",", ((long) pwr_max * 64L + 5) / 10); // section max power (W)
   }
-
-  // reset power min/max:
-  PIE3bits.RXB0IE = 0; // disable interrupts
-  {
-    twizy_power_min = 32767;
-    twizy_power_max = -32768;
-  }
-  PIE3bits.RXB0IE = 1; // enable interrupt
 
   // V3.5.2:
   s = stp_x(s, ",", (unsigned int) twizy_status);
   
+  // V3.6.0: add BMS power limits [W] and autopower levels [%]
+#ifdef OVMS_TWIZY_BATTMON
+  s = stp_i(s, ",", (int) twizy_batt[0].max_drive_pwr * 500);
+  s = stp_i(s, ",", (int) twizy_batt[0].max_recup_pwr * -500);
+  s = stp_l2f(s, ",", twizy_autodrive_level, 3);
+  s = stp_l2f(s, ",", twizy_autorecup_level, 3);
+#else // OVMS_TWIZY_BATTMON
+  s = stp_rom(s, ",,,,");
+#endif // OVMS_TWIZY_BATTMON
+
+  // V3.6.0: add current min/max
+  if (curr_min == 32767) {
+    s = stp_rom(s, ",0,0"); // no min/max collected in section
+  } else {
+    s = stp_l2f(s, ",", ((long) curr_min * 100L) / 4, 2); // section min current (A)
+    s = stp_l2f(s, ",", ((long) curr_max * 100L) / 4, 2); // section max current (A)
+  }
+
   return net_msg_encode_statputs(stat, &crc);
 }
 
@@ -3788,8 +3915,8 @@ char vehicle_twizy_pwrlog_msgp(char stat)
   s = stp_l2f(s, ",", twizy_soc_min, 2);
   s = stp_l2f(s, ",", twizy_soc_max, 2);
 
-  s = stp_ul(s, ",", (pwr_use + 11250) / 22500);
-  s = stp_ul(s, ",", (pwr_rec + 11250) / 22500);
+  s = stp_ul(s, ",", (pwr_use + WH_RND) / WH_DIV);
+  s = stp_ul(s, ",", (pwr_rec + WH_RND) / WH_DIV);
   s = stp_ul(s, ",", (pwr_dist + 5) / 10);
 
   s = stp_i(s, ",", KmFromMi(car_estrange));
@@ -3826,6 +3953,10 @@ char vehicle_twizy_pwrlog_msgp(char stat)
           ? (twizy_speedpwr[CAN_SPEED_DECEL].spdsum * 10) / twizy_speedpwr[CAN_SPEED_DECEL].spdcnt
           : 0, 2); // avg decel kph/s
 
+  // V3.6.0: coulomb count discharge/charge (Ah)
+  s = stp_l2f(s, ",", (twizy_charge_use + CAH_RND) / CAH_DIV, 2);
+  s = stp_l2f(s, ",", (twizy_charge_rec + CAH_RND) / CAH_DIV, 2);
+  
 
   // send:
 
@@ -4026,11 +4157,24 @@ BOOL vehicle_twizy_poll0(void)
           }
         }
 
-        // POWER:
+        // CURRENT & POWER:
         t = ((unsigned int) (can_databuffer[1] & 0x0f) << 8) + can_databuffer[2];
         if (t > 0 && t < 0x0f00)
         {
-          twizy_power = 2000 - (signed int) t;
+          twizy_current = 2000 - (signed int) t;
+          // ...in 1/4 A
+          
+          // set min/max:
+          if (twizy_current < twizy_current_min)
+            twizy_current_min = twizy_current;
+          if (twizy_current > twizy_current_max)
+            twizy_current_max = twizy_current;
+
+          // calculate power:
+          twizy_power = (twizy_current < 0)
+                  ? -((((long) -twizy_current) * twizy_batt[0].volt_act + 128) >> 8)
+                  : ((((long) twizy_current) * twizy_batt[0].volt_act + 128) >> 8);
+          // ...in 256/40 W = 6.4 W
 
           // set min/max:
           if (twizy_power < twizy_power_min)
@@ -4051,11 +4195,13 @@ BOOL vehicle_twizy_poll0(void)
           {
             twizy_speedpwr[twizy_speed_state].use += twizy_power;
             twizy_level_use += twizy_power;
+            twizy_charge_use += twizy_current;
           }
           else
           {
             twizy_speedpwr[twizy_speed_state].rec += -twizy_power;
             twizy_level_rec += -twizy_power;
+            twizy_charge_rec += -twizy_current;
           }
 
           // do we need to take base power consumption into account?
@@ -4230,8 +4376,10 @@ BOOL vehicle_twizy_poll1(void)
 
         // running average over 4 samples:
         twizy_accel_avg = twizy_accel_avg * 3 + delta;
-        twizy_accel_avg += (twizy_accel_avg < 0) ? -2 : 2;
-        twizy_accel_avg /= 4; // C18: no ANSI >> on negative ints
+        // C18: no arithmetic >> sign propagation on negative ints
+        twizy_accel_avg = (twizy_accel_avg < 0)
+                ? -((-twizy_accel_avg + 2) >> 2)
+                : ((twizy_accel_avg + 2) >> 2);
 
         // switch speed state:
         if (twizy_accel_avg >= CAN_ACCEL_THRESHOLD)
@@ -4510,7 +4658,7 @@ BOOL vehicle_twizy_poll1(void)
         v2 = ((UINT) CAN_NIBL(6) << 8)
                 | ((UINT) CAN_BYTE(7));
 
-        twizy_batt[0].volt_act = (v1 + v2) >> 1;
+        twizy_batt[0].volt_act = (v1 + v2 + 1) >> 1;
 
         state |= BATT_SENSORS_GOT55F;
 
@@ -4739,10 +4887,11 @@ BOOL vehicle_twizy_idlepoll(void)
   if ((twizy_kickdown_hold == 0) && (twizy_kickdown_level > 0)
           && (sys_features[FEATURE_CANWRITE])
           && (sys_features[FEATURE_KICKDOWN_THRESHOLD] > 0)
-          && (cfgparam(drive) != -1) && (cfgparam(drive) != 100)
+          && (((cfgparam(drive) != -1) && (cfgparam(drive) != 100))
+            || (twizy_autodrive_level < 1000))
           ) {
-    // set drive level to boost (100%):
-    if (vehicle_twizy_cfg_drive(100) == 0) {
+    // set drive level to boost (100%, no autopower limit):
+    if (vehicle_twizy_cfg_drive(100, -1, -1) == 0) {
       twizy_kickdown_hold = CAN_KICKDOWN_HOLDTIME;
       PORTC |= 1; // switch on LED
     }
@@ -4788,7 +4937,7 @@ BOOL vehicle_twizy_state_ticker10th(void)
       // releasing, count down:
       if (--twizy_kickdown_hold == 0) {
         // reset drive level to normal:
-        if (vehicle_twizy_cfg_drive(cfgparam(drive)) != 0)
+        if (vehicle_twizy_cfg_drive(cfgparam(drive), cfgparam(autodrive_ref), cfgparam(autodrive_minprc)) != 0)
           twizy_kickdown_hold = 2; // error: retry
         else
           twizy_kickdown_level = 0; // ok, reset kickdown detection
@@ -4910,7 +5059,8 @@ BOOL vehicle_twizy_state_ticker1(void)
    */
 
   // Count seconds:
-  car_time++;
+  // obsoleted by NET_FN_CARTIME
+  //car_time++;
 
   // SOC: convert to percent:
   car_SOC = (twizy_soc + 50) / 100;
@@ -5026,7 +5176,10 @@ BOOL vehicle_twizy_state_ticker1(void)
     net_req_notification(NET_NOTIFY_ENV);
 
     // send power statistics if 25+ Wh used:
-    if (twizy_speedpwr[CAN_SPEED_CONST].use > (22500L*25))
+    if ((twizy_speedpwr[CAN_SPEED_CONST].use
+        +twizy_speedpwr[CAN_SPEED_ACCEL].use
+        +twizy_speedpwr[CAN_SPEED_DECEL].use)
+            > (WH_DIV * 25))
       twizy_notify |= (SEND_PowerNotify | SEND_PowerLog);
 
     #ifdef OVMS_TWIZY_CFG
@@ -5115,6 +5268,10 @@ BOOL vehicle_twizy_state_ticker1(void)
 
       // Send charge stat:
       net_req_notification(NET_NOTIFY_STAT);
+      
+      // Send charge start notification?
+      if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SCHGSTART)
+        net_req_notification(NET_NOTIFY_CHARGE);
     }
 
     else
@@ -5282,7 +5439,7 @@ BOOL vehicle_twizy_state_ticker1(void)
      * Auto recuperation adjustment (if enabled):
      */
 
-    vehicle_twizy_cfg_autorecup();
+    vehicle_twizy_cfg_autopower();
 
 #endif //OVMS_TWIZY_BATTMON
 
@@ -5314,8 +5471,8 @@ BOOL vehicle_twizy_state_ticker10(void)
     car_chargecurrent = 0;
     twizy_speed = 0;
     twizy_power = 0;
-    twizy_power_min = 32767;
-    twizy_power_max = -32768;
+    twizy_power_min = twizy_current_min = 32767;
+    twizy_power_max = twizy_current_max = -32768;
   }
   else
   {
@@ -5426,6 +5583,8 @@ void vehicle_twizy_power_reset(void)
     twizy_speed_distref = twizy_dist;
     twizy_level_use = 0;
     twizy_level_rec = 0;
+    twizy_charge_use = 0;
+    twizy_charge_rec = 0;
   }
   PIE3bits.RXB0IE = 1; // enable interrupt
 
@@ -5494,7 +5653,7 @@ void vehicle_twizy_power_collect(void)
 
   // calc grade in percent:
   alt_diff = car_altitude - twizy_level_alt;
-  grade_perc = (long) alt_diff * 100 / (long) dist;
+  grade_perc = (long) alt_diff * 100L / (long) dist;
 
   // set new section reference:
   twizy_level_odo = twizy_odometer;
@@ -5549,31 +5708,31 @@ void vehicle_twizy_power_prepmsg(char mode)
   if ((pwr_use == 0) || (pwr_dist <= 10))
   {
     // not driven: only output power totals:
-    s = stp_ul(s, "Power -", (pwr_use + 11250) / 22500);
-    s = stp_ul(s, " +", (pwr_rec + 11250) / 22500);
+    s = stp_ul(s, "Power -", (pwr_use + WH_RND) / WH_DIV);
+    s = stp_ul(s, " +", (pwr_rec + WH_RND) / WH_DIV);
     s = stp_rom(s, " Wh");
   }
   else if (mode == 't')
   {
     // power totals:
-    s = stp_ul(s, "Power -", (pwr_use + 11250) / 22500);
-    s = stp_ul(s, " +", (pwr_rec + 11250) / 22500);
+    s = stp_ul(s, "Power -", (pwr_use + WH_RND) / WH_DIV);
+    s = stp_ul(s, " +", (pwr_rec + WH_RND) / WH_DIV);
     s = stp_l2f(s, " Wh ", pwr_dist / 1000, 1);
     s = stp_i(s, " km\r Const ", prc_const);
-    s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_CONST].use + 11250) / 22500);
-    s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500);
+    s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_CONST].use + WH_RND) / WH_DIV);
+    s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_CONST].rec + WH_RND) / WH_DIV);
     s = stp_i(s, " Wh\r Accel ", prc_accel);
-    s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_ACCEL].use + 11250) / 22500);
-    s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_ACCEL].rec + 11250) / 22500);
+    s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_ACCEL].use + WH_RND) / WH_DIV);
+    s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_ACCEL].rec + WH_RND) / WH_DIV);
     s = stp_i(s, " Wh\r Decel ", prc_decel);
-    s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_DECEL].use + 11250) / 22500);
-    s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_DECEL].rec + 11250) / 22500);
+    s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_DECEL].use + WH_RND) / WH_DIV);
+    s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_DECEL].rec + WH_RND) / WH_DIV);
     s = stp_ul(s, " Wh\r Up ", twizy_levelpwr[CAN_LEVEL_UP].hsum);
-    s = stp_ul(s, "m -", (twizy_levelpwr[CAN_LEVEL_UP].use + 11250) / 22500);
-    s = stp_ul(s, " +", (twizy_levelpwr[CAN_LEVEL_UP].rec + 11250) / 22500);
+    s = stp_ul(s, "m -", (twizy_levelpwr[CAN_LEVEL_UP].use + WH_RND) / WH_DIV);
+    s = stp_ul(s, " +", (twizy_levelpwr[CAN_LEVEL_UP].rec + WH_RND) / WH_DIV);
     s = stp_ul(s, " Wh\r Down ", twizy_levelpwr[CAN_LEVEL_DOWN].hsum);
-    s = stp_ul(s, "m -", (twizy_levelpwr[CAN_LEVEL_DOWN].use + 11250) / 22500);
-    s = stp_ul(s, " +", (twizy_levelpwr[CAN_LEVEL_DOWN].rec + 11250) / 22500);
+    s = stp_ul(s, "m -", (twizy_levelpwr[CAN_LEVEL_DOWN].use + WH_RND) / WH_DIV);
+    s = stp_ul(s, " +", (twizy_levelpwr[CAN_LEVEL_DOWN].rec + WH_RND) / WH_DIV);
     s = stp_rom(s, " Wh");
   }
   else // mode == 'e'
@@ -5601,7 +5760,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     pwr = pwr_use - pwr_rec;
     if ((pwr_use > 0) && (dist > 0))
     {
-      s = stp_l(s, " ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
+      s = stp_l(s, " ", (pwr / dist * 10000 + ((pwr>=0)?WH_RND:-WH_RND)) / WH_DIV);
       s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
@@ -5620,7 +5779,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     if ((pwr_use > 0) && (dist > 0))
     {
       s = stp_i(s, "\r=== ", prc_const);
-      s = stp_l(s, "% ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
+      s = stp_l(s, "% ", (pwr / dist * 10000 + ((pwr>=0)?WH_RND:-WH_RND)) / WH_DIV);
       s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
@@ -5636,7 +5795,7 @@ void vehicle_twizy_power_prepmsg(char mode)
               ? ((twizy_speedpwr[CAN_SPEED_ACCEL].spdsum * 10)
                 / twizy_speedpwr[CAN_SPEED_ACCEL].spdcnt + 5) / 10
               : 0, 1); // avg accel kph/s
-      s = stp_l(s, "kps ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
+      s = stp_l(s, "kps ", (pwr / dist * 10000 + ((pwr>=0)?WH_RND:-WH_RND)) / WH_DIV);
       s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
@@ -5652,7 +5811,7 @@ void vehicle_twizy_power_prepmsg(char mode)
               ? ((twizy_speedpwr[CAN_SPEED_DECEL].spdsum * 10)
                 / twizy_speedpwr[CAN_SPEED_DECEL].spdcnt + 5) / 10
               : 0, 1); // avg decel kph/s
-      s = stp_l(s, "kps ", (pwr / dist * 10000 + ((pwr>=0)?11250:-11250)) / 22500);
+      s = stp_l(s, "kps ", (pwr / dist * 10000 + ((pwr>=0)?WH_RND:-WH_RND)) / WH_DIV);
       s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
@@ -5666,7 +5825,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     if ((pwr_use > 0) && (dist > 0))
     {
       s = stp_i(s, "\r^^^ ", twizy_levelpwr[CAN_LEVEL_UP].hsum);
-      s = stp_l(s, "m ", (pwr / dist * 1000 + ((pwr>=0)?11250:-11250)) / 22500);
+      s = stp_l(s, "m ", (pwr / dist * 1000 + ((pwr>=0)?WH_RND:-WH_RND)) / WH_DIV);
       s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
@@ -5678,7 +5837,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     if ((pwr_use > 0) && (dist > 0))
     {
       s = stp_i(s, "\rvvv ", twizy_levelpwr[CAN_LEVEL_DOWN].hsum);
-      s = stp_l(s, "m ", (pwr / dist * 1000 + ((pwr>=0)?11250:-11250)) / 22500);
+      s = stp_l(s, "m ", (pwr / dist * 1000 + ((pwr>=0)?WH_RND:-WH_RND)) / WH_DIV);
       s = stp_i(s, "Wpk/", (pwr_rec / (pwr_use/1000) + 5) / 10);
       s = stp_rom(s, "%");
     }
@@ -5691,6 +5850,7 @@ char vehicle_twizy_power_msgp(char stat, int cmd)
 {
   static WORD crc;
   char *s;
+  UINT8 i;
 
   if (cmd == CMD_PowerUsageStats)
   {
@@ -5711,38 +5871,28 @@ char vehicle_twizy_power_msgp(char stat, int cmd)
      *
      */
 
-    s = stp_rom(net_scratchpad, "MP-0 HRT-PWR-UsageStats,0,86400");
+    s = stp_rom(net_scratchpad, "MP-0 HRT-PWR-Stats,0,86400");
 
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_CONST].dist);
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_CONST].use);
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_CONST].rec);
+    for (i=0; i<=2; i++)
+    {
+      s = stp_ul(s, ",", (twizy_speedpwr[i].dist + 5) / 10);
+      s = stp_ul(s, ",", (twizy_speedpwr[i].use + WH_RND) / WH_DIV);
+      s = stp_ul(s, ",", (twizy_speedpwr[i].rec + WH_RND) / WH_DIV);
+      s = stp_ul(s, ",", twizy_speedpwr[i].spdcnt);
+      s = stp_ul(s, ",", twizy_speedpwr[i].spdsum);
+    }
 
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_ACCEL].dist);
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_ACCEL].use);
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_ACCEL].rec);
-
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_DECEL].dist);
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_DECEL].use);
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_DECEL].rec);
-
-    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_UP].dist);
-    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_UP].hsum);
-    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_UP].use);
-    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_UP].rec);
-
-    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_DOWN].dist);
-    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_DOWN].hsum);
-    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_DOWN].use);
-    s = stp_ul(s, ",", twizy_levelpwr[CAN_LEVEL_DOWN].rec);
-
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_CONST].spdcnt);
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_CONST].spdsum);
-
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_ACCEL].spdcnt);
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_ACCEL].spdsum);
-
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_DECEL].spdcnt);
-    s = stp_ul(s, ",", twizy_speedpwr[CAN_SPEED_DECEL].spdsum);
+    for (i=0; i<=1; i++)
+    {
+      s = stp_ul(s, ",", twizy_levelpwr[i].dist);
+      s = stp_ul(s, ",", twizy_levelpwr[i].hsum);
+      s = stp_ul(s, ",", (twizy_levelpwr[i].use + WH_RND) / WH_DIV);
+      s = stp_ul(s, ",", (twizy_levelpwr[i].rec + WH_RND) / WH_DIV);
+    }
+    
+    // V3.6.0: coulomb count discharge/charge (Ah)
+    s = stp_l2f(s, ",", (twizy_charge_use + CAH_RND) / CAH_DIV, 2);
+    s = stp_l2f(s, ",", (twizy_charge_rec + CAH_RND) / CAH_DIV, 2);
     
     stat = net_msg_encode_statputs(stat, &crc);
   }
@@ -5890,7 +6040,7 @@ char vehicle_twizy_debug_msgp(char stat, int cmd)
   s = stp_i(s, ",", twizy_power_min * 16);
   s = stp_i(s, ",", twizy_power_max * 16);
   s = stp_i(s, ",", (int) twizy_batt[0].max_recup_pwr * 500);
-  s = stp_i(s, ",", (int) last_max_recup_pwr * 500);
+  s = stp_i(s, ",", (int) twizy_autorecup_checkpoint * 500);
   s = stp_i(s, ",", cfgparam(autorecup_min));
   s = stp_l2f(s, ",", twizy_autorecup_level, 1);
 #endif
@@ -5954,7 +6104,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
 #ifdef OVMS_TWIZY_BATTMON
   // V3.4.0: autorecup
   s = stp_i(s, " BMRP=", (int) twizy_batt[0].max_recup_pwr * 500);
-  s = stp_i(s, " LMRP=", (int) last_max_recup_pwr * 500);
+  s = stp_i(s, " LMRP=", (int) twizy_autorecup_checkpoint * 500);
   s = stp_i(s, " ARP=", cfgparam(autorecup_min));
   s = stp_l2f(s, " ARL=", twizy_autorecup_level, 1);
 #endif //OVMS_TWIZY_BATTMON
@@ -6048,6 +6198,7 @@ BOOL vehicle_twizy_debug_sms(BOOL premsg, char *caller, char *command, char *arg
 void vehicle_twizy_stat_prepmsg(void)
 {
   char *s;
+  unsigned long pwr;
   
   // append to net_scratchpad:
   s = strchr(net_scratchpad, 0);
@@ -6070,9 +6221,16 @@ void vehicle_twizy_stat_prepmsg(void)
       s = stp_rom(s, "Charging Stopped");
     }
 
-    // Power sum:
-    s = stp_ul(s, "\r CHG: ", (twizy_speedpwr[CAN_SPEED_CONST].rec + 11250) / 22500);
-    s = stp_rom(s, " Wh");
+    // Power sums: battery input:
+    pwr = (twizy_speedpwr[CAN_SPEED_CONST].rec + WH_RND) / WH_DIV;
+    s = stp_ul(s, "\r CHG: ", pwr);
+    // Grid drain estimation:
+    //  charge efficiency is ~88.1% w/o 12V charge and ~86.4% with
+    //  (depending on when to cut the grid connection)
+    //  so we're using 87.2% as an average efficiency:
+    pwr = (pwr * 1000 + 436) / 872;
+    s = stp_ul(s, " (~", pwr);
+    s = stp_rom(s, ") Wh");
 
     if (car_chargestate != 4)
     {
@@ -6325,7 +6483,7 @@ void vehicle_twizy_calculate_chargetimes(void)
   {
     // estimate max range:
     if (twizy_soc_min && twizy_soc_min_range)
-      maxrange = ((long) twizy_soc_min_range * 10000) / twizy_soc_min;
+      maxrange = ((long) twizy_soc_min_range * 10000L) / twizy_soc_min;
     else
       maxrange = 0;
 
@@ -6370,7 +6528,7 @@ void vehicle_twizy_calculate_chargetimes(void)
   {
     car_chargelimit_minsremaining_range = (maxrange > 0)
             ? vehicle_twizy_chargetime(
-                ((long) rangelimit * 10000) / maxrange)
+                ((long) rangelimit * 10000L) / maxrange)
             : 0;
   }
 
@@ -7509,9 +7667,7 @@ BOOL vehicle_twizy_fn_smshandler(BOOL premsg, char *caller, char *command, char 
   // Command parsing...
   for (k = 0; vehicle_twizy_sms_cmdtable[k][0] != 0; k++)
   {
-    if (memcmppgm2ram(command,
-                      (char const rom far*)vehicle_twizy_sms_cmdtable[k] + 1,
-                      strlenpgm((char const rom far*)vehicle_twizy_sms_cmdtable[k]) - 1) == 0)
+    if (starts_with(command, (char const rom far*)vehicle_twizy_sms_cmdtable[k] + 1))
     {
       // Call sms handler:
       k = (*vehicle_twizy_sms_hfntable[k])(premsg, caller, command, arguments);
@@ -7538,9 +7694,7 @@ BOOL vehicle_twizy_fn_smsextensions(char *caller, char *command, char *arguments
   // Command parsing...
   for (k = 0; vehicle_twizy_sms_cmdtable[k][0] != 0; k++)
   {
-    if (memcmppgm2ram(command,
-                      (char const rom far*)vehicle_twizy_sms_cmdtable[k] + 1,
-                      strlenpgm((char const rom far*)vehicle_twizy_sms_cmdtable[k]) - 1) == 0)
+    if (starts_with(command, (char const rom far*)vehicle_twizy_sms_cmdtable[k] + 1))
     {
       // we need to check the caller authorization:
       arguments = net_sms_initargs(arguments);
@@ -7629,8 +7783,8 @@ BOOL vehicle_twizy_initialise(void)
 
     twizy_speed = 0;
     twizy_power = 0;
-    twizy_power_min = 32767;
-    twizy_power_max = -32768;
+    twizy_power_min = twizy_current_min = 32767;
+    twizy_power_max = twizy_current_max = -32768;
     twizy_odometer = 0;
     twizy_dist = 0;
 
@@ -7655,20 +7809,10 @@ BOOL vehicle_twizy_initialise(void)
 
 
     // init power statistics:
-    memset(twizy_speedpwr, 0, sizeof twizy_speedpwr);
-    twizy_speed_state = CAN_SPEED_CONST;
-    twizy_speed_distref = 0;
-
-    memset(twizy_levelpwr, 0, sizeof twizy_levelpwr);
-    twizy_level_odo = 0;
-    twizy_level_alt = 0;
-    twizy_level_use = 0;
-    twizy_level_rec = 0;
+    vehicle_twizy_power_reset();
     
     twizy_notify = 0;
 
-    car_time = 0;
-    car_parktime = 0;
 
 #ifdef OVMS_TWIZY_CFG
 
@@ -7680,9 +7824,6 @@ BOOL vehicle_twizy_initialise(void)
     twizy_max_pwr_hi = 0;
 
     twizy_sevcon_fault = 0;
-
-    last_max_recup_pwr = 0;
-    twizy_autorecup_level = 1000;
 
     twizy_cfg.type = 0;
     
@@ -7705,6 +7846,10 @@ BOOL vehicle_twizy_initialise(void)
 
   }
 
+  // Init autopower system:
+  twizy_autorecup_level = twizy_autodrive_level = 1000;
+  twizy_autorecup_checkpoint = twizy_autodrive_checkpoint = 0;
+  
   // Init temporary feature slot defaults on each start:
   sys_features[FEATURE_KICKDOWN_THRESHOLD] = CAN_KICKDOWN_THRESHOLD;
   sys_features[FEATURE_KICKDOWN_COMPZERO] = CAN_KICKDOWN_COMPZERO;
@@ -7839,9 +7984,10 @@ BOOL vehicle_twizy_initialise(void)
   vehicle_fn_smsextensions = &vehicle_twizy_fn_smsextensions;
   vehicle_fn_commandhandler = &vehicle_twizy_fn_commandhandler;
 
-  net_fnbits |= NET_FN_INTERNALGPS; // Require internal GPS
+  net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
   net_fnbits |= NET_FN_SOCMONITOR;    // Require SOC monitor
+  net_fnbits |= NET_FN_CARTIME;       // Get real UTC time from modem
 
   return TRUE;
 }

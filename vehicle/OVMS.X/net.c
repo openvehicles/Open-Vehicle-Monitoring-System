@@ -487,6 +487,7 @@ void net_state_enter(unsigned char newstate)
   switch(net_state)
     {
     case NET_STATE_FIRSTRUN:
+      net_msg_bufpos = NULL;
       net_timeout_rxdata = NET_RXDATA_TIMEOUT;
       led_set(OVMS_LED_GRN,OVMS_LED_ON);
       led_set(OVMS_LED_RED,OVMS_LED_ON);
@@ -1289,7 +1290,9 @@ void net_state_ticker1(void)
           if ((net_notify & NET_NOTIFY_NET_ALARM)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_ALARM); // Clear notification flag
+#ifndef OVMS_NO_VEHICLE_ALERTS
             net_msg_alarm();
+#endif //OVMS_NO_VEHICLE_ALERTS
             return;
             }
           else if ((net_notify & NET_NOTIFY_NET_CHARGE)>0)
@@ -1314,7 +1317,9 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_TRUNK); // Clear notification flag
+#ifndef OVMS_NO_VEHICLE_ALERTS
             net_msg_valettrunk();
+#endif //OVMS_NO_VEHICLE_ALERTS
             return;
             }
           else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
@@ -1349,7 +1354,9 @@ void net_state_ticker1(void)
           if ((net_notify & NET_NOTIFY_SMS_ALARM)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_ALARM); // Clear notification flag
+#ifndef OVMS_NO_VEHICLE_ALERTS
             net_sms_alarm(p);
+#endif //OVMS_NO_VEHICLE_ALERTS
             return;
             }
           else if ((net_notify & NET_NOTIFY_SMS_CHARGE)>0)
@@ -1371,7 +1378,9 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_TRUNK); // Clear notification flag
+#ifndef OVMS_NO_VEHICLE_ALERTS
             net_sms_valettrunk(p);
+#endif //OVMS_NO_VEHICLE_ALERTS
             return;
             }
           else if ((net_notify & NET_NOTIFY_SMS_STAT)>0)

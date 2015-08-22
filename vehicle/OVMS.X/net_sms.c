@@ -44,7 +44,7 @@
 
 #pragma udata
 char *net_sms_argend;
-char *net_msg_bufpos = NULL; // buffer write position for net_put*
+char *net_msg_bufpos; // buffer write position for net_put*
 
 rom char NET_MSG_DENIED[] = "Permission denied";
 rom char NET_MSG_INVALID[] = "Invalid command";
@@ -57,12 +57,19 @@ rom char NET_MSG_LOCK[] = "Vehicle lock requested";
 rom char NET_MSG_UNLOCK[] = "Vehicle unlock requested";
 rom char NET_MSG_VALET[] = "Valet mode requested";
 rom char NET_MSG_UNVALET[] = "Valet mode cancel requested";
+
+#ifndef OVMS_NO_CHARGECONTROL
 rom char NET_MSG_CHARGEMODE[] = "Charge mode change requested";
 rom char NET_MSG_CHARGESTART[] = "Charge start requested";
 rom char NET_MSG_CHARGESTOP[] = "Charge stop requested";
 rom char NET_MSG_COOLDOWN[] = "Cooldown requested";
+#endif //OVMS_NO_CHARGECONTROL
+
+#ifndef OVMS_NO_VEHICLE_ALERTS
 rom char NET_MSG_ALARM[] = "Vehicle alarm is sounding!";
 rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
+#endif //OVMS_NO_VEHICLE_ALERTS
+
 //rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
 rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttps://maps.google.com/maps?q=";
 
@@ -89,6 +96,12 @@ void net_send_sms_start(char* number)
     delay100(2);
     }
 
+  // ATT: the following code tries to prepend the current time to ALL
+  //    outbound SMS. It relies on a) all SMS leaving enough space
+  //    to add "HH:MM:SS\r " = 10 chars and b) ALL SMS senders to
+  //    call net_send_sms_start() BEFORE preparing the message in
+  //    net_scratchpad -- otherwise the prepd message is lost.
+#ifndef OVMS_NO_SMSTIME
   if ((car_time > 315360000)&&
       ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SSMSTIME)==0))
     {
@@ -98,6 +111,8 @@ void net_send_sms_start(char* number)
     s = stp_rom(s, "\r ");
     net_puts_ram(net_scratchpad);
     }
+#endif //OVMS_NO_SMSTIME
+  
   }
 
 void net_send_sms_finish(void)
@@ -128,6 +143,7 @@ void net_send_sms_rom(char* number, const rom char* message)
   net_send_sms_finish();
   }
 
+#if 0 // unused code
 void net_send_sms_ram(char* number, const char* message)
   {
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
@@ -136,6 +152,7 @@ void net_send_sms_ram(char* number, const char* message)
   net_puts_ram(message);
   net_send_sms_finish();
   }
+#endif
 
 BOOL net_sms_stat(char* number)
   {
@@ -153,6 +170,7 @@ BOOL net_sms_stat(char* number)
   return TRUE;
   }
 
+#ifndef OVMS_NO_CTP
 BOOL net_sms_ctp(char* number, char *arguments)
   {
   char *p;
@@ -168,7 +186,9 @@ BOOL net_sms_ctp(char* number, char *arguments)
 
   return TRUE;
   }
+#endif //OVMS_NO_CTP
 
+#ifndef OVMS_NO_VEHICLE_ALERTS
 void net_sms_alarm(char* number)
   {
   char *p;
@@ -192,6 +212,7 @@ void net_sms_valettrunk(char* number)
   net_puts_rom(NET_MSG_VALETTRUNK);
   net_send_sms_finish();
   }
+#endif //OVMS_NO_VEHICLE_ALERTS
 
 void net_sms_socalert(char* number)
   {
@@ -927,10 +948,12 @@ BOOL net_sms_handle_reset(char *caller, char *command, char *arguments)
   return FALSE;
   }
 
+#ifndef OVMS_NO_CTP
 BOOL net_sms_handle_ctp(char *caller, char *command, char *arguments)
   {
   return net_sms_ctp(caller, arguments);
   }
+#endif //OVMS_NO_CTP
 
 BOOL net_sms_handle_temps(char *caller, char *command, char *arguments)
   {
@@ -1002,7 +1025,9 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
 #endif // OVMS_NO_CHARGECONTROL
     "3VERSION",
     "3RESET",
+#ifndef OVMS_NO_CTP
     "3CTP",
+#endif //OVMS_NO_CTP
     "3TEMPS",
 #ifdef OVMS_ACCMODULE
     "2ACC ",
@@ -1047,7 +1072,9 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
 #endif // OVMS_NO_CHARGECONTROL
   &net_sms_handle_version,
   &net_sms_handle_reset,
+#ifndef OVMS_NO_CTP
   &net_sms_handle_ctp,
+#endif //OVMS_NO_CTP
   &net_sms_handle_temps,
 #ifdef OVMS_ACCMODULE
   &acc_handle_sms,

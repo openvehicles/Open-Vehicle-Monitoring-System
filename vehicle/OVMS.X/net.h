@@ -164,6 +164,7 @@ extern unsigned char net_notify_suppresscount; // To suppress STAT notifications
 #define NET_NOTIFY_ALARM      NET_NOTIFY_NET_ALARM
 
 extern char net_scratchpad[NET_BUF_MAX];
+extern char net_buf[NET_BUF_MAX];
 
 void net_puts_rom(const rom char *data);
 void net_puts_ram(const char *data);

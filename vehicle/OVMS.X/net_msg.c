@@ -727,7 +727,6 @@ void net_msg_cmd_in(char* msg)
   {
   // We have received a command message (pointed to by <msg>)
   char *d;
-  int k;
 
   for (d=msg;(*d != 0)&&(*d != ',');d++) ;
   if (*d == ',')
@@ -844,11 +843,19 @@ BOOL net_msg_cmd_exec(void)
 
     case 7: // SMS command wrapper
 
-      // process command:
+      // set net_put output buffer to net_msg_scratchpad:
       net_msg_bufpos = net_msg_scratchpad;
-      k = net_sms_in(par_get(PARAM_REGPHONE), net_msg_cmd_msg);
+      
+      // Nasty workaround: if we process the cmd from net_scratchpad it
+      // will fail on char position 16/17, probably due to some C18 bank switching
+      // bug (?)... Workaround is to copy the cmd into net_buf:
+      stp_ram(net_buf, net_msg_cmd_msg);
+      
+      // process command:
+      k = net_sms_in(par_get(PARAM_REGPHONE), net_buf);
+      
+      // output is now in net_msg_scratchpad, reset net_put buffer:
       net_msg_bufpos = NULL;
-      // output is now in net_msg_scratchpad
 
       // create return string:
       s = stp_i(net_scratchpad, NET_MSG_CMDRESP, net_msg_cmd_code);
@@ -978,9 +985,11 @@ void net_msg_forward_sms(char *caller, char *SMS)
   net_msg_start();
   strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PA");
   strcatpgm2ram(net_scratchpad,(char const rom far*)"SMS FROM: ");
-  strcat(net_scratchpad, caller);
+  strcat(net_scratchpad, caller); // max 19 chars
   strcatpgm2ram(net_scratchpad,(char const rom far*)" - MSG: ");
-  SMS[170]=0; // Hacky limit on the max size of an SMS forwarded
+  // scratchpad max 199 chars, rom strings 25 + caller 19 = 44 chars
+  // => max payload = 155 chars
+  SMS[155]=0; // Hacky limit on the max size of an SMS forwarded
   strcat(net_scratchpad, SMS);
   net_msg_encode_puts();
   net_msg_send();
@@ -1158,6 +1167,7 @@ char *net_prep_stat(char *s)
   return s;
 }
 
+#ifndef OVMS_NO_CTP
 char *net_prep_ctp(char *s, char *argument)
 {
   int imStart = car_idealrange;
@@ -1267,6 +1277,7 @@ char *net_prep_ctp(char *s, char *argument)
     }
   return s;
 }
+#endif //OVMS_NO_CTP
 
 void net_msg_alert(void)
 {
@@ -1278,6 +1289,7 @@ void net_msg_alert(void)
   net_prep_stat(s);
 }
 
+#ifndef OVMS_NO_VEHICLE_ALERTS
 void net_msg_alarm(void)
   {
   char *p;
@@ -1299,6 +1311,7 @@ void net_msg_valettrunk(void)
   net_msg_encode_puts();
   net_msg_send();
   }
+#endif //OVMS_NO_VEHICLE_ALERTS
 
 void net_msg_socalert(void)
   {

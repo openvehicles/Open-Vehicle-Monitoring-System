@@ -74,6 +74,9 @@ unsigned long MiFromKm(unsigned long km);
 void JdToYMD(unsigned long jd, int *pyear, int *pmonth, int *pday);
 unsigned long JdFromYMD(int year, int month, int day);
 
+// string prefix check (replacement for memcmppgm2ram/strncmppgm2ram)
+BOOL starts_with(char *s, const rom char *pfx);
+
 // sprintf replacement utils: stp string print
 char *stp_rom(char *dst, const rom char *val);
 char *stp_ram(char *dst, const char *val);
