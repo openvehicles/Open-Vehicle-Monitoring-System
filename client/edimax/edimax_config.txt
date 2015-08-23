@@ -1,0 +1,10 @@
+# Edimax Smart Plug LAN access parameters:
+EDIMAX_IP=192.168.1.33
+EDIMAX_USER=admin
+EDIMAX_PASS=1234
+
+# Switch on Edimax at or below SOC level:
+SOC_ON=25
+
+# Switch off Edimax at or above SOC level:
+SOC_OFF=80

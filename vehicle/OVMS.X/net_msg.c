@@ -92,8 +92,10 @@ rom char NET_MSG_CMDOK[] = ",0";
 rom char NET_MSG_CMDINVALIDSYNTAX[] = ",1,Invalid syntax";
 rom char NET_MSG_CMDNOCANWRITE[] = ",1,No write access to CAN";
 rom char NET_MSG_CMDINVALIDRANGE[] = ",1,Parameter out of range";
+#ifndef OVMS_NO_CHARGECONTROL
 rom char NET_MSG_CMDNOCANCHARGE[] = ",1,Cannot charge (charge port closed)";
 rom char NET_MSG_CMDNOCANSTOPCHARGE[] = ",1,Cannot stop charge (charge not in progress)";
+#endif // OVMS_NO_CHARGECONTROL
 rom char NET_MSG_CMDUNIMPLEMENTED[] = ",3";
 
 
@@ -344,13 +346,24 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", car_stale_timer);
   s = stp_l2f(s, ",", (unsigned long)car_cac100, 2);
   s = stp_i(s, ",", car_chargefull_minsremaining);
-  s = stp_i(s, ",", car_chargelimit_minsremaining);
-  s = stp_i(s, ",", car_chargelimit_rangelimit);
+  s = stp_i(s, ",",
+            ((car_chargelimit_minsremaining_range >= 0)
+          && (car_chargelimit_minsremaining_range < car_chargelimit_minsremaining_soc))
+          ? car_chargelimit_minsremaining_range
+          : car_chargelimit_minsremaining_soc); // ETR for first limit reached
+  s = stp_i(s, ",", (*p == 'M')
+          ? car_chargelimit_rangelimit
+          : KmFromMi(car_chargelimit_rangelimit));
   s = stp_i(s, ",", car_chargelimit_soclimit);
   s = stp_i(s, ",", car_coolingdown);
   s = stp_i(s, ",", car_cooldown_tbattery);
   s = stp_i(s, ",", car_cooldown_timelimit);
   s = stp_i(s, ",", car_chargeestimate);
+  s = stp_i(s, ",", car_chargelimit_minsremaining_range);
+  s = stp_i(s, ",", car_chargelimit_minsremaining_soc);
+  s = stp_i(s, ",", (*p == 'M')
+          ? car_max_idealrange
+          : KmFromMi(car_max_idealrange));
 
   return net_msg_encode_statputs(stat, &crc_stat);
 }
@@ -440,9 +453,9 @@ char net_msgp_environment(char stat)
   s = stp_i(s, ",", car_tpem);
   s = stp_i(s, ",", car_tmotor);
   s = stp_i(s, ",", car_tbattery);
-  s = stp_i(s, ",", car_trip);
-  s = stp_ul(s, ",", car_odometer);
-  s = stp_i(s, ",", car_speed);
+  s = stp_i(s, ",", (can_mileskm=='M') ? car_trip : KmFromMi(car_trip));
+  s = stp_ul(s, ",", (can_mileskm=='M') ? car_odometer : KmFromMi(car_odometer));
+  s = stp_i(s, ",", car_speed); // no conversion, stored in user unit
   s = stp_ul(s, ",", park);
   s = stp_i(s, ",", car_ambient_temp);
   s = stp_i(s, ",", car_doors3);
@@ -793,7 +806,9 @@ BOOL net_msg_cmd_exec(void)
         *p++ = 0;
         // At this point, <net_msg_cmd_msg> points to the command, and <p> to the param value
         k = atoi(net_msg_cmd_msg);
-        if ((k>=0)&&(k<PARAM_FEATURE_S))
+        // Check validity of param key and value (no empty value allowed for auth params):
+        if ( (k>=0) && (k<PARAM_FEATURE_S)
+                && ((k>PARAM_MODULEPASS) || (*p!=0)) )
           {
           par_set(k, p);
           STP_OK(net_scratchpad, net_msg_cmd_code);
@@ -824,6 +839,36 @@ BOOL net_msg_cmd_exec(void)
 
     case 6: // CHARGE ALERT (params unused)
       net_msg_alert();
+      net_msg_encode_puts();
+      break;
+
+    case 7: // SMS command wrapper
+
+      // process command:
+      net_msg_bufpos = net_msg_scratchpad;
+      k = net_sms_in(par_get(PARAM_REGPHONE), net_msg_cmd_msg);
+      net_msg_bufpos = NULL;
+      // output is now in net_msg_scratchpad
+
+      // create return string:
+      s = stp_i(net_scratchpad, NET_MSG_CMDRESP, net_msg_cmd_code);
+      s = stp_i(s, ",", 1-k); // 0=ok 1=error
+      if (k)
+        {
+        *s++ = ',';
+        for (p = net_msg_scratchpad; *p; p++)
+          {
+            if (*p == '\n')
+              *s++ = '\r'; // translate LF to CR
+            else if (*p == ',')
+              *s++ = ';'; // translate , to ;
+            else
+              *s++ = *p;
+          }
+        *s = 0;
+        }
+
+      // send return string:
       net_msg_encode_puts();
       break;
 
@@ -872,7 +917,8 @@ BOOL net_msg_cmd_exec(void)
       net_msg_encode_puts();
       delay100(2);
       break;
-    default:
+
+  default:
       return FALSE;
     }
 
@@ -1069,14 +1115,14 @@ char *net_prep_stat(char *s)
       if (car_chargelimit_soclimit > 0)
         {
         s = stp_i(s, "\r ", car_chargelimit_soclimit);
-        s = stp_i(s,"%: ",car_chargelimit_minsremaining);
+        s = stp_i(s,"%: ",car_chargelimit_minsremaining_soc);
         s = stp_rom(s," mins");
         }
       if (car_chargelimit_rangelimit > 0)
         {
         s = stp_i(s, "\r ", (can_mileskm == 'K')?KmFromMi(car_chargelimit_rangelimit):car_chargelimit_rangelimit);
         s = stp_rom(s, unit);
-        s = stp_i(s,": ",car_chargelimit_minsremaining);
+        s = stp_i(s,": ",car_chargelimit_minsremaining_range);
         s = stp_rom(s," mins");
         }
     }

@@ -1,0 +1,8 @@
+### Edimax control by SOC level ###
+
+# Send switch on/off infos to:
+MAILTO=your@email.org
+
+# Schedule SOC check once per minute:
+# (note: change client path according to your installation)
+* * * * * cd $HOME/ovms/client && ./edimax_check.sh

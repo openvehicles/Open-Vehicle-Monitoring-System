@@ -50,11 +50,18 @@ extern rom char NET_MSG_CMDUNIMPLEMENTED[];
 #define STP_NOCANSTOPCHARGE(buf,cmd)  stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDNOCANSTOPCHARGE)
 #define STP_UNIMPLEMENTED(buf,cmd)    stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDUNIMPLEMENTED)
 
-extern char net_msg_serverok;
-extern char net_msg_sendpending;
-extern int  net_msg_cmd_code;
-extern char* net_msg_cmd_msg;
-extern char net_msg_scratchpad[NET_BUF_MAX];
+extern char net_msg_serverok;               // flag
+extern char net_msg_sendpending;            // flag & counter
+
+extern int  net_msg_cmd_code;               // currently processed msg command code
+extern char* net_msg_cmd_msg;               // ...and parameters, see  net_msg_cmd_in()
+
+extern char net_msg_scratchpad[NET_BUF_MAX]; // encoding buffer for paranoid mode
+    // note: net_msg_scratchpad is only used as a temporary buffer
+    // by net_msg_encode_puts() -- it can be reused as a temp buffer
+    // in other places as long as net_msg_encode_puts() is not called.
+
+extern char *net_msg_bufpos; // write position in net_msg_scratchpad in wrapper mode
 
 void net_msg_init(void);
 void net_msg_disconnected(void);

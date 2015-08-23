@@ -158,7 +158,7 @@ void diag_handle_sms(char *command, char *arguments)
     strcpy(net_caller,(const char*)"OVMSDIAG");
     }
   net_puts_rom("\r\n");
-  net_sms_in(net_caller,arguments,strlen(arguments));
+  net_sms_in(net_caller,arguments);
   }
 
 void diag_handle_msg(char *command, char *arguments)

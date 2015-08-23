@@ -44,8 +44,10 @@
 
 #pragma udata
 char *net_sms_argend;
+char *net_msg_bufpos = NULL; // buffer write position for net_put*
 
 rom char NET_MSG_DENIED[] = "Permission denied";
+rom char NET_MSG_INVALID[] = "Invalid command";
 rom char NET_MSG_REGISTERED[] = "Your phone has been registered as the owner.";
 rom char NET_MSG_PASSWORD[] = "Module password has been changed.";
 rom char NET_MSG_PARAMS[] = "Parameters have been set.";
@@ -70,15 +72,23 @@ void net_send_sms_start(char* number)
   {
   if (net_state == NET_STATE_DIAGMODE)
     {
+    // DIAG mode: screen output
     net_puts_rom("# ");
+    }
+  else if (net_msg_bufpos)
+    {
+    // NET SMS wrapper mode: nothing to do here
+    // net_put* will write to net_msg_bufpos
     }
   else
     {
+    // MODEM mode:
     net_puts_rom("AT+CMGS=\"");
     net_puts_ram(number);
     net_puts_rom("\"\r\n");
     delay100(2);
     }
+
   if ((car_time > 315360000)&&
       ((sys_features[FEATURE_CARBITS]&FEATURE_CB_SSMSTIME)==0))
     {
@@ -94,10 +104,17 @@ void net_send_sms_finish(void)
   {
   if (net_state == NET_STATE_DIAGMODE)
     {
+    // DIAG mode:
     net_puts_rom("\r\n");
+    }
+  else if (net_msg_bufpos)
+    {
+    // NET SMS wrapper mode: 0-terminate buffer
+    *net_msg_bufpos = 0;
     }
   else
     {
+    // MODEM mode:
     net_puts_rom("\x1a");
     }
   }
@@ -218,7 +235,7 @@ void net_sms_12v_alert(char* number)
 unsigned char net_sms_checkcaller(char *caller)
   {
   char *p = par_get(PARAM_REGPHONE);
-  if (strncmp(p,caller,strlen(p)) == 0)
+  if (*p && strncmp(p,caller,strlen(p)) == 0)
     return 1;
   else
     {
@@ -232,7 +249,7 @@ unsigned char net_sms_checkpassarg(char *caller, char *arguments)
   {
   char *p = par_get(PARAM_MODULEPASS);
 
-  if ((arguments != NULL)&&(strncmp(p,arguments,strlen(p))==0))
+  if ((arguments != NULL)&&(*p && strncmp(p,arguments,strlen(p))==0))
     return 1;
   else
     {
@@ -315,6 +332,14 @@ BOOL net_sms_handle_passq(char *caller, char *command, char *arguments)
 
 BOOL net_sms_handle_pass(char *caller, char *command, char *arguments)
   {
+  // Password may not be empty:
+  if (*arguments == 0)
+  {
+    net_send_sms_start(caller);
+    net_puts_rom(NET_MSG_INVALID);
+    return TRUE;
+  }
+  
   par_set(PARAM_MODULEPASS, arguments);
 
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
@@ -807,6 +832,8 @@ BOOL net_sms_handle_unvalet(char *caller, char *command, char *arguments)
   return TRUE;
   }
 
+#ifndef OVMS_NO_CHARGECONTROL
+
 // Set charge mode (params: 0=standard, 1=storage,3=range,4=performance) and optional current limit
 BOOL net_sms_handle_chargemode(char *caller, char *command, char *arguments)
   {
@@ -867,6 +894,9 @@ BOOL net_sms_handle_cooldown(char *caller, char *command, char *arguments)
 #endif
   return TRUE;
   }
+
+#endif // OVMS_NO_CHARGECONTROL
+
 
 BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
   {
@@ -964,10 +994,12 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "2UNLOCK",
     "2VALET",
     "2UNVALET",
+#ifndef OVMS_NO_CHARGECONTROL
     "2CHARGEMODE ",
     "2CHARGESTART",
     "2CHARGESTOP",
     "2COOLDOWN",
+#endif // OVMS_NO_CHARGECONTROL
     "3VERSION",
     "3RESET",
     "3CTP",
@@ -1007,10 +1039,12 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_unlock,
   &net_sms_handle_valet,
   &net_sms_handle_unvalet,
+#ifndef OVMS_NO_CHARGECONTROL
   &net_sms_handle_chargemode,
   &net_sms_handle_chargestart,
   &net_sms_handle_chargestop,
   &net_sms_handle_cooldown,
+#endif // OVMS_NO_CHARGECONTROL
   &net_sms_handle_version,
   &net_sms_handle_reset,
   &net_sms_handle_ctp,
@@ -1059,7 +1093,7 @@ BOOL net_sms_checkauth(char authmode, char *caller, char **arguments)
 // It tries to find a matching command handler based on the
 // command tables.
 
-void net_sms_in(char *caller, char *buf, unsigned char pos)
+BOOL net_sms_in(char *caller, char *buf)
   {
   // The buf contains an SMS command
   // and caller contains the caller telephone number
@@ -1080,12 +1114,12 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
       char *arguments = net_sms_initargs(p);
 
       if (!net_sms_checkauth(sms_cmdtable[k][0], caller, &arguments))
-          return;
+          return FALSE; // auth error
 
       if (vehicle_fn_smshandler != NULL)
         {
         if (vehicle_fn_smshandler(TRUE, caller, buf, arguments))
-          return;
+          return TRUE; // handled
         }
 
       result = (*sms_hfntable[k])(caller, buf, arguments);
@@ -1095,7 +1129,7 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
           vehicle_fn_smshandler(FALSE, caller, buf, arguments);
         net_send_sms_finish();
         }
-      return;
+      return result;
       }
     }
 
@@ -1103,11 +1137,12 @@ void net_sms_in(char *caller, char *buf, unsigned char pos)
     {
     // Try passing the command to the vehicle module for handling...
     if (vehicle_fn_smsextensions(caller, buf, p))
-      return;
+      return TRUE; // handled
     }
 
   // SMS didn't match any command pattern, forward to user via net msg
   net_msg_forward_sms(caller, buf);
+  return FALSE; // unknown command
   }
 
 BOOL net_sms_handle_help(char *caller, char *command, char *arguments)

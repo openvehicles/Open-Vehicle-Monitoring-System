@@ -46,7 +46,7 @@ BOOL net_sms_stat(char* number);
 void net_sms_alarm(char* number);
 void net_sms_valettrunk(char* number);
 BOOL net_sms_checkauth(char authmode, char *caller, char **arguments);
-void net_sms_in(char *caller, char *buf, unsigned char pos);
+BOOL net_sms_in(char *caller, char *buf);
 void net_sms_socalert(char* number);
 void net_sms_12v_alert(char* number);
 
