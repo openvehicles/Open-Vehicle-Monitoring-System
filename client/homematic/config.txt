@@ -1,0 +1,28 @@
+#
+# V 0.1
+#
+# This is Freeware - Use at your own risk
+#  Question? freeware#meinbriefkasten.eu or gherman Twizy-forum http://www.vectrix-forum.de/
+#
+# Homematic access parameters: 
+#		Get DeviceIDs using HQ-WebUI extension in homematic
+# 
+# AccuUpperThreshold_ID and AccuLowerThreshold_ID
+# these are 2 number variables [0 - 100] on homematic
+#  if charge of vehicle drops below LowerThreshold, the powerplug will be switched on
+#  if charge of vehicle reaches UpperThreshold, the powerplug will be switched off
+#
+HOMEMATIC_IP=192.168.3.4
+SwitchTwizy_ID=2797
+AccuUpperThreshold_ID=7865
+AccuLowerThreshold_ID=7864
+
+#
+# GIS Koordinates of Home
+#  use google maps to get coordinates. 
+#    Browse to the place you call home click right and select What is here? 
+#    (or similar, sorry only have a german version "Was ist hier?")
+#    Example coordinates are Berlin Reichstag
+#
+HOME_GIS_LONG=52.518591
+HOME_GIS_LAT=13.376171

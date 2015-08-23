@@ -1,0 +1,51 @@
+INTENDED USE
+============
+
+For vehicles that do not support charge control via CAN: automatically switch on/off charging according to the current SOC level using a homematic plug.
+
+This can be used to keep the vehicle charged when parking for long periods, and/or to terminate charging below 100%.
+
+
+REQUIREMENTS
+============
+
+1. An running Homematic Homeautomation system with installed extension 
+  - XML-API V 1.10 (required) 
+  - HQ-WebUI (recommended)
+  ==> http://www.homematic.com/
+   
+2. Configured OVMS perl client.
+
+3. Some sort of server running some sort of cron daemon.
+
+
+CONFIGURATION
+=============
+
+1. Setup your Homematic.
+- install XML-API 1.10
+- recommended for ID-retrieval HQ_WEBUI
+- configure systemvariable for BatteryUpperThreshold and BatteryLowerThreshold (number 0-100)
+- Fill in plausible values for BatteryUpperThreshold and BatteryLowerThreshold (Upper = 100, Lower = 90)
+
+2. configuration config.txt
+- IP of homematic 
+- Device IDs in homematic 
+- GPS-coordinates of home (see config.txt for more explanations on how to get correct coordinates)
+
+3. Add the "check.sh" script to your cron tab, schedule i.e. once per minute or every 3-5 minutes. (see example crontab).
+
+That's all.
+
+
+OPERATION
+=========
+
+On each invocation "check.sh" will read the current SOC level of your car using the "status.pl" script.
+
+If car is at home and the SOC level is at or below the BatteryLowerThreshhold threshold configured, the Homematic plug will be switched on. If it's at or above the BatteryUpperThreshhold level, the plug will be switched off.
+If the cars leaves home before BatteryUpperThreshold is reached the plug will be switched off.
+
+The switching is done by the HM_Switch function in "Homematic.sh" script (expecting "true" or "false" as it's single argument), for more details look into the scripts, detailed explanation is provided there
+
+
