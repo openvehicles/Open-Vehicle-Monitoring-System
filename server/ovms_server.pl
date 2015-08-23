@@ -482,7 +482,7 @@ sub io_terminate
       }
     elsif ($conns{$fn}{'clienttype'} eq 'A')
       {
-      delete $app_conns{$vehicleid};
+      delete $app_conns{$vehicleid}{$fn};
       # Notify any listening cars
       my $cfn = $car_conns{$vehicleid};
       if (defined $cfn)
