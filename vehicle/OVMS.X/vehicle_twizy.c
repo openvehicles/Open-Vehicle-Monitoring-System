@@ -256,6 +256,8 @@
     - New: feature #14 & 64 = send notification on charge starts
     - Fixed charge time estimation for SOC > 94%
     - ISR performance optimization
+    - car_SOC no longer rounded to avoid 99.5% == 100%
+    - Trip end odometer saved & used for RT-PWR-Log charge entries
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -459,6 +461,12 @@ unsigned int twizy_soc_min; // min SOC reached during last discharge
 unsigned int twizy_soc_min_range; // twizy_range at min SOC
 unsigned int twizy_soc_max; // max SOC reached during last charge
 unsigned int twizy_soc_tripstart; // SOC at last power on
+
+#pragma udata overlay vehicle_overlay_data2
+
+unsigned int twizy_soc_tripend; // SOC at last power off
+
+#pragma udata overlay vehicle_overlay_data
 
 unsigned int twizy_range; // range in km
 unsigned int twizy_speed; // current speed in 1/100 km/h
@@ -1956,6 +1964,7 @@ UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc, int autorecup_ref, 
 //      sets lower limit on auto power adjustment
 {
   UINT err;
+  UINT level;
 
   // parameter validation:
 
@@ -2002,10 +2011,18 @@ UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc, int autorecup_ref, 
   
 #endif //OVMS_TWIZY_BATTMON
 
-  // set:
-  if (err = writesdo(0x2920,0x03,scale(CFG.DefaultRecup,CFG.DefaultRecupPrc,neutral_prc,0,twizy_autorecup_level)))
+  // set neutral recup level:
+  level = scale(CFG.DefaultRecup,CFG.DefaultRecupPrc,neutral_prc,0,1000);
+  if (twizy_autorecup_level != 1000)
+      level = (((long) level) * twizy_autorecup_level) / 1000;
+  if (err = writesdo(0x2920,0x03,level))
     return err;
-  if (err = writesdo(0x2920,0x04,scale(CFG.DefaultRecup,CFG.DefaultRecupPrc,brake_prc,0,twizy_autorecup_level)))
+  
+  // set brake recup level:
+  level = scale(CFG.DefaultRecup,CFG.DefaultRecupPrc,brake_prc,0,1000);
+  if (twizy_autorecup_level != 1000)
+      level = (((long) level) * twizy_autorecup_level) / 1000;
+  if (err = writesdo(0x2920,0x04,level))
     return err;
 
   return 0;
@@ -3940,7 +3957,7 @@ char vehicle_twizy_pwrlog_msgp(char stat)
   // trip distance driven in km based on odometer (more real than pwr_dist):
   s = stp_l2f(s, ",", (twizy_odometer - twizy_odometer_tripstart), 2);
   // trip SOC diff:
-  s = stp_l2f(s, ",", ABS((long)twizy_soc_tripstart - (long)twizy_soc), 2);
+  s = stp_l2f(s, ",", ABS((long)twizy_soc_tripstart - (long)twizy_soc_tripend), 2);
 
   // trip speed/delta statistics:
   s = stp_l2f(s, ",", (twizy_speedpwr[CAN_SPEED_CONST].spdcnt > 0)
@@ -5063,7 +5080,9 @@ BOOL vehicle_twizy_state_ticker1(void)
   //car_time++;
 
   // SOC: convert to percent:
-  car_SOC = (twizy_soc + 50) / 100;
+  // (no rounding here to avoid home automation scripts to take e.g. 99.5% for 100%
+  //    and to make the car_SOC reflect the Twizy display SOC)
+  car_SOC = twizy_soc / 100;
 
   // ODOMETER: convert to miles/10:
   car_odometer = MiFromKm(twizy_odometer / 10);
@@ -5173,6 +5192,9 @@ BOOL vehicle_twizy_state_ticker1(void)
 
     car_parktime = car_time-1; // Record it as 1 second ago, so non zero report
 
+    // set trip references:
+    twizy_soc_tripend = twizy_soc;
+    
     net_req_notification(NET_NOTIFY_ENV);
 
     // send power statistics if 25+ Wh used:
@@ -5765,9 +5787,9 @@ void vehicle_twizy_power_prepmsg(char mode)
       s = stp_rom(s, "%");
     }
 
-    if (twizy_soc <= twizy_soc_tripstart)
+    if (twizy_soc_tripend <= twizy_soc_tripstart)
     {
-      s = stp_l2f(s, " SOC-", (twizy_soc_tripstart - twizy_soc + 5) / 10, 1);
+      s = stp_l2f(s, " SOC-", (twizy_soc_tripstart - twizy_soc_tripend + 5) / 10, 1);
       s = stp_l2f(s, "%=", (twizy_soc + 5) / 10, 1);
       s = stp_rom(s, "%");
     }
@@ -7787,6 +7809,9 @@ BOOL vehicle_twizy_initialise(void)
     twizy_power_max = twizy_current_max = -32768;
     twizy_odometer = 0;
     twizy_dist = 0;
+
+    twizy_soc_tripstart = twizy_soc_tripend = 0;
+    twizy_odometer_tripstart = 0;
 
 #ifdef OVMS_TWIZY_BATTMON
 
