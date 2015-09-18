@@ -26,7 +26,7 @@ my $vehicle_id       = $config->val('client','vehicle_id','TESTCAR');
 my $server_password  = $config->val('client','server_password','NETPASS');
 my $module_password  = $config->val('client','module_password','OVMS');
 
-my $server_ip        = $config->val('client','server_ip','64.111.70.40');
+my $server_ip        = $config->val('client','server_ip','54.243.136.230');
 
 
 #####

@@ -547,7 +547,7 @@ function openvehicles_provision_form($form, &$form_state, $user, $vehicleid)
 
     $form['ap_servergroup']['ap_serverip'] = array(
       '#title' => t('OVMS Server'),
-      '#default_value' => '64.111.70.40',
+      '#default_value' => '54.243.136.230',
       '#required' => TRUE,
       '#input' => TRUE,
       '#size' => 15,
