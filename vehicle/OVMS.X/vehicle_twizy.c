@@ -256,8 +256,11 @@
     - New: feature #14 & 64 = send notification on charge starts
     - Fixed charge time estimation for SOC > 94%
     - ISR performance optimization
+
+ * 3.6.1  30 Aug 2015 (Michael Balzer)
     - car_SOC no longer rounded to avoid 99.5% == 100%
     - Trip end odometer saved & used for RT-PWR-Log charge entries
+    - Fix: battery alert state also remembered for IP notification
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -356,7 +359,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.6.0";
+rom char vehicle_twizy_version[] = "3.6.1";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -565,22 +568,6 @@ unsigned int twizy_sevcon_fault;    // SEVCON highest active fault
 
 #pragma udata overlay vehicle_overlay_data2
 
-UINT8 twizy_autorecup_checkpoint;   // change detection for autorecup function
-UINT twizy_autorecup_level;         // autorecup: current recup level (per mille)
-
-UINT8 twizy_autodrive_checkpoint;   // change detection for autopower function
-UINT twizy_autodrive_level;         // autopower: current drive level (per mille)
-
-signed int twizy_current;           // momentary battery current in 1/4 A, negative=charging
-signed int twizy_current_min;       // min battery current in GPS log section
-signed int twizy_current_max;       // max battery current in GPS log section
-
-volatile UINT32 twizy_charge_use;   // coulomb count: batt current used (discharged) 1/400 As
-volatile UINT32 twizy_charge_rec;   // coulomb count: batt current recovered (charged) 1/400 As
-// cAh = [1/400 As] / 400 / 3600 * 100
-#define CAH_DIV (14400L)
-#define CAH_RND (7200L)
-
 volatile UINT8 twizy_accel_pedal;           // accelerator pedal (running avg)
 volatile UINT8 twizy_kickdown_level;        // kickdown detection & pedal max level
 UINT8 twizy_kickdown_hold;                  // kickdown hold countdown (1/10 seconds)
@@ -599,10 +586,27 @@ UINT8 twizy_kickdown_hold;                  // kickdown hold countdown (1/10 sec
     ? 0 \
     : (((int)(pedal) - (int)sys_features[FEATURE_KICKDOWN_COMPZERO]) >> 3)))
 
-#pragma udata overlay vehicle_overlay_data
-
-
 #endif // OVMS_TWIZY_CFG
+
+
+UINT8 twizy_autorecup_checkpoint;   // change detection for autorecup function
+UINT twizy_autorecup_level;         // autorecup: current recup level (per mille)
+
+UINT8 twizy_autodrive_checkpoint;   // change detection for autopower function
+UINT twizy_autodrive_level;         // autopower: current drive level (per mille)
+
+
+signed int twizy_current;           // momentary battery current in 1/4 A, negative=charging
+signed int twizy_current_min;       // min battery current in GPS log section
+signed int twizy_current_max;       // max battery current in GPS log section
+
+volatile UINT32 twizy_charge_use;   // coulomb count: batt current used (discharged) 1/400 As
+volatile UINT32 twizy_charge_rec;   // coulomb count: batt current recovered (charged) 1/400 As
+// cAh = [1/400 As] / 400 / 3600 * 100
+#define CAH_DIV (14400L)
+#define CAH_RND (7200L)
+
+#pragma udata overlay vehicle_overlay_data
 
 
 
@@ -7212,6 +7216,10 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
       }
     }
 
+    // Remember last alert state notified:
+    twizy_batt[0].last_volt_alerts = twizy_batt[0].volt_alerts;
+    twizy_batt[0].last_temp_alerts = twizy_batt[0].temp_alerts;
+
   } // cmd == CMD_BatteryAlert
 
   else // cmd == CMD_BatteryStatus (default)
@@ -7876,8 +7884,10 @@ BOOL vehicle_twizy_initialise(void)
   twizy_autorecup_checkpoint = twizy_autodrive_checkpoint = 0;
   
   // Init temporary feature slot defaults on each start:
+#ifdef OVMS_TWIZY_CFG
   sys_features[FEATURE_KICKDOWN_THRESHOLD] = CAN_KICKDOWN_THRESHOLD;
   sys_features[FEATURE_KICKDOWN_COMPZERO] = CAN_KICKDOWN_COMPZERO;
+#endif // OVMS_TWIZY_CFG
 
 #ifdef OVMS_TWIZY_BATTMON
   twizy_batt_sensors_state = BATT_SENSORS_START;
