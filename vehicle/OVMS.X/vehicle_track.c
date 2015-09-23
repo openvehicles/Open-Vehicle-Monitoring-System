@@ -53,11 +53,11 @@ BOOL vehicle_track_initialise(void)
 
   // Vehicle specific data initialisation
   car_stale_timer = -1; // Timed charging is not supported for OVMS TRACK
-  car_time = 0;
 
   // Hook in...
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
+  net_fnbits |= NET_FN_CARTIME;       // Require car_time support
   car_doors1bits.CarON = 1;           // Fake car is ON (for GPS)
   car_speed = 1;                      // Fake car moving (for GPS)
   
