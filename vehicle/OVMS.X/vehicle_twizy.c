@@ -4192,9 +4192,11 @@ BOOL vehicle_twizy_poll0(void)
             twizy_current_max = twizy_current;
 
           // calculate power:
+#ifdef OVMS_TWIZY_BATTMON
           twizy_power = (twizy_current < 0)
                   ? -((((long) -twizy_current) * twizy_batt[0].volt_act + 128) >> 8)
                   : ((((long) twizy_current) * twizy_batt[0].volt_act + 128) >> 8);
+#endif // #ifdef OVMS_TWIZY_BATTMON
           // ...in 256/40 W = 6.4 W
 
           // set min/max:
