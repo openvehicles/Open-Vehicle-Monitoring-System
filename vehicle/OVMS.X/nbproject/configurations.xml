@@ -1048,7 +1048,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_NONE;OVMS_CAR_RENAULTTWIZY;OVMS_HW_V2;OVMS_INTERNALGPS;OVMS_NO_CHARGECONTROL;OVMS_NO_CTP;OVMS_NO_VEHICLE_ALERTS;OVMS_NO_SMSTIME"/>
+                  value="OVMS_CAR_NONE;OVMS_CAR_RENAULTTWIZY;OVMS_HW_V2;OVMS_INTERNALGPS;OVMS_TWIZY_BATTMON;OVMS_TWIZY_CFG;OVMS_NO_CHARGECONTROL;OVMS_NO_CTP;OVMS_NO_VEHICLE_ALERTS;OVMS_NO_SMSTIME"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -1131,6 +1131,8 @@
         </C18-LD>
         <C18LanguageToolchain>
         </C18LanguageToolchain>
+      </item>
+      <item path="logging.c" ex="true" overriding="false">
       </item>
       <item path="vehicle_kyburz.c" ex="true" overriding="false">
         <C18>
