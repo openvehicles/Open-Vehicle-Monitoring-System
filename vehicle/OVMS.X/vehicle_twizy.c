@@ -2033,6 +2033,8 @@ UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc, int autorecup_ref, 
 }
 
 
+#ifdef OVMS_TWIZY_BATTMON
+
 // Auto recup & drive power update function:
 // check for BMS max pwr change, update SEVCON settings accordingly
 // this is called by vehicle_twizy_state_ticker1() = approx. once per second
@@ -2063,6 +2065,8 @@ void vehicle_twizy_cfg_autopower(void)
     vehicle_twizy_cfg_drive(cfgparam(drive), ref, minprc);
   }
 }
+
+#endif //OVMS_TWIZY_BATTMON
 
 
 UINT vehicle_twizy_cfg_ramps(int start_prm, int accel_prc, int decel_prc, int neutral_prc, int brake_prc)
@@ -4196,6 +4200,8 @@ BOOL vehicle_twizy_poll0(void)
           twizy_power = (twizy_current < 0)
                   ? -((((long) -twizy_current) * twizy_batt[0].volt_act + 128) >> 8)
                   : ((((long) twizy_current) * twizy_batt[0].volt_act + 128) >> 8);
+#else
+          twizy_power = 0; // unknown
 #endif // #ifdef OVMS_TWIZY_BATTMON
           // ...in 256/40 W = 6.4 W
 
@@ -4214,7 +4220,7 @@ BOOL vehicle_twizy_poll0(void)
 
           // add to speed state:
           twizy_speedpwr[twizy_speed_state].dist += t;
-          if (twizy_power > 0)
+          if (twizy_current > 0)
           {
             twizy_speedpwr[twizy_speed_state].use += twizy_power;
             twizy_level_use += twizy_power;
