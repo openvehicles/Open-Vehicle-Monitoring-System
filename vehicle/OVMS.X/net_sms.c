@@ -570,6 +570,7 @@ BOOL net_sms_handle_gprsq(char *caller, char *command, char *arguments)
   s = stp_s(s, "\r\n APN:", par_get(PARAM_GPRSAPN));
   s = stp_s(s, "\r\n User:", par_get(PARAM_GPRSUSER));
   s = stp_s(s, "\r\n Password:", par_get(PARAM_GPRSPASS));
+  s = stp_s(s, "\r\n DNS:", par_get(PARAM_GPRSDNS));
   s = stp_s(s, "\r\n GSM:", car_gsmcops);
 
   if (!inputs_gsmgprs())
@@ -609,6 +610,14 @@ BOOL net_sms_handle_gprs(char *caller, char *command, char *arguments)
         par_set(PARAM_GPRSPASS, arguments+1);
       else
         par_set(PARAM_GPRSPASS, arguments);
+      }
+    arguments = net_sms_nextarg(arguments);
+    if (arguments != NULL)
+      {
+      if ((arguments[0]=='-')&&(arguments[1]==0))
+        par_set(PARAM_GPRSDNS, arguments+1);
+      else
+        par_set(PARAM_GPRSDNS, arguments);
       }
     }
   gprsq_result = net_sms_handle_gprsq(caller, command, arguments);

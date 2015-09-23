@@ -94,9 +94,10 @@
 #define NETINIT_CIICR        3
 #define NETINIT_CIPHEAD      4
 #define NETINIT_CIFSR        5
-#define NETINIT_CLPORT       6
-#define NETINIT_CIPSTART     7
-#define NETINIT_CONNECTING   8
+#define NETINIT_CDNSCFG      6
+#define NETINIT_CLPORT       7
+#define NETINIT_CIPSTART     8
+#define NETINIT_CONNECTING   9
 
 // NET data
 extern unsigned char net_state;                // The current state

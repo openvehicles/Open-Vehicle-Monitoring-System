@@ -60,6 +60,7 @@
 #define PARAM_ACC_3       0x12
 #define PARAM_ACC_4       0x13
 
+#define PARAM_GPRSDNS     0x16
 #define PARAM_TIMEZONE    0x17
 
 #define PARAM_FEATURE_BASE 0x10

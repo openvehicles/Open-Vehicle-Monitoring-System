@@ -104,6 +104,7 @@ rom char NET_COPS[] = "AT+COPS=0,1;+COPS?\r";
 rom char NET_WAKEUP[] = "AT\r";
 rom char NET_HANGUP[] = "ATH\r";
 rom char NET_CREG_CIPSTATUS[] = "AT+CREG?;+CIPSTATUS;+CCLK?;+CSQ\r";
+rom char NET_CREG_STATUS[] = "AT+CREG?\r";
 rom char NET_IPR_SET[] = "AT+IPR=9600\r"; // sets fixed baud rate for the modem
 
 ////////////////////////////////////////////////////////////////////////
@@ -483,6 +484,12 @@ void net_state_enter(unsigned char newstate)
   {
   char *p;
 
+// Enable for debugging (via serial port) of state transitions
+//  p = stp_x(net_scratchpad, "\r\n# ST-ENTER: ", newstate);
+//  p = stp_rom(p, "\r\n");
+//  net_puts_ram(net_scratchpad);
+//  delay100(1);
+  
   net_state = newstate;
   switch(net_state)
     {
@@ -646,7 +653,7 @@ void net_state_enter(unsigned char newstate)
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
       delay100(2);
       net_timeout_goto = NET_STATE_HARDRESET;
-      net_timeout_ticks = 240;
+      net_timeout_ticks = 120;
       net_msg_disconnected();
       p = par_get(PARAM_GSMLOCK);
       if (*p==0)
@@ -668,7 +675,7 @@ void net_state_enter(unsigned char newstate)
       led_set(OVMS_LED_GRN,NET_LED_COPS);
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
       net_timeout_goto = NET_STATE_COPSWDONE;
-      net_timeout_ticks = 30;
+      net_timeout_ticks = 300;
       break;
     case NET_STATE_COPSWDONE:
       if (net_cops_tries++ < 20)
@@ -901,6 +908,17 @@ void net_state_activity()
             break;
           case NETINIT_CIFSR:
             net_puts_rom("AT+CIFSR\r");
+            break;
+          case NETINIT_CDNSCFG:
+            b = par_get(PARAM_GPRSDNS);
+            if (*b == 0)
+              net_puts_rom("AT\r");
+            else
+              {
+              net_puts_rom("AT+CDNSCFG=\"");
+              net_puts_ram(b);
+              net_puts_rom("\"\r");
+              }
             break;
           case NETINIT_CLPORT:
             net_puts_rom("AT+CLPORT=\"TCP\",\"6867\"\r");
@@ -1218,10 +1236,18 @@ void net_state_ticker1(void)
         led_set(OVMS_LED_RED,NET_LED_ERRCOPS);
         }
       break;
+    case NET_STATE_COPSWAIT:
+      if ((net_timeout_ticks % 10)==0)
+        {
+        delay100(2);
+        net_puts_rom(NET_CREG_STATUS);
+        while(vUARTIntTxBufDataCnt>0) { delay100(1); } // Wait for TX flush
+        delay100(2); // Wait for stable result
+        }
+      break;
     case NET_STATE_SOFTRESET:
       net_state_enter(NET_STATE_FIRSTRUN);
       break;
-
 
     case NET_STATE_READY:
 
