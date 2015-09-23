@@ -204,20 +204,18 @@ BOOL vehicle_obdii_initialise(void)
   BRGCON3 = 0x02;
 
   CIOCON = 0b00100000; // CANTX pin will drive VDD when recessive
+  vehicle_fn_poll0 = &vehicle_obdii_poll0;
+  vehicle_fn_ticker1 = &vehicle_obdii_ticker1;
   if (sys_features[FEATURE_CANWRITE]>0)
     {
     CANCON = 0b00000000;  // Normal mode
+    vehicle_poll_setpidlist(vehicle_obdii_polls);
+    vehicle_poll_setstate(0);
     }
   else
     {
     CANCON = 0b01100000; // Listen only mode, Receive bufer 0
     }
-
-  // Hook in...
-  vehicle_fn_poll0 = &vehicle_obdii_poll0;
-  vehicle_fn_ticker1 = &vehicle_obdii_ticker1;
-  vehicle_poll_setpidlist(vehicle_obdii_polls);
-  vehicle_poll_setstate(0);
 
   net_fnbits |= NET_FN_INTERNALGPS;   // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR;    // Require 12v monitor
