@@ -28,6 +28,30 @@
 ; THE SOFTWARE.
 */
 
+2014-09-23 2.8.1       Firmware 2.8.1
+                       # Full build for twizzy, in production (include CFG and BATTMON)
+                       # Make COPS more lenient.
+                       # Support GPRS DNS configuration via parameter #
+                       # Permit compilation of vehicle_twizy without OVMS_TWIZY_BATTMON
+                       # Require car_time for vehicle_track.c
+                       # Hook-in for vehicle_obdii
+                       # Update default QC server IP to 54.197.255.127
+                       # Twizy V3.6.1
+                       # Nissan Leaf on EVCAN bus, and enhancements to vehicle code to support
+                       # Include charge status in DIAG
+                       # Revision to SOC and idealrange calculations, from Tom Saxtons suggestions
+                       # Fixed D msg trip/odometer output conversion
+                       # Consistency fix: new STAT ranges converted to user units
+                       # Comments regarding 104.8576ms timer1
+                       # Precision changes to led_carticker (ovms mailing list subject "Tick math" October 2014)
+                       # First implemention of net_fnbits NET_FN_CARTIME
+                       # carbit feature FEATURE_CB_SSMSTIME to allow suppress sms time comments
+                       # Allow ACC acc_handle_msg to choose to handle a particular message
+                       # Include timezone in time shown in sms responses
+                       # Make ALL sms responses include time, if possible
+                       # SMS "MODULE?" output in "MODULE" parameter order (user suggestion)
+                       # And a host of other small changes (including a lot of twizzy work)
+
 2014-03-10 2.6.5       Firmware 2.6.5
                        # Change car_tmotor to signed int
                        # Call vehicle_fn_poll0() in OVMS_POLLER, if no poll list defined
