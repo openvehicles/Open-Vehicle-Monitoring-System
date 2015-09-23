@@ -26,7 +26,7 @@ MP_CC="/Applications/microchip/mplabc18/v3.40/bin/mcc18"
 MP_AS="/Applications/microchip/mplabc18/v3.40/bin/../mpasm/MPASMWIN"
 MP_LD="/Applications/microchip/mplabc18/v3.40/bin/mplink"
 MP_AR="/Applications/microchip/mplabc18/v3.40/bin/mplib"
-DEP_GEN=${MP_JAVA_PATH}java -jar "/Applications/microchip/mplabx/mplab_ide.app/Contents/Resources/mplab_ide/mplab_ide/modules/../../bin/extractobjectdependencies.jar" 
+DEP_GEN=${MP_JAVA_PATH}java -jar "/Applications/microchip/mplabx/mplab_ide.app/Contents/Resources/mplab_ide/mplab_ide/modules/../../bin/extractobjectdependencies.jar"
 MP_CC_DIR="/Applications/microchip/mplabc18/v3.40/bin"
 # MP_CPPC_DIR is not defined
 # MP_BC_DIR is not defined
