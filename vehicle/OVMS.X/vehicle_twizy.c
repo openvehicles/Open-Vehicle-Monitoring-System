@@ -261,6 +261,7 @@
     - car_SOC no longer rounded to avoid 99.5% == 100%
     - Trip end odometer saved & used for RT-PWR-Log charge entries
     - Fix: battery alert state also remembered for IP notification
+    - Ideal range calculated with temperature influence approximation
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -5047,6 +5048,27 @@ BOOL vehicle_twizy_state_ticker10th(void)
 
 
 ////////////////////////////////////////////////////////////////////////
+// vehicle_twizy_get_maxrange: get MAXRANGE with temperature compensation
+//
+
+int vehicle_twizy_get_maxrange(void)
+{
+  int maxRange;
+  
+  // Read user configuration:
+  maxRange = sys_features[FEATURE_MAXRANGE];
+
+  // Temperature compensation:
+  //   - assumes standard maxRange specified at 20°C
+  //   - temperature influence approximation: 0.6 km / °C
+  if (maxRange != 0)
+    maxRange -= ((20 - car_tbattery) * 6) / 10;
+  
+  return maxRange;
+}
+
+
+////////////////////////////////////////////////////////////////////////
 // twizy_state_ticker1()
 // State Model: Per-second ticker
 // This function is called approximately once per second, and gives
@@ -5070,7 +5092,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 
   suffSOC = sys_features[FEATURE_SUFFSOC];
   suffRange = sys_features[FEATURE_SUFFRANGE];
-  maxRange = sys_features[FEATURE_MAXRANGE];
+  maxRange = vehicle_twizy_get_maxrange();
 
   if (can_mileskm == 'K')
   {
@@ -6501,7 +6523,7 @@ void vehicle_twizy_calculate_chargetimes(void)
   if (sys_features[FEATURE_MAXRANGE] > 0)
   {
     // max range defined by user (in user units):
-    maxrange = sys_features[FEATURE_MAXRANGE];
+    maxrange = vehicle_twizy_get_maxrange();
 
     if (can_mileskm == 'M')
     {
