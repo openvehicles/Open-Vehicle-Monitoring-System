@@ -257,11 +257,14 @@
     - Fixed charge time estimation for SOC > 94%
     - ISR performance optimization
 
- * 3.6.1  30 Aug 2015 (Michael Balzer)
+ * 3.6.1  26 Sep 2015 (Michael Balzer)
     - car_SOC no longer rounded to avoid 99.5% == 100%
     - Trip end odometer saved & used for RT-PWR-Log charge entries
     - Fix: battery alert state also remembered for IP notification
     - Ideal range calculated with temperature influence approximation
+    - Battery capacity estimation
+    - Charge start restarts SOC window (to get most recent BMS SOC)
+    - Charge interruption no longer restarts power sums & SOC window
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -331,9 +334,10 @@
 #define FEATURE_KICKDOWN_THRESHOLD  0x01 // Kickdown threshold (pedal change)
 #define FEATURE_KICKDOWN_COMPZERO   0x02 // Kickdown pedal compensation zero point
 
-#define FEATURE_SUFFSOC             0x0A // Sufficient SOC
-#define FEATURE_SUFFRANGE           0x0B // Sufficient range
-#define FEATURE_MAXRANGE            0x0C // Maximum ideal range
+#define FEATURE_SUFFSOC             0x0A // Sufficient SOC [%]
+#define FEATURE_SUFFRANGE           0x0B // Sufficient range [Mi/km]
+#define FEATURE_MAXRANGE            0x0C // Maximum ideal range [Mi/km]
+#define FEATURE_CAPACITY            0x0D // Battery capacity [1/100 %]
 
 
 // Twizy specific params:
@@ -606,6 +610,13 @@ volatile UINT32 twizy_charge_rec;   // coulomb count: batt current recovered (ch
 // cAh = [1/400 As] / 400 / 3600 * 100
 #define CAH_DIV (14400L)
 #define CAH_RND (7200L)
+
+// battery capacity helpers:
+UINT32 twizy_cc_charge;             // coulomb count: charge sum in CC phase 1/400 As
+UINT twizy_cc_volt;                 // end of CC phase detection
+UINT twizy_cc_soc;                  // SOC at end of CC phase
+UINT twizy_bat_cap_prc;             // actual capacity in 1/100 percent of...
+#define BATT_NET_CAPACITY_CAH 10800L // usable capacity of fresh battery in cAh
 
 #pragma udata overlay vehicle_overlay_data
 
@@ -3983,6 +3994,8 @@ char vehicle_twizy_pwrlog_msgp(char stat)
   s = stp_l2f(s, ",", (twizy_charge_use + CAH_RND) / CAH_DIV, 2);
   s = stp_l2f(s, ",", (twizy_charge_rec + CAH_RND) / CAH_DIV, 2);
   
+  // V3.6.1: battery capacity (%)
+  s = stp_l2f(s, ",", twizy_bat_cap_prc, 2);
 
   // send:
 
@@ -5069,6 +5082,20 @@ int vehicle_twizy_get_maxrange(void)
 
 
 ////////////////////////////////////////////////////////////////////////
+// vehicle_twizy_get_capacity: get FEATURE_CAPACITY
+//
+
+void vehicle_twizy_get_capacity(void)
+{
+  // we need FEATURE_CAPACITY as int (sys_features[] is char):
+  twizy_bat_cap_prc = myatof(par_get(PARAM_FEATURE_BASE + FEATURE_CAPACITY)) * 100;
+  
+  // compatibility for feature list output:
+  sys_features[FEATURE_CAPACITY] = (twizy_bat_cap_prc + 50) / 100;
+}
+
+
+////////////////////////////////////////////////////////////////////////
 // twizy_state_ticker1()
 // State Model: Per-second ticker
 // This function is called approximately once per second, and gives
@@ -5102,6 +5129,8 @@ BOOL vehicle_twizy_state_ticker1(void)
     if (maxRange > 0)
       maxRange = MiFromKm(maxRange);
   }
+  
+  vehicle_twizy_get_capacity();
 
 
   /***************************************************************************
@@ -5308,19 +5337,24 @@ BOOL vehicle_twizy_state_ticker1(void)
     // If we've not been charging before...
     if (car_chargestate > 2)
     {
-      // ...enter state 1=charging:
-      car_chargestate = 1;
-
       // reset SOC max:
       twizy_soc_max = twizy_soc;
+
+      // reset SOC min & power sums if not resuming from charge interruption:
+      if (car_chargestate != 21)
+      {
+        twizy_soc_min = twizy_soc;
+        twizy_soc_min_range = twizy_range;
+        vehicle_twizy_power_reset();
+      }
 
       #ifdef OVMS_TWIZY_BATTMON
         // reset battery monitor:
         vehicle_twizy_battstatus_reset();
       #endif // OVMS_TWIZY_BATTMON
 
-      // reset power sums:
-      vehicle_twizy_power_reset();
+      // ...enter state 1=charging:
+      car_chargestate = 1;
 
       // Send charge stat:
       net_req_notification(NET_NOTIFY_STAT);
@@ -5350,14 +5384,25 @@ BOOL vehicle_twizy_state_ticker1(void)
         net_req_notification(NET_NOTIFY_CHARGE);
         net_req_notification(NET_NOTIFY_STAT);
       }
-
-        // ...else set "topping off" from 94% SOC:
+      
+      // ...else set "topping off" from 94% SOC:
       else if ((car_chargestate != 2) && (twizy_soc >= 9400))
       {
         // ...enter state 2=topping off:
         car_chargestate = 2;
         net_req_notification(NET_NOTIFY_STAT);
       }
+
+#ifdef OVMS_TWIZY_BATTMON
+      // battery capacity estimation: detect end of CC phase
+      // (maximum battery voltage level reached)
+      if (twizy_batt[0].volt_max > twizy_cc_volt)
+      {
+        twizy_cc_volt = twizy_batt[0].volt_max;
+        twizy_cc_soc = twizy_soc;
+        twizy_cc_charge = twizy_charge_rec;
+      }
+#endif //OVMS_TWIZY_BATTMON
 
     }
 
@@ -5392,8 +5437,41 @@ BOOL vehicle_twizy_state_ticker1(void)
       // yes, check if we've reached 100.00% SOC:
       if (twizy_soc_max >= 10000)
       {
+        UINT32 charge;
+        UINT cap_prc;
+        
         // yes, means "done"
         car_chargestate = 4;
+        
+#ifdef OVMS_TWIZY_BATTMON
+        // calculate battery capacity if charge started below 40% SOC:
+        if (twizy_soc_min < 4000)
+        {
+          // scale CC charge part by SOC range:
+          charge = (twizy_cc_charge / (twizy_cc_soc - twizy_soc_min)) * twizy_cc_soc;
+          // add CV charge part:
+          charge += (twizy_charge_rec - twizy_cc_charge);
+          
+          // convert to cAh:
+          charge = (charge + CAH_RND) / CAH_DIV;
+          // convert to 1/100 percent:
+          cap_prc = (charge * 10000) / BATT_NET_CAPACITY_CAH;
+          
+          // smooth over 10 samples:
+          if (twizy_bat_cap_prc > 0)
+          {
+            cap_prc = (twizy_bat_cap_prc * 9L + cap_prc + 5) / 10;
+          }
+          twizy_bat_cap_prc = cap_prc;
+          
+          // store in EEPROM:
+          stp_l2f(par_value, "", twizy_bat_cap_prc, 2);
+          par_write(PARAM_FEATURE_BASE + FEATURE_CAPACITY);
+          // feature list compatibility:
+          sys_features[FEATURE_CAPACITY] = (twizy_bat_cap_prc + 50) / 100;
+        }
+#endif //OVMS_TWIZY_BATTMON
+
       }
       else
       {
@@ -5427,6 +5505,10 @@ BOOL vehicle_twizy_state_ticker1(void)
       twizy_soc_min_range = twizy_range;
     }
   }
+  
+  
+  // convert battery capacity percent to framework cAh:
+  car_cac100 = (twizy_bat_cap_prc * BATT_NET_CAPACITY_CAH) / 10000;
 
 
   /***************************************************************************
@@ -5648,6 +5730,9 @@ void vehicle_twizy_power_reset(void)
   twizy_level_odo = 0;
   twizy_level_alt = 0;
 
+  twizy_cc_charge = 0;
+  twizy_cc_soc = 0;
+  twizy_cc_volt = 0;
 }
 
 
@@ -6341,6 +6426,14 @@ void vehicle_twizy_stat_prepmsg(void)
   {
     s = stp_l2f(s, "\r ODO: ", KmFromMi(car_odometer), 1);
     s = stp_rom(s, " km");
+  }
+  
+  // BATTERY CAPACITY:
+  if (twizy_bat_cap_prc > 0)
+  {
+    s = stp_l2f(s, "\r CAP: ", (twizy_bat_cap_prc + 5) / 10, 1);
+    s = stp_l2f(s, "% ", (car_cac100 + 5) / 10, 1);
+    s = stp_rom(s, " Ah");
   }
 
 }
@@ -7923,7 +8016,14 @@ BOOL vehicle_twizy_initialise(void)
   twizy_batt_sensors_state = BATT_SENSORS_START;
 #endif // OVMS_TWIZY_BATTMON
 
+  // read FEATURE_CAPACITY:
+  vehicle_twizy_get_capacity();
 
+  
+  //
+  // CAN interface configuration:
+  //
+  
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
