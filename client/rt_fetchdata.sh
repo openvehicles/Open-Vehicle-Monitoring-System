@@ -81,7 +81,7 @@ echo "Fetch RT-PWR-Log..."
 	HEAD+=",motor_temp,pem_temp"
 	HEAD+=",trip_length_km,trip_soc_usage"
 	HEAD+=",trip_avg_speed_kph,trip_avg_accel_kps,trip_avg_decel_kps"
-	HEAD+=",charge_used_ah,charge_recd_ah"
+	HEAD+=",charge_used_ah,charge_recd_ah,batt_capacity_prc"
 	echo $HEAD
 	./cmd.pl 32 "RT-PWR-Log"
 ) > "${NAME}-pwrlog.csv"
