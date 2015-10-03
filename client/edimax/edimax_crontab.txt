@@ -3,6 +3,6 @@
 # Send switch on/off infos to:
 MAILTO=your@email.org
 
-# Schedule SOC check once per minute:
+# Schedule SOC check every 2 minutes:
 # (note: change client path according to your installation)
-* * * * * cd $HOME/ovms/client && ./edimax_check.sh
+*/2 * * * * cd $HOME/ovms/client && ./edimax_check.sh 2>/dev/null
