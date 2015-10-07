@@ -470,6 +470,13 @@ void vehicle_initialise(void)
     vehicle_kyburz_initialise();
     }
 #endif
+#ifdef OVMS_CAR_KIASOUL
+  else if (memcmppgm2ram(p, (char const rom far*)"KS", 2) == 0)
+    {
+    void vehicle_kiasoul_initialise(void);
+    vehicle_kiasoul_initialise();
+    }
+#endif
 #ifdef OVMS_CAR_NONE
   else
     {
