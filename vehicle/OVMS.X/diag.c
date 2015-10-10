@@ -132,6 +132,7 @@ void diag_ticker(void)
     net_puts_rom("\r\n# NOTIFY CHARGE ALERT\r\n");
     net_notify &= ~(NET_NOTIFY_NET_CHARGE|NET_NOTIFY_SMS_CHARGE);
     }
+#ifndef OVMS_NO_VEHICLE_ALERTS
   if (net_notify & (NET_NOTIFY_NET_TRUNK|NET_NOTIFY_SMS_TRUNK))
     {
     net_puts_rom("\r\n# NOTIFY TRUNK ALERT\r\n");
@@ -142,6 +143,7 @@ void diag_ticker(void)
     net_puts_rom("\r\n# NOTIFY ALARM ALERT\r\n");
     net_notify &= ~(NET_NOTIFY_NET_ALARM|NET_NOTIFY_SMS_ALARM);
     }
+#endif //OVMS_NO_VEHICLE_ALERTS
   }
 
 // These are the diagnostic command handlers

@@ -1313,15 +1313,16 @@ void net_state_ticker1(void)
                 && (net_msg_serverok==1) && (net_msg_sendpending==0))
           {
           delay100(10);
+#ifndef OVMS_NO_VEHICLE_ALERTS
           if ((net_notify & NET_NOTIFY_NET_ALARM)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_ALARM); // Clear notification flag
-#ifndef OVMS_NO_VEHICLE_ALERTS
             net_msg_alarm();
-#endif //OVMS_NO_VEHICLE_ALERTS
             return;
             }
-          else if ((net_notify & NET_NOTIFY_NET_CHARGE)>0)
+          else
+#endif //OVMS_NO_VEHICLE_ALERTS
+          if ((net_notify & NET_NOTIFY_NET_CHARGE)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_CHARGE); // Clear notification flag
             if (net_notify_suppresscount==0)
@@ -1340,14 +1341,14 @@ void net_state_ticker1(void)
             if (net_fnbits & NET_FN_12VMONITOR) net_msg_12v_alert();
             return;
             }
+#ifndef OVMS_NO_VEHICLE_ALERTS
           else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_TRUNK); // Clear notification flag
-#ifndef OVMS_NO_VEHICLE_ALERTS
             net_msg_valettrunk();
-#endif //OVMS_NO_VEHICLE_ALERTS
             return;
             }
+#endif //OVMS_NO_VEHICLE_ALERTS
           else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_STAT); // Clear notification flag
@@ -1377,15 +1378,16 @@ void net_state_ticker1(void)
           {
           delay100(10);
           p = par_get(PARAM_REGPHONE);
+#ifndef OVMS_NO_VEHICLE_ALERTS
           if ((net_notify & NET_NOTIFY_SMS_ALARM)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_ALARM); // Clear notification flag
-#ifndef OVMS_NO_VEHICLE_ALERTS
             net_sms_alarm(p);
-#endif //OVMS_NO_VEHICLE_ALERTS
             return;
             }
-          else if ((net_notify & NET_NOTIFY_SMS_CHARGE)>0)
+          else
+#endif //OVMS_NO_VEHICLE_ALERTS
+          if ((net_notify & NET_NOTIFY_SMS_CHARGE)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_CHARGE); // Clear notification flag
             if (net_notify_suppresscount==0)
@@ -1401,14 +1403,14 @@ void net_state_ticker1(void)
             if (net_fnbits & NET_FN_12VMONITOR) net_sms_12v_alert(p);
             return;
             }
+#ifndef OVMS_NO_VEHICLE_ALERTS
           else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_TRUNK); // Clear notification flag
-#ifndef OVMS_NO_VEHICLE_ALERTS
             net_sms_valettrunk(p);
-#endif //OVMS_NO_VEHICLE_ALERTS
             return;
             }
+#endif //OVMS_NO_VEHICLE_ALERTS
           else if ((net_notify & NET_NOTIFY_SMS_STAT)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_STAT); // Clear notification flag
