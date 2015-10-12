@@ -2758,12 +2758,14 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // success message:
       s = stp_rom(s, "OK, power cycle to activate!");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x2920,0x05) == 0)
         s = stp_ul(s, " fwd=", twizy_sdo.data);
       if (readsdo(0x3813,0x34) == 0)
         s = stp_ul(s, " wrn=", twizy_sdo.data);
       s = vehicle_twizy_fmt_powermap(s);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 
@@ -2801,10 +2803,12 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // success message:
       s = stp_rom(s, "OK, power cycle to activate!");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x6076,0x00) == 0)
         s = stp_ul(s, " trq=", twizy_sdo.data - CFG.DeltaMapTrq);
       s = vehicle_twizy_fmt_powermap(s);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 
@@ -2857,6 +2861,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       s = stp_rom(s, "OK");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x3813,0x24+6) == 0)
         s = stp_ul(s, " D4=", twizy_sdo.data);
@@ -2870,6 +2875,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
         s = stp_ul(s, " B4=", twizy_sdo.data);
       if (readsdo(0x3813,0x07+7) == 0)
         s = stp_ul(s, "@", twizy_sdo.data);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 
@@ -2910,10 +2916,12 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // success message:
       s = stp_rom(s, "OK");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x2920,0x01) == 0)
         s = stp_ul(s, " pow=", twizy_sdo.data);
       s = stp_l2f(s, " auto%=", twizy_autodrive_level, 1);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 
@@ -2949,12 +2957,14 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // success message:
       s = stp_rom(s, "OK");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x2920,0x03) == 0)
         s = stp_ul(s, " ntr=", twizy_sdo.data);
       if (readsdo(0x2920,0x04) == 0)
         s = stp_ul(s, " brk=", twizy_sdo.data);
       s = stp_l2f(s, " auto%=", twizy_autorecup_level, 1);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 
@@ -2989,6 +2999,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // success message:
       s = stp_rom(s, "OK");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x291c,0x02) == 0)
         s = stp_ul(s, " rpst=", twizy_sdo.data);
@@ -2996,6 +3007,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
         s = stp_ul(s, " rpac=", twizy_sdo.data);
       if (readsdo(0x2920,0x0e) == 0)
         s = stp_ul(s, " rpbk=", twizy_sdo.data);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 
@@ -3021,11 +3033,13 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // success message:
       s = stp_rom(s, "OK");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x2920,0x0f) == 0)
         s = stp_ul(s, " rlacc=", twizy_sdo.data);
       if (readsdo(0x2920,0x10) == 0)
         s = stp_ul(s, " rldec=", twizy_sdo.data);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 
@@ -3048,11 +3062,13 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // success message:
       s = stp_rom(s, "OK");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x290a,0x01) == 0)
         s = stp_ul(s, " scrv=", twizy_sdo.data);
       if (readsdo(0x290a,0x03) == 0)
         s = stp_ul(s, " srmp=", twizy_sdo.data);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 
@@ -3082,11 +3098,13 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
       // success message:
       s = stp_rom(s, "OK");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x3813,0x06) == 0)
         s = stp_ul(s, " bon=", twizy_sdo.data);
       if (readsdo(0x2910,0x01) == 0)
         s = stp_x(s, " flgs=", twizy_sdo.data);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 #endif // OVMS_TWIZY_CFG_BRAKELIGHT
@@ -3101,6 +3119,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
     else {
       s = stp_rom(s, "OK");
 
+#ifdef OVMS_TWIZY_DEBUG
       // debug:
       if (readsdo(0x2920,0x05) == 0)
         s = stp_ul(s, " fwd=", twizy_sdo.data);
@@ -3117,6 +3136,7 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
 
       if (readsdo(0x291c,0x02) == 0)
         s = stp_ul(s, " rpst=", twizy_sdo.data);
+#endif //OVMS_TWIZY_DEBUG
     }
   }
 
