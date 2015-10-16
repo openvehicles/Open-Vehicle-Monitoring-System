@@ -68,11 +68,11 @@ UINT ks_speed;                // in [kph]
 // 
 //    typedef struct
 //    {
-//      unsigned int moduleid; // replying module id
-//      unsigned int rmoduleid; // requesting module id or 0
+//      unsigned int moduleid; // send request to (0 = end of list)
+//      unsigned int rmoduleid; // expect response from (0 = broadcast)
 //      unsigned char type; // see below
 //      unsigned int pid; // the PID to request
-//      unsigned int polltime[VEHICLE_POLL_NSTATES];
+//      unsigned int polltime[VEHICLE_POLL_NSTATES]; // poll frequency
 //    } vehicle_pid_t;
 //
 // The following polling types are currently supported:
@@ -91,8 +91,8 @@ UINT ks_speed;                // in [kph]
 
 rom vehicle_pid_t vehicle_kiasoul_polls[] = 
 {
-    { 0x7ea, 0, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {  120, 120, 0 } }, // VIN
-    { 0, 0, 0x00, 0x00, { 0, 0, 0 } }
+  { 0x7e2, 0, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {  120, 120, 0 } }, // VIN
+  { 0, 0, 0x00, 0x00, { 0, 0, 0 } }
 };
 
 
@@ -142,6 +142,8 @@ BOOL vehicle_kiasoul_poll0(void)
 
 BOOL vehicle_kiasoul_poll1(void)
   {
+  UINT val1;
+  
   // reset bus activity timeout:
   ks_busactive = KS_BUS_TIMEOUT;
 
@@ -160,7 +162,9 @@ BOOL vehicle_kiasoul_poll1(void)
       
     case 0x200:
       // Estimated range:
-      ks_estrange = (UINT)CAN_BYTE(2) << 1;
+      val1 = (UINT)CAN_BYTE(2) << 1;
+      if (val1 > 0)
+        ks_estrange = val1;
       break;
       
     case 0x4f2:
@@ -177,7 +181,9 @@ BOOL vehicle_kiasoul_poll1(void)
       
     case 0x594:
       // SOC:
-      ks_soc = (UINT)CAN_BYTE(5) * 5 + CAN_BYTE(6);
+      val1 = (UINT)CAN_BYTE(5) * 5 + CAN_BYTE(6);
+      if (val1 > 0)
+        ks_soc = val1;
       break;
       
     }

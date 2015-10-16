@@ -121,6 +121,7 @@ void vehicle_poll_poller(void)
       vehicle_poll_pid = vehicle_poll_plcur->pid;
       if (vehicle_poll_plcur->rmoduleid != 0)
         {
+        // send to <moduleid>, listen to response from <rmoduleid>:
         vehicle_poll_moduleid_low = vehicle_poll_plcur->rmoduleid;
         vehicle_poll_moduleid_high = vehicle_poll_plcur->rmoduleid;
         TXB0CON = 0;
@@ -129,6 +130,7 @@ void vehicle_poll_poller(void)
         }
       else
         {
+        // broadcast: send to 0x7df, listen to all responses:
         vehicle_poll_moduleid_low = 0x7e8;
         vehicle_poll_moduleid_high = 0x7ef;
         TXB0CON = 0;
