@@ -379,14 +379,14 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
     // output ks_diag_01:
     s = stp_rom(s, "DIAG_01:");
     for (i=0; i<sizeof(ks_diag_01); i++)
-      s = stp_sx(s, (i%4)?" ":"\n", ks_diag_01[i]);
+      s = stp_sx(s, (i%7)?"":"\n", ks_diag_01[i]);
     }
   else if (arguments && (arguments[0]=='5'))
     {
     // output ks_diag_05:
     s = stp_rom(s, "DIAG_05:");
     for (i=0; i<sizeof(ks_diag_05); i++)
-      s = stp_sx(s, (i%4)?" ":"\n", ks_diag_05[i]);
+      s = stp_sx(s, (i%7)?"":"\n", ks_diag_05[i]);
     }
   else
     {
