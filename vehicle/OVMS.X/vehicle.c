@@ -140,6 +140,9 @@ void vehicle_poll_poller(void)
       switch (vehicle_poll_plcur->type)
         {
         case VEHICLE_POLL_TYPE_OBDIICURRENT:
+        case VEHICLE_POLL_TYPE_OBDIIFREEZE:
+        case VEHICLE_POLL_TYPE_OBDIISESSION:
+          // 8 bit PID request for single frame response:
           TXB0D0 = 0x02;
           TXB0D1 = vehicle_poll_type;
           TXB0D2 = vehicle_poll_pid;
@@ -152,6 +155,8 @@ void vehicle_poll_poller(void)
           TXB0CON = 0b00001000; // mark for transmission
           break;
         case VEHICLE_POLL_TYPE_OBDIIVEHICLE:
+        case VEHICLE_POLL_TYPE_OBDIIGROUP:
+          // 8 bit PID request for multi frame response:
           vehicle_poll_ml_remain = 0;
           TXB0D0 = 0x02;
           TXB0D1 = vehicle_poll_type;
@@ -164,9 +169,8 @@ void vehicle_poll_poller(void)
           TXB0DLC = 0b00001000; // data length (8)
           TXB0CON = 0b00001000; // mark for transmission
           break;
-        case VEHICLE_POLL_TYPE_OBDIIGROUP:
-          break;
         case VEHICLE_POLL_TYPE_OBDIIEXTENDED:
+          // 16 bit PID request:
           TXB0D0 = 0x03;
           TXB0D1 = VEHICLE_POLL_TYPE_OBDIIEXTENDED;    // Get extended PID
           TXB0D2 = vehicle_poll_pid >> 8;
@@ -197,23 +201,28 @@ BOOL vehicle_poll_poll0(void)
   switch (vehicle_poll_type)
     {
     case VEHICLE_POLL_TYPE_OBDIICURRENT:
-      if ((can_databuffer[1] == 0x41)&&
+    case VEHICLE_POLL_TYPE_OBDIIFREEZE:
+    case VEHICLE_POLL_TYPE_OBDIISESSION:
+      // 8 bit PID single frame response:
+      if ((can_databuffer[1] == 0x40+vehicle_poll_type)&&
           (can_databuffer[2] == vehicle_poll_pid))
         return TRUE; // Call vehicle poller
       break;
     case VEHICLE_POLL_TYPE_OBDIIVEHICLE:
+    case VEHICLE_POLL_TYPE_OBDIIGROUP:
+      // 8 bit PID multiple frame response:
       if (((can_databuffer[0]>>4) == 0x1)&&
-          (can_databuffer[2] == 0x49)&&
+          (can_databuffer[2] == 0x40+vehicle_poll_type)&&
           (can_databuffer[3] == vehicle_poll_pid))
         {
-        // First frame
+        // First frame; send flow control frame:
         while (TXB0CONbits.TXREQ) {} // Loop until TX is done
         TXB0CON = 0;
         TXB0SIDL = ((can_id-8) & 0x07)<<5;
         TXB0SIDH = ((can_id-8)>>3);
-        TXB0D0 = 0x30;
-        TXB0D1 = 0x00;
-        TXB0D2 = 0x32; // 50ms
+        TXB0D0 = 0x30; // flow control frame type
+        TXB0D1 = 0x00; // request all frames available
+        TXB0D2 = 0x32; // with 50ms send interval
         TXB0D3 = 0x00;
         TXB0D4 = 0x00;
         TXB0D5 = 0x00;
@@ -221,6 +230,8 @@ BOOL vehicle_poll_poll0(void)
         TXB0D7 = 0x00;
         TXB0DLC = 0b00001000; // data length (8)
         TXB0CON = 0b00001000; // mark for transmission
+        
+        // prepare frame processing, first frame contains first 3 bytes:
         vehicle_poll_ml_remain = (((unsigned int)(can_databuffer[0]&0xf0))<<8)+can_databuffer[1] - 3;
         vehicle_poll_ml_offset = 3;
         vehicle_poll_ml_frame = 0;
@@ -228,11 +239,11 @@ BOOL vehicle_poll_poll0(void)
         can_databuffer[0] = can_databuffer[5];
         can_databuffer[1] = can_databuffer[6];
         can_databuffer[2] = can_databuffer[7];
-        return TRUE;
+        return TRUE; // Call vehicle poller
         }
       else if (((can_databuffer[0]>>4)==0x2)&&(vehicle_poll_ml_remain>0))
         {
-        // Consecutive frame
+        // Consecutive frame (1 control + 7 data bytes)
         for (k=0;k<7;k++) { can_databuffer[k] = can_databuffer[k+1]; }
         if (vehicle_poll_ml_remain>7)
           {
@@ -250,9 +261,8 @@ BOOL vehicle_poll_poll0(void)
         return TRUE;
         }
       break;
-    case VEHICLE_POLL_TYPE_OBDIIGROUP:
-      break;
     case VEHICLE_POLL_TYPE_OBDIIEXTENDED:
+      // 16 bit PID response:
       if ((can_databuffer[1] == 0x62)&&
           ((can_databuffer[3]+(((unsigned int) can_databuffer[2]) << 8)) == vehicle_poll_pid))
         return TRUE; // Call vehicle poller
