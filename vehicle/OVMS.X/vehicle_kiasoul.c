@@ -68,6 +68,10 @@ UINT ks_speed;                // in [kph]
 UINT8 ks_diag_01[0x3D-3];     // diag data page 01
 UINT8 ks_diag_05[0x2C-3];     // diag data page 05
 
+// test/debug:
+UINT8 ks_diag_01_len;
+UINT8 ks_diag_05_len;
+
 #pragma udata
 
 
@@ -113,6 +117,23 @@ rom vehicle_pid_t vehicle_kiasoul_polls[] =
 // 
 // Kia Soul: buffer 0 = process OBDII polling result
 // 
+// Available framework variables:
+//  can_id            = CAN RX ID (poll -> rmoduleid)
+//  can_filter        = CAN RX filter number triggered (see init)
+//  can_databuffer    = CAN RX data buffer (8 bytes)
+//  can_datalength    = CAN RX data length (in data buffer)
+//
+// OBDII/UDS polling response:
+//  vehicle_poll_type = last poll -> type
+//  vehicle_poll_pid  = last poll -> pid
+//
+// Multi frame response: hook called once per frame
+//  vehicle_poll_ml_frame   = frame counter (0..n)
+//  can_datalength          = frame length
+//                            (3 bytes in frame 0, max 7 bytes in frames 1..n)
+//  vehicle_poll_ml_offset  = msg length including this frame
+//  vehicle_poll_ml_remain  = msg length remaining after this frame
+//
 
 BOOL vehicle_kiasoul_poll0(void)
   {
@@ -128,8 +149,9 @@ BOOL vehicle_kiasoul_poll0(void)
         {
         case 0x02:
           // VIN (multi-line response):
-          for (value1=0;value1<can_datalength;value1++)
-            car_vin[value1+(vehicle_poll_ml_offset-can_datalength)] = can_databuffer[value1];
+          value2 = vehicle_poll_ml_offset - can_datalength;
+          for (value1=0; value1<can_datalength; value1++)
+            car_vin[value2+value1] = can_databuffer[value1];
           if (vehicle_poll_ml_remain==0)
             car_vin[value1+vehicle_poll_ml_offset] = 0;
           break;
@@ -140,19 +162,23 @@ BOOL vehicle_kiasoul_poll0(void)
       switch (vehicle_poll_pid)
         {
         case 0x01:
-          // diag page 01:
+          // diag page 01: skip first frame (no data)
           if (vehicle_poll_ml_frame > 0)
             {
-            for (value1=0;value1<can_datalength;value1++)
-              ks_diag_01[(vehicle_poll_ml_frame-1)*7+value1] = can_databuffer[value1];
+            value2 = vehicle_poll_ml_offset - can_datalength - 3;
+            for (value1=0; value1<can_datalength; value1++)
+              ks_diag_01[value2+value1] = can_databuffer[value1];
+            ks_diag_01_len = vehicle_poll_ml_offset;
             }
           break;
         case 0x05:
-          // diag page 05:
+          // diag page 05: skip first frame (no data)
           if (vehicle_poll_ml_frame > 0)
             {
-            for (value1=0;value1<can_datalength;value1++)
-              ks_diag_05[(vehicle_poll_ml_frame-1)*7+value1] = can_databuffer[value1];
+            value2 = vehicle_poll_ml_offset - can_datalength - 3;
+            for (value1=0; value1<can_datalength; value1++)
+              ks_diag_05[value2+value1] = can_databuffer[value1];
+            ks_diag_05_len = vehicle_poll_ml_offset;
             }
           break;
         }
@@ -172,6 +198,12 @@ BOOL vehicle_kiasoul_poll0(void)
 // 
 // Kia Soul: buffer 1 = direct CAN bus processing
 // 
+// Available framework variables:
+//  can_id            = CAN RX ID
+//  can_filter        = CAN RX filter number triggered (see init)
+//  can_databuffer    = CAN RX data buffer (8 bytes)
+//  can_datalength    = CAN RX data length (in data buffer)
+//
 
 BOOL vehicle_kiasoul_poll1(void)
   {
@@ -377,14 +409,14 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
   if (arguments && (arguments[0]=='1'))
     {
     // output ks_diag_01:
-    s = stp_rom(s, "DIAG_01:");
+    s = stp_i(s, "DIAG_01:", ks_diag_01_len);
     for (i=0; i<sizeof(ks_diag_01); i++)
       s = stp_sx(s, (i%7)?"":"\n", ks_diag_01[i]);
     }
   else if (arguments && (arguments[0]=='5'))
     {
     // output ks_diag_05:
-    s = stp_rom(s, "DIAG_05:");
+    s = stp_i(s, "DIAG_05:", ks_diag_05_len);
     for (i=0; i<sizeof(ks_diag_05); i++)
       s = stp_sx(s, (i%7)?"":"\n", ks_diag_05[i]);
     }
@@ -553,7 +585,13 @@ BOOL vehicle_kiasoul_initialise(void)
   ks_chargepower = 0;
   
   ks_speed = 0;
+  
+  memset(ks_diag_01, 0, sizeof(ks_diag_01));
+  memset(ks_diag_05, 0, sizeof(ks_diag_05));
 
+  ks_diag_01_len = 0;
+  ks_diag_05_len = 0;
+  
   
   //
   // Initialize CAN interface:
