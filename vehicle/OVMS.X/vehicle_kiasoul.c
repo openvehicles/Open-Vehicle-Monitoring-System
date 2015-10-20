@@ -137,8 +137,8 @@ rom vehicle_pid_t vehicle_kiasoul_polls[] =
 
 BOOL vehicle_kiasoul_poll0(void)
   {
-  unsigned char value1;
-  unsigned int value2;
+  UINT8 i;
+  UINT base;
 
   // process OBDII data:
   switch (can_id)
@@ -149,11 +149,15 @@ BOOL vehicle_kiasoul_poll0(void)
         {
         case 0x02:
           // VIN (multi-line response):
-          value2 = vehicle_poll_ml_offset - can_datalength;
-          for (value1=0; value1<can_datalength; value1++)
-            car_vin[value2+value1] = can_databuffer[value1];
-          if (vehicle_poll_ml_remain==0)
-            car_vin[value1+vehicle_poll_ml_offset] = 0;
+          // VIN length is 20 on Kia => skip first frame (3 bytes):
+          if (vehicle_poll_ml_frame > 0)
+            {
+            base = vehicle_poll_ml_offset - can_datalength - 3;
+            for (i=0; (i<can_datalength) && ((base+i)<(sizeof(car_vin)-1)); i++)
+              car_vin[base+i] = can_databuffer[i];
+            if (vehicle_poll_ml_remain == 0)
+              car_vin[base+i] = 0;
+            }
           break;
         }
       break;
@@ -165,9 +169,9 @@ BOOL vehicle_kiasoul_poll0(void)
           // diag page 01: skip first frame (no data)
           if (vehicle_poll_ml_frame > 0)
             {
-            value2 = vehicle_poll_ml_offset - can_datalength - 3;
-            for (value1=0; value1<can_datalength; value1++)
-              ks_diag_01[value2+value1] = can_databuffer[value1];
+            base = vehicle_poll_ml_offset - can_datalength - 3;
+            for (i=0; (i<can_datalength) && ((base+i)<sizeof(ks_diag_01)); i++)
+              ks_diag_01[base+i] = can_databuffer[i];
             ks_diag_01_len = vehicle_poll_ml_offset;
             }
           break;
@@ -175,9 +179,9 @@ BOOL vehicle_kiasoul_poll0(void)
           // diag page 05: skip first frame (no data)
           if (vehicle_poll_ml_frame > 0)
             {
-            value2 = vehicle_poll_ml_offset - can_datalength - 3;
-            for (value1=0; value1<can_datalength; value1++)
-              ks_diag_05[value2+value1] = can_databuffer[value1];
+            base = vehicle_poll_ml_offset - can_datalength - 3;
+            for (i=0; (i<can_datalength) && ((base+i)<sizeof(ks_diag_05)); i++)
+              ks_diag_05[base+i] = can_databuffer[i];
             ks_diag_05_len = vehicle_poll_ml_offset;
             }
           break;
@@ -609,13 +613,14 @@ BOOL vehicle_kiasoul_initialise(void)
   // Buffer 0 (filters 0, 1) for OBDII responses
   RXB0CON = 0b00000000;
 
-  RXM0SIDL = 0b00000000;        // Mask   111 1111 1000
+  RXM0SIDL = 0b00000000;        // Mask0   = 111 1111 1000
   RXM0SIDH = 0b11111111;
 
   RXF0SIDL = 0b00000000;        // Filter0 = 111 1110 1000 (0x7E8 .. 0x7EF)
-  RXF0SIDH = 0b11111101;
+  RXF0SIDH = 0b11111101;        // (OBDII responses)
 
-  // Filter1 currently unused
+  RXF1SIDL = 0b00000000;        // Filter1 = 111 1111 1000 (0x7F8 .. 0x7FF)
+  RXF1SIDH = 0b11111111;        // (should not be triggered)
   
   
   // Buffer 1 (filters 2, 3, 4 and 5) for direct can bus messages
