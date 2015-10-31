@@ -17,6 +17,9 @@
 //  - OBD diag pages 01 & 05
 //  - SMS command "DEBUG"
 // 
+// 0.3  31 Oct 2015  (Geir Øyvind Vælidalo)
+//  - Proper SOC
+//  - Odometer, Chargepower
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +49,7 @@
 #include "net_sms.h"
 
 // Module version:
-rom char vehicle_kiasoul_version[] = "0.2";
+rom char vehicle_kiasoul_version[] = "0.3";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -61,9 +64,13 @@ UINT8 ks_busactive;           // indication that bus is active
 car_doors1bits_t ks_doors1;   // Main status flags
 
 UINT ks_soc;                  // SOC [1/10 %]
+UINT ks_bms_soc;              // BMS SOC [1/10 %]
 UINT ks_estrange;             // Estimated range remaining [km]
 UINT ks_chargepower;          // in [1/256 kW]
 UINT ks_speed;                // in [kph]
+UINT ks_auxVoltage;           // Voltage 12V aux battery
+
+UINT32 ks_odometer;           // Odometer [km]
 
 UINT8 ks_diag_01[0x3D-3];     // diag data page 01
 UINT8 ks_diag_05[0x2C-3];     // diag data page 05
@@ -71,6 +78,8 @@ UINT8 ks_diag_05[0x2C-3];     // diag data page 05
 // test/debug:
 UINT8 ks_diag_01_len;
 UINT8 ks_diag_05_len;
+
+UINT8 ks_parking_brake_status;
 
 #pragma udata
 
@@ -236,23 +245,40 @@ BOOL vehicle_kiasoul_poll1(void)
         ks_estrange = val1;
       break;
       
+    case 0x433:
+       ks_parking_brake_status = (CAN_BYTE(2)>>4) & 0x1;
+       break;
+       
+    case 0x4f0:
+       // Odometer:
+       ks_odometer = ((UINT32)CAN_BYTE(5) << 16) + ((UINT32)CAN_BYTE(6) << 8) + (UINT32)CAN_BYTE(7);
+       break;
+    
     case 0x4f2:
       // Speed:
       ks_speed = ((UINT)CAN_BYTE(1) << 1) + ((CAN_BYTE(2) & 0x80) >> 7);
       break;
       
+    case 0x542:
+      // SOC:
+      val1 = (UINT)CAN_BYTE(0) * 5;
+      if (val1 > 0)
+         ks_soc = val1;
+      break;
+  
     case 0x581:
       // Car is CHARGING:
       ks_doors1.CarON = 0;
       ks_doors1.Charging = (CAN_BYTE(3) != 0);
-      ks_chargepower = ((UINT)CAN_BYTE(6) << 8) + CAN_BYTE(7);
+      //ks_chargepower = ((UINT)CAN_BYTE(6) << 8) + CAN_BYTE(7);
+      ks_chargepower = ((UINT)CAN_BYTE(7) << 8) + CAN_BYTE(6); //Seems more correct.
       break;
       
     case 0x594:
-      // SOC:
+      // BMS SOC:
       val1 = (UINT)CAN_BYTE(5) * 5 + CAN_BYTE(6);
       if (val1 > 0)
-        ks_soc = val1;
+        ks_bms_soc = val1;
       break;
       
     }
@@ -297,6 +323,7 @@ BOOL vehicle_kiasoul_ticker1(void)
   
   car_estrange = MiFromKm(ks_estrange);
   car_idealrange = car_estrange; // todo
+  car_odometer = ks_odometer/100; //Todo is missing -25km from the actual displayed ODO
 
   if (can_mileskm == 'M')
     car_speed = MiFromKm(ks_speed); // mph
@@ -354,12 +381,20 @@ BOOL vehicle_kiasoul_ticker1(void)
       car_doors5bits.Charging12V = 1;
       car_chargeduration = 0; // Reset charge duration
       car_chargestate = 1; // Charging state
+      
+      car_linevoltage = 230; //TODO These are only valid for Europe and slowcharging
+      car_chargecurrent = (((long)ks_chargepower*1000)/256)/230; //TODO GOEV
+
       net_req_notification(NET_NOTIFY_STAT);
       }
     else
       {
       // Charging continues:
       car_chargeduration++;
+
+      car_linevoltage = 230; //TODO These are only valid for Europe and slowcharging
+      car_chargecurrent = (((long)ks_chargepower*1000)/256)/230; //TODO GOEV
+
       if (car_SOC >= 95)
         {
         car_chargestate = 2; // Topping off
@@ -373,6 +408,7 @@ BOOL vehicle_kiasoul_ticker1(void)
     car_doors1bits.PilotSignal = 0;
     car_doors1bits.Charging = 0;
     car_doors5bits.Charging12V = 0;
+    car_chargecurrent = 0;
     if (car_SOC == 100)
       car_chargestate = 4; // Charge DONE
     else
@@ -430,9 +466,11 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
     s = stp_rom(s, "VARS:");
     s = stp_sx(s, " doors1=", *((UINT8*)&ks_doors1));
     s = stp_i(s, " soc=", ks_soc);
+    s = stp_i(s, " bmssoc=", ks_bms_soc);
     s = stp_i(s, " estrange=", ks_estrange);
     s = stp_i(s, " chargepower=", ks_chargepower);
     s = stp_i(s, " speed=", ks_speed);
+    s = stp_i(s, " parkingbrake=", ks_parking_brake_status);
     }
 
   // Send SMS:
@@ -589,6 +627,8 @@ BOOL vehicle_kiasoul_initialise(void)
   ks_chargepower = 0;
   
   ks_speed = 0;
+  
+  ks_parking_brake_status = 0;
   
   memset(ks_diag_01, 0, sizeof(ks_diag_01));
   memset(ks_diag_05, 0, sizeof(ks_diag_05));
