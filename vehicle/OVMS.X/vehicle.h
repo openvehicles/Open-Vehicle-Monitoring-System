@@ -88,11 +88,16 @@ void vehicle_idlepoll(void);
 
 #define VEHICLE_POLL_NSTATES 3
 
+// Polling types supported:
+//  (see https://en.wikipedia.org/wiki/OBD-II_PIDs
+//   and https://en.wikipedia.org/wiki/Unified_Diagnostic_Services)
 #define VEHICLE_POLL_TYPE_NONE          0x00
-#define VEHICLE_POLL_TYPE_OBDIICURRENT  0x01
-#define VEHICLE_POLL_TYPE_OBDIIVEHICLE  0x09
-#define VEHICLE_POLL_TYPE_OBDIIGROUP    0x21
-#define VEHICLE_POLL_TYPE_OBDIIEXTENDED 0x22
+#define VEHICLE_POLL_TYPE_OBDIICURRENT  0x01 // Mode 01 "current data"
+#define VEHICLE_POLL_TYPE_OBDIIFREEZE   0x02 // Mode 02 "freeze frame data"
+#define VEHICLE_POLL_TYPE_OBDIIVEHICLE  0x09 // Mode 09 "vehicle information"
+#define VEHICLE_POLL_TYPE_OBDIISESSION  0x10 // UDS: Diagnostic Session Control
+#define VEHICLE_POLL_TYPE_OBDIIGROUP    0x21 // enhanced data by 8 bit PID
+#define VEHICLE_POLL_TYPE_OBDIIEXTENDED 0x22 // enhanced data by 16 bit PID
 
 typedef struct
 {

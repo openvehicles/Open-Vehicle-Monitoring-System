@@ -13,6 +13,10 @@
 //  - Initial release, untested
 //  - VIN, car status, doors & charging status, SOC, estimated range, speed
 // 
+// 0.2  16 Oct 2015  (Michael Balzer)
+//  - OBD diag pages 01 & 05
+//  - SMS command "DEBUG"
+// 
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -39,9 +43,10 @@
 #include "ovms.h"
 #include "params.h"
 #include "net_msg.h"
+#include "net_sms.h"
 
 // Module version:
-rom char vehicle_kiasoul_version[] = "0.1";
+rom char vehicle_kiasoul_version[] = "0.2";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -60,6 +65,13 @@ UINT ks_estrange;             // Estimated range remaining [km]
 UINT ks_chargepower;          // in [1/256 kW]
 UINT ks_speed;                // in [kph]
 
+UINT8 ks_diag_01[0x3D-3];     // diag data page 01
+UINT8 ks_diag_05[0x2C-3];     // diag data page 05
+
+// test/debug:
+UINT8 ks_diag_01_len;
+UINT8 ks_diag_05_len;
+
 #pragma udata
 
 
@@ -70,18 +82,12 @@ UINT ks_speed;                // in [kph]
 //    {
 //      unsigned int moduleid; // send request to (0 = end of list)
 //      unsigned int rmoduleid; // expect response from (0 = broadcast)
-//      unsigned char type; // see below
+//      unsigned char type; // see vehicle.h
 //      unsigned int pid; // the PID to request
 //      unsigned int polltime[VEHICLE_POLL_NSTATES]; // poll frequency
 //    } vehicle_pid_t;
 //
-// The following polling types are currently supported:
-//  (see https://en.wikipedia.org/wiki/OBD-II_PIDs)
-//    #define VEHICLE_POLL_TYPE_NONE          0x00
-//    #define VEHICLE_POLL_TYPE_OBDIICURRENT  0x01 // Mode 01
-//    #define VEHICLE_POLL_TYPE_OBDIIVEHICLE  0x09 // Mode 09
-//    #define VEHICLE_POLL_TYPE_OBDIIGROUP    0x21 // enhanced data by offset
-//    #define VEHICLE_POLL_TYPE_OBDIIEXTENDED 0x22 // enhanced data by PID
+// Polling types ("modes") supported: see vehicle.h
 // 
 // polltime[state] = poll period in seconds, i.e. 10 = poll every 10 seconds
 //
@@ -92,6 +98,10 @@ UINT ks_speed;                // in [kph]
 rom vehicle_pid_t vehicle_kiasoul_polls[] = 
 {
   { 0x7e2, 0, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {  120, 120, 0 } }, // VIN
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } }, // Start diag session
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x01, {  60, 10, 0 } }, // Diag page 01
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x05, {  60, 10, 0 } }, // Diag page 05
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } }, // End diag session (?)
   { 0, 0, 0x00, 0x00, { 0, 0, 0 } }
 };
 
@@ -107,24 +117,77 @@ rom vehicle_pid_t vehicle_kiasoul_polls[] =
 // 
 // Kia Soul: buffer 0 = process OBDII polling result
 // 
+// Available framework variables:
+//  can_id            = CAN RX ID (poll -> rmoduleid)
+//  can_filter        = CAN RX filter number triggered (see init)
+//  can_databuffer    = CAN RX data buffer (8 bytes)
+//  can_datalength    = CAN RX data length (in data buffer)
+//
+// OBDII/UDS polling response:
+//  vehicle_poll_type = last poll -> type
+//  vehicle_poll_pid  = last poll -> pid
+//
+// Multi frame response: hook called once per frame
+//  vehicle_poll_ml_frame   = frame counter (0..n)
+//  can_datalength          = frame length
+//                            (3 bytes in frame 0, max 7 bytes in frames 1..n)
+//  vehicle_poll_ml_offset  = msg length including this frame
+//  vehicle_poll_ml_remain  = msg length remaining after this frame
+//
 
 BOOL vehicle_kiasoul_poll0(void)
   {
-  unsigned char value1;
-  unsigned int value2;
+  UINT8 i;
+  UINT base;
 
   // process OBDII data:
-  switch (vehicle_poll_pid)
+  switch (can_id)
     {
-
-    case 0x02:
-      // VIN (multi-line response):
-      for (value1=0;value1<can_datalength;value1++)
-        car_vin[value1+(vehicle_poll_ml_offset-can_datalength)] = can_databuffer[value1];
-      if (vehicle_poll_ml_remain==0)
-        car_vin[value1+vehicle_poll_ml_offset] = 0;
+    
+    case 0x7ea:
+      switch (vehicle_poll_pid)
+        {
+        case 0x02:
+          // VIN (multi-line response):
+          // VIN length is 20 on Kia => skip first frame (3 bytes):
+          if (vehicle_poll_ml_frame > 0)
+            {
+            base = vehicle_poll_ml_offset - can_datalength - 3;
+            for (i=0; (i<can_datalength) && ((base+i)<(sizeof(car_vin)-1)); i++)
+              car_vin[base+i] = can_databuffer[i];
+            if (vehicle_poll_ml_remain == 0)
+              car_vin[base+i] = 0;
+            }
+          break;
+        }
       break;
-
+  
+    case 0x7ec:
+      switch (vehicle_poll_pid)
+        {
+        case 0x01:
+          // diag page 01: skip first frame (no data)
+          if (vehicle_poll_ml_frame > 0)
+            {
+            base = vehicle_poll_ml_offset - can_datalength - 3;
+            for (i=0; (i<can_datalength) && ((base+i)<sizeof(ks_diag_01)); i++)
+              ks_diag_01[base+i] = can_databuffer[i];
+            ks_diag_01_len = vehicle_poll_ml_offset;
+            }
+          break;
+        case 0x05:
+          // diag page 05: skip first frame (no data)
+          if (vehicle_poll_ml_frame > 0)
+            {
+            base = vehicle_poll_ml_offset - can_datalength - 3;
+            for (i=0; (i<can_datalength) && ((base+i)<sizeof(ks_diag_05)); i++)
+              ks_diag_05[base+i] = can_databuffer[i];
+            ks_diag_05_len = vehicle_poll_ml_offset;
+            }
+          break;
+        }
+      break;
+  
     }
 
   return TRUE; 
@@ -139,6 +202,12 @@ BOOL vehicle_kiasoul_poll0(void)
 // 
 // Kia Soul: buffer 1 = direct CAN bus processing
 // 
+// Available framework variables:
+//  can_id            = CAN RX ID
+//  can_filter        = CAN RX filter number triggered (see init)
+//  can_databuffer    = CAN RX data buffer (8 bytes)
+//  can_datalength    = CAN RX data length (in data buffer)
+//
 
 BOOL vehicle_kiasoul_poll1(void)
   {
@@ -315,6 +384,179 @@ BOOL vehicle_kiasoul_ticker1(void)
   }
 
 
+////////////////////////////////////////////////////////////////////////
+// Vehicle specific SMS command: DEBUG
+//
+
+BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *arguments)
+  {
+  char *s;
+  int i;
+  
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+    return FALSE;
+
+  if (!caller || !*caller)
+    {
+    caller = par_get(PARAM_REGPHONE);
+    if (!caller || !*caller)
+      return FALSE;
+    }
+
+  // Start SMS:
+  if (premsg)
+    net_send_sms_start(caller);
+
+  // Format SMS:
+  s = net_scratchpad;
+
+  if (arguments && (arguments[0]=='1'))
+    {
+    // output ks_diag_01:
+    s = stp_i(s, "DIAG_01:", ks_diag_01_len);
+    for (i=0; i<sizeof(ks_diag_01); i++)
+      s = stp_sx(s, (i%7)?"":"\n", ks_diag_01[i]);
+    }
+  else if (arguments && (arguments[0]=='5'))
+    {
+    // output ks_diag_05:
+    s = stp_i(s, "DIAG_05:", ks_diag_05_len);
+    for (i=0; i<sizeof(ks_diag_05); i++)
+      s = stp_sx(s, (i%7)?"":"\n", ks_diag_05[i]);
+    }
+  else
+    {
+    // output status vars:
+    s = stp_rom(s, "VARS:");
+    s = stp_sx(s, " doors1=", *((UINT8*)&ks_doors1));
+    s = stp_i(s, " soc=", ks_soc);
+    s = stp_i(s, " estrange=", ks_estrange);
+    s = stp_i(s, " chargepower=", ks_chargepower);
+    s = stp_i(s, " speed=", ks_speed);
+    }
+
+  // Send SMS:
+  net_puts_ram(net_scratchpad);
+
+  return TRUE;
+  }
+
+
+////////////////////////////////////////////////////////////////////////
+// This is the Kia Soul SMS command table
+// (for implementation notes see net_sms::sms_cmdtable comment)
+//
+// First char = auth mode of command:
+//   1:     the first argument must be the module password
+//   2:     the caller must be the registered telephone
+//   3:     the caller must be the registered telephone, or first argument the module password
+
+BOOL vehicle_kiasoul_help_sms(BOOL premsg, char *caller, char *command, char *arguments);
+
+rom char vehicle_kiasoul_sms_cmdtable[][NET_SMS_CMDWIDTH] =
+  {
+  "3DEBUG",       // Output debug data
+  "3HELP",        // extend HELP output
+  ""
+  };
+
+rom far BOOL(*vehicle_kiasoul_sms_hfntable[])(BOOL premsg, char *caller, char *command, char *arguments) =
+  {
+  &vehicle_kiasoul_debug_sms,
+  &vehicle_kiasoul_help_sms
+  };
+
+
+// SMS COMMAND DISPATCHERS:
+// premsg: TRUE=may replace, FALSE=may extend standard handler
+// returns TRUE if handled
+
+BOOL vehicle_kiasoul_fn_smshandler(BOOL premsg, char *caller, char *command, char *arguments)
+  {
+  // called to extend/replace standard command: framework did auth check for us
+
+  UINT8 k;
+
+  // Command parsing...
+  for (k = 0; vehicle_kiasoul_sms_cmdtable[k][0] != 0; k++)
+    {
+    if (starts_with(command, (char const rom far*)vehicle_kiasoul_sms_cmdtable[k] + 1))
+      {
+      // Call sms handler:
+      k = (*vehicle_kiasoul_sms_hfntable[k])(premsg, caller, command, arguments);
+
+      if ((premsg) && (k))
+        {
+        // we're in charge + handled it; finish SMS:
+        net_send_sms_finish();
+        }
+
+      return k;
+      }
+    }
+
+  return FALSE; // no vehicle command
+  }
+
+BOOL vehicle_kiasoul_fn_smsextensions(char *caller, char *command, char *arguments)
+  {
+  // called for specific command: we need to do the auth check
+
+  UINT8 k;
+
+  // Command parsing...
+  for (k = 0; vehicle_kiasoul_sms_cmdtable[k][0] != 0; k++)
+    {
+    if (starts_with(command, (char const rom far*)vehicle_kiasoul_sms_cmdtable[k] + 1))
+      {
+      // we need to check the caller authorization:
+      arguments = net_sms_initargs(arguments);
+      if (!net_sms_checkauth(vehicle_kiasoul_sms_cmdtable[k][0], caller, &arguments))
+        return FALSE; // failed
+
+      // Call sms handler:
+      k = (*vehicle_kiasoul_sms_hfntable[k])(TRUE, caller, command, arguments);
+
+      if (k)
+        {
+        // we're in charge + handled it; finish SMS:
+        net_send_sms_finish();
+        }
+
+      return k;
+      }
+    }
+
+  return FALSE; // no vehicle command
+  }
+
+
+////////////////////////////////////////////////////////////////////////
+// Vehicle specific SMS command output extension: HELP
+//
+
+BOOL vehicle_kiasoul_help_sms(BOOL premsg, char *caller, char *command, char *arguments)
+  {
+  int k;
+
+  if (premsg)
+    return FALSE; // run only in extend mode
+
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+    return FALSE;
+
+  net_puts_rom("\nKIA:");
+
+  for (k = 0; vehicle_kiasoul_sms_cmdtable[k][0] != 0; k++)
+    {
+    net_puts_rom(" ");
+    net_puts_rom(vehicle_kiasoul_sms_cmdtable[k] + 1);
+    }
+
+  return TRUE;
+  }
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Framework hook: _initialise (initialise vars & CAN interface)
 // 
@@ -347,7 +589,13 @@ BOOL vehicle_kiasoul_initialise(void)
   ks_chargepower = 0;
   
   ks_speed = 0;
+  
+  memset(ks_diag_01, 0, sizeof(ks_diag_01));
+  memset(ks_diag_05, 0, sizeof(ks_diag_05));
 
+  ks_diag_01_len = 0;
+  ks_diag_05_len = 0;
+  
   
   //
   // Initialize CAN interface:
@@ -365,13 +613,14 @@ BOOL vehicle_kiasoul_initialise(void)
   // Buffer 0 (filters 0, 1) for OBDII responses
   RXB0CON = 0b00000000;
 
-  RXM0SIDL = 0b00000000;        // Mask   111 1111 1000
+  RXM0SIDL = 0b00000000;        // Mask0   = 111 1111 1000
   RXM0SIDH = 0b11111111;
 
   RXF0SIDL = 0b00000000;        // Filter0 = 111 1110 1000 (0x7E8 .. 0x7EF)
-  RXF0SIDH = 0b11111101;
+  RXF0SIDH = 0b11111101;        // (OBDII responses)
 
-  // Filter1 currently unused
+  RXF1SIDL = 0b00000000;        // Filter1 = 111 1111 1000 (0x7F8 .. 0x7FF)
+  RXF1SIDH = 0b11111111;        // (should not be triggered)
   
   
   // Buffer 1 (filters 2, 3, 4 and 5) for direct can bus messages
@@ -415,6 +664,8 @@ BOOL vehicle_kiasoul_initialise(void)
   vehicle_fn_poll0 = &vehicle_kiasoul_poll0;
   vehicle_fn_poll1 = &vehicle_kiasoul_poll1;
   vehicle_fn_ticker1 = &vehicle_kiasoul_ticker1;
+  vehicle_fn_smshandler = &vehicle_kiasoul_fn_smshandler;
+  vehicle_fn_smsextensions = &vehicle_kiasoul_fn_smsextensions;
   
   if (sys_features[FEATURE_CANWRITE]>0)
     vehicle_poll_setpidlist(vehicle_kiasoul_polls);
