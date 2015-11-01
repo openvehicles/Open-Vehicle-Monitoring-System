@@ -20,6 +20,7 @@
 // 0.3  31 Oct 2015  (Geir Øyvind Vælidalo)
 //  - Proper SOC
 //  - Odometer, Chargepower
+//  - Ideal range support (Add your maksimum range in Feature #12)
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -68,7 +69,7 @@ UINT ks_bms_soc;              // BMS SOC [1/10 %]
 UINT ks_estrange;             // Estimated range remaining [km]
 UINT ks_chargepower;          // in [1/256 kW]
 UINT ks_speed;                // in [kph]
-UINT ks_auxVoltage;           // Voltage 12V aux battery
+UINT ks_auxVoltage;           // Voltage 12V aux battery [1/10 V]
 
 UINT32 ks_odometer;           // Odometer [km]
 
@@ -81,8 +82,12 @@ UINT8 ks_diag_05_len;
 
 UINT8 ks_parking_brake_status;
 
+UINT8 ks_charge_byte3;
+UINT8 ks_charge_byte5;
 #pragma udata
 
+// Kia Soul EV specific features:
+#define FEATURE_MAXRANGE            0x0C // Maximum ideal range [Mi/km]
 
 ////////////////////////////////////////////////////////////////////////////////
 // OBDII polling table:
@@ -182,6 +187,10 @@ BOOL vehicle_kiasoul_poll0(void)
             for (i=0; (i<can_datalength) && ((base+i)<sizeof(ks_diag_01)); i++)
               ks_diag_01[base+i] = can_databuffer[i];
             ks_diag_01_len = vehicle_poll_ml_offset;
+            if(vehicle_poll_ml_frame==4)
+               {
+                ks_auxVoltage = can_databuffer[4];
+               }
             }
           break;
         case 0x05:
@@ -246,18 +255,19 @@ BOOL vehicle_kiasoul_poll1(void)
       break;
       
     case 0x433:
+       // Parking brake status 
        ks_parking_brake_status = (CAN_BYTE(2)>>4) & 0x1;
        break;
        
     case 0x4f0:
        // Odometer:
-       ks_odometer = ((UINT32)CAN_BYTE(5) << 16) + ((UINT32)CAN_BYTE(6) << 8) + (UINT32)CAN_BYTE(7);
+       ks_odometer = ((UINT32)CAN_BYTE(7) << 16) + ((UINT32)CAN_BYTE(6) << 8) + (UINT32)CAN_BYTE(5);
        break;
     
     case 0x4f2:
-      // Speed:
-      ks_speed = ((UINT)CAN_BYTE(1) << 1) + ((CAN_BYTE(2) & 0x80) >> 7);
-      break;
+       // Speed:
+       ks_speed = ((UINT)CAN_BYTE(1) << 1) + ((CAN_BYTE(2) & 0x80) >> 7);
+       break;
       
     case 0x542:
       // SOC:
@@ -270,8 +280,9 @@ BOOL vehicle_kiasoul_poll1(void)
       // Car is CHARGING:
       ks_doors1.CarON = 0;
       ks_doors1.Charging = (CAN_BYTE(3) != 0);
-      //ks_chargepower = ((UINT)CAN_BYTE(6) << 8) + CAN_BYTE(7);
-      ks_chargepower = ((UINT)CAN_BYTE(7) << 8) + CAN_BYTE(6); //Seems more correct.
+      ks_chargepower = ((UINT)CAN_BYTE(7) << 8) + CAN_BYTE(6); 
+      ks_charge_byte3 = CAN_BYTE(3);
+      ks_charge_byte5 = CAN_BYTE(5);
       break;
       
     case 0x594:
@@ -288,6 +299,26 @@ BOOL vehicle_kiasoul_poll1(void)
 
 #pragma tmpdata
 
+////////////////////////////////////////////////////////////////////////
+// vehicle_Kia Soul EV get_maxrange: get MAXRANGE with temperature compensation
+//
+
+int vehicle_kiasoul_get_maxrange(void)
+{
+  int maxRange;
+  
+  // Read user configuration:
+  maxRange = sys_features[FEATURE_MAXRANGE];
+
+  // Temperature compensation:
+  //   - assumes standard maxRange specified at 20°C
+  //   - temperature influence approximation: 0.6 km / °C
+  //todo if (maxRange != 0)
+  //todo   maxRange -= ((20 - car_tbattery) * 6) / 10;
+  
+  return maxRange;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Framework hook: _ticker1 (called about once per second)
@@ -297,7 +328,7 @@ BOOL vehicle_kiasoul_poll1(void)
 
 BOOL vehicle_kiasoul_ticker1(void)
   {
-  
+  int maxRange;
   // 
   // Check CAN bus activity timeout:
   //
@@ -314,7 +345,8 @@ BOOL vehicle_kiasoul_ticker1(void)
     ks_speed = 0;
     }
   
-
+  maxRange = vehicle_kiasoul_get_maxrange();
+  
   // 
   // Convert KS status data to OVMS framework:
   //
@@ -322,14 +354,20 @@ BOOL vehicle_kiasoul_ticker1(void)
   car_SOC = ks_soc / 10; // no rounding to avoid 99.5 = 100
   
   car_estrange = MiFromKm(ks_estrange);
-  car_idealrange = car_estrange; // todo
-  car_odometer = ks_odometer/100; //Todo is missing -25km from the actual displayed ODO
+
+  if (maxRange > 0)
+     car_idealrange = MiFromKm((((float) maxRange) * ks_soc) / 1000);
+  else
+     car_idealrange = car_estrange;
+  
+  car_odometer = MiFromKm(ks_odometer); 
 
   if (can_mileskm == 'M')
     car_speed = MiFromKm(ks_speed); // mph
   else
     car_speed = ks_speed; // kph
   
+  car_12vline = ks_auxVoltage/10;
   
   //
   // Check for car status changes:
@@ -355,7 +393,7 @@ BOOL vehicle_kiasoul_ticker1(void)
     {
     // Car is OFF
     //vehicle_poll_setstate(0);
-    car_doors1bits.HandBrake = 1;
+    car_doors1bits.HandBrake = ks_parking_brake_status;
     car_doors1bits.CarON = 0;
     car_speed = 0;
     if (car_parktime == 0)
@@ -381,10 +419,7 @@ BOOL vehicle_kiasoul_ticker1(void)
       car_doors5bits.Charging12V = 1;
       car_chargeduration = 0; // Reset charge duration
       car_chargestate = 1; // Charging state
-      
-      car_linevoltage = 230; //TODO These are only valid for Europe and slowcharging
-      car_chargecurrent = (((long)ks_chargepower*1000)/256)/230; //TODO GOEV
-
+      car_chargemode = 0; //Standard charging. 
       net_req_notification(NET_NOTIFY_STAT);
       }
     else
@@ -392,15 +427,25 @@ BOOL vehicle_kiasoul_ticker1(void)
       // Charging continues:
       car_chargeduration++;
 
-      car_linevoltage = 230; //TODO These are only valid for Europe and slowcharging
-      car_chargecurrent = (((long)ks_chargepower*1000)/256)/230; //TODO GOEV
-
       if (car_SOC >= 95)
         {
         car_chargestate = 2; // Topping off
         net_req_notification(NET_NOTIFY_ENV);
         }
       }
+      
+      //Setting "virtual" charge mode 
+      car_linevoltage = 230;    //TODO Can we find the correct voltage somewhere?
+      if( ks_chargepower < 600 ){        //Roughly 10A
+        car_chargemode = 0;              //Standard charging      
+      }else if( ks_chargepower < 1900 ){ //Roughly 32A
+        car_chargemode = 3;              //Range      
+      }else{             
+        car_linevoltage = 400;    //TODO Can we find the correct voltage somewhere?
+        car_chargemode = 4;       //Performance      
+      }
+      car_chargecurrent = (((long)ks_chargepower*1000)>>8)/car_linevoltage; 
+      
     }
   else if (car_doors1bits.Charging)
     {
@@ -464,13 +509,16 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
     {
     // output status vars:
     s = stp_rom(s, "VARS:");
-    s = stp_sx(s, " doors1=", *((UINT8*)&ks_doors1));
-    s = stp_i(s, " soc=", ks_soc);
-    s = stp_i(s, " bmssoc=", ks_bms_soc);
-    s = stp_i(s, " estrange=", ks_estrange);
-    s = stp_i(s, " chargepower=", ks_chargepower);
-    s = stp_i(s, " speed=", ks_speed);
-    s = stp_i(s, " parkingbrake=", ks_parking_brake_status);
+    s = stp_sx(s, "\rdoors1=", *((UINT8*)&ks_doors1));
+    s = stp_i(s, "\rsoc=", ks_soc);
+    s = stp_i(s, "\rbmssoc=", ks_bms_soc);
+    s = stp_i(s, "\restrange=", ks_estrange);
+    s = stp_i(s, "\rchargepower=", ks_chargepower);
+    s = stp_i(s, "\rspeed=", ks_speed);
+    s = stp_i(s, "\rparkingbrake=", ks_parking_brake_status);
+    s = stp_l2f_h(s, "\raux battery=", ks_auxVoltage,1);
+    s = stp_i(s, "\rcharge byte 3=", ks_charge_byte3);
+    s = stp_i(s, "\rcharge byte 5=", ks_charge_byte5);
     }
 
   // Send SMS:
@@ -479,6 +527,47 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
   return TRUE;
   }
 
+////////////////////////////////////////////////////////////////////////
+// Vehicle specific SMS command: RANGE
+// Usage: RANGE? Get current range
+//        RANGE 12334 Set new maximum range 
+
+BOOL vehicle_kiasoul_range_sms(BOOL premsg, char *caller, char *command, char *arguments)
+  {
+  char *s;
+  int i;
+  
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+    return FALSE;
+
+  if (!caller || !*caller)
+    {
+    caller = par_get(PARAM_REGPHONE);
+    if (!caller || !*caller)
+      return FALSE;
+    }
+
+  // Start SMS:
+  if (premsg)
+    net_send_sms_start(caller);
+
+  // Format SMS:
+  s = net_scratchpad;
+
+  if (arguments && *arguments)
+  {
+    // Set new maximum range value
+    sys_features[FEATURE_MAXRANGE] = atoi(arguments);
+  }
+  
+  // output current maximum range setting
+  s = stp_i(s, " Range = ", vehicle_kiasoul_get_maxrange());
+
+  // Send SMS:
+  net_puts_ram(net_scratchpad);
+
+  return TRUE;
+  }
 
 ////////////////////////////////////////////////////////////////////////
 // This is the Kia Soul SMS command table
@@ -495,13 +584,15 @@ rom char vehicle_kiasoul_sms_cmdtable[][NET_SMS_CMDWIDTH] =
   {
   "3DEBUG",       // Output debug data
   "3HELP",        // extend HELP output
+  "3RANGE",       // Range setting
   ""
   };
 
 rom far BOOL(*vehicle_kiasoul_sms_hfntable[])(BOOL premsg, char *caller, char *command, char *arguments) =
   {
   &vehicle_kiasoul_debug_sms,
-  &vehicle_kiasoul_help_sms
+  &vehicle_kiasoul_help_sms,
+  &vehicle_kiasoul_range_sms
   };
 
 
