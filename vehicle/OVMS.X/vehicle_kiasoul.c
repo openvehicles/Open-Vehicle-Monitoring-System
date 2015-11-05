@@ -40,14 +40,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-//TODO: Check speed bytes
-//      Check charge bytes 3 and 5 when using Chademo
-//      Check CA
-//      Find out if alert SMS is working for 12V battery
-//      Find out if alert SMS is working for CA and why it is not sending a message
-//          when fully charged.
-//      
-
 #include <stdlib.h>
 #include <delays.h>
 #include <string.h>
@@ -93,6 +85,10 @@ UINT8 ks_diag_05_len;
 
 UINT8 ks_parking_brake_status;
 
+UINT  ks_can_request_id;                             // The ID to request
+UINT8 ks_can_request_status;                         // The status of the can request
+unsigned char  ks_can_response_databuffer[8];        // The response
+
 UINT8 ks_charge_byte3; //TODO Temporary temperature variables for analysis purposes.
 UINT8 ks_charge_byte5;
 // Not charging:        byte 3=0         Byte 5=0
@@ -107,14 +103,14 @@ UINT8 ks_temp_5;
 
 UINT8 ks_door_byte; //TODO Temporary door byte for analysis purposes
 
-UINT8 ks_battery_module_temp_1;     
-UINT8 ks_battery_module_temp_2; 
-UINT8 ks_battery_module_temp_3; 
-UINT8 ks_battery_module_temp_4; 
-UINT8 ks_battery_module_temp_5; 
-UINT8 ks_battery_module_temp_6; 
-UINT8 ks_battery_module_temp_7; 
-UINT8 ks_battery_module_temp_8; 
+signed char ks_battery_module_temp_1;     
+signed char ks_battery_module_temp_2; 
+signed char ks_battery_module_temp_3; 
+signed char ks_battery_module_temp_4; 
+signed char ks_battery_module_temp_5; 
+signed char ks_battery_module_temp_6; 
+signed char ks_battery_module_temp_7; 
+signed char ks_battery_module_temp_8; 
 
 UINT  ks_battery_DC_voltage;                //DC voltage                    02 21 01 -> 22  2+3
 UINT  ks_battery_current;                   //Battery current               02 21 01 -> 21 7+22 1
@@ -169,9 +165,9 @@ rom vehicle_pid_t vehicle_kiasoul_polls[] =
   { 0, 0, 0x00, 0x00, { 0, 0, 0 } }
 };
 
-
 // ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
 #pragma tmpdata high_isr_tmpdata
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Framework hook: _poll0 (ISR; process CAN buffer 0)
@@ -325,6 +321,7 @@ BOOL vehicle_kiasoul_poll0(void)
 BOOL vehicle_kiasoul_poll1(void)
   {
   UINT val1;
+  int i;
   
   // reset bus activity timeout:
   ks_busactive = KS_BUS_TIMEOUT;
@@ -364,7 +361,6 @@ BOOL vehicle_kiasoul_poll1(void)
     case 0x4f2:
        // Speed:
        ks_speed = ((UINT)CAN_BYTE(1) << 1) + ((CAN_BYTE(2) & 0x80) >> 7);
-       //ks_speed = (UINT)CAN_BYTE(1) + ((UINT)CAN_BYTE(2) << 8); //TODO temporarily for debugging purposes
        break; 
       
     case 0x542:
@@ -409,6 +405,16 @@ BOOL vehicle_kiasoul_poll1(void)
   
     }
   
+  // Fetch requested can id, as specified via QRY sms.
+  if( ks_can_request_status==1 ){
+      if( can_id == ks_can_request_id  ){        
+        for(i=0; i<8; i++){
+            ks_can_response_databuffer[i]=CAN_BYTE(i);
+        }
+        ks_can_request_status=2;
+      }
+  }
+  
   return TRUE;
   }
 
@@ -428,10 +434,31 @@ int vehicle_kiasoul_get_maxrange(void)
   // Temperature compensation:
   //   - assumes standard maxRange specified at 20°C
   //   - temperature influence approximation: 0.6 km / °C
-  //todo if (maxRange != 0)
-  //todo   maxRange -= ((20 - car_tbattery) * 6) / 10;
+  //TODO if (maxRange != 0)
+  //TODO   maxRange -= ((20 - car_tbattery) * 6) / 10;
   
   return maxRange;
+}
+
+void vehicle_kiasoul_query_sms_response(void){
+    char *s;
+    int i;
+ 
+    // Start SMS:
+    net_send_sms_start(par_get(PARAM_REGPHONE));
+
+    // Format SMS:
+    s = net_scratchpad;
+
+    // output 
+    s = stp_x(s, "Can: 0x", ks_can_request_id);
+    //for (i=0; i<8; i++)
+    //  s = stp_sx(s, " ", ks_can_response_databuffer[i]);
+
+    // Send SMS:
+    net_puts_ram(net_scratchpad);
+    net_send_sms_finish();
+    ks_can_request_status=0;
 }
 
 
@@ -490,6 +517,11 @@ BOOL vehicle_kiasoul_ticker1(void)
   
   //TODO car_12vline = ks_auxVoltage/10;
   car_12vline_ref = 122; //TODO  
+  
+  car_tbattery = (signed int)ks_battery_module_temp_1; /*((signed int)ks_battery_module_temp_1 + (signed int)ks_battery_module_temp_2 + 
+                  (signed int)ks_battery_module_temp_3 + (signed int)ks_battery_module_temp_4 + 
+                  (signed int)ks_battery_module_temp_5 + (signed int)ks_battery_module_temp_6 + 
+                  (signed int)ks_battery_module_temp_7 + (signed int)ks_battery_module_temp_8 ) / 8;*/
   
   //
   // Check for car status changes:
@@ -583,6 +615,9 @@ BOOL vehicle_kiasoul_ticker1(void)
       }
       car_chargecurrent = (((long)ks_chargepower*1000)>>8)/car_linevoltage; 
       
+      //Calculate remaining charge time
+      car_chargefull_minsremaining = ((float)((2700-(27*car_SOC))*60))/(((float)ks_chargepower)/(float)256);
+      
       ks_last_soc = car_SOC;
       ks_last_ideal_range = car_idealrange;
     }
@@ -600,7 +635,12 @@ BOOL vehicle_kiasoul_ticker1(void)
     net_req_notification(NET_NOTIFY_CHARGE);
     net_req_notification(NET_NOTIFY_STAT);
     }
- 
+  
+  // Check if we have a can-message as a response to a QRY sms
+  //if( ks_can_request_status==2 ){
+   //   vehicle_kiasoul_query_sms_response();
+  //}
+  
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -682,6 +722,12 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
     s = stp_i(s, "\n#6:", ks_battery_module_temp_6);
     s = stp_i(s, "\n#7:", ks_battery_module_temp_7);
     s = stp_i(s, "\n#8:", ks_battery_module_temp_8);
+    s = stp_x(s, "\ncan id:", ks_can_request_id);     //TODO 
+    s = stp_i(s, "\ncan_st:", ks_can_request_status); //TODO 
+    s = stp_rom(s, "\nData: "); //TODO
+    for (i=0; i<8; i++)
+      s = stp_sx(s, " ", ks_can_response_databuffer[i]);
+
     }
   else
     {
@@ -910,6 +956,29 @@ BOOL vehicle_kiasoul_charge_alert_sms(BOOL premsg, char *caller, char *command, 
   }
 
 ////////////////////////////////////////////////////////////////////////
+// Vehicle specific SMS command: QRY
+//
+
+BOOL vehicle_kiasoul_query_sms(BOOL premsg, char *caller, char *command, char *arguments)
+  {
+  if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
+    return FALSE;
+
+  if (arguments && *arguments)
+  {
+    char one = arguments[0];
+    char two = arguments[1];
+    char three = arguments[2];
+    ks_can_request_id = ((UINT)((one >= 'A') ? (one - 'A' + 10) : (one - '0'))<<8)+
+                        (((two >= 'A') ? (UINT)(two - 'A' + 10) : (UINT)(two - '0'))<<4)+
+                        (((three >= 'A') ? (UINT32)(three - 'A' + 10) : (UINT)(three - '0')));
+    ks_can_request_status = 1;
+  }
+
+  return TRUE;
+}
+
+////////////////////////////////////////////////////////////////////////
 // This is the Kia Soul SMS command table
 // (for implementation notes see net_sms::sms_cmdtable comment)
 //
@@ -926,6 +995,7 @@ rom char vehicle_kiasoul_sms_cmdtable[][NET_SMS_CMDWIDTH] =
   "3HELP",        // extend HELP output
   "3RANGE",       // Range setting
   "3CA",          // Charge Alert
+  "3QRY",         // Query CAN        
   ""
   };
 
@@ -934,7 +1004,8 @@ rom far BOOL(*vehicle_kiasoul_sms_hfntable[])(BOOL premsg, char *caller, char *c
   &vehicle_kiasoul_debug_sms,
   &vehicle_kiasoul_help_sms,
   &vehicle_kiasoul_range_sms,
-  &vehicle_kiasoul_charge_alert_sms
+  &vehicle_kiasoul_charge_alert_sms,
+  &vehicle_kiasoul_query_sms
   };
 
 
@@ -1076,6 +1147,9 @@ BOOL vehicle_kiasoul_initialise(void)
   ks_temp_4 = 20;
   ks_temp_5 = 20;
   
+  ks_can_request_id = 0; 
+  ks_can_request_status = 0; 
+
   //
   // Initialize CAN interface:
   // 
