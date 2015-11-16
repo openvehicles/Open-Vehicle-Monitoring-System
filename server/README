@@ -39,4 +39,6 @@ To be able to send push notifications to Android devices, you need to register a
 Enter the API key into your ovms_server.conf and the project number (GCM sender ID) into the
 App vehicle configuration.
 
+ATT: you will now additionally need the CPAN module "Net::SSLeay" for the HTTPS connection.
+
 
