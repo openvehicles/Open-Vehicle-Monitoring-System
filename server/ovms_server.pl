@@ -24,6 +24,7 @@ use HTTP::Parser::XS qw(parse_http_request);
 use Socket qw(SOL_SOCKET SO_KEEPALIVE);
 use Email::MIME;
 use Email::Sender::Simple qw(sendmail);
+use POSIX qw(strftime);
 
 use constant SOL_TCP => 6;
 use constant TCP_KEEPIDLE => 4;
@@ -32,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.1.1-20121216";
+my $VERSION = "2.2.1-20151116";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -1193,6 +1194,7 @@ sub svr_timeout
 sub push_queuenotify
   {
   my ($vehicleid, $alerttype, $alertmsg) = @_;
+  my $timestamp = strftime "%Y-%m-%d %H:%M:%S", gmtime;
 
   if ($alerttype eq 'E')
     {
@@ -1209,6 +1211,7 @@ sub push_queuenotify
     $rec{'vehicleid'} = $vehicleid;
     $rec{'alerttype'} = $alerttype;
     $rec{'alertmsg'} = $alertmsg;
+    $rec{'timestamp'} = $timestamp;
     $rec{'pushkeytype'} = $row->{'pushkeytype'};
     $rec{'pushkeyvalue'} = $row->{'pushkeyvalue'};
     $rec{'appid'} = $row->{'appid'};
@@ -1407,12 +1410,14 @@ sub gcm_tim
     my $vehicleid = $rec->{'vehicleid'};
     my $alerttype = $rec->{'alerttype'};
     my $alertmsg = $rec->{'alertmsg'};
+    my $timestamp = $rec->{'timestamp'};
     my $pushkeyvalue = $rec->{'pushkeyvalue'};
     my $appid = $rec->{'appid'};
     AE::log info => "#$fn - $vehicleid msg gcm '$alertmsg' => $pushkeyvalue";
     my $body = 'registration_id='.uri_escape($pushkeyvalue)
               .'&data.title='.uri_escape($vehicleid)
               .'&data.message='.uri_escape($alertmsg)
+              .'&data.time='.uri_escape($timestamp)
               .'&collapse_key='.time;
     http_request
       POST=>'https://android.googleapis.com/gcm/send',

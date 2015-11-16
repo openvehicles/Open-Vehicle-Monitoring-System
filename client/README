@@ -5,17 +5,16 @@ Open Vehicle Monitoring System
 Perl modules
 ============
 
-Install the following perl modules from CPAN:
+The following perl modules from CPAN are used by the clients:
 
-  EV
-  AnyEvent
   Config::IniFiles
-  DBI
-  DBD::MySQL
   Digest::MD5
   Digest::HMAC
   Crypt::RC4::XS
   MIME::Base64
+
+Install modules using cpanminus:
+  cpanm Config::IniFiles Digest::MD5 Digest::HMAC Crypt::RC4::XS MIME::Base64
 
 
 The clients

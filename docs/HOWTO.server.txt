@@ -1,10 +1,13 @@
 HOWTO Setup an OVMS server
+==========================
+
 
 0. DO I NEED THIS?
 
 You don't need to run your own OVMS server.
 You can just use the public Open Vehicles OVMS server.
 The choice is yours.
+
 
 1. PREREQUISITES
 
@@ -18,19 +21,35 @@ to be able to create a database and accounts.
 This could conscievably run on a windows server, but you are on your own ;-)
 [ let us know instructions if you manage to get it running ]
 
+
 2. MODULE INSTALLATION
 
 Install the following perl modules from CPAN:
 
-  EV
-  AnyEvent
   Config::IniFiles
-  DBI
-  DBD::MySQL
   Digest::MD5
   Digest::HMAC
   Crypt::RC4::XS
   MIME::Base64
+
+  DBI
+  DBD::mysql
+  EV
+  AnyEvent
+  AnyEvent::HTTP
+  AnyEvent::HTTPD
+  HTTP::Parser::XS
+  Data::UUID
+  Email::MIME
+  Email::Sender::Simple
+  Net::SSLeay
+  JSON::XS
+
+Install modules using cpanminus:
+  cpanm Config::IniFiles Digest::MD5 Digest::HMAC Crypt::RC4::XS MIME::Base64 \
+    DBI DBD::mysql EV AnyEvent AnyEvent::HTTP AnyEvent::HTTPD HTTP::Parser::XS \
+    Data::UUID Email::MIME Email::Sender::Simple Net::SSLeay JSON::XS
+
 
 3. MYSQL SETUP
 
@@ -50,6 +69,7 @@ Insert a record into the ovms_cars table, to give you access to your own car:
 
 Obviously, change the vehicleid, carpass and userpass as necessary. The only required fields are
 vehicleid and carpass.
+
 
 4. OVMS_SERVER ACCESS TO MYSQL
 
@@ -71,11 +91,13 @@ Test the connection with:
 If you get "ERROR 1044 (42000): Access denied", fix it before proceeding. The most likely cause
 is a mistake in your mysql user grant rights.
 
+
 5. RUN THE SERVER
 
 Get the ovms_server.pl code from github and run it with:
 
   $ ./ovms_server.pl
+
 
 6. ENJOY
 

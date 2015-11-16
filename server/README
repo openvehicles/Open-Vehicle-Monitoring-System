@@ -1,4 +1,5 @@
 Open Vehicle Monitoring System
+==============================
 
 
 The Server
@@ -18,3 +19,24 @@ file suitably configured, the ovms_server.sql database tables in a mysql databas
 the *.vece files (to convert error code to messages for different vehicle types).
 
 The other scripts are purely for development and testing purposes.
+
+
+Android Push Notifications
+==========================
+
+...are based on Google Cloud Messaging (GCM).
+
+To be able to send push notifications to Android devices, you need to register a GCM project:
+
+ - Log in to your Google account
+ - Open https://developers.google.com/mobile/add
+ - Select platform "Android"
+ - Enter an arbitrary project name, e.g. "MyOvmsServer"
+ - Package name should be "com.openvehicles.OVMS"
+ - Activate "Cloud Messaging" and generate the key
+ - Note the API key and project number (= GCM sender ID)
+
+Enter the API key into your ovms_server.conf and the project number (GCM sender ID) into the
+App vehicle configuration.
+
+
