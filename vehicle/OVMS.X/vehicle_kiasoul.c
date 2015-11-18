@@ -36,7 +36,7 @@
 //  - Better charge handling (Sense proper car on, car off, port open etc.)
 //  - Added time to full charge
 //
-// 0.33  xx Nov 2015  (Geir Øyvind Vælidalo)
+// 0.33  18 Nov 2015  (Geir Øyvind Vælidalo)
 //  - TMPS-data in app
 //  - TMPS-SMS
 //  - Improved charge handling. Fetching proper voltages and amperes?
