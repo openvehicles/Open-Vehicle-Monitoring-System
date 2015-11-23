@@ -1215,11 +1215,22 @@ sub push_queuenotify
     $rec{'pushkeytype'} = $row->{'pushkeytype'};
     $rec{'pushkeyvalue'} = $row->{'pushkeyvalue'};
     $rec{'appid'} = $row->{'appid'};
+    
+    # send mail notifications:
+    if ($row->{'pushtype'} eq 'mail' && $mail_enabled eq 1)
+      {
+      push @mail_queue,\%rec;
+      AE::log info => "- - $vehicleid msg queued mail notification for $rec{'pushkeyvalue'}";
+      }
+    
+    # check active connections:
     foreach (%{$app_conns{$vehicleid}})
       {
       my $fn = $_;
       next CANDIDATE if ($conns{$fn}{'appid'} eq $row->{'appid'}); # Car connected?
       }
+    
+    # send Apple push notification:
     if ($row->{'pushtype'} eq 'apns')
       {
       if ($row->{'pushkeytype'} eq 'sandbox')
@@ -1228,15 +1239,12 @@ sub push_queuenotify
         { push @apns_queue_production,\%rec; }
       AE::log info => "- - $vehicleid msg queued apns notification for $rec{'pushkeytype'}:$rec{'appid'}";
       }
+    
+    # send Google push notification:
     if ($row->{'pushtype'} eq 'gcm')
       {
       push @gcm_queue,\%rec;
       AE::log info => "- - $vehicleid msg queued gcm notification for $rec{'pushkeytype'}:$rec{'appid'}";
-      }
-    if ($row->{'pushtype'} eq 'mail' && $mail_enabled eq 1)
-      {
-      push @mail_queue,\%rec;
-      AE::log info => "- - $vehicleid msg queued mail notification for $rec{'pushkeyvalue'}";
       }
     }
   }
