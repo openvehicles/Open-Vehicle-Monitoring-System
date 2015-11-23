@@ -48,7 +48,15 @@
 //  - Fixed issue with detecting ChaDeMo-charging? (Still untested)
 //  - Adjusted some of the values in BATT, as they was just 1/10th of actual
 //    values.
-//  - Added AVG-sms which returns avarage use per km/mi in total.
+//  - Added AVG-sms which returns average use per km/mi in total.
+//
+// 0.41  21 Nov 2015  (Geir Øyvind Vælidalo)
+//  - Fixed some issues with charge detection
+//  - Added three poll states: 0=parking, 1=driving, 2=charging
+//  - Calculates charge limit for TYPE1/2 charging.
+//  - Added car_chargekWh. 
+//  - Minor cleanups 
+//  - Fixed AVG-sms. Value was only 1/10 of actual value. 
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -77,13 +85,14 @@
 #include "net_sms.h"
 
 // Module version:
-rom char vehicle_kiasoul_version[] = "0.4";
+rom char vehicle_kiasoul_version[] = "0.41";
 
 #define CAN_ADJ -1  // To adjust for the 1 byte difference between the 
                     // can_databuffer and the google spreadsheet
-#define KS_CHARGING 0x80     
-#define KS_CHADEMO  0x40
-#define KS_TYPE1    0x20
+#define KS_PLUGGED_IN       (ks_charge_bits & 0x80)     
+#define KS_CHADEMO_CHARGING (ks_charge_bits & 0x40)
+#define KS_J1772_CHARGING   (ks_charge_bits & 0x20)
+#define KS_CHARGING         (ks_charge_bits & 0x60)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Kia Soul state variables
@@ -95,7 +104,7 @@ UINT8 ks_busactive;           // indication that bus is active
 
 car_doors1bits_t ks_doors1;   // Main status flags
 
-UINT8 ks_soc;                  // SOC [1/10 %]
+UINT8 ks_soc;                 // SOC [1/10 %]
 UINT ks_last_soc;
 UINT ks_bms_soc;              // BMS SOC [1/10 %]
 UINT8 ks_estrange;            // Estimated range remaining [km]
@@ -168,6 +177,8 @@ INT8 ks_tpms_temp[4];
 
 UINT8 ks_send_charge_SMS;
 
+long ks_cum_charge_start;
+
 #define KS_BUS_TIMEOUT 10     // bus activity timeout in seconds
 
 // Kia Soul EV specific features:
@@ -192,31 +203,31 @@ UINT8 ks_send_charge_SMS;
 // polltime[state] = poll period in seconds, i.e. 10 = poll every 10 seconds
 //
 // state: 0..2; set by vehicle_poll_setstate()
-//      i.e. 0=parking, 1=driving
+//      i.e. 0=parking, 1=driving, 2=charging
 //
 
 rom vehicle_pid_t vehicle_kiasoul_polls[] = 
 {
-  { 0x7e2, 0, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {  120, 120, 0 } }, // VIN
+  { 0x7e2, 0, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {  120, 120, 120 } }, // VIN
   //{ 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } }, // Start diag session
-  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x01, {  30, 10, 0 } }, // Diag page 01
-  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  90, 15, 0 } }, // Diag page 02
-  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x03, {  90, 15, 0 } }, // Diag page 03
-  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x04, {  90, 15, 0 } }, // Diag page 04
-  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x05, {  30, 10, 0 } }, // Diag page 05
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x01, {  30, 10, 10 } }, // Diag page 01
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  90, 30, 10 } }, // Diag page 02
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x03, {  90, 30, 10 } }, // Diag page 03
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x04, {  90, 30, 10 } }, // Diag page 04
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x05, {  30, 10, 10 } }, // Diag page 05
   //{ 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } }, // End diag session (?)
 
   //{ 0x7e2, 0x79c, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } },   // Start diag session
-  { 0x794, 0x79c, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  30, 10, 0 } },     // On board charger
+  { 0x794, 0x79c, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  30, 30, 10 } },     // On board charger
   //{ 0x7e2, 0x79c, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } },   // End diag session (?)
 
   //{ 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } }, // Start diag session
-  { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x00, {  30, 10, 0 } },   // VMCU    
-  { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  30, 10, 0 } },   // 
+  { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x00, {  30, 30, 10 } },   // VMCU    
+  { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  30, 30, 10 } },   // 
   //{ 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } }, // End diag session (?)
  
   //{ 0x7e2, 0x7de, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } },   // Start diag session
-  { 0x7df, 0x7de, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x06, {  30, 10, 0 } },     // TMPS
+  { 0x7df, 0x7de, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x06, {  60, 15, 60 } },     // TMPS
   //{ 0x7e2, 0x7de, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } },   // End diag session (?)
 
   { 0, 0, 0x00, 0x00, { 0, 0, 0 } }
@@ -458,8 +469,7 @@ BOOL vehicle_kiasoul_poll0(void)
 
 BOOL vehicle_kiasoul_poll1(void)
   {
-  UINT val1;
-  int i;
+  long val1;
   
   // reset bus activity timeout:
   ks_busactive = KS_BUS_TIMEOUT;
@@ -493,7 +503,12 @@ BOOL vehicle_kiasoul_poll1(void)
        
     case 0x4f0:
        // Odometer:
-       ks_odometer_speed = ((UINT32)CAN_BYTE(7) << 24) | ((UINT32)CAN_BYTE(6) << 16) | ((UINT32)CAN_BYTE(5)<<8); //Odometer
+       val1 = ((UINT32)CAN_BYTE(7) << 24) | ((UINT32)CAN_BYTE(6) << 16) 
+            | ((UINT32)CAN_BYTE(5) << 8);
+       //Make sure we only update if we have a bigger value
+       if( val1>(ks_odometer_speed & 0xffffff00) ){ 
+          ks_odometer_speed = (ks_odometer_speed & 0x000000ff) | val1; 
+       }
     case 0x4f2:
        // Speed:
        ks_odometer_speed = (ks_odometer_speed & 0xffffff00) | CAN_BYTE(1);
@@ -508,7 +523,6 @@ BOOL vehicle_kiasoul_poll1(void)
   
     case 0x581:
       // Car is CHARGING:
-      //ks_doors1.Charging = (CAN_BYTE(3) != 0);
       ks_chargepower = ((UINT)CAN_BYTE(7) << 8) | CAN_BYTE(6); 
       ks_charge_byte3 = CAN_BYTE(3);
       ks_charge_byte5 = CAN_BYTE(5);
@@ -525,8 +539,8 @@ BOOL vehicle_kiasoul_poll1(void)
   // Fetch requested can id, as specified via QRY sms.
   if( ks_can_request_id & REQUEST_STATUS_BITS==REQUEST_STATUS_NOT_READ ){ //Both status bit are set, so we haven't read the data yet
       if( can_id == ks_can_request_id &0xfff  ){        
-        for(i=0; i<8; i++){
-            ks_can_response_databuffer[i]=CAN_BYTE(i);
+        for(val1=0; val1<8; val1++){
+            ks_can_response_databuffer[val1]=CAN_BYTE(val1);
         }
         ks_can_request_id &= 0x7FFF; //Clear most significant bit as we have read the data
       }
@@ -663,7 +677,6 @@ BOOL vehicle_kiasoul_ticker1(void)
   if (ks_doors1.CarON)
     {
     // Car is ON
-    //vehicle_poll_setstate(1);
     car_doors1bits.CarON = 1;
     if (car_parktime != 0)
       {
@@ -671,11 +684,11 @@ BOOL vehicle_kiasoul_ticker1(void)
       net_req_notification(NET_NOTIFY_ENV);
       ks_start_odo = ks_odometer_speed>>8;
       }
+    car_trip = MiFromKm((UINT)((ks_odometer_speed>>8)-ks_start_odo));
     }
   else
     {
     // Car is OFF
-    //vehicle_poll_setstate(0);
     car_doors1bits.CarON = 0;
     car_speed = 0;
     if (car_parktime == 0)
@@ -684,15 +697,24 @@ BOOL vehicle_kiasoul_ticker1(void)
       net_req_notification(NET_NOTIFY_ENV);
       }
     }
+
+  if( KS_J1772_CHARGING ){  // Type 1 or Type 2 charging
+      car_linevoltage   = ks_obc_volt/10;    
+      car_chargecurrent = (((long)ks_chargepower*1000)>>8)/car_linevoltage;
+      car_chargemode    = 0;                      // Standard      
+      car_chargelimit   = 6600/car_linevoltage;   // 6.6kW
+  }else if( KS_CHADEMO_CHARGING ){     //ChaDeMo             
+      car_linevoltage   = ks_battery_DC_voltage/10; 
+      car_chargecurrent = (UINT8)((-ks_battery_current)/10);
+      car_chargemode    = 4;                      // Performance      
+      car_chargelimit   = 250;                    // 250A - 100kW/400V
+  }
   
-  car_trip = MiFromKm((UINT)((ks_odometer_speed>>8)-ks_start_odo));
+  ks_doors1.Charging = KS_PLUGGED_IN && KS_CHARGING && (car_chargecurrent>0);
   
-  ks_doors1.Charging = (ks_charge_bits & KS_CHARGING != 0);
-  //TODO detect heating
-    
+  vehicle_poll_setstate( ks_doors1.Charging ? 2 : (ks_doors1.CarON ? 1 : 0));
   //
   // Check for charging status changes:
-  //s
   if (ks_doors1.Charging)
     {
     if (!car_doors1bits.Charging)
@@ -706,9 +728,10 @@ BOOL vehicle_kiasoul_ticker1(void)
       car_chargeduration = 0;   // Reset charge duration
       car_chargestate = 1;      // Charging state
       car_chargemode = 0;       // Standard charging. 
-      car_chargekwh = 0;        // 
-      car_chargelimit = 0;
-      ks_send_charge_SMS = 1;
+      car_chargekwh = 0;        // kWh charged
+      car_chargelimit = 0;      // Charge limit
+      ks_send_charge_SMS = 1;   // Send SMS when charging is fully initiated
+      ks_cum_charge_start = ks_battery_cum_charge;
       }
     else
       {
@@ -734,40 +757,36 @@ BOOL vehicle_kiasoul_ticker1(void)
       }
       
       //Setting "virtual" charge mode 
-      if( ks_charge_bits & KS_TYPE1>0 ){  // Type 1 or Type 2 charging
+      /*if( ks_charge_bits & KS_TYPE1>0 ){  // Type 1 or Type 2 charging
         car_linevoltage   = ks_obc_volt/10;    
         car_chargecurrent = (((long)ks_chargepower*1000)>>8)/car_linevoltage;
-        car_chargemode    = 0;              // Standard      
-        car_chargelimit   = 28;             // 28A - 6.6kW/230V
-      }else if( ks_charge_bits & KS_CHADEMO>0){ //ChaDeMo             
+        car_chargemode    = 0;                      // Standard      
+        car_chargelimit   = 6600/car_linevoltage;   // 6.6kW
+      }else if( ks_charge_bits & KS_CHADEMO>0){     //ChaDeMo             
         car_linevoltage   = ks_battery_DC_voltage/10; 
         car_chargecurrent = (-ks_battery_current)/10;
-        car_chargemode    = 4;              // Performance      
-        car_chargelimit   = 250;            // 250A - 100kW/400V
-      }
+        car_chargemode    = 4;                      // Performance      
+        car_chargelimit   = 250;                    // 250A - 100kW/400V
+      }*/
     
       // Check if we have what is needed to calculate remaining minutes
       if( car_linevoltage>0 && car_chargecurrent>0){
         car_chargestate = 1;      // Charging state
-        //car_chargecurrent = (((long)ks_chargepower*1000)>>8)/car_linevoltage; 
-
+ 
         //Calculate remaining charge time
         //TODO If CA is sat, we should calculate for CA and not total     
-        //car_chargefull_minsremaining = (UINT)((float)((27.0-(27.0*car_SOC)/100.0)*15360.0)/((float)(ks_chargepower)));
         car_chargefull_minsremaining = (UINT)((float)((27000.0-(27000.0*car_SOC)/100.0)*60.0)/((float)(car_linevoltage*car_chargecurrent)));
         if( car_chargefull_minsremaining>2000){ //Prevent too long chargetimes 
           car_chargefull_minsremaining=2000; 
         }          
+        
+        if( ks_send_charge_SMS>0){ //Send Charge SMS after we have initialized the voltage and current settings 
+          ks_send_charge_SMS=0;
+        }
       }else{       
-          car_chargestate = 0x0f; //Heating 
+          car_chargestate = 0x0f; //Heating?
       }
-      
-      if( ks_send_charge_SMS>0 && car_doors1bits.Charging){ //Send Charge SMS after we have initialized the voltage and current settings 
-        net_req_notification(NET_NOTIFY_CHARGE);
-        net_req_notification(NET_NOTIFY_STAT);
-        ks_send_charge_SMS=0;
-      }
-              
+      car_chargekwh = (UINT8)(ks_battery_cum_charge - ks_cum_charge_start);
       ks_last_soc = car_SOC;
       ks_last_ideal_range = car_idealrange;
     }
@@ -783,6 +802,8 @@ BOOL vehicle_kiasoul_ticker1(void)
     else
       car_chargestate = 21; // Charge STOPPED
     car_chargelimit = 0;
+    car_chargekwh = (UINT8)(ks_battery_cum_charge - ks_cum_charge_start);
+    ks_cum_charge_start=0; 
     net_req_notification(NET_NOTIFY_CHARGE);
     net_req_notification(NET_NOTIFY_STAT);
     }
@@ -1004,11 +1025,11 @@ BOOL vehicle_kiasoul_avg_sms(BOOL premsg, char *caller, char *command, char *arg
   s = net_scratchpad;
   s = stp_rom(s, "Average\n");
   if (can_mileskm == 'M') {
-    s = stp_l2f(s, "", (long)ks_battery_cum_discharge/(long)MiFromKm((ks_odometer_speed>>8)/100),2);
+    s = stp_l2f(s, "", (long)ks_battery_cum_discharge/(long)MiFromKm((ks_odometer_speed>>8)/10000),2);
     s = stp_l2f(s, "kWh/100mi\n", (long)MiFromKm(ks_odometer_speed>>8)/(long)ks_battery_cum_discharge/100,2);
     s = stp_rom(s, "mi/kWh");
   }else{
-    s = stp_l2f(s, "", (long)ks_battery_cum_discharge/(long)((ks_odometer_speed>>8)/100),2);
+    s = stp_l2f(s, "", (long)ks_battery_cum_discharge/(long)((ks_odometer_speed>>8)/10000),2);
     s = stp_l2f(s, "kWh/100km\n", (long)(ks_odometer_speed>>8)/(long)(ks_battery_cum_discharge/100),2);
     s = stp_rom(s, "km/kWh");
   }
