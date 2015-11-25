@@ -58,6 +58,14 @@
 //  - Minor cleanups 
 //  - Fixed AVG-sms. Value was only 1/10 of actual value. 
 //
+// 0.42  25 Nov 2015  (Geir Øyvind Vælidalo)
+//  - Fixed Trip + added trip to AVG sms (untested)
+//  - chargefull_minsremaining calculation should calc to range or soc
+//    specified in CA if present. On ChaDeMo 83% is always max (BMS SOC 80%)
+//  - SMS-notification when starting charging is now back. Removed by mistake.
+//  - "Changed" the poll states to 0=off, 1=on, 2=charging 
+//  - ChaDeMo charging is properly detected
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -114,6 +122,7 @@ UINT8 ks_auxVoltage;          // Voltage 12V aux battery [1/10 V]
 
 UINT32 ks_odometer_speed;     // Odometer (Three MSB) and speed (LSB))
 UINT32 ks_start_odo;          // used to calculate trip (1 UNUSED BYTE!!)
+UINT32 ks_start_cdc;          // used to calculate trip (Cummulated discharge) 
 
 UINT8 ks_batt_fan_byte; //TODO Temporary
 UINT8 ks_batt_dc_byte; //TODO Temporary
@@ -203,31 +212,31 @@ long ks_cum_charge_start;
 // polltime[state] = poll period in seconds, i.e. 10 = poll every 10 seconds
 //
 // state: 0..2; set by vehicle_poll_setstate()
-//      i.e. 0=parking, 1=driving, 2=charging
+//     0=off, 1=on, 2=charging
 //
 
 rom vehicle_pid_t vehicle_kiasoul_polls[] = 
 {
-  { 0x7e2, 0, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {  120, 120, 120 } }, // VIN
+  { 0x7e2, 0, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, {  0, 120, 120 } }, // VIN
   //{ 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } }, // Start diag session
   { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x01, {  30, 10, 10 } }, // Diag page 01
-  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  90, 30, 10 } }, // Diag page 02
-  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x03, {  90, 30, 10 } }, // Diag page 03
-  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x04, {  90, 30, 10 } }, // Diag page 04
-  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x05, {  30, 10, 10 } }, // Diag page 05
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  0, 30, 10 } }, // Diag page 02
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x03, {  0, 30, 10 } }, // Diag page 03
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x04, {  0, 30, 10 } }, // Diag page 04
+  { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x05, {  120, 10, 10 } }, // Diag page 05
   //{ 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } }, // End diag session (?)
 
   //{ 0x7e2, 0x79c, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } },   // Start diag session
-  { 0x794, 0x79c, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  30, 30, 10 } },     // On board charger
+  { 0x794, 0x79c, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  0, 0, 10 } },     // On board charger
   //{ 0x7e2, 0x79c, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } },   // End diag session (?)
 
   //{ 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } }, // Start diag session
-  { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x00, {  30, 30, 10 } },   // VMCU    
-  { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  30, 30, 10 } },   // 
+  { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x00, {  30, 10, 10 } },    // VMCU  Shift-stick 
+  { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, {  30, 10, 0 } },     //       Motor temp++
   //{ 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } }, // End diag session (?)
  
   //{ 0x7e2, 0x7de, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } },   // Start diag session
-  { 0x7df, 0x7de, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x06, {  60, 15, 60 } },     // TMPS
+  { 0x7df, 0x7de, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x06, {  30, 10, 0 } },     // TMPS
   //{ 0x7e2, 0x7de, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } },   // End diag session (?)
 
   { 0, 0, 0x00, 0x00, { 0, 0, 0 } }
@@ -608,6 +617,7 @@ void vehicle_kiasoul_query_sms_response(void){
 BOOL vehicle_kiasoul_ticker1(void)
   {
   int maxRange, suffSOC, suffRange;
+  float chargeTarget;
   UINT8 i;
   // 
   // Check CAN bus activity timeout:
@@ -675,35 +685,39 @@ BOOL vehicle_kiasoul_ticker1(void)
   car_doors1bits.HandBrake = ks_doors1.HandBrake;
   
   if (ks_doors1.CarON)
-    {
+  {
     // Car is ON
-    car_doors1bits.CarON = 1;
+    if(car_doors1bits.CarON==0){
+      car_doors1bits.CarON = 1;
+      ks_start_odo = ks_odometer_speed>>8;     //ODO at Start of trip
+      ks_start_cdc = ks_battery_cum_discharge; //Cummulated discharge at start of trip
+    }
     if (car_parktime != 0)
-      {
+    {
       car_parktime = 0; // No longer parking
       net_req_notification(NET_NOTIFY_ENV);
-      ks_start_odo = ks_odometer_speed>>8;
-      }
-    car_trip = MiFromKm((UINT)((ks_odometer_speed>>8)-ks_start_odo));
     }
+    car_trip = MiFromKm((UINT)((ks_odometer_speed>>8)-ks_start_odo));    
+  }
   else
-    {
+  {
     // Car is OFF
     car_doors1bits.CarON = 0;
     car_speed = 0;
     if (car_parktime == 0)
       {
       car_parktime = car_time-1; // Record it as 1 second ago, so non zero report
+      car_trip = MiFromKm((UINT)((ks_odometer_speed>>8)-ks_start_odo));    
       net_req_notification(NET_NOTIFY_ENV);
       }
-    }
+  }
 
-  if( KS_J1772_CHARGING ){  // Type 1 or Type 2 charging
+  if( KS_J1772_CHARGING ){            // J1772 - Type 1  charging
       car_linevoltage   = ks_obc_volt/10;    
       car_chargecurrent = (((long)ks_chargepower*1000)>>8)/car_linevoltage;
       car_chargemode    = 0;                      // Standard      
       car_chargelimit   = 6600/car_linevoltage;   // 6.6kW
-  }else if( KS_CHADEMO_CHARGING ){     //ChaDeMo             
+  }else if( KS_CHADEMO_CHARGING ){     //ChaDeMo charging            
       car_linevoltage   = ks_battery_DC_voltage/10; 
       car_chargecurrent = (UINT8)((-ks_battery_current)/10);
       car_chargemode    = 4;                      // Performance      
@@ -755,33 +769,33 @@ BOOL vehicle_kiasoul_ticker1(void)
         net_req_notification(NET_NOTIFY_ENV);
         }
       }
-      
-      //Setting "virtual" charge mode 
-      /*if( ks_charge_bits & KS_TYPE1>0 ){  // Type 1 or Type 2 charging
-        car_linevoltage   = ks_obc_volt/10;    
-        car_chargecurrent = (((long)ks_chargepower*1000)>>8)/car_linevoltage;
-        car_chargemode    = 0;                      // Standard      
-        car_chargelimit   = 6600/car_linevoltage;   // 6.6kW
-      }else if( ks_charge_bits & KS_CHADEMO>0){     //ChaDeMo             
-        car_linevoltage   = ks_battery_DC_voltage/10; 
-        car_chargecurrent = (-ks_battery_current)/10;
-        car_chargemode    = 4;                      // Performance      
-        car_chargelimit   = 250;                    // 250A - 100kW/400V
-      }*/
-    
+          
       // Check if we have what is needed to calculate remaining minutes
       if( car_linevoltage>0 && car_chargecurrent>0){
         car_chargestate = 1;      // Charging state
  
         //Calculate remaining charge time
-        //TODO If CA is sat, we should calculate for CA and not total     
-        car_chargefull_minsremaining = (UINT)((float)((27000.0-(27000.0*car_SOC)/100.0)*60.0)/((float)(car_linevoltage*car_chargecurrent)));
-        if( car_chargefull_minsremaining>2000){ //Prevent too long chargetimes 
-          car_chargefull_minsremaining=2000; 
+        if( suffSOC>0 ){
+          chargeTarget = 270*suffSOC;
+        }else if(suffRange>0){
+          chargeTarget = (suffRange*27000/maxRange);
+        }else{
+          chargeTarget = 27000;
+        }
+        if( KS_CHADEMO_CHARGING && chargeTarget>22410 ){ //ChaDeMo charging            
+          chargeTarget = 22410;
+        }
+        car_chargefull_minsremaining = (UINT)
+                ((float)((chargeTarget-(27000.0*car_SOC)/100.0)*60.0)/
+                ((float)(car_linevoltage*car_chargecurrent)));
+        if( car_chargefull_minsremaining>1440){ //Maximum 24h charge time 
+          car_chargefull_minsremaining=1440; 
         }          
         
         if( ks_send_charge_SMS>0){ //Send Charge SMS after we have initialized the voltage and current settings 
           ks_send_charge_SMS=0;
+          net_req_notification(NET_NOTIFY_CHARGE);
+          net_req_notification(NET_NOTIFY_STAT);
         }
       }else{       
           car_chargestate = 0x0f; //Heating?
@@ -814,6 +828,7 @@ BOOL vehicle_kiasoul_ticker1(void)
    }
   
   }
+  
 
 ////////////////////////////////////////////////////////////////////////
 // Vehicle specific SMS command: DEBUG
@@ -866,7 +881,7 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
     s = stp_l2f(s, "\n12v1=", ks_auxVoltage,1);
     s = stp_l2f(s, "\n12v2=", car_12vline,1);
     s = stp_i(s, "\nABHD", ks_air_bag_hwire_duty);
-    s = stp_i(s, "%\nTrip", car_trip);
+    s = stp_l(s, "%\nTrip", car_trip);
     }
   
   // Send SMS:
@@ -1016,6 +1031,8 @@ BOOL vehicle_kiasoul_tpms_sms(BOOL premsg, char *caller, char *command, char *ar
 BOOL vehicle_kiasoul_avg_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
   char *s;
+  float discharge;
+  float trip;
   
   // Start SMS:
   if (premsg)
@@ -1023,13 +1040,27 @@ BOOL vehicle_kiasoul_avg_sms(BOOL premsg, char *caller, char *command, char *arg
 
   // Format SMS:
   s = net_scratchpad;
-  s = stp_rom(s, "Average\n");
+  discharge = (float)(ks_battery_cum_discharge-ks_start_cdc);
+  trip = (float)((ks_odometer_speed>>8)-ks_start_odo);
   if (can_mileskm == 'M') {
-    s = stp_l2f(s, "", (long)ks_battery_cum_discharge/(long)MiFromKm((ks_odometer_speed>>8)/10000),2);
+    if(trip>0){
+      trip = (float)MiFromKm(trip);
+      s = stp_l2f(s, "Last trip:\n", (long)trip,1);
+      s = stp_l2f(s, "mi\n", (long)(discharge/trip),2);
+      s = stp_l2f(s, "kWh/100mi\n", (long)(trip*100.0/discharge),2);
+      s = stp_rom(s, "mi/kWh\n");
+    }
+    s = stp_l2f(s, "Total:\n", (long)(ks_battery_cum_discharge*100)/(long)MiFromKm((ks_odometer_speed>>8)/100),2);
     s = stp_l2f(s, "kWh/100mi\n", (long)MiFromKm(ks_odometer_speed>>8)/(long)ks_battery_cum_discharge/100,2);
     s = stp_rom(s, "mi/kWh");
   }else{
-    s = stp_l2f(s, "", (long)ks_battery_cum_discharge/(long)((ks_odometer_speed>>8)/10000),2);
+    if(trip>0){
+      s = stp_l2f(s, "Last Trip:\n", (long)trip,1);
+      s = stp_l2f(s, "km\n", (long)(discharge/trip),2);
+      s = stp_l2f(s, "kWh/100km\n", (long)(trip*100.0/discharge),2);
+      s = stp_rom(s, "km/kWh\n");
+    }
+    s = stp_l2f(s, "Total:\n", (long)(ks_battery_cum_discharge*100)/(long)((ks_odometer_speed>>8)/100),2);
     s = stp_l2f(s, "kWh/100km\n", (long)(ks_odometer_speed>>8)/(long)(ks_battery_cum_discharge/100),2);
     s = stp_rom(s, "km/kWh");
   }
