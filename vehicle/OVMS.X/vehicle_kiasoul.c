@@ -66,7 +66,7 @@
 //  - "Changed" the poll states to 0=off, 1=on, 2=charging 
 //  - ChaDeMo charging is properly detected
 //
-// 0.43  26 Nov 2015  (Geir Øyvind Vælidalo)
+// 0.43  29 Nov 2015  (Geir Øyvind Vælidalo)
 //  - Fixed trip in AVG sms + added discharge and recuperation for last trip.
 //  - Changed AVG-sms to TRIP-sms
 //  - Added ambient temperature 
