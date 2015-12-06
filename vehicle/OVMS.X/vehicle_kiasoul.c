@@ -72,6 +72,17 @@
 //  - Added ambient temperature 
 //  - MaxRange is adjusted based on ambient temp and assumes half range at -20C  
 //
+// 0.44  06 Dec 2015  (Geir Øyvind Vælidalo)
+//  - Removed unused bytes to make room for ACC
+//  - Fixed a bug with speed 
+//  - Fixed issue with CarOn and CarOff not being detected properly, causing
+//    problems for trip.
+//  - Fixed ODOmeter. Could sometimes be reset.
+//  - Built with ACC, so more data is available for APP (E.g. Mins remaining 
+//    until car will be full, Range Limits etc.) See protocol doc, and Tesla
+//    Roadster OVMS user guide.
+//  - Added more data to TRIP-sms
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -99,15 +110,10 @@
 #include "net_sms.h"
 
 // Module version:
-rom char vehicle_kiasoul_version[] = "0.43";
+rom char vehicle_kiasoul_version[] = "0.44";
 
 #define CAN_ADJ -1  // To adjust for the 1 byte difference between the 
 // can_databuffer and the google spreadsheet
-#define KS_PLUGGED_IN       (ks_charge_bits & 0x80)     
-#define KS_CHADEMO_CHARGING (ks_charge_bits & 0x40)
-#define KS_J1772_CHARGING   (ks_charge_bits & 0x20)
-#define KS_CHARGING         (ks_charge_bits & 0x60)
-
 ////////////////////////////////////////////////////////////////////////////////
 // Kia Soul state variables
 // 
@@ -118,24 +124,29 @@ UINT8 ks_busactive; // indication that bus is active
 
 car_doors1bits_t ks_doors1; // Main status flags
 
-UINT8 ks_soc; // SOC [1/10 %]
-UINT ks_last_soc;
-UINT ks_bms_soc; // BMS SOC [1/10 %]
-UINT8 ks_estrange; // Estimated range remaining [km]
-UINT ks_last_ideal_range;
+UINT8 ks_last_soc;
+UINT8 ks_bms_soc;   // BMS SOC [1/10 %]
+UINT8 ks_estrange;  // Estimated range remaining [km]
+UINT8 ks_last_ideal_range;
 UINT ks_chargepower; // in [1/256 kW]
 UINT8 ks_auxVoltage; // Voltage 12V aux battery [1/10 V]
 
-UINT32 ks_odometer_speed; // Odometer (Three MSB) and speed (LSB))
-UINT32 ks_start_odo; // used to calculate trip (1 UNUSED BYTE!!)
-UINT32 ks_start_cdc; // used to calculate trip (Cumulated discharge) 
-UINT32 ks_start_cc;  // used to calculate trip (Cumulated charge)
+UINT8 ks_odometer[3]; 
+UINT8 ks_trip_start_odo[3]; // used to calculate trip
+#define KS_TRIP_START_ODOMETER (((UINT32)ks_trip_start_odo[0]<<16) | ((UINT32)ks_trip_start_odo[1]<<8) | ((UINT32)ks_trip_start_odo[2]))
+#define KS_ODOMETER            (((UINT32)ks_odometer[0]<<16)       | ((UINT32)ks_odometer[1]<<8)       | ((UINT32)ks_odometer[2]))
 
-UINT8 ks_batt_fan_byte; //TODO Temporary
-UINT8 ks_batt_dc_byte; //TODO Temporary
+UINT32 ks_start_cdc;        // Used to calculate trip power use (Cumulated discharge) 
+UINT32 ks_start_cc;         // Used to calculate trip recuperation (Cumulated charge)
+UINT32 ks_cum_charge_start; // Used to calculate charged power.
 
-UINT8 ks_charge_bits;
-UINT8 ks_door_byte;     //TODO Temporary door byte for analysis purposes
+struct{
+  unsigned char FanStatus:4;           
+  unsigned char ChargingChademo:1;     
+  unsigned char ChargingJ1772:1;       
+  unsigned char :1;                    
+  unsigned char SendChargeSMS:1;       
+} ks_status_bits;
 
 #define REQUEST_STATUS_BITS 0xC000
 #define REQUEST_STATUS_NOT_READ 0x8000
@@ -145,10 +156,9 @@ UINT8 ks_can_response_databuffer[8];  // The response
 
 UINT8 ks_battery_module_temp[8];
 
-UINT ks_battery_DC_voltage;           //DC voltage                    02 21 01 -> 22 2+3
-INT ks_battery_current;               //Battery current               02 21 01 -> 21 7+22 1
-UINT ks_battery_avail_charge;         //Available charge              02 21 01 -> 21 2+3
-UINT ks_battery_avail_discharge;      //Available discharge           02 21 01 -> 21 4+5
+UINT  ks_battery_DC_voltage;          //DC voltage                    02 21 01 -> 22 2+3
+INT   ks_battery_current;             //Battery current               02 21 01 -> 21 7+22 1
+UINT  ks_battery_avail_charge;        //Available charge              02 21 01 -> 21 2+3
 UINT8 ks_battery_max_cell_voltage;    //Max cell voltage              02 21 01 -> 23 6
 UINT8 ks_battery_max_cell_voltage_no; //Max cell voltage no           02 21 01 -> 23 7
 UINT8 ks_battery_min_cell_voltage;    //Min cell voltage              02 21 01 -> 24 1
@@ -158,39 +168,38 @@ UINT32 ks_battery_cum_charge_current;     //Cumulated charge current    02 21 01
 UINT32 ks_battery_cum_discharge_current;  //Cumulated discharge current 02 21 01 -> 25 3-6
 UINT32 ks_battery_cum_charge;             //Cumulated charge power      02 21 01 -> 25 7 + 26 1-3
 UINT32 ks_battery_cum_discharge;          //Cumulated discharge power   02 21 01 -> 26 4-7
-UINT32 ks_battery_cum_op_time;            //Cumulated operating time    02 21 01 -> 27 1-4
+UINT8  ks_battery_cum_op_time[3];         //Cumulated operating time    02 21 01 -> 27 1-4
 
-UINT8 ks_battery_cell_voltage[96];
-//181 bytes
+UINT8 ks_battery_cell_voltage[96]; //TODO Fetch these in blocks on demand instead. 
+                                   //Should be able to save 64 bytes, however, this
+                                   //will need to rewrite the SMS as 32 values are
+                                   //too much for 160 characters.
 
 UINT8 ks_battery_min_temperature;         //02 21 05 -> 21 7 
 UINT8 ks_battery_inlet_temperature;       //02 21 05 -> 21 6 
 UINT8 ks_battery_max_temperature;         //02 21 05 -> 22 1 
-UINT8 ks_air_bag_hwire_duty;              //02 21 05 -> 23 5
 UINT8 ks_battery_heat_1_temperature;      //02 21 05 -> 23 6
 UINT8 ks_battery_heat_2_temperature;      //02 21 05 -> 23 7
-UINT ks_battery_max_detoriation;          //02 21 05 -> 24 1+2
+UINT  ks_battery_max_detoriation;         //02 21 05 -> 24 1+2
 UINT8 ks_battery_max_detoriation_cell_no; //02 21 05 -> 24 3
-UINT ks_battery_min_detoriation;          //02 21 05 -> 24 4+5
+UINT  ks_battery_min_detoriation;         //02 21 05 -> 24 4+5
 UINT8 ks_battery_min_detoriation_cell_no; //02 21 05 -> 24 6
 
-UINT8 ks_heatsink_temperature;
-UINT ks_battery_fan;
+UINT8 ks_heatsink_temperature; //TODO Remove?
+UINT8 ks_battery_fan_feedback;
 
-UINT ks_obc_volt;
-UINT ks_obc_ampere;
-
-UINT8 ks_shift_bits;
+//UINT8 ks_air_bag_hwire_duty;              //02 21 05 -> 23 5 //TODO Remove?
+//UINT  ks_obc_ampere; //TODO Remove?
+//UINT  ks_battery_avail_discharge;     //Available discharge           02 21 01 -> 21 4+5
 
 UINT32 ks_tpms_id[4];
-UINT8 ks_tpms_pressure[4];
 INT8 ks_tpms_temp[4];
-
-UINT8 ks_send_charge_SMS;
+UINT8 ks_tpms_pressure[4];
+UINT8 ks_obc_volt;
+UINT8 ks_shift_bits;
 
 #pragma udata overlay vehicle_overlay_data2
-
-UINT32 ks_cum_charge_start;
+UINT8 ks_door_byte;     //TODO Temporary door byte for analysis purposes
 
 #define KS_BUS_TIMEOUT 10     // bus activity timeout in seconds
 
@@ -221,26 +230,18 @@ UINT32 ks_cum_charge_start;
 
 rom vehicle_pid_t vehicle_kiasoul_polls[] ={
   { 0x7e2, 0, VEHICLE_POLL_TYPE_OBDIIVEHICLE, 0x02, { 0, 120, 120}}, // VIN
-  //{ 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } }, // Start diag session
   { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x01, { 30, 10, 10}}, // Diag page 01
   { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, { 0, 30, 10}}, // Diag page 02
   { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x03, { 0, 30, 10}}, // Diag page 03
   { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x04, { 0, 30, 10}}, // Diag page 04
   { 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x05, { 120, 10, 10}}, // Diag page 05
-  //{ 0x7e4, 0x7ec, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } }, // End diag session (?)
 
-  //{ 0x7e2, 0x79c, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } },   // Start diag session
   { 0x794, 0x79c, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, { 0, 0, 10}}, // On board charger
-  //{ 0x7e2, 0x79c, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } },   // End diag session (?)
 
-  //{ 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } }, // Start diag session
   { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x00, { 30, 10, 10}}, // VMCU  Shift-stick 
   { 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x02, { 30, 10, 0}}, //       Motor temp++
-  //{ 0x7e2, 0x7ea, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } }, // End diag session (?)
 
-  //{ 0x7e2, 0x7de, VEHICLE_POLL_TYPE_OBDIISESSION, 0x90, {  60, 10, 0 } },   // Start diag session
   { 0x7df, 0x7de, VEHICLE_POLL_TYPE_OBDIIGROUP, 0x06, { 30, 10, 0}}, // TMPS
-  //{ 0x7e2, 0x7de, VEHICLE_POLL_TYPE_OBDIISESSION, 0x00, {  60, 10, 0 } },   // End diag session (?)
 
   { 0, 0, 0x00, 0x00, { 0, 0, 0}}
 };
@@ -278,6 +279,7 @@ rom vehicle_pid_t vehicle_kiasoul_polls[] ={
 BOOL vehicle_kiasoul_poll0(void) {
   UINT8 i;
   UINT base;
+  UINT32 val;
 
   // process OBDII data:
   switch (can_id) {
@@ -286,38 +288,49 @@ BOOL vehicle_kiasoul_poll0(void) {
         case 0x06:
           car_stale_tpms = 120;
           if (vehicle_poll_ml_frame == 0) {
-            ks_tpms_id[0] = (UINT32) can_databuffer[7] 
+            val = (UINT32) can_databuffer[7] 
                     | ((UINT32) can_databuffer[6] << 8) 
                     | ((UINT32) can_databuffer[5] << 16) 
                     | ((UINT32) can_databuffer[4] << 24);
+            if( val>0 ) ks_tpms_id[0] = val;
           } else if (vehicle_poll_ml_frame == 1) {
-            ks_tpms_pressure[0] = can_databuffer[1 + CAN_ADJ];
+            i = can_databuffer[1 + CAN_ADJ];
+            if( i>0 ) ks_tpms_pressure[0] = i;
             ks_tpms_temp[0] = can_databuffer[2 + CAN_ADJ];
-            ks_tpms_id[1] = (ks_tpms_id[1] & 0x000000ff) 
+            val = (ks_tpms_id[1] & 0x000000ff) 
                     | ((UINT32) can_databuffer[7 + CAN_ADJ] << 8) 
                     | ((UINT32) can_databuffer[6 + CAN_ADJ] << 16) 
                     | ((UINT32) can_databuffer[5 + CAN_ADJ] << 24);
+            if( val>0 ) ks_tpms_id[1] = val;
           } else if (vehicle_poll_ml_frame == 2) {
-            ks_tpms_id[1] = (UINT32) can_databuffer[1 + CAN_ADJ] | (ks_tpms_id[1] & 0xffffff00);
-            ks_tpms_pressure[1] = can_databuffer[2 + CAN_ADJ];
+            val = (UINT32) can_databuffer[1 + CAN_ADJ] | (ks_tpms_id[1] & 0xffffff00);
+            if( val>0 ) ks_tpms_id[1] = val;
+            i = can_databuffer[2 + CAN_ADJ];
+            if( i>0 ) ks_tpms_pressure[1] = i;
             ks_tpms_temp[1] = can_databuffer[3 + CAN_ADJ];
-            ks_tpms_id[2] = (ks_tpms_id[2] & 0x0000ffff) 
+            val = (ks_tpms_id[2] & 0x0000ffff) 
                     | ((UINT32) can_databuffer[7 + CAN_ADJ] << 16) 
                     | ((UINT32) can_databuffer[6 + CAN_ADJ] << 24);
+            if( val>0 ) ks_tpms_id[2] = val;
           } else if (vehicle_poll_ml_frame == 3) {
-            ks_tpms_id[2] = (UINT32) can_databuffer[2 + CAN_ADJ] 
+            val = (UINT32) can_databuffer[2 + CAN_ADJ] 
                     | ((UINT32) can_databuffer[1 + CAN_ADJ] << 8) 
                     | (ks_tpms_id[2] & 0xffff0000);
-            ks_tpms_pressure[2] = can_databuffer[3 + CAN_ADJ];
+            if( val>0 ) ks_tpms_id[2] = val;
+            i = can_databuffer[3 + CAN_ADJ];
+            if( i>0 ) ks_tpms_pressure[2] = i;
             ks_tpms_temp[2] = can_databuffer[4 + CAN_ADJ];
-            ks_tpms_id[3] = (ks_tpms_id[3] & 0x00ffffff) 
+            val = (ks_tpms_id[3] & 0x00ffffff) 
                     | ((UINT32) can_databuffer[7 + CAN_ADJ] << 24);
+            if( val>0 ) ks_tpms_id[3] = val;
           } else if (vehicle_poll_ml_frame == 4) {
-            ks_tpms_id[3] = (UINT32) can_databuffer[3 + CAN_ADJ] 
+            val = (UINT32) can_databuffer[3 + CAN_ADJ] 
                     | ((UINT32) can_databuffer[2 + CAN_ADJ] << 8) 
                     | ((UINT32) can_databuffer[1 + CAN_ADJ] << 16) 
                     | (ks_tpms_id[3] & 0xff000000);
-            ks_tpms_pressure[3] = can_databuffer[4 + CAN_ADJ];
+            if( val>0 ) ks_tpms_id[3] = val;
+            i = can_databuffer[4 + CAN_ADJ];
+            if( i>0 ) ks_tpms_pressure[3] = i;
             ks_tpms_temp[3] = can_databuffer[5 + CAN_ADJ];
           }
           break;
@@ -328,11 +341,11 @@ BOOL vehicle_kiasoul_poll0(void) {
       switch (vehicle_poll_pid) {
         case 0x02:
           if (vehicle_poll_ml_frame == 1) {
-            ks_obc_volt = ((UINT) can_databuffer[3 + CAN_ADJ] << 8) 
-                    | (UINT) can_databuffer[4 + CAN_ADJ];
+            ks_obc_volt = (UINT8)((((UINT) can_databuffer[3 + CAN_ADJ] << 8) 
+                    | (UINT) can_databuffer[4 + CAN_ADJ])/10);
           } else if (vehicle_poll_ml_frame == 2) {
-            ks_obc_ampere = ((UINT) can_databuffer[4 + CAN_ADJ] << 8) 
-                    | (UINT) can_databuffer[5 + CAN_ADJ];
+            //ks_obc_ampere = ((UINT) can_databuffer[4 + CAN_ADJ] << 8) 
+            //        | (UINT) can_databuffer[5 + CAN_ADJ];
           }
           break;
       }
@@ -360,7 +373,7 @@ BOOL vehicle_kiasoul_poll0(void) {
             if (vehicle_poll_ml_frame == 3) {
               car_tmotor = can_databuffer[5 + CAN_ADJ] - 40;
               car_tpem = can_databuffer[6 + CAN_ADJ] - 40;
-              ks_heatsink_temperature = can_databuffer[7 + CAN_ADJ]; //TODO Not correct?
+              ks_heatsink_temperature = can_databuffer[7 + CAN_ADJ] - 40;
               car_stale_temps = 120;
             }
           }
@@ -377,16 +390,21 @@ BOOL vehicle_kiasoul_poll0(void) {
             {
               ks_battery_avail_charge = (UINT) can_databuffer[3 + CAN_ADJ] 
                       | ((UINT) can_databuffer[2 + CAN_ADJ] << 8);
-              ks_battery_avail_discharge = (UINT) can_databuffer[5 + CAN_ADJ] 
-                      | ((UINT) can_databuffer[4 + CAN_ADJ] << 8);
-              ks_charge_bits = can_databuffer[6 + CAN_ADJ];
+              //ks_battery_avail_discharge = (UINT8)(((UINT) can_databuffer[5 + CAN_ADJ] 
+              //        | ((UINT) can_databuffer[4 + CAN_ADJ] << 8))>>2);
+              i = can_databuffer[6 + CAN_ADJ];
+              ks_doors1.PilotSignal = ((i & 0x80)>0);
+              ks_status_bits.ChargingChademo = ((i & 0x40)>0);
+              ks_status_bits.ChargingJ1772   = ((i & 0x20)>0);
               ks_battery_current = (ks_battery_current & 0x00FF) 
                       | ((UINT) can_databuffer[7 + CAN_ADJ] << 8);
             }
             if (vehicle_poll_ml_frame == 2) // 02 21 01 - 22
             {
-              ks_battery_current = (ks_battery_current & 0xFF00) | (UINT) can_databuffer[1 + CAN_ADJ];
-              ks_battery_DC_voltage = (UINT) can_databuffer[3 + CAN_ADJ] | ((UINT) can_databuffer[2 + CAN_ADJ] << 8);
+              ks_battery_current = (ks_battery_current & 0xFF00) 
+                      | (UINT) can_databuffer[1 + CAN_ADJ];
+              ks_battery_DC_voltage = (UINT) can_databuffer[3 + CAN_ADJ] 
+                      | ((UINT) can_databuffer[2 + CAN_ADJ] << 8);
               ks_battery_module_temp[0] = can_databuffer[4 + CAN_ADJ];
               ks_battery_module_temp[1] = can_databuffer[5 + CAN_ADJ];
               ks_battery_module_temp[2] = can_databuffer[6 + CAN_ADJ];
@@ -405,9 +423,11 @@ BOOL vehicle_kiasoul_poll0(void) {
             {
               ks_battery_min_cell_voltage = can_databuffer[1 + CAN_ADJ];
               ks_battery_min_cell_voltage_no = can_databuffer[2 + CAN_ADJ];
-              ks_battery_fan = (UINT) can_databuffer[4 + CAN_ADJ] | ((UINT) can_databuffer[3 + CAN_ADJ] << 8);
-              //TODO Probably not correct
-              ks_battery_cum_charge_current = (ks_battery_cum_charge_current & 0x0000FFFF) | ((UINT32) can_databuffer[6 + CAN_ADJ] << 24) | ((UINT32) can_databuffer[7 + CAN_ADJ] << 16);
+              ks_status_bits.FanStatus = can_databuffer[4 + CAN_ADJ] & 0xF; 
+              ks_battery_fan_feedback = can_databuffer[3 + CAN_ADJ];
+              ks_battery_cum_charge_current = (ks_battery_cum_charge_current & 0x0000FFFF) 
+                      | ((UINT32) can_databuffer[6 + CAN_ADJ] << 24) 
+                      | ((UINT32) can_databuffer[7 + CAN_ADJ] << 16);
 
               ks_auxVoltage = can_databuffer[5 + CAN_ADJ];
             } else if (vehicle_poll_ml_frame == 5) // 02 21 01 - 25
@@ -433,10 +453,13 @@ BOOL vehicle_kiasoul_poll0(void) {
                       | ((UINT32) can_databuffer[4 + CAN_ADJ] << 24);
             } else if (vehicle_poll_ml_frame == 7) // 02 21 01 - 27
             {
-              ks_battery_cum_op_time = (UINT32) can_databuffer[4 + CAN_ADJ] 
+              val = ((UINT32) can_databuffer[4 + CAN_ADJ] 
                       | ((UINT32) can_databuffer[3 + CAN_ADJ] << 8) 
                       | ((UINT32) can_databuffer[2 + CAN_ADJ] << 16) 
-                      | ((UINT32) can_databuffer[1 + CAN_ADJ] << 24);
+                      | ((UINT32) can_databuffer[1 + CAN_ADJ] << 24))/3600;
+              ks_battery_cum_op_time[0] = (val>>16) & 0xff;
+              ks_battery_cum_op_time[1] = (val>>8) & 0xff;
+              ks_battery_cum_op_time[2] = val & 0xff;
             }
           }
           break;
@@ -455,13 +478,11 @@ BOOL vehicle_kiasoul_poll0(void) {
         case 0x05:
           if (vehicle_poll_ml_frame == 1) {
             ks_battery_inlet_temperature = can_databuffer[6 + CAN_ADJ];
-            ks_battery_min_temperature = can_databuffer[7 + CAN_ADJ];
+            ks_battery_min_temperature   = can_databuffer[7 + CAN_ADJ];
           } else if (vehicle_poll_ml_frame == 2) {
             ks_battery_max_temperature = can_databuffer[1 + CAN_ADJ];
           } else if (vehicle_poll_ml_frame == 3) {
-            ks_batt_fan_byte = can_databuffer[3 + CAN_ADJ];
-            ks_batt_dc_byte = can_databuffer[4 + CAN_ADJ];
-            ks_air_bag_hwire_duty = can_databuffer[5 + CAN_ADJ];
+            //ks_air_bag_hwire_duty = can_databuffer[5 + CAN_ADJ];
             ks_battery_heat_1_temperature = can_databuffer[6 + CAN_ADJ];
             ks_battery_heat_2_temperature = can_databuffer[7 + CAN_ADJ];
           } else if (vehicle_poll_ml_frame == 4) {
@@ -497,7 +518,7 @@ BOOL vehicle_kiasoul_poll0(void) {
 //
 
 BOOL vehicle_kiasoul_poll1(void) {
-  long val1;
+  long val;
 
   // reset bus activity timeout:
   ks_busactive = KS_BUS_TIMEOUT;
@@ -506,20 +527,18 @@ BOOL vehicle_kiasoul_poll1(void) {
   switch (can_id) {
 
     case 0x018:
-      // Car is ON:
-      ks_doors1.CarON = ((CAN_BYTE(0) & 0x8) > 0);
-      ks_doors1.ChargePort = ((CAN_BYTE(0) & 0x1) > 0);
       // Doors status:
-      ks_doors1.FrontLeftDoor = ((CAN_BYTE(0) & 0x10) > 0);
-      ks_doors1.FrontRightDoor = ((CAN_BYTE(0) & 0x80) > 0);
+      ks_doors1.ChargePort      = ((CAN_BYTE(0) & 0x01) > 0);
+      ks_doors1.FrontLeftDoor   = ((CAN_BYTE(0) & 0x10) > 0);
+      ks_doors1.FrontRightDoor  = ((CAN_BYTE(0) & 0x80) > 0);
       ks_door_byte = CAN_BYTE(0);
       break;
 
     case 0x200:
       // Estimated range:
-      val1 = CAN_BYTE(2);
-      if (val1 > 0)
-        ks_estrange = val1;
+      val = CAN_BYTE(2);
+      if (val > 0)
+        ks_estrange = val;
       break;
 
     case 0x433:
@@ -529,22 +548,36 @@ BOOL vehicle_kiasoul_poll1(void) {
 
     case 0x4f0:
       // Odometer:
-      val1 = ((UINT32) CAN_BYTE(7) << 24) | ((UINT32) CAN_BYTE(6) << 16)
-              | ((UINT32) CAN_BYTE(5) << 8);
-      //Make sure we only update if we have a bigger value
-      if (val1 > (ks_odometer_speed & 0xffffff00)) {
-        ks_odometer_speed = (ks_odometer_speed & 0x000000ff) | val1;
+      if( can_datalength=8 && ( CAN_BYTE(7) || CAN_BYTE(6) || CAN_BYTE(5)) ){
+        ks_odometer[0]=CAN_BYTE(7);
+        ks_odometer[1]=CAN_BYTE(6);
+        ks_odometer[2]=CAN_BYTE(5);
       }
+      break;
+      
     case 0x4f2:
       // Speed:
-      ks_odometer_speed = (ks_odometer_speed & 0xffffff00) | CAN_BYTE(1);
+      if (can_mileskm == 'M')
+        car_speed = MiFromKm(CAN_BYTE(1) >> 1); // mph
+      else
+        car_speed = CAN_BYTE(1) >> 1; // kph      
+      
+      // 4f2 is one of the few can-messages that are sent while car is on and off.
+      // Byte 2 and 7 are some sort of counters which runs while the car is on.
+      if ( CAN_BYTE(2)>0 || CAN_BYTE(7)>0 ){
+        ks_doors1.CarON = 1;
+      }else if(CAN_BYTE(2)==0 && CAN_BYTE(7)==0 && car_speed==0 
+              && ks_doors1.HandBrake==1 ){
+        // Boths 2 and 7 and speed is 0, so we assumes the car is off.
+        ks_doors1.CarON = 0;
+      }
       break;
 
     case 0x542:
       // SOC:
-      val1 = CAN_BYTE(0);
-      if (val1 > 0)
-        ks_soc = val1;
+      val = CAN_BYTE(0);
+      if (val > 0)
+        car_SOC = val>>1;
       break;
 
     case 0x581:
@@ -554,13 +587,13 @@ BOOL vehicle_kiasoul_poll1(void) {
 
     case 0x594:
       // BMS SOC:
-      val1 = (UINT) CAN_BYTE(5) * 5 + CAN_BYTE(6);
-      if (val1 > 0)
-        ks_bms_soc = val1;
+      val = (UINT) CAN_BYTE(5) * 5 + CAN_BYTE(6);
+      if (val > 0)
+        ks_bms_soc = (UINT8)(val/10);
       break;
 
     case 0x653:
-      // AMBIENT TEMPERATURE(?):
+      // AMBIENT TEMPERATURE:
       car_ambient_temp = (((signed int)CAN_BYTE(5))/2)-40;
       car_stale_ambient = 120;
       break;
@@ -569,8 +602,8 @@ BOOL vehicle_kiasoul_poll1(void) {
   // Fetch requested can id, as specified via QRY sms.
   if (ks_can_request_id & REQUEST_STATUS_BITS == REQUEST_STATUS_NOT_READ) { //Both status bit are set, so we haven't read the data yet
     if (can_id == ks_can_request_id & 0xfff) {
-      for (val1 = 0; val1 < 8; val1++) {
-        ks_can_response_databuffer[val1] = CAN_BYTE(val1);
+      for (val = 0; val < 8; val++) {
+        ks_can_response_databuffer[val] = CAN_BYTE(val);
       }
       ks_can_request_id &= 0x7FFF; //Clear most significant bit as we have read the data
     }
@@ -585,7 +618,7 @@ BOOL vehicle_kiasoul_poll1(void) {
 // vehicle_Kia Soul EV get_maxrange: get MAXRANGE with temperature compensation
 //
 
-int vehicle_kiasoul_get_maxrange(void) {
+UINT8 vehicle_kiasoul_get_maxrange(void) {
   int maxRange;
 
   // Read user configuration:
@@ -597,7 +630,7 @@ int vehicle_kiasoul_get_maxrange(void) {
   if (maxRange != 0){
      maxRange = (maxRange * (100 - (int)(ABS(20 - car_ambient_temp)* 1.25)))/100;
   }
-  return maxRange;
+  return (UINT8)maxRange;
 }
 
 void vehicle_kiasoul_query_sms_response(void) {
@@ -634,7 +667,7 @@ void vehicle_kiasoul_query_sms_response(void) {
 // 
 
 BOOL vehicle_kiasoul_ticker1(void) {
-  int maxRange, suffSOC, suffRange;
+  UINT8 maxRange, suffRange, suffSOC; 
   float chargeTarget;
   UINT8 i;
   // 
@@ -649,36 +682,31 @@ BOOL vehicle_kiasoul_ticker1(void) {
     ks_doors1.CarON = 0;
     ks_doors1.Charging = 0;
     ks_chargepower = 0;
-    ks_odometer_speed &= 0xffffff00; //Clear speed
+    car_speed = 0;//Clear speed
   }
 
   /***************************************************************************
    * Read feature configuration:
    */
 
-  suffSOC = sys_features[FEATURE_SUFFSOC];
-  suffRange = sys_features[FEATURE_SUFFRANGE];
+  suffSOC = (UINT8)sys_features[FEATURE_SUFFSOC];
+  suffRange = (UINT8)sys_features[FEATURE_SUFFRANGE];
   maxRange = vehicle_kiasoul_get_maxrange();
 
   // 
   // Convert KS status data to OVMS framework:
   //
 
-  car_SOC = ks_soc >> 1; // no rounding to avoid 99.5 = 100
-
   car_estrange = MiFromKm((UINT) ks_estrange << 1);
 
   if (maxRange > 0)
-    car_idealrange = MiFromKm((((float) maxRange) * ks_soc) / 200);
+    car_idealrange = MiFromKm((((float) maxRange) * car_SOC) / 100);
   else
     car_idealrange = car_estrange;
 
-  car_odometer = MiFromKm(ks_odometer_speed >> 8);
-
-  if (can_mileskm == 'M')
-    car_speed = MiFromKm((ks_odometer_speed & 0xff) >> 1); // mph
-  else
-    car_speed = (ks_odometer_speed & 0xff) >> 1; // kph
+  if( ks_odometer[0]>0 || ks_odometer[1]>0 || ks_odometer[2]>0){ 
+    car_odometer = MiFromKm(KS_ODOMETER);
+  }
 
   car_tbattery = ((signed int) ks_battery_module_temp[0] + (signed int) ks_battery_module_temp[1] +
           (signed int) ks_battery_module_temp[2] + (signed int) ks_battery_module_temp[3] +
@@ -696,10 +724,10 @@ BOOL vehicle_kiasoul_ticker1(void) {
   // Check for car status changes:
   //
 
-  car_doors1bits.FrontLeftDoor = ks_doors1.FrontLeftDoor;
+  car_doors1bits.FrontLeftDoor  = ks_doors1.FrontLeftDoor;
   car_doors1bits.FrontRightDoor = ks_doors1.FrontRightDoor;
-  car_doors1bits.ChargePort = ks_doors1.ChargePort;
-  car_doors1bits.HandBrake = ks_doors1.HandBrake;
+  car_doors1bits.ChargePort     = ks_doors1.ChargePort;
+  car_doors1bits.HandBrake      = ks_doors1.HandBrake;
 
   if (ks_doors1.CarON) {
     // Car is ON
@@ -707,39 +735,44 @@ BOOL vehicle_kiasoul_ticker1(void) {
       car_doors1bits.CarON = 1;
       
       // Start trip, save current state
-      ks_start_odo = ks_odometer_speed >> 8; //ODO at Start of trip
-      ks_start_cdc = ks_battery_cum_discharge; //Cumulated discharge
-      ks_start_cc  = ks_battery_cum_charge; //Cumulated charge
+      //ODO at Start of trip
+      ks_trip_start_odo[0]=ks_odometer[0];
+      ks_trip_start_odo[1]=ks_odometer[1];
+      ks_trip_start_odo[2]=ks_odometer[2];
+      ks_start_cdc = ks_battery_cum_discharge;  //Cumulated discharge
+      ks_start_cc  = ks_battery_cum_charge;     //Cumulated charge
     }
     if (car_parktime != 0) {
       car_parktime = 0; // No longer parking
       net_req_notification(NET_NOTIFY_ENV);
     }
-    car_trip = MiFromKm((UINT) ((ks_odometer_speed >> 8) - ks_start_odo));
+    car_trip = MiFromKm((UINT) (KS_ODOMETER - KS_TRIP_START_ODOMETER));
   } else {
     // Car is OFF
     car_doors1bits.CarON = 0;
     car_speed = 0;
     if (car_parktime == 0) {
       car_parktime = car_time - 1; // Record it as 1 second ago, so non zero report
-      car_trip = MiFromKm((UINT) ((ks_odometer_speed >> 8) - ks_start_odo));
+      car_trip = MiFromKm((UINT) (KS_ODOMETER - KS_TRIP_START_ODOMETER));
       net_req_notification(NET_NOTIFY_ENV);
     }
   }
 
-  if (KS_J1772_CHARGING) { // J1772 - Type 1  charging
-    car_linevoltage = ks_obc_volt / 10;
+  if (ks_status_bits.ChargingJ1772) { // J1772 - Type 1  charging
+    car_linevoltage = ks_obc_volt;
     car_chargecurrent = (((long) ks_chargepower * 1000) >> 8) / car_linevoltage;
     car_chargemode = 0; // Standard      
     car_chargelimit = 6600 / car_linevoltage; // 6.6kW
-  } else if (KS_CHADEMO_CHARGING) { //ChaDeMo charging            
+  } else if (ks_status_bits.ChargingChademo) { //ChaDeMo charging            
     car_linevoltage = ks_battery_DC_voltage / 10;
     car_chargecurrent = (UINT8) ((-ks_battery_current) / 10);
     car_chargemode = 4; // Performance      
-    car_chargelimit = (UINT)((long)ks_battery_avail_charge*1000/car_linevoltage); // 250A - 100kW/400V
+    car_chargelimit = (UINT)((long)ks_battery_avail_charge*4000/car_linevoltage); // 250A - 100kW/400V
   }
-
-  ks_doors1.Charging = KS_PLUGGED_IN && KS_CHARGING && (car_chargecurrent > 0);
+  
+  ks_doors1.Charging = ks_doors1.PilotSignal 
+          && (ks_status_bits.ChargingChademo || ks_status_bits.ChargingJ1772)
+          && (car_chargecurrent > 0);
 
   vehicle_poll_setstate(ks_doors1.Charging ? 2 : (ks_doors1.CarON ? 1 : 0));
   //
@@ -757,7 +790,7 @@ BOOL vehicle_kiasoul_ticker1(void) {
       car_chargemode = 0; // Standard charging. 
       car_chargekwh = 0; // kWh charged
       car_chargelimit = 0; // Charge limit
-      ks_send_charge_SMS = 1; // Send SMS when charging is fully initiated
+      ks_status_bits.SendChargeSMS = 1; // Send SMS when charging is fully initiated
       ks_cum_charge_start = ks_battery_cum_charge;
     } else {
       // Charging continues:
@@ -787,11 +820,11 @@ BOOL vehicle_kiasoul_ticker1(void) {
       if (suffSOC > 0) {
         chargeTarget = 270 * suffSOC;
       } else if (suffRange > 0) {
-        chargeTarget = (suffRange * 27000 / maxRange);
+        chargeTarget = ((long)suffRange * 27000 / maxRange);
       } else {
         chargeTarget = 27000;
       }
-      if (KS_CHADEMO_CHARGING && chargeTarget > 22410) { //ChaDeMo charging            
+      if (ks_status_bits.ChargingChademo && chargeTarget > 22410) { //ChaDeMo charging            
         chargeTarget = 22410;
       }
       car_chargefull_minsremaining = (UINT)
@@ -801,8 +834,8 @@ BOOL vehicle_kiasoul_ticker1(void) {
         car_chargefull_minsremaining = 1440;
       }
 
-      if (ks_send_charge_SMS > 0) { //Send Charge SMS after we have initialized the voltage and current settings 
-        ks_send_charge_SMS = 0;
+      if (ks_status_bits.SendChargeSMS == 1) { //Send Charge SMS after we have initialized the voltage and current settings 
+        ks_status_bits.SendChargeSMS = 0;
         net_req_notification(NET_NOTIFY_CHARGE);
         net_req_notification(NET_NOTIFY_STAT);
       }
@@ -811,7 +844,7 @@ BOOL vehicle_kiasoul_ticker1(void) {
     }
     car_chargekwh = (UINT8) (ks_battery_cum_charge - ks_cum_charge_start);
     ks_last_soc = car_SOC;
-    ks_last_ideal_range = car_idealrange;
+    ks_last_ideal_range = (UINT8)car_idealrange;
   } else if (car_doors1bits.Charging) {
     // Charge completed or interrupted:
     car_doors1bits.PilotSignal = 0;
@@ -840,7 +873,6 @@ BOOL vehicle_kiasoul_ticker1(void) {
 ////////////////////////////////////////////////////////////////////////
 // Vehicle specific SMS command: DEBUG
 //
-
 BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *arguments) {
   char *s;
   int i;
@@ -864,24 +896,53 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
   if (arguments && (arguments[0] == 'C')) {
     s = stp_rom(s, "VARS:");
     s = stp_i(s, "\nobc V=", ks_obc_volt);
-    s = stp_i(s, "\nobc A=", ks_obc_ampere);
-    s = stp_i(s, "\nCharge bits=", ks_charge_bits);
-    s = stp_i(s, "\nFan=", ks_battery_fan);
-    s = stp_i(s, "\nBFB=", ks_batt_fan_byte);
-    s = stp_i(s, "\nBDB=", ks_batt_dc_byte);
+    //s = stp_i(s, "\nobc A=", ks_obc_ampere);
+    s = stp_i(s, "\nBMSsoc=", ks_bms_soc);
+    s = stp_l2f(s, "%\nchgep=", (ks_chargepower * 1000) >> 8, 2);
+    s = stp_i(s, "\nFan\nDuty: ", ks_status_bits.FanStatus*10);
+    if( ks_status_bits.FanStatus==0 ){
+      s = stp_rom(s, "% ");
+    }else if( ks_status_bits.FanStatus==1 ){
+      s = stp_rom(s, "% 90"); // i*900
+    }else if( ks_status_bits.FanStatus==2 ){
+      s = stp_rom(s, "% 120");  // i*600
+    }else if( ks_status_bits.FanStatus==3 ){
+      s = stp_rom(s, "% 150");   // i*500
+    }else if( ks_status_bits.FanStatus==4 ){
+      s = stp_rom(s, "% 180");   // i*450
+    }else if( ks_status_bits.FanStatus==5 ){
+      s = stp_rom(s, "% 210");   // i*420
+    }else if( ks_status_bits.FanStatus==6 ){
+      s = stp_rom(s, "% 245");   // i*408,3
+    }else if( ks_status_bits.FanStatus==7 ){
+      s = stp_rom(s, "% 260");   // i*433,333   
+    }else if( ks_status_bits.FanStatus==8 ){
+      s = stp_rom(s, "% 280");   // i*350
+    }else if( ks_status_bits.FanStatus==9 ){
+      s = stp_rom(s, "% 300");   // i*333,3333
+    }
+    s = stp_i(s, "0 rpm\nFeedback=", ks_battery_fan_feedback);
+    s = stp_rom(s, "Hz");
   } else {
     // output status vars:
     s = stp_rom(s, "VARS:");
     s = stp_i(s, "\ndoors=", ks_door_byte);
-    s = stp_l2f(s, "\nBMSsoc=", ks_bms_soc, 1);
-    s = stp_l2f(s, "%\nchgep=", (ks_chargepower * 1000) >> 8, 2);
-    s = stp_i(s, "\nspeed=", (ks_odometer_speed & 0xff) >> 1);
+    s = stp_i(s, "\nspeed=", car_speed);
     s = stp_i(s, "\nparkbr=", ks_doors1.HandBrake);
     s = stp_i(s, "\nStick=", ks_shift_bits);
     s = stp_l2f(s, "\n12v1=", ks_auxVoltage, 1);
     s = stp_l2f(s, "\n12v2=", car_12vline, 1);
-    s = stp_i(s, "\nABHD", ks_air_bag_hwire_duty);
-    s = stp_l(s, "%\nTrip", car_trip);
+    //s = stp_i(s, "\nABHD", ks_air_bag_hwire_duty);
+
+    s = stp_x(s, "QRY: 0x", ks_can_request_id & 0xFFF);
+    if (ks_can_request_id & REQUEST_STATUS_BITS == REQUEST_STATUS_NOT_READ) { 
+      s = stp_rom(s, "\nQRY NOT READ");
+    }else if (ks_can_request_id & REQUEST_STATUS_BITS == REQUEST_STATUS_NOT_SENT) { 
+      s = stp_rom(s, "\nQRY NOT SENT");
+    }else{ 
+      s = stp_rom(s, "\nQRY SENT");
+    }
+
   }
 
   // Send SMS:
@@ -916,8 +977,8 @@ BOOL vehicle_kiasoul_battery_sms(BOOL premsg, char *caller, char *command, char 
 
   s = stp_l2f(s, "Battery\n", (long) ks_battery_DC_voltage, 1);
   s = stp_l2f(s, "V ", (long) ks_battery_current, 1);
-  s = stp_l2f(s, "A\nAC", (long) ks_battery_avail_charge, 2);
-  s = stp_l2f(s, "kW\nAD", (long) ks_battery_avail_discharge, 2);
+  s = stp_l2f(s, "A\nAC", (long)ks_battery_avail_charge, 2);
+  //s = stp_l2f(s, "kW\nAD", long) ks_battery_avail_discharge, 2);
   s = stp_l2f(s, "kW\nC", (long) ks_battery_max_cell_voltage << 1, 2);
   s = stp_i(s, "V#", ks_battery_max_cell_voltage_no);
   s = stp_l2f(s, " ", (long) ks_battery_min_cell_voltage << 1, 2);
@@ -926,7 +987,9 @@ BOOL vehicle_kiasoul_battery_sms(BOOL premsg, char *caller, char *command, char 
   s = stp_l2f(s, "Ah ", (long) ks_battery_cum_charge, 1);
   s = stp_l2f(s, "kWh\nCD", (long) ks_battery_cum_discharge_current, 1);
   s = stp_l2f(s, "Ah ", (long) ks_battery_cum_discharge, 1);
-  s = stp_l(s, "kWh\nOT", (long) ks_battery_cum_op_time / 3600);
+  s = stp_l(s, "kWh\nOT", (long) ((UINT32)ks_battery_cum_op_time[0]<<16) | 
+          ((UINT32)ks_battery_cum_op_time[1]<<8) | 
+          ((UINT32)ks_battery_cum_op_time[2]));
   s = stp_l2f(s, "h\nDet", (long) ks_battery_max_detoriation, 1);
   s = stp_i(s, "%#", ks_battery_max_detoriation_cell_no);
   s = stp_l2f(s, " ", (long) ks_battery_min_detoriation, 1);
@@ -1025,10 +1088,9 @@ BOOL vehicle_kiasoul_tpms_sms(BOOL premsg, char *caller, char *command, char *ar
 
 BOOL vehicle_kiasoul_trip_sms(BOOL premsg, char *caller, char *command, char *arguments) {
   char *s;
-  float discharge;
-  float dischargeTotal;
-  float trip;
-  UINT32 recuperation;
+  UINT32 discharge;
+  UINT32 dischargeTotal;
+  UINT32 trip, recuperation;
   
   // Start SMS:
   if (premsg)
@@ -1038,36 +1100,39 @@ BOOL vehicle_kiasoul_trip_sms(BOOL premsg, char *caller, char *command, char *ar
   s = net_scratchpad;
   
   recuperation = (ks_battery_cum_charge - ks_start_cc);
-  dischargeTotal = (float) (ks_battery_cum_discharge - ks_start_cdc);
-  discharge = (float) (dischargeTotal - recuperation);
-  trip = (float) ((ks_odometer_speed >> 8) - ks_start_odo);
+  dischargeTotal = (ks_battery_cum_discharge - ks_start_cdc);
+  discharge = (dischargeTotal - recuperation);
+  trip = (KS_ODOMETER - KS_TRIP_START_ODOMETER);
   if (can_mileskm == 'M') {
-    if (trip > 0) {
-      trip = (float) MiFromKm(trip);
-      s = stp_l2f(s, "Last trip:\n", (long) trip, 1);
+    if (trip > 0 && ks_start_cc!=0 && ks_start_cdc!=0) {
+      trip = MiFromKm(trip);
+      s = stp_l2f(s, "TRIP\n", trip, 1);
       s = stp_l2f(s, "mi\n", (long) (discharge * 10000.0 / trip), 2);
       s = stp_l2f(s, "kWh/100mi\n", (long) (trip * 100.0 / discharge), 2);
-      s = stp_l2f(s, "mi/kWh\nDisch. ", (long)discharge,1);
-      s = stp_l2f(s, "kWh\nRecup. ", (long)recuperation,1);
-      s = stp_l2f(s, "kWh\nSum    ", (long)dischargeTotal,1);
+      s = stp_l2f(s, "mi/kWh\nDis ", (long)discharge,1);
+      s = stp_l2f(s, "kWh\nRec ", (long)recuperation,1);
+      s = stp_l2f(s, "kWh\nSum ", (long)dischargeTotal,1);
       s = stp_rom(s, "kWh\n\n");
     }
-    s = stp_l2f(s, "Total:\n", (long) (ks_battery_cum_discharge * 100) / (long) MiFromKm((ks_odometer_speed >> 8) / 100), 2);
-    s = stp_l2f(s, "kWh/100mi\n", (long) MiFromKm(ks_odometer_speed >> 8) / (long) ks_battery_cum_discharge / 100, 2);
-    s = stp_rom(s, "mi/kWh");
+    s = stp_l2f(s, "ODO\n", (long) (ks_battery_cum_discharge * 100) / (long) MiFromKm(KS_ODOMETER / 100), 2);
+    s = stp_l2f(s, "kWh/100mi\n", (long) MiFromKm(KS_ODOMETER) / (long) ks_battery_cum_discharge / 100, 2);
+    s = stp_l2f(s, "mi/kWh\nDisch ", (long)ks_battery_cum_discharge,1);
+    s = stp_rom(s, "kWh");
   } else {
-    if (trip > 0) {
-      s = stp_l2f(s, "Last Trip:\n", (long) trip, 1);
+    if (trip > 0 && ks_start_cc!=0 && ks_start_cdc!=0) {
+      s = stp_l2f(s, "TRIP\n", trip, 1);
       s = stp_l2f(s, "km\n", (long) (discharge * 10000.0 / trip), 2);
       s = stp_l2f(s, "kWh/100km\n", (long) (trip * 100.0 / discharge), 2);
-      s = stp_l2f(s, "km/kWh\nDisch. ", (long)discharge,1);
-      s = stp_l2f(s, "kWh\nRecup. ", (long)recuperation,1);
-      s = stp_l2f(s, "kWh\nSum    ", (long)dischargeTotal,1);
+      s = stp_l2f(s, "km/kWh\nDis ", (long)discharge,1);
+      s = stp_l2f(s, "kWh\nRec ", (long)recuperation,1);
+      s = stp_l2f(s, "kWh\nSum ", (long)dischargeTotal,1);
       s = stp_rom(s, "kWh\n\n");
     }
-    s = stp_l2f(s, "Total:\n", (long) (ks_battery_cum_discharge * 100) / (long) ((ks_odometer_speed >> 8) / 100), 2);
-    s = stp_l2f(s, "kWh/100km\n", (long) (ks_odometer_speed >> 8) / (long) (ks_battery_cum_discharge / 100), 2);
-    s = stp_rom(s, "km/kWh");
+    s = stp_l2f(s, "ODO\n", (long)KS_ODOMETER, 1);
+    s = stp_l2f(s, "km\n", (long) (ks_battery_cum_discharge * 100) / (long) (KS_ODOMETER / 100), 2);
+    s = stp_l2f(s, "kWh/100km\n", (long) (KS_ODOMETER) / (long) (ks_battery_cum_discharge / 100), 2);
+    s = stp_l2f(s, "km/kWh\nDis ", (long)ks_battery_cum_discharge,1);
+    s = stp_rom(s, "kWh");
   }
 
   // Send SMS:
@@ -1286,7 +1351,7 @@ BOOL vehicle_kiasoul_charge_alert_sms(BOOL premsg, char *caller, char *command, 
   }
 
   // SOC:
-  s = stp_l2f(s, "\n SOC: ", ks_soc * 5, 1);
+  s = stp_l2f(s, "\n SOC: ", car_SOC * 10, 1);
   s = stp_rom(s, "%");
 
 
@@ -1458,8 +1523,9 @@ BOOL vehicle_kiasoul_initialise(void) {
   ks_doors1.FrontLeftDoor = 0;
   ks_doors1.FrontRightDoor = 0;
   ks_doors1.HandBrake = 0;
+  ks_doors1.PilotSignal = 0;
 
-  ks_soc = 100; // avoid low SOC alerts
+  car_SOC = 100; // avoid low SOC alerts
   ks_last_soc = 100;
   ks_bms_soc = 100;
 
@@ -1470,13 +1536,12 @@ BOOL vehicle_kiasoul_initialise(void) {
   ks_last_ideal_range = 0;
   ks_chargepower = 0;
 
-  ks_batt_fan_byte = 0;
-  ks_batt_dc_byte = 0;
-
   ks_can_request_id = 0;
 
-  ks_odometer_speed = 0;
-
+  car_speed = 0;
+  memset(ks_odometer, 0, sizeof (ks_odometer));
+  memset(ks_trip_start_odo, 0, sizeof (ks_trip_start_odo));
+ 
   memset(ks_can_response_databuffer, 0, sizeof (ks_can_response_databuffer));
 
   ks_door_byte = 0;
@@ -1486,7 +1551,7 @@ BOOL vehicle_kiasoul_initialise(void) {
   ks_battery_DC_voltage = 0;
   ks_battery_current = 0;
   ks_battery_avail_charge = 0;
-  ks_battery_avail_discharge = 0;
+  //ks_battery_avail_discharge = 0;
   ks_battery_max_cell_voltage = 0;
   ks_battery_max_cell_voltage_no = 0;
   ks_battery_min_cell_voltage = 0;
@@ -1495,14 +1560,14 @@ BOOL vehicle_kiasoul_initialise(void) {
   ks_battery_cum_discharge_current = 0;
   ks_battery_cum_charge = 0;
   ks_battery_cum_discharge = 0;
-  ks_battery_cum_op_time = 0;
+  memset(ks_battery_cum_op_time, 0, sizeof (ks_battery_cum_op_time));
 
   memset(ks_battery_cell_voltage, 0, sizeof (ks_battery_cell_voltage));
 
   ks_battery_min_temperature = 0;
   ks_battery_inlet_temperature = 0;
   ks_battery_max_temperature = 0;
-  ks_air_bag_hwire_duty = 0;
+  //ks_air_bag_hwire_duty = 0;
   ks_battery_heat_1_temperature = 0;
   ks_battery_heat_2_temperature = 0;
   ks_battery_max_detoriation = 0;
@@ -1510,13 +1575,14 @@ BOOL vehicle_kiasoul_initialise(void) {
   ks_battery_min_detoriation = 0;
   ks_battery_min_detoriation_cell_no = 0;
   ks_heatsink_temperature = 0;
-  ks_charge_bits = 0;
-  ks_battery_fan = 0;
+  ks_status_bits.ChargingChademo = 0;
+  ks_status_bits.ChargingJ1772 = 0;
+  ks_status_bits.SendChargeSMS = 0;
+  ks_status_bits.FanStatus = 0;
+  ks_battery_fan_feedback = 0;
   ks_obc_volt = 0;
-  ks_obc_ampere = 0;
+  //ks_obc_ampere = 0;
   ks_shift_bits = 0;
-
-  ks_send_charge_SMS = 0;
 
   car_ambient_temp = 0;
   
