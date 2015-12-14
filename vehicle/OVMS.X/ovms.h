@@ -83,6 +83,19 @@
 #define COOLDOWN_DEFAULT_TEMPLIMIT 31
 #define COOLDOWN_DEFAULT_TIMELIMIT 60
 
+// Charge types with IDs from Open Chargemaps connectiontypes
+// See http://api.openchargemap.io/v2/referencedata/
+typedef enum{
+    UNDEFINED = 0, 
+    J1772_TYPE1 = 1,
+    CHADEMO = 2,
+    TESLA_ROADSTER = 8, 
+    MENNEKES_TYPE2 = 25,
+    TESLA_SUPERCHARGER = 27,
+    TESLA_MODEL_S = 30,
+    CCS = 33
+}chargetype;
+
 #pragma udata
 extern rom unsigned char ovms_firmware[3]; // Firmware version
 extern unsigned int car_linevoltage; // Line Voltage
@@ -94,6 +107,7 @@ extern unsigned char car_chargesubstate;
 extern unsigned char car_chargemode; // 0=standard, 1=storage, 3=range, 4=performance
 extern unsigned char car_charge_b4; // B4 byte of charge state
 extern unsigned char car_chargekwh; // KWh of charge
+extern chargetype car_chargetype;  
 
 
 //

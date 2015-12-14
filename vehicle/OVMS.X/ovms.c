@@ -81,6 +81,7 @@ unsigned char car_chargesubstate = 0;
 unsigned char car_chargemode = 0; // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_charge_b4 = 0; // B4 byte of charge state
 unsigned char car_chargekwh = 0; // KWh of charge
+chargetype car_chargetype = UNDEFINED; // Undefined chargetype 
 unsigned char car_doors1 = 0; //
 unsigned char car_doors2 = 0; //
 unsigned char car_doors3 = 0; //
