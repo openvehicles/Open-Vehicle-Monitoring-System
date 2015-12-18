@@ -364,7 +364,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.6.1";
+rom char vehicle_twizy_version[] = "3.6.2";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -1293,6 +1293,13 @@ struct twizy_cfg_params {
   UINT    DefaultTrq;
   UINT32  DefaultTrqLim;
   UINT    DeltaMapTrq;
+  
+  UINT    DefaultFMAP9Trq;
+  UINT    DefaultFMAP9Curr;
+  UINT    DefaultFMAP9Grad;
+  UINT32  DefaultCurrLim;
+  UINT    DefaultCurrStatorMax;
+  UINT    BoostCurr;
 
   UINT    DefaultPwrLo;
   UINT    DefaultPwrLoLim;
@@ -1343,7 +1350,14 @@ rom struct twizy_cfg_params twizy_cfg_params[2] =
     55000,  // DefaultTrq
     70125,  // DefaultTrqLim
     0,      // DeltaMapTrq
-
+    
+    1122,   // DefaultFMAP9Trq
+    9984,   // DefaultFMAP9Curr
+    1659,   // DefaultFMAP9Grad
+    450000, // DefaultCurrLim
+    450,    // DefaultCurrStatorMax
+    540,    // BoostCurr
+    
     12182,  // DefaultPwrLo
     17000,  // DefaultPwrLoLim
     13000,  // DefaultPwrHi
@@ -1394,6 +1408,13 @@ rom struct twizy_cfg_params twizy_cfg_params[2] =
     36000,  // DefaultTrqLim
     500,    // DeltaMapTrq
 
+    576,    // DefaultFMAP9Trq
+    8960,   // DefaultFMAP9Curr
+    8192,   // DefaultFMAP9Grad
+    270000, // DefaultCurrLim
+    290,    // DefaultCurrStatorMax
+    330,    // BoostCurr
+    
     7050,   // DefaultPwrLo
     10000,  // DefaultPwrLoLim
     7650,   // DefaultPwrHi
@@ -1464,12 +1485,23 @@ UINT vehicle_twizy_cfg_makepowermap(void
   if (twizy_max_rpm == CFG.DefaultRpmMax && twizy_max_trq == CFG.DefaultTrq
     && twizy_max_pwr_lo == CFG.DefaultPwrLo && twizy_max_pwr_hi == CFG.DefaultPwrHi) {
 
-    // restore default map:
-
+    // restore default torque map:
     for (i=0; i<18; i++) {
       if (err = writesdo(0x4611,0x01+i,CFG.DefaultPMAP[i]))
         return err;
     }
+    
+    // reset flux map pt 9:
+    if (err = writesdo(0x4610,0x11,CFG.DefaultFMAP9Trq))
+      return err;
+    if (err = writesdo(0x4610,0x12,CFG.DefaultFMAP9Curr))
+      return err;
+
+    // reset max current:
+    if (err = writesdo(0x4641,0x02,CFG.DefaultCurrStatorMax))
+      return err;
+    if (err = writesdo(0x6075,0x00,CFG.DefaultCurrLim))
+      return err;
   }
 
   else {
@@ -1488,6 +1520,31 @@ UINT vehicle_twizy_cfg_makepowermap(void
     if (err = writesdo(0x4611,0x04,rpm_0))
       return err;
 
+    // raise currents only if in unlimited mode:
+    if (sys_features[FEATURE_CANWRITE] == 2) {
+      
+      pwr = CFG.DefaultFMAP9Curr;
+      
+      if (trq > CFG.DefaultFMAP9Trq) {
+        // calculate max flux current:
+        pwr += ((((UINT32) trq - CFG.DefaultFMAP9Trq) * CFG.DefaultFMAP9Grad + 512) >> 10);
+        
+        // set flux map pt 9:
+        if (err = writesdo(0x4610,0x11,trq))
+          return err;
+        if (err = writesdo(0x4610,0x12,pwr))
+          return err;
+      }
+
+      // set max current:
+      pwr = ((pwr * 3) >> 6) + 1;
+      pwr = LIMIT_MAX(pwr, CFG.BoostCurr);
+      if (err = writesdo(0x4641,0x02,pwr))
+        return err;
+      if (err = writesdo(0x6075,0x00,pwr * 1000L))
+        return err;
+    }
+    
     // calculate constant power part:
 
     if (twizy_max_rpm > rpm_0)
@@ -1660,22 +1717,25 @@ UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc)
 //    130% = 16900 W (mechanical)
 {
   UINT err;
+  
+  // check for unlimited mode (CANWRITE=2):
+  BOOL limited = (sys_features[FEATURE_CANWRITE] != 2);
 
   // parameter validation:
 
   if (trq_prc == -1)
     trq_prc = 100;
-  else if (trq_prc < 10 || trq_prc > 130)
+  else if (trq_prc < 10 || (limited && trq_prc > 130))
     return ERR_Range + 1;
 
   if (pwr_lo_prc == -1)
     pwr_lo_prc = 100;
-  else if (pwr_lo_prc < 10 || pwr_lo_prc > 139)
+  else if (pwr_lo_prc < 10 || (limited && pwr_lo_prc > 139))
     return ERR_Range + 2;
 
   if (pwr_hi_prc == -1)
     pwr_hi_prc = 100;
-  else if (pwr_hi_prc < 10 || pwr_hi_prc > 130)
+  else if (pwr_hi_prc < 10 || (limited && pwr_hi_prc > 130))
     return ERR_Range + 3;
 
   // we need pre-op state for the power map manipulation (0x4611):
@@ -1691,7 +1751,8 @@ UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc)
 
 
   // calc peak use torque:
-  twizy_max_trq = scale(CFG.DefaultTrq,100,trq_prc,10000,CFG.DefaultTrqLim);
+  twizy_max_trq = scale(CFG.DefaultTrq,100,trq_prc,10000,
+    (limited) ? CFG.DefaultTrqLim : 200000);
 
   // set peak use torque:
   if (err = writesdo(0x6076,0x00,twizy_max_trq + CFG.DeltaMapTrq))
@@ -1702,8 +1763,10 @@ UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc)
   //  return err;
 
   // calc peak use power:
-  twizy_max_pwr_lo = scale(CFG.DefaultPwrLo,100,pwr_lo_prc,500,CFG.DefaultPwrLoLim);
-  twizy_max_pwr_hi = scale(CFG.DefaultPwrHi,100,pwr_hi_prc,500,CFG.DefaultPwrHiLim);
+  twizy_max_pwr_lo = scale(CFG.DefaultPwrLo,100,pwr_lo_prc,500,
+    (limited) ? CFG.DefaultPwrLoLim : 200000);
+  twizy_max_pwr_hi = scale(CFG.DefaultPwrHi,100,pwr_hi_prc,500,
+    (limited) ? CFG.DefaultPwrHiLim : 200000);
 
   return 0;
 }
@@ -2476,6 +2539,7 @@ char *vehicle_twizy_fmt_sdo(char *s)
 }
 
 
+#ifdef OVMS_TWIZY_DEBUG
 // utility: output power map info to string:
 char *vehicle_twizy_fmt_powermap(char *s)
 {
@@ -2497,6 +2561,7 @@ char *vehicle_twizy_fmt_powermap(char *s)
 
   return s;
 }
+#endif // OVMS_TWIZY_DEBUG
 
 
 // utility: output profile switch result info to string
