@@ -220,11 +220,13 @@ void diag_handle_diag(char *command, char *arguments)
   s = stp_rom(s, "\r\n");
   net_puts_ram(net_scratchpad);
 
+#ifndef OVMS_NO_CRASHDEBUG
   s = stp_i(net_scratchpad, "#  CRASH:    ", debug_crashcnt);
   s = stp_i(s, " / ", debug_crashreason );
   s = stp_i(s, " / ", debug_checkpoint );
   s = stp_rom(s, "\r\n");
   net_puts_ram(net_scratchpad);
+#endif // OVMS_NO_CRASHDEBUG
 
   #ifdef OVMS_HW_V2
   x = inputs_voltage()*10;

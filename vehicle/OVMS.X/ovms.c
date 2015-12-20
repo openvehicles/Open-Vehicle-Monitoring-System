@@ -146,9 +146,11 @@ int car_chargeestimate = -1;                   // ACC: charge time estimation fo
 
 unsigned char car_SOCalertlimit = 5;           // Low limit of SOC at which alert should be raised
 
+#ifndef OVMS_NO_CRASHDEBUG
 UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 UINT8 debug_crashreason;        // last saved reset reason (bit set)
 UINT8 debug_checkpoint;         // number of last checkpoint before crash
+#endif // OVMS_NO_CRASHDEBUG
 
 
 void main(void)
@@ -169,16 +171,20 @@ void main(void)
 
   if (x == 3) // 3 = normal Power On
   {
+#ifndef OVMS_NO_CRASHDEBUG
     debug_crashreason = 0;
     debug_crashcnt = 0;
+#endif // OVMS_NO_CRASHDEBUG
 #ifdef OVMS_LOGGINGMODULE
     logging_initialise();
 #endif
   }
   else
   {
+#ifndef OVMS_NO_CRASHDEBUG
     debug_crashreason = x | 0x80; // 0x80 = keep checkpoint until sent to server
     debug_crashcnt++;
+#endif // OVMS_NO_CRASHDEBUG
   }
 
   CHECKPOINT(0x20)

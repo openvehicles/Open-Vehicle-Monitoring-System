@@ -747,6 +747,7 @@ BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
     s = stp_l2f(s, " ref=", car_12vline_ref, 1);
   }
 
+#ifndef OVMS_NO_CRASHDEBUG
   /* DEBUG / QA stats: output crash counter and decode last reason:
    */
   s = stp_i(s, "\n Crashes:", debug_crashcnt);
@@ -769,6 +770,7 @@ BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
       s = stp_rom(s, " STKUNF"); // Stack underflow
     s = stp_i(s, " - ", debug_checkpoint);
   }
+#endif // OVMS_NO_CRASHDEBUG
 
   net_puts_ram(net_scratchpad);
 

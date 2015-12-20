@@ -235,9 +235,18 @@ extern unsigned char car_SOCalertlimit;           // Low limit of SOC at which a
 #define CAR_IS_HEATING (car_chargestate==0x0f)
 
 // DEBUG / QA stats:
+#ifndef OVMS_NO_CRASHDEBUG
+
 extern UINT8 debug_crashcnt;           // crash counter, cleared on normal power up
 extern UINT8 debug_crashreason;        // last saved reset reason (bit set)
 extern UINT8 debug_checkpoint;         // number of last checkpoint before crash
 #define CHECKPOINT(n) if ((debug_crashreason & 0x80)==0) debug_checkpoint = n;
+
+#else //OVMS_NO_CRASHDEBUG
+
+#define CHECKPOINT(n) ;
+
+#endif //OVMS_NO_CRASHDEBUG
+
 
 #endif

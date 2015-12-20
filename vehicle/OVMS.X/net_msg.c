@@ -590,6 +590,7 @@ void net_msg_server_welcome(char *msg)
   }
 
 
+#ifndef OVMS_NO_CRASHDEBUG
   /* DEBUG / QA stats: Send crash counter and last reason:
    *
    * MP-0 H*-OVM-DebugCrash,0,2592000
@@ -617,6 +618,9 @@ void net_msg_server_welcome(char *msg)
     net_msg_encode_puts();
     net_msg_send();
     }
+#endif // OVMS_NO_CRASHDEBUG
+
+
 #ifdef OVMS_LOGGINGMODULE
   logging_serverconnect();
 #endif // #ifdef OVMS_LOGGINGMODULE
