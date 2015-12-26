@@ -169,8 +169,22 @@ void net_poll(void)
       if ((net_state==NET_STATE_FIRSTRUN)||(net_state==NET_STATE_DIAGMODE))
         {
         // Special handling in FIRSTRUN and DIAGMODE
-        if (x == 0x0a) continue; // Skip 0x0a (LF)
-        if (x == 0x0d) x=0x0a; // Treat CR as LF
+        if (x == 0x0a) // Skip 0x0a (LF)
+          continue;
+        else if (x == 0x0d) // Treat CR as LF
+          x = 0x0a;
+        else if (x == 0x08 && net_buf_pos > 0) // Backspace
+          {
+          net_buf[--net_buf_pos] = 0;
+          continue;
+          }
+        else if (x == 0x01 || x == 0x03) // Ctrl-A / Ctrl-C
+          {
+          net_buf_pos = 0;
+          net_buf[0] = 0;
+          net_puts_rom("\r\n");
+          continue;
+          }
         }
       if (x == 0x0d) continue; // Skip 0x0d (CR)
       net_buf[net_buf_pos++] = x;

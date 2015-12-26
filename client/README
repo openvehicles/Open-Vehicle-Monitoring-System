@@ -13,6 +13,10 @@ The following perl modules from CPAN are used by the clients:
   Crypt::RC4::XS
   MIME::Base64
 
+...additionally for the diag mode clients (serial connection):
+  Device::SerialPort   (UNIX)
+  Win32::SerialPort    (Windows)
+
 Install modules using cpanminus:
   cpanm Config::IniFiles Digest::MD5 Digest::HMAC Crypt::RC4::XS MIME::Base64
 
@@ -91,5 +95,36 @@ files (similar to rt_fetchdata).
 
 "rt_resetlogs.sh" will reset all SEVCON logs. Please note: not all log entries
 may be clearable, query and fetch again to check the log contents after reset.
+
+
+The diag mode clients
+=====================
+
+The diag mode clients can be used additionally or instead of a terminal emulator
+to access the module via serial line.
+
+Both clients offer command line help using the "--help" option.
+
+"diagcmd.pl" sends an arbitrary number of commands to the module and outputs
+their responses. (Note: if you want to redirect the output you need to
+explicitly do "perl diagcmd.pl ..." instead of "./diagcmd.pl ...")
+
+Example: init diag mode and read out car status:
+
+	#> ./diagcmd.pl --init "s stat"
+
+Note: you only need to do "--init" once (this will listen for the module
+startup and issue the "SETUP" command).
+
+"dcf_download.pl" uses the Twizy CFG commands to download the register dictionary
+and current values from the SEVCON controller and write a DCF in CSV format.
+
+Example:
+
+	#> ./dcf_download.pl --init --output=my-config.csv
+
+Note: as every single SDO read needs to be issued through the CFG command interface
+this is a long operation, expect ~ 1 hour for a complete download. Progress is reported,
+and you can resume a broken download using the "--start" option.
 
 
