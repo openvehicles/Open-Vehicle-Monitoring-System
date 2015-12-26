@@ -218,7 +218,7 @@ Tesla Roadster CAN Bus analysis:
 			bit2 = Charge port (open=1/closed=0)
 			bit3 = Pilot present (true=1/false=0) (always 1 on my 2.5)
 			bit4 = Charging (true=1/false=0)
-			bit5 = always 1
+			bit5 = always 1 (N.B. maybe related to driving pawl - 1 in park, but perhaps 0 while driving???)
 			bit6 = Hand brake applied (true=1/false=0)
 			bit7 = Car ON (true=1/false=0)
 			
@@ -599,6 +599,8 @@ Some messages have been seen on CAN ID #0x400
 		         0.2486 400 01 01 00 00 00 00 4C 1D          
 		         0.3486 400 01 01 00 00 00 00 4C 1D          
 		         0.4486 400 01 01 00 00 00 00 4C 1D          
+
+                N.B. Suggestion is that 4th byte of 0x400 B1=0x01 is the PRND gear selection
 
 	DASHBOARD
 		B1=0x02 Data to dashboard
