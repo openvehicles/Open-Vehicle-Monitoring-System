@@ -168,7 +168,11 @@ void main(void)
   //RCONbits.NOT_PD = 1;    // b2 = 4  = Power Down detection
   //RCONbits.NOT_TO = 1;    // b3 = 8  = watchdog TimeOut occured
   RCONbits.NOT_RI = 1; // b4 = 16 = Reset Instruction
-
+  
+  // ...clear stack overflow & underflow flags:
+  STKPTRbits.STKFUL = 0;
+  STKPTRbits.STKUNF = 0;
+  
   if (x == 3) // 3 = normal Power On
   {
 #ifndef OVMS_NO_CRASHDEBUG

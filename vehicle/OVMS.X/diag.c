@@ -150,16 +150,8 @@ void diag_ticker(void)
 
 void diag_handle_sms(char *command, char *arguments)
   {
-  char *p = par_get(PARAM_REGPHONE);
-  if (*p != 0)
-    {
-    strncpy(net_caller,p,NET_TEL_MAX);
-    }
-  else
-    {
-    strcpy(net_caller,(const char*)"OVMSDIAG");
-    }
   net_puts_rom("\r\n");
+  net_assert_caller(NULL); // set net_caller to PARAM_REGPHONE
   net_sms_in(net_caller,arguments);
   }
 

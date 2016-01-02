@@ -16,6 +16,9 @@
  * Based upon:
  * http://code.google.com/p/pic-tweeter/source/browse/branches/MCHPStack402/TCPIP+Demo+App/base64conversion.c
  *
+ * Based upon:
+ * http://base64.sourceforge.net/b64.c
+ *
  ********************************************************************/
 #ifndef __CRYPT_BASE64_H
 #define __CRYPT_BASE64_H
@@ -25,7 +28,7 @@
 
 extern const rom unsigned char cb64[];
 
-void base64encode(BYTE *inputData, WORD inputLen, BYTE *outputData);
+char *base64encode(BYTE *inputData, WORD inputLen, BYTE *outputData);
 void base64encodesend(BYTE *inputData, WORD inputLen);
 int base64decode(BYTE *inputData, BYTE *outputData);
 

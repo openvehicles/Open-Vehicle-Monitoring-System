@@ -184,4 +184,6 @@ void net_state_ticker(void);
 void net_req_notification_error(unsigned int errorcode, unsigned long errordata);
 void net_req_notification(unsigned int notify);
 
+char *net_assert_caller(char *caller);
+
 #endif // #ifndef __OVMS_NET_H

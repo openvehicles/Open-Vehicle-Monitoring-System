@@ -174,7 +174,7 @@ void net_msg_encode_puts(void)
       k=strlen(net_msg_scratchpad);
       RC4_crypt(&pm_crypto1, &pm_crypto2, net_msg_scratchpad, k);
 
-      strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 EM");
+      stp_rom(net_scratchpad,(char const rom far*)"MP-0 EM");
       net_scratchpad[7] = code;
       base64encode(net_msg_scratchpad,k,net_scratchpad+8);
       // The messdage is now in paranoid mode...
@@ -573,7 +573,7 @@ void net_msg_server_welcome(char *msg)
 
     // To be truly paranoid, we must send the paranoid token to the server ;-)
     ptokenmade=0; // Leave it off for the MP-0 ET message
-    strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 ET");
+    stp_rom(net_scratchpad,(char const rom far*)"MP-0 ET");
     strcat(net_scratchpad,ptoken);
     net_msg_start();
     net_msg_encode_puts();
@@ -630,7 +630,6 @@ void net_msg_server_welcome(char *msg)
 void net_msg_in(char* msg)
   {
   int k;
-  char s;
 
   if (net_msg_serverok == 0)
     {
@@ -643,17 +642,6 @@ void net_msg_in(char* msg)
     }
 
   // Ok, we've got an encrypted message waiting for work.
-  // The following is a nasty hack because base64decode doesn't like incoming
-  // messages of length divisible by 4, and is really expecting a CRLF
-  // terminated string, so we give it one...
-  CHECKPOINT(0x40)
-  if (((strlen(msg)*4)/3) >= (NET_BUF_MAX-3))
-    {
-    // Quick exit to reset link if incoming message is too big
-    net_state_enter(NET_STATE_DONETINIT);
-    return;
-    }
-  strcatpgm2ram(msg,(char const rom far*)"\r\n");
   k = base64decode(msg,net_scratchpad);
   CHECKPOINT(0x41)
   RC4_crypt(&rx_crypto1, &rx_crypto2, net_scratchpad, k);
@@ -667,11 +655,7 @@ void net_msg_in(char* msg)
   if ((*msg == 'E')&&(msg[1]=='M'))
     {
     // A paranoid-mode message from the server (or, more specifically, app)
-    // The following is a nasty hack because base64decode doesn't like incoming
-    // messages of length divisible by 4, and is really expecting a CRLF
-    // terminated string, so we give it one...
     msg += 2; // Now pointing to the code just before encrypted paranoid message
-    strcatpgm2ram(msg,(char const rom far*)"\r\n");
     k = base64decode(msg+1,net_msg_scratchpad+1);
     RC4_setup(&pm_crypto1, &pm_crypto2, pdigest, MD5_SIZE);
     for (k=0;k<1024;k++)
@@ -689,7 +673,7 @@ void net_msg_in(char* msg)
   switch (*msg)
     {
     case 'A': // PING
-      strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 a");
+      stp_rom(net_scratchpad,(char const rom far*)"MP-0 a");
       if (net_msg_sendpending==0)
         {
         net_msg_start();
@@ -744,7 +728,7 @@ void net_msg_cmd_in(char* msg)
 
 BOOL net_msg_cmd_exec(void)
   {
-  int k;
+  UINT8 k;
   char *p, *s;
 
   delay100(2);
@@ -849,27 +833,29 @@ BOOL net_msg_cmd_exec(void)
 
     case 7: // SMS command wrapper
 
-      // set net_put output buffer to net_msg_scratchpad:
-      net_msg_bufpos = net_msg_scratchpad;
+      // copy command to net_msg_scratchpad:
+      //    !!! ATT: net_msg_scratchpad MUST NOT be used
+      //    !!! in command handler prior to parameter parsing!
+      stp_ram(net_msg_scratchpad, net_msg_cmd_msg);
       
-      // Nasty workaround: if we process the cmd from net_scratchpad it
-      // will fail on char position 16/17, probably due to some C18 bank switching
-      // bug (?)... Workaround is to copy the cmd into net_buf:
-      stp_ram(net_buf, net_msg_cmd_msg);
+      // redirect command output into net_buf[]:
+      net_msg_bufpos = net_buf;
       
       // process command:
-      k = net_sms_in(par_get(PARAM_REGPHONE), net_buf);
+      net_assert_caller(NULL); // set net_caller to PARAM_REGPHONE
+      k = net_sms_in(net_caller, net_msg_scratchpad);
       
-      // output is now in net_msg_scratchpad, reset net_put buffer:
+      // terminate output redirection:
+      *net_msg_bufpos = 0;
       net_msg_bufpos = NULL;
-
+      
       // create return string:
       s = stp_i(net_scratchpad, NET_MSG_CMDRESP, net_msg_cmd_code);
       s = stp_i(s, ",", 1-k); // 0=ok 1=error
       if (k)
         {
         *s++ = ',';
-        for (p = net_msg_scratchpad; *p; p++)
+        for (p = net_buf; *p; p++)
           {
             if (*p == '\n')
               *s++ = '\r'; // translate LF to CR
@@ -989,7 +975,7 @@ void net_msg_forward_sms(char *caller, char *SMS)
 
   delay100(2);
   net_msg_start();
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PA");
+  stp_rom(net_scratchpad,(char const rom far*)"MP-0 PA");
   strcatpgm2ram(net_scratchpad,(char const rom far*)"SMS FROM: ");
   strcat(net_scratchpad, caller); // max 19 chars
   strcatpgm2ram(net_scratchpad,(char const rom far*)" - MSG: ");
@@ -1302,7 +1288,7 @@ void net_msg_alarm(void)
 
   delay100(2);
   net_msg_start();
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PAVehicle alarm is sounding!");
+  stp_rom(net_scratchpad,(char const rom far*)"MP-0 PAVehicle alarm is sounding!");
   net_msg_encode_puts();
   net_msg_send();
   }
@@ -1313,7 +1299,7 @@ void net_msg_valettrunk(void)
 
   delay100(2);
   net_msg_start();
-  strcpypgm2ram(net_scratchpad,(char const rom far*)"MP-0 PATrunk has been opened (valet mode).");
+  stp_rom(net_scratchpad,(char const rom far*)"MP-0 PATrunk has been opened (valet mode).");
   net_msg_encode_puts();
   net_msg_send();
   }

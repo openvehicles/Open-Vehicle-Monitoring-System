@@ -128,3 +128,17 @@ this is a long operation, expect ~ 1 hour for a complete download. Progress is r
 and you can resume a broken download using the "--start" option.
 
 
+Utilities: cfgconv
+==================
+
+"cfgconv" converts SEVCON profiles from text commands to base64 and vice versa.
+See Twizy commands "CFG GET" and "CFG SET" for details.
+
+Build:
+	gcc -o cfgconv cfgconv.c
+
+Use:
+	a) convert base64 to text: ./cfgconv base64data > profile.txt
+	b) convert text to base64: ./cfgconv < profile.txt
+
+

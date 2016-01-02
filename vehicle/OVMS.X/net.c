@@ -144,6 +144,22 @@ void net_reset_async(void)
   vUARTIntStatus.UARTIntRxError = 0;
   }
 
+
+////////////////////////////////////////////////////////////////////////
+// net_assert_caller():
+// check for valid (non empty) caller, fallback to PARAM_REGPHONE
+//
+char *net_assert_caller(char *caller)
+  {
+  if (!caller || !*caller)
+    {
+    strcpy(net_caller, par_get(PARAM_REGPHONE));
+    return(net_caller);
+    }
+  return caller;
+  }
+
+
 ////////////////////////////////////////////////////////////////////////
 // net_poll()
 // This function is an entry point from the main() program loop, and
@@ -294,7 +310,7 @@ void net_puts_rom(const rom char *data)
   if (net_msg_bufpos)
     {
     // NET SMS wrapper mode: (189 byte = max MP payload)
-    for (;*data && (net_msg_bufpos < (net_msg_scratchpad+189));data++)
+    for (;*data && (net_msg_bufpos < (net_buf+189));data++)
       *net_msg_bufpos++ = *data;
     }
 
@@ -341,7 +357,7 @@ void net_puts_ram(const char *data)
   if (net_msg_bufpos)
     {
     // NET SMS wrapper mode: (189 byte = max MP payload)
-    for (;*data && (net_msg_bufpos < (net_msg_scratchpad+189));data++)
+    for (;*data && (net_msg_bufpos < (net_buf+189));data++)
       *net_msg_bufpos++ = *data;
     }
 
@@ -386,7 +402,7 @@ void net_putc_ram(const char data)
   if (net_msg_bufpos)
     {
     // NET SMS wrapper mode: (189 byte = max MP payload)
-    if (net_msg_bufpos < (net_msg_scratchpad+189))
+    if (net_msg_bufpos < (net_buf+189))
       *net_msg_bufpos++ = data;
     }
   else
@@ -436,7 +452,7 @@ void net_req_notification_error(unsigned int errorcode, unsigned long errordata)
 //
 void net_req_notification(unsigned int notify)
   {
-  char *p,*q;
+  char *p;
   p = par_get(PARAM_NOTIFIES);
   if (strstrrampgm(p,(char const rom far*)"SMS") != NULL)
     {
@@ -449,9 +465,15 @@ void net_req_notification(unsigned int notify)
   }
 
 ////////////////////////////////////////////////////////////////////////
-// net_phonebook
-// A phonebook entry has arrived, and the parameters may need to be
-// updated...
+// net_phonebook: SIM phonebook auto provisioning system
+//
+// Usage:
+// Create phonebook entries like "O-8-MYVEHICLEID", "O-5-APN", etc.
+// The O- prefix tells us this is OVMS, the next number is the parameter
+// number to set, and the remainder is the value.
+// This is very flexible, but the textual fields are limited in length
+// (typically 16 characters or so).
+// 
 void net_phonebook(char *pb)
   {
   // We have a phonebook entry line from the SIM card / modem
@@ -1206,7 +1228,6 @@ void net_state_activity()
 void net_state_ticker1(void)
   {
   char stat;
-  char *p;
   char cmd[5];
 
   CHECKPOINT(0x38)
@@ -1391,12 +1412,12 @@ void net_state_ticker1(void)
         if ((net_notify & NET_NOTIFY_SMSPART)>0)
           {
           delay100(10);
-          p = par_get(PARAM_REGPHONE);
+          net_assert_caller(NULL); // set net_caller to PARAM_REGPHONE
 #ifndef OVMS_NO_VEHICLE_ALERTS
           if ((net_notify & NET_NOTIFY_SMS_ALARM)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_ALARM); // Clear notification flag
-            net_sms_alarm(p);
+            net_sms_alarm(net_caller);
             return;
             }
           else
@@ -1406,22 +1427,22 @@ void net_state_ticker1(void)
             net_notify &= ~(NET_NOTIFY_SMS_CHARGE); // Clear notification flag
             if (net_notify_suppresscount==0)
               {
-                strcpypgm2ram(cmd, "STAT");
-                net_sms_in(p, cmd);
+                stp_rom(cmd, "STAT");
+                net_sms_in(net_caller, cmd);
               }
             return;
             }
           else if ((net_notify & NET_NOTIFY_SMS_12VLOW)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_12VLOW); // Clear notification flag
-            if (net_fnbits & NET_FN_12VMONITOR) net_sms_12v_alert(p);
+            if (net_fnbits & NET_FN_12VMONITOR) net_sms_12v_alert(net_caller);
             return;
             }
 #ifndef OVMS_NO_VEHICLE_ALERTS
           else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_TRUNK); // Clear notification flag
-            net_sms_valettrunk(p);
+            net_sms_valettrunk(net_caller);
             return;
             }
 #endif //OVMS_NO_VEHICLE_ALERTS

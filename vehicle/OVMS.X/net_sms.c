@@ -77,16 +77,18 @@ rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttps://maps.google.com/maps?q
 
 void net_send_sms_start(char* number)
   {
-  if (net_state == NET_STATE_DIAGMODE)
-    {
-    // DIAG mode: screen output
-    net_puts_rom("# ");
-    }
-  else if (net_msg_bufpos)
+  if (net_msg_bufpos)
     {
     // NET SMS wrapper mode: nothing to do here
     // net_put* will write to net_msg_bufpos
     }
+#ifdef OVMS_DIAGMODULE
+  else if (net_state == NET_STATE_DIAGMODE)
+    {
+    // DIAG mode: screen output
+    net_puts_rom("# ");
+    }
+#endif // OVMS_DIAGMODULE
   else
     {
     // MODEM mode:
@@ -117,16 +119,18 @@ void net_send_sms_start(char* number)
 
 void net_send_sms_finish(void)
   {
-  if (net_state == NET_STATE_DIAGMODE)
+  if (net_msg_bufpos)
+    {
+    // NET SMS wrapper mode: nothing to do here
+    // net_msg_cmd_exec() will terminate the string
+    }
+#ifdef OVMS_DIAGMODULE
+  else if (net_state == NET_STATE_DIAGMODE)
     {
     // DIAG mode:
     net_puts_rom("\r\n");
     }
-  else if (net_msg_bufpos)
-    {
-    // NET SMS wrapper mode: 0-terminate buffer
-    *net_msg_bufpos = 0;
-    }
+#endif // OVMS_DIAGMODULE
   else
     {
     // MODEM mode:
@@ -1136,7 +1140,7 @@ BOOL net_sms_in(char *caller, char *buf)
   // The buf contains an SMS command
   // and caller contains the caller telephone number
   char *p;
-  int k;
+  UINT8 k;
 
   // Convert SMS command (first word) to upper-case
   for (p=buf; ((*p!=0)&&(*p!=' ')); p++)

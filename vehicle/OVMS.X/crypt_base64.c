@@ -1,6 +1,8 @@
 /*********************************************************************
 MODULE NAME:    b64.c
 
+ORIGIN:         http://base64.sourceforge.net/b64.c
+
 AUTHOR:         Bob Trower 08/04/01
 
 PROJECT:        Crypt Data Packaging
@@ -60,7 +62,7 @@ void encodeblock( unsigned char in[3], unsigned char out[4], int len )
   out[3] = (unsigned char) (len > 2 ? cb64[ in[2] & 0x3f ] : '=');
   }
 
-void base64encode(BYTE *inputData, WORD inputLen, BYTE *outputData)
+char *base64encode(BYTE *inputData, WORD inputLen, BYTE *outputData)
   {
   int len = 0;
   int k;
@@ -82,6 +84,7 @@ void base64encode(BYTE *inputData, WORD inputLen, BYTE *outputData)
     for (len=0;len<4;len++) *outputData++ = out[len];
     }
   *outputData = 0;
+  return outputData;
   }
 
 void base64encodesend(BYTE *inputData, WORD inputLen)
@@ -116,25 +119,26 @@ void decodeblock( unsigned char in[4], unsigned char out[3] )
 
 int base64decode(BYTE *inputData, BYTE *outputData)
   {
+  BYTE c = 1;
   unsigned char v;
   int i, len;
   int written = 0;
 
-  while( *inputData != 0 )
+  while( c != 0 )
     {
-    for( len = 0, i = 0; (i < 4) && (*inputData != 0); i++ )
+    for( len = 0, i = 0; (i < 4) && (c != 0); i++ )
       {
       v = 0;
-      while( (*inputData != 0) && (v == 0) )
+      while( (c != 0) && (v == 0) )
         {
-        v = (unsigned char) *inputData++;
-        v = (unsigned char) ((v < 43 || v > 122) ? 0 : cd64[ v - 43 ]);
+        c = (*inputData) ? *inputData++ : 0;
+        v = (unsigned char) ((c < 43 || c > 122) ? 0 : cd64[ c - 43 ]);
         if( v )
           {
           v = (unsigned char) ((v == '$') ? 0 : v - 61);
           }
         }
-      if( *inputData != 0 )
+      if( c != 0 )
         {
         len++;
         if( v )
