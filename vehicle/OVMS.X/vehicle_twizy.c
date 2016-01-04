@@ -266,7 +266,7 @@
     - Charge start restarts SOC window (to get most recent BMS SOC)
     - Charge interruption no longer restarts power sums & SOC window
 
- * 3.7.1  2 Jan 2016 (Michael Balzer)
+ * 3.7.1  4 Jan 2016 (Michael Balzer)
     - CFG POWER: max current control, higher torque & power levels
     - New: CFG GET & SET: read/write complete profiles (base64 encoded)
     - CFG GET, SET, INFO & SAVE can be used "offline" (w/o SEVCON access)
@@ -1309,13 +1309,11 @@ struct twizy_cfg_params {
   UINT32  DefaultTrqLim;
   UINT    DeltaMapTrq;
   
-  UINT    DefaultFMAP9Trq;
-  UINT    DefaultFMAP9Curr;
-  UINT    ExtendedFMAP9Trq;
-  UINT    ExtendedFMAP9Curr;
   UINT32  DefaultCurrLim;
   UINT    DefaultCurrStatorMax;
   UINT    BoostCurr;
+  UINT    DefaultFMAP[4]; // only upper 2 points needed
+  UINT    ExtendedFMAP[4]; // only upper 2 points needed
 
   UINT    DefaultPwrLo;
   UINT    DefaultPwrLoLim;
@@ -1331,7 +1329,7 @@ struct twizy_cfg_params {
   UINT8   DefaultRampAccelPrc;
 
   UINT    DefaultPMAP[18];
-
+  
   UINT    DefaultMapSpd[4];
 };
 
@@ -1367,14 +1365,12 @@ rom struct twizy_cfg_params twizy_cfg_params[2] =
     70125,  // DefaultTrqLim
     0,      // DeltaMapTrq
     
-    1122,   // DefaultFMAP9Trq
-    9984,   // DefaultFMAP9Curr
-    2240,   // ExtendedFMAP9Trq
-    11795,  // ExtendedFMAP9Curr
     450000, // DefaultCurrLim
     450,    // DefaultCurrStatorMax
     540,    // BoostCurr
-    
+    { 964, 9728, 1122, 9984 }, // DefaultFMAP
+    { 1122, 10089, 2240, 11901 }, // ExtendedFMAP
+
     12182,  // DefaultPwrLo
     17000,  // DefaultPwrLoLim
     13000,  // DefaultPwrHi
@@ -1425,13 +1421,11 @@ rom struct twizy_cfg_params twizy_cfg_params[2] =
     36000,  // DefaultTrqLim
     500,    // DeltaMapTrq
 
-    576,    // DefaultFMAP9Trq
-    8960,   // DefaultFMAP9Curr
-    1328,   // ExtendedFMAP9Trq
-    14976,  // ExtendedFMAP9Curr
     270000, // DefaultCurrLim
     290,    // DefaultCurrStatorMax
     330,    // BoostCurr
+    { 480, 8192, 576, 8960 }, // DefaultFMAP
+    { 656, 9600, 1328, 11901 }, // ExtendedFMAP
     
     7050,   // DefaultPwrLo
     10000,  // DefaultPwrLoLim
@@ -1509,11 +1503,11 @@ UINT vehicle_twizy_cfg_makepowermap(void
         return err;
     }
     
-    // restore default flux map:
-    if (err = writesdo(0x4610,0x11,CFG.DefaultFMAP9Trq))
-      return err;
-    if (err = writesdo(0x4610,0x12,CFG.DefaultFMAP9Curr))
-      return err;
+    // restore default flux map (only last 2 points):
+    for (i=0; i<4; i++) {
+      if (err = writesdo(0x4610,0x0f+i,CFG.DefaultFMAP[i]))
+        return err;
+    }
   }
 
   else {
@@ -1532,14 +1526,20 @@ UINT vehicle_twizy_cfg_makepowermap(void
     if (err = writesdo(0x4611,0x04,rpm_0))
       return err;
 
-    // adjust flux map:
+    // adjust flux map (only last 2 points):
     
-    if (err = writesdo(0x4610,0x11,
-            (trq > CFG.DefaultFMAP9Trq) ? CFG.ExtendedFMAP9Trq : CFG.DefaultFMAP9Trq))
-      return err;
-    if (err = writesdo(0x4610,0x12,
-            (trq > CFG.DefaultFMAP9Trq) ? CFG.ExtendedFMAP9Curr : CFG.DefaultFMAP9Curr))
-      return err;
+    if (trq > CFG.DefaultFMAP[2]) {
+      for (i=0; i<4; i++) {
+        if (err = writesdo(0x4610,0x0f+i,CFG.ExtendedFMAP[i]))
+          return err;
+      }
+    }
+    else {
+      for (i=0; i<4; i++) {
+        if (err = writesdo(0x4610,0x0f+i,CFG.DefaultFMAP[i]))
+          return err;
+      }
+    }
     
     // calculate constant power part:
 
