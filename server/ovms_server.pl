@@ -1223,6 +1223,14 @@ sub push_queuenotify
       AE::log info => "- - $vehicleid msg queued mail notification for $rec{'pushkeyvalue'}";
       }
     
+    # send Google push notification:
+    if ($row->{'pushtype'} eq 'gcm')
+      {
+      push @gcm_queue,\%rec;
+      AE::log info => "- - $vehicleid msg queued gcm notification for $rec{'pushkeytype'}:$rec{'appid'}";
+      }
+    }
+    
     # check active connections:
     foreach (%{$app_conns{$vehicleid}})
       {
@@ -1239,14 +1247,6 @@ sub push_queuenotify
         { push @apns_queue_production,\%rec; }
       AE::log info => "- - $vehicleid msg queued apns notification for $rec{'pushkeytype'}:$rec{'appid'}";
       }
-    
-    # send Google push notification:
-    if ($row->{'pushtype'} eq 'gcm')
-      {
-      push @gcm_queue,\%rec;
-      AE::log info => "- - $vehicleid msg queued gcm notification for $rec{'pushkeytype'}:$rec{'appid'}";
-      }
-    }
   }
 
 sub vece_expansion
