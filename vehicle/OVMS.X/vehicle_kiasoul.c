@@ -83,6 +83,13 @@
 //    Roadster OVMS user guide.
 //  - Added more data to TRIP-sms
 //
+// 0.45  06 Jan 2016  (Geir Øyvind Vælidalo)
+//  - Added charge type (J1772 and ChaDeMo)
+//  - Minimized the BCV-sms to save 63 bytes of ram.
+//    - BCV SMS-response is now very minimalized to make room for 32 values.  
+//  - car_chargekWh was 10 times to high
+//  - QRY is rewritten in order to save a few bytes of ram.
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -110,10 +117,12 @@
 #include "net_sms.h"
 
 // Module version:
-rom char vehicle_kiasoul_version[] = "0.44";
+rom char vehicle_kiasoul_version[] = "0.45";
 
 #define CAN_ADJ -1  // To adjust for the 1 byte difference between the 
-// can_databuffer and the google spreadsheet
+                    // can_databuffer and the google spreadsheet
+#define H2D(c) (c >= 'A') ? (c - 'A' + 10) : (c - '0') //Simple hex to decimal
+
 ////////////////////////////////////////////////////////////////////////////////
 // Kia Soul state variables
 // 
@@ -141,18 +150,26 @@ UINT32 ks_start_cc;         // Used to calculate trip recuperation (Cumulated ch
 UINT32 ks_cum_charge_start; // Used to calculate charged power.
 
 struct{
-  unsigned char FanStatus:4;           
   unsigned char ChargingChademo:1;     
   unsigned char ChargingJ1772:1;       
   unsigned char :1;                    
-  unsigned char SendChargeSMS:1;       
-} ks_status_bits;
+  unsigned char :1;                    
+  unsigned char FanStatus:4;           
+} ks_charge_bits;
 
-#define REQUEST_STATUS_BITS 0xC000
-#define REQUEST_STATUS_NOT_READ 0x8000
-#define REQUEST_STATUS_NOT_SENT 0x4000
-UINT ks_can_request_id;               // The ID to request + status bits (0x8000=Not read, 0x4000=not sent)
-UINT8 ks_can_response_databuffer[8];  // The response
+struct{
+  unsigned char BCV_BlockToFetch:2;           
+  unsigned char BCV_BlockFetched:1;     
+  unsigned char BCV_BlockSent:1;       
+  unsigned char NotifyCharge:1;       
+  unsigned char :1;                    
+  unsigned char QRY_Read:1;                    
+  unsigned char QRY_Sent:1;                    
+ } ks_sms_bits;
+
+UINT8 ks_can_qry_databuffer[8];  // The can query data buffer
+// Two first bytes is the request id
+#define KS_REQUEST_ID (((UINT)ks_can_qry_databuffer[0]<<8) | ((UINT)ks_can_qry_databuffer[1]))
 
 UINT8 ks_battery_module_temp[8];
 
@@ -170,16 +187,14 @@ UINT32 ks_battery_cum_charge;             //Cumulated charge power      02 21 01
 UINT32 ks_battery_cum_discharge;          //Cumulated discharge power   02 21 01 -> 26 4-7
 UINT8  ks_battery_cum_op_time[3];         //Cumulated operating time    02 21 01 -> 27 1-4
 
-UINT8 ks_battery_cell_voltage[96]; //TODO Fetch these in blocks on demand instead. 
-                                   //Should be able to save 64 bytes, however, this
-                                   //will need to rewrite the SMS as 32 values are
-                                   //too much for 160 characters.
+UINT8 ks_battery_cell_voltage[32]; 
 
 UINT8 ks_battery_min_temperature;         //02 21 05 -> 21 7 
 UINT8 ks_battery_inlet_temperature;       //02 21 05 -> 21 6 
 UINT8 ks_battery_max_temperature;         //02 21 05 -> 22 1 
 UINT8 ks_battery_heat_1_temperature;      //02 21 05 -> 23 6
 UINT8 ks_battery_heat_2_temperature;      //02 21 05 -> 23 7
+
 UINT  ks_battery_max_detoriation;         //02 21 05 -> 24 1+2
 UINT8 ks_battery_max_detoriation_cell_no; //02 21 05 -> 24 3
 UINT  ks_battery_min_detoriation;         //02 21 05 -> 24 4+5
@@ -193,12 +208,26 @@ UINT8 ks_battery_fan_feedback;
 //UINT  ks_battery_avail_discharge;     //Available discharge           02 21 01 -> 21 4+5
 
 UINT32 ks_tpms_id[4];
-INT8 ks_tpms_temp[4];
+INT8  ks_tpms_temp[4];
 UINT8 ks_tpms_pressure[4];
-UINT8 ks_obc_volt;
-UINT8 ks_shift_bits;
 
-#pragma udata overlay vehicle_overlay_data2
+UINT8 ks_obc_volt;
+
+typedef union{
+  struct{ //TODO Is this the correct order, or should it be swapped?
+    unsigned char Park:1;           
+    unsigned char Reverse:1;     
+    unsigned char Neutral:1;       
+    unsigned char Drive:1;       
+    unsigned char Break:1;                    
+    unsigned char ECOOff:1;                    
+    unsigned char :1;                    
+    unsigned char :1;                    
+   };
+   unsigned char value;
+}KsShiftBits;
+KsShiftBits ks_shift_bits;
+
 UINT8 ks_door_byte;     //TODO Temporary door byte for analysis purposes
 
 #define KS_BUS_TIMEOUT 10     // bus activity timeout in seconds
@@ -355,7 +384,7 @@ BOOL vehicle_kiasoul_poll0(void) {
       switch (vehicle_poll_pid) {
         case 0x00:
           if (vehicle_poll_ml_frame == 1) {
-            ks_shift_bits = can_databuffer[4 + CAN_ADJ];
+            ks_shift_bits.value = can_databuffer[4 + CAN_ADJ];
           }
           break;
 
@@ -394,8 +423,8 @@ BOOL vehicle_kiasoul_poll0(void) {
               //        | ((UINT) can_databuffer[4 + CAN_ADJ] << 8))>>2);
               i = can_databuffer[6 + CAN_ADJ];
               ks_doors1.PilotSignal = ((i & 0x80)>0);
-              ks_status_bits.ChargingChademo = ((i & 0x40)>0);
-              ks_status_bits.ChargingJ1772   = ((i & 0x20)>0);
+              ks_charge_bits.ChargingChademo = ((i & 0x40)>0);
+              ks_charge_bits.ChargingJ1772   = ((i & 0x20)>0);
               ks_battery_current = (ks_battery_current & 0x00FF) 
                       | ((UINT) can_databuffer[7 + CAN_ADJ] << 8);
             }
@@ -423,7 +452,7 @@ BOOL vehicle_kiasoul_poll0(void) {
             {
               ks_battery_min_cell_voltage = can_databuffer[1 + CAN_ADJ];
               ks_battery_min_cell_voltage_no = can_databuffer[2 + CAN_ADJ];
-              ks_status_bits.FanStatus = can_databuffer[4 + CAN_ADJ] & 0xF; 
+              ks_charge_bits.FanStatus = can_databuffer[4 + CAN_ADJ] & 0xF; 
               ks_battery_fan_feedback = can_databuffer[3 + CAN_ADJ];
               ks_battery_cum_charge_current = (ks_battery_cum_charge_current & 0x0000FFFF) 
                       | ((UINT32) can_databuffer[6 + CAN_ADJ] << 24) 
@@ -468,10 +497,16 @@ BOOL vehicle_kiasoul_poll0(void) {
         case 0x03:
         case 0x04:
           // diag page 02-04: skip first frame (no data)
-          if (vehicle_poll_ml_frame > 0) {
-            base = ((vehicle_poll_pid - 2) << 5) + vehicle_poll_ml_offset - can_datalength - 3;
-            for (i = 0; i < can_datalength && ((base + i)<sizeof (ks_battery_cell_voltage)); i++)
-              ks_battery_cell_voltage[base + i] = can_databuffer[i];
+          if( !ks_sms_bits.BCV_BlockFetched ){
+            if( ks_sms_bits.BCV_BlockToFetch==vehicle_poll_pid-2){
+              if (vehicle_poll_ml_frame >= 0) {
+                base = vehicle_poll_ml_offset - can_datalength - 3;
+                for (i = 0; i < can_datalength && ((base + i)<sizeof (ks_battery_cell_voltage)); i++)
+                  ks_battery_cell_voltage[base + i] = can_databuffer[i];
+                ks_sms_bits.BCV_BlockFetched = 1;
+                ks_sms_bits.BCV_BlockSent = 0;
+              }
+            }
           }
           break;
 
@@ -600,12 +635,13 @@ BOOL vehicle_kiasoul_poll1(void) {
   }
 
   // Fetch requested can id, as specified via QRY sms.
-  if (ks_can_request_id & REQUEST_STATUS_BITS == REQUEST_STATUS_NOT_READ) { //Both status bit are set, so we haven't read the data yet
-    if (can_id == ks_can_request_id & 0xfff) {
+  if (!ks_sms_bits.QRY_Read) { 
+    if (can_id == KS_REQUEST_ID) {
+      ks_sms_bits.QRY_Read = 1;
       for (val = 0; val < 8; val++) {
-        ks_can_response_databuffer[val] = CAN_BYTE(val);
+        ks_can_qry_databuffer[val] = CAN_BYTE(val);
       }
-      ks_can_request_id &= 0x7FFF; //Clear most significant bit as we have read the data
+      ks_sms_bits.QRY_Sent = 0;
     }
   }
 
@@ -644,19 +680,43 @@ void vehicle_kiasoul_query_sms_response(void) {
   s = net_scratchpad;
 
   // output 
-  s = stp_x(s, "Can: 0x", ks_can_request_id & 0xFFF);
   s = stp_rom(s, "\nHex: ");
   for (i = 0; i < 8; i++)
-    s = stp_sx(s, " ", ks_can_response_databuffer[i]);
+    s = stp_sx(s, " ", ks_can_qry_databuffer[i]);
 
   s = stp_rom(s, "\nDec: ");
   for (i = 0; i < 8; i++)
-    s = stp_i(s, " ", ks_can_response_databuffer[i]);
+    s = stp_i(s, " ", ks_can_qry_databuffer[i]);
 
   // Send SMS:
   net_puts_ram(net_scratchpad);
   net_send_sms_finish();
-  ks_can_request_id = 0;
+  ks_sms_bits.QRY_Sent = 1;
+}
+
+void vehicle_kiasoul_bcv_sms_response(void) {
+  char *s;
+  int i;
+
+  // Start SMS:
+  net_send_sms_start(par_get(PARAM_REGPHONE));
+
+  // Format SMS:
+  s = net_scratchpad;
+
+  // Format SMS:
+  s = net_scratchpad;
+  for (; i < sizeof(ks_battery_cell_voltage); i++) {
+    s = stp_l2f(s, " ", ((UINT) ks_battery_cell_voltage[i] << 1), 2);
+    if ((i % 8) == 7) {
+      s = stp_rom(s, "\n");
+    }
+  }
+  // Send SMS:
+  net_puts_ram(net_scratchpad);
+  net_send_sms_finish();
+
+  ks_sms_bits.BCV_BlockSent = 1;
 }
 
 
@@ -758,12 +818,12 @@ BOOL vehicle_kiasoul_ticker1(void) {
     }
   }
 
-  if (ks_status_bits.ChargingJ1772) { // J1772 - Type 1  charging
+  if (ks_charge_bits.ChargingJ1772) { // J1772 - Type 1  charging
     car_linevoltage = ks_obc_volt;
     car_chargecurrent = (((long) ks_chargepower * 1000) >> 8) / car_linevoltage;
     car_chargemode = 0; // Standard      
     car_chargelimit = 6600 / car_linevoltage; // 6.6kW
-  } else if (ks_status_bits.ChargingChademo) { //ChaDeMo charging            
+  } else if (ks_charge_bits.ChargingChademo) { //ChaDeMo charging            
     car_linevoltage = ks_battery_DC_voltage / 10;
     car_chargecurrent = (UINT8) ((-ks_battery_current) / 10);
     car_chargemode = 4; // Performance      
@@ -771,7 +831,7 @@ BOOL vehicle_kiasoul_ticker1(void) {
   }
   
   ks_doors1.Charging = ks_doors1.PilotSignal 
-          && (ks_status_bits.ChargingChademo || ks_status_bits.ChargingJ1772)
+          && (ks_charge_bits.ChargingChademo || ks_charge_bits.ChargingJ1772)
           && (car_chargecurrent > 0);
 
   vehicle_poll_setstate(ks_doors1.Charging ? 2 : (ks_doors1.CarON ? 1 : 0));
@@ -790,7 +850,12 @@ BOOL vehicle_kiasoul_ticker1(void) {
       car_chargemode = 0; // Standard charging. 
       car_chargekwh = 0; // kWh charged
       car_chargelimit = 0; // Charge limit
-      ks_status_bits.SendChargeSMS = 1; // Send SMS when charging is fully initiated
+      if(ks_charge_bits.ChargingChademo ){
+        car_chargetype = CHADEMO;
+      }else{
+        car_chargetype = J1772_TYPE1;
+      }
+      ks_sms_bits.NotifyCharge = 1; // Send SMS when charging is fully initiated
       ks_cum_charge_start = ks_battery_cum_charge;
     } else {
       // Charging continues:
@@ -824,7 +889,7 @@ BOOL vehicle_kiasoul_ticker1(void) {
       } else {
         chargeTarget = 27000;
       }
-      if (ks_status_bits.ChargingChademo && chargeTarget > 22410) { //ChaDeMo charging            
+      if (ks_charge_bits.ChargingChademo && chargeTarget > 22410) { //ChaDeMo charging            
         chargeTarget = 22410;
       }
       car_chargefull_minsremaining = (UINT)
@@ -834,15 +899,15 @@ BOOL vehicle_kiasoul_ticker1(void) {
         car_chargefull_minsremaining = 1440;
       }
 
-      if (ks_status_bits.SendChargeSMS == 1) { //Send Charge SMS after we have initialized the voltage and current settings 
-        ks_status_bits.SendChargeSMS = 0;
+      if (ks_sms_bits.NotifyCharge == 1) { //Send Charge SMS after we have initialized the voltage and current settings 
+        ks_sms_bits.NotifyCharge = 0;
         net_req_notification(NET_NOTIFY_CHARGE);
         net_req_notification(NET_NOTIFY_STAT);
       }
     } else {
       car_chargestate = 0x0f; //Heating?
     }
-    car_chargekwh = (UINT8) (ks_battery_cum_charge - ks_cum_charge_start);
+    car_chargekwh = (UINT8) ((ks_battery_cum_charge - ks_cum_charge_start)/10);
     ks_last_soc = car_SOC;
     ks_last_ideal_range = (UINT8)car_idealrange;
   } else if (car_doors1bits.Charging) {
@@ -856,17 +921,22 @@ BOOL vehicle_kiasoul_ticker1(void) {
     else
       car_chargestate = 21; // Charge STOPPED
     car_chargelimit = 0;
-    car_chargekwh = (UINT8) (ks_battery_cum_charge - ks_cum_charge_start);
+    car_chargekwh = (UINT8) (ks_battery_cum_charge - ks_cum_charge_start)/10;
     ks_cum_charge_start = 0;
     net_req_notification(NET_NOTIFY_CHARGE);
     net_req_notification(NET_NOTIFY_STAT);
   }
 
   // Check if we have a can-message as a response to a QRY sms
-  if (ks_can_request_id & REQUEST_STATUS_BITS == REQUEST_STATUS_NOT_SENT) { //Only second MSbit is sat, so we have data and are ready to send
+  if (ks_sms_bits.QRY_Read && !ks_sms_bits.QRY_Sent) { 
+    //Only second MSbit is sat, so we have data and are ready to send
     vehicle_kiasoul_query_sms_response();
   }
-
+  
+  // Check if we have to send a response to BCV
+  if( ks_sms_bits.BCV_BlockFetched && !ks_sms_bits.BCV_BlockSent){
+    vehicle_kiasoul_bcv_sms_response();
+  }
 }
 
 
@@ -899,26 +969,26 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
     //s = stp_i(s, "\nobc A=", ks_obc_ampere);
     s = stp_i(s, "\nBMSsoc=", ks_bms_soc);
     s = stp_l2f(s, "%\nchgep=", (ks_chargepower * 1000) >> 8, 2);
-    s = stp_i(s, "\nFan\nDuty: ", ks_status_bits.FanStatus*10);
-    if( ks_status_bits.FanStatus==0 ){
+    s = stp_i(s, "\nFan\nDuty: ", ks_charge_bits.FanStatus*10);
+    if( ks_charge_bits.FanStatus==0 ){
       s = stp_rom(s, "% ");
-    }else if( ks_status_bits.FanStatus==1 ){
+    }else if( ks_charge_bits.FanStatus==1 ){
       s = stp_rom(s, "% 90"); // i*900
-    }else if( ks_status_bits.FanStatus==2 ){
+    }else if( ks_charge_bits.FanStatus==2 ){
       s = stp_rom(s, "% 120");  // i*600
-    }else if( ks_status_bits.FanStatus==3 ){
+    }else if( ks_charge_bits.FanStatus==3 ){
       s = stp_rom(s, "% 150");   // i*500
-    }else if( ks_status_bits.FanStatus==4 ){
+    }else if( ks_charge_bits.FanStatus==4 ){
       s = stp_rom(s, "% 180");   // i*450
-    }else if( ks_status_bits.FanStatus==5 ){
+    }else if( ks_charge_bits.FanStatus==5 ){
       s = stp_rom(s, "% 210");   // i*420
-    }else if( ks_status_bits.FanStatus==6 ){
+    }else if( ks_charge_bits.FanStatus==6 ){
       s = stp_rom(s, "% 245");   // i*408,3
-    }else if( ks_status_bits.FanStatus==7 ){
+    }else if( ks_charge_bits.FanStatus==7 ){
       s = stp_rom(s, "% 260");   // i*433,333   
-    }else if( ks_status_bits.FanStatus==8 ){
+    }else if( ks_charge_bits.FanStatus==8 ){
       s = stp_rom(s, "% 280");   // i*350
-    }else if( ks_status_bits.FanStatus==9 ){
+    }else if( ks_charge_bits.FanStatus==9 ){
       s = stp_rom(s, "% 300");   // i*333,3333
     }
     s = stp_i(s, "0 rpm\nFeedback=", ks_battery_fan_feedback);
@@ -929,18 +999,27 @@ BOOL vehicle_kiasoul_debug_sms(BOOL premsg, char *caller, char *command, char *a
     s = stp_i(s, "\ndoors=", ks_door_byte);
     s = stp_i(s, "\nspeed=", car_speed);
     s = stp_i(s, "\nparkbr=", ks_doors1.HandBrake);
-    s = stp_i(s, "\nStick=", ks_shift_bits);
+    s = stp_i(s, "\nStick=", ks_shift_bits.value);
     s = stp_l2f(s, "\n12v1=", ks_auxVoltage, 1);
     s = stp_l2f(s, "\n12v2=", car_12vline, 1);
     //s = stp_i(s, "\nABHD", ks_air_bag_hwire_duty);
 
-    s = stp_x(s, "QRY: 0x", ks_can_request_id & 0xFFF);
-    if (ks_can_request_id & REQUEST_STATUS_BITS == REQUEST_STATUS_NOT_READ) { 
-      s = stp_rom(s, "\nQRY NOT READ");
-    }else if (ks_can_request_id & REQUEST_STATUS_BITS == REQUEST_STATUS_NOT_SENT) { 
-      s = stp_rom(s, "\nQRY NOT SENT");
+    s = stp_x(s, "\nQRY: 0x", KS_REQUEST_ID);
+    if (!ks_sms_bits.QRY_Read) { 
+      s = stp_rom(s, "\nUNREAD");
+    }else if (!ks_sms_bits.QRY_Sent) { 
+      s = stp_rom(s, "\nUNSENT");
     }else{ 
-      s = stp_rom(s, "\nQRY SENT");
+      s = stp_rom(s, "\nSENT");
+    }
+
+    s = stp_x(s, "\nBCV: ", ks_sms_bits.BCV_BlockToFetch);
+    if (!ks_sms_bits.BCV_BlockFetched) { 
+      s = stp_rom(s, "\nUNREAD");
+    }else if (!ks_sms_bits.BCV_BlockSent) { 
+      s = stp_rom(s, "\nUNSENT");
+    }else{ 
+      s = stp_rom(s, "\nSENT");
     }
 
   }
@@ -1143,31 +1222,7 @@ BOOL vehicle_kiasoul_trip_sms(BOOL premsg, char *caller, char *command, char *ar
 ////////////////////////////////////////////////////////////////////////
 // Vehicle specific SMS command: BCV
 //
-
-void vehicle_kiasoul_battery_cells_sms_response(BOOL premsg, char *caller, int i, int to) {
-  char *s;
-
-  // Start SMS:
-  if (premsg)
-    net_send_sms_start(caller);
-
-  // Format SMS:
-  s = net_scratchpad;
-  s = stp_rom(s, "Cell V");
-  for (; i < to && i < 96; i++) {
-    if ((i % 5) == 0) {
-      s = stp_ulp(s, "\n", (i + 1), 2, '0');
-    }
-    s = stp_l2f(s, " ", ((UINT) ks_battery_cell_voltage[i] << 1), 2);
-  }
-  // Send SMS:
-  net_puts_ram(net_scratchpad);
-  net_send_sms_finish();
-  delay100(5);
-}
-
 BOOL vehicle_kiasoul_battery_cells_sms(BOOL premsg, char *caller, char *command, char *arguments) {
-  UINT8 start = 0;
   if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)
     return FALSE;
 
@@ -1178,11 +1233,12 @@ BOOL vehicle_kiasoul_battery_cells_sms(BOOL premsg, char *caller, char *command,
   }
 
   if (arguments && arguments[0] >= '0' && arguments[0] <= '3') {
-    start = (arguments[0] - '0')*25;
+    ks_sms_bits.BCV_BlockToFetch=(arguments[0] - '0');
+    ks_sms_bits.BCV_BlockFetched = 0;
+    ks_sms_bits.BCV_BlockSent = 0;
+    return TRUE;
   }
-  vehicle_kiasoul_battery_cells_sms_response(premsg, caller, start, start + 25);
-
-  return TRUE;
+  return FALSE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1370,10 +1426,12 @@ BOOL vehicle_kiasoul_query_sms(BOOL premsg, char *caller, char *command, char *a
     return FALSE;
 
   if (arguments && *arguments) {
-    ks_can_request_id = ((UINT) ((arguments[0] >= 'A') ? (arguments[0] - 'A' + 10) : (arguments[0] - '0')) << 8) |
-            (((arguments[1] >= 'A') ? (arguments[1] - 'A' + 10) : (arguments[1] - '0')) << 4) |
-            (((arguments[2] >= 'A') ? (arguments[2] - 'A' + 10) : (arguments[2] - '0'))) |
-            REQUEST_STATUS_NOT_READ | REQUEST_STATUS_NOT_SENT; //Set status bits
+    ks_can_qry_databuffer[0] = H2D(arguments[0]);
+    ks_can_qry_databuffer[1] = (H2D(arguments[1]))<<4;
+    ks_can_qry_databuffer[1] += H2D(arguments[2]);
+    
+    ks_sms_bits.QRY_Read=0;
+    ks_sms_bits.QRY_Sent=0;
   }
 
   return TRUE;
@@ -1536,13 +1594,11 @@ BOOL vehicle_kiasoul_initialise(void) {
   ks_last_ideal_range = 0;
   ks_chargepower = 0;
 
-  ks_can_request_id = 0;
-
   car_speed = 0;
   memset(ks_odometer, 0, sizeof (ks_odometer));
   memset(ks_trip_start_odo, 0, sizeof (ks_trip_start_odo));
  
-  memset(ks_can_response_databuffer, 0, sizeof (ks_can_response_databuffer));
+  memset(ks_can_qry_databuffer, 0, sizeof (ks_can_qry_databuffer));
 
   ks_door_byte = 0;
 
@@ -1551,7 +1607,6 @@ BOOL vehicle_kiasoul_initialise(void) {
   ks_battery_DC_voltage = 0;
   ks_battery_current = 0;
   ks_battery_avail_charge = 0;
-  //ks_battery_avail_discharge = 0;
   ks_battery_max_cell_voltage = 0;
   ks_battery_max_cell_voltage_no = 0;
   ks_battery_min_cell_voltage = 0;
@@ -1567,7 +1622,6 @@ BOOL vehicle_kiasoul_initialise(void) {
   ks_battery_min_temperature = 0;
   ks_battery_inlet_temperature = 0;
   ks_battery_max_temperature = 0;
-  //ks_air_bag_hwire_duty = 0;
   ks_battery_heat_1_temperature = 0;
   ks_battery_heat_2_temperature = 0;
   ks_battery_max_detoriation = 0;
@@ -1575,14 +1629,16 @@ BOOL vehicle_kiasoul_initialise(void) {
   ks_battery_min_detoriation = 0;
   ks_battery_min_detoriation_cell_no = 0;
   ks_heatsink_temperature = 0;
-  ks_status_bits.ChargingChademo = 0;
-  ks_status_bits.ChargingJ1772 = 0;
-  ks_status_bits.SendChargeSMS = 0;
-  ks_status_bits.FanStatus = 0;
+  ks_charge_bits.ChargingChademo = 0;
+  ks_charge_bits.ChargingJ1772 = 0;
+  ks_charge_bits.FanStatus = 0;
   ks_battery_fan_feedback = 0;
+  ks_sms_bits.NotifyCharge = 0;
+  ks_sms_bits.BCV_BlockToFetch = 0;
+  ks_sms_bits.BCV_BlockFetched = 1;
+  ks_sms_bits.BCV_BlockSent = 1;
   ks_obc_volt = 0;
-  //ks_obc_ampere = 0;
-  ks_shift_bits = 0;
+  ks_shift_bits.value = 0;
 
   car_ambient_temp = 0;
   
