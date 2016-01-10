@@ -5,14 +5,17 @@ use Digest::HMAC;
 use Crypt::RC4::XS;
 use MIME::Base64;
 use IO::Socket::INET;
+use IO::Socket::Timeout;
+use Errno qw(ETIMEDOUT EWOULDBLOCK);
 use Config::IniFiles;
 
 # Read command line arguments:
 my $cmd_code = $ARGV[0];
 my $cmd_args = $ARGV[1];
+my $cmd_rescnt = $ARGV[2];
 
 if (!$cmd_code) {
- print "usage: cmd.pl code [args]\n";
+ print "usage: cmd.pl code [args] [resultcnt]\n";
  exit;
 }
 
@@ -25,16 +28,24 @@ my $vehicle_id       = $config->val('client','vehicle_id','TESTCAR');
 my $server_password  = $config->val('client','server_password','NETPASS');
 my $module_password  = $config->val('client','module_password','OVMS');
 
-my $server_ip        = $config->val('client','server_ip','54.197.255.127');
+my $server_ip        = $config->val('client','server_ip','tmc.openvehicles.com');
 
 
 #####
 ##### CONNECT
 #####
 
-my $sock = IO::Socket::INET->new(PeerAddr => $server_ip,
-                                 PeerPort => '6867',
-                                 Proto    => 'tcp');
+my $sock = IO::Socket::INET->new(
+	PeerAddr => $server_ip,
+	PeerPort => '6867',
+	Proto    => 'tcp',
+	Timeout  => 5 );
+
+# configure socket timeouts:
+IO::Socket::Timeout->enable_timeouts_on($sock);
+$sock->read_timeout(10);
+$sock->write_timeout(10);
+
 
 #####
 ##### REGISTER
@@ -98,21 +109,17 @@ my $ptoken = "";
 my $pdigest = "";
 my $data = "";
 my $discardcnt = 0;
+my $resultcnt = 0;
 
 while(1)
 {
-	# Timeout socket reads after 10 seconds:
-	eval {
-			local $SIG{ALRM} = sub { die "Timed Out" };
-			alarm 10;
-			$data = <$sock>;
-			alarm 0;
-		};
-		if ($@ and $@ =~ /Timed Out/) {
-			print STDERR "No more results, exit.\n";
-			exit;
-		}
-
+	# Read from server:
+	$data = <$sock>;
+	if (! $data && ( 0+$! == ETIMEDOUT || 0+$! == EWOULDBLOCK )) {
+		print STDERR "Read timeout, exit.\n";
+		exit;
+	}
+	
 	chop $data; chop $data;
 	my $decoded = $rxcipher->RC4(decode_base64($data));
 
@@ -139,6 +146,11 @@ while(1)
 	{
 		print STDOUT $decoded,"\n";
 		$discardcnt = 0;
+		$resultcnt++;
+		if ($resultcnt >= $cmd_rescnt)
+		{
+			exit;
+		}
 	}
 	else
 	{

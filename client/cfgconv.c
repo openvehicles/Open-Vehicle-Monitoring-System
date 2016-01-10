@@ -5,16 +5,18 @@
  *  https://github.com/openvehicles
  * 
  * cfgconv: Twizy SEVCON configuration profile converter
- * 	(convert from base64 to text commands and vice versa)
+ * 	(convert from base64 to text commands or key=value tags format and vice versa)
  *
  * Usage:
- *  a) convert base64 to text: ./cfgconv base64data > profile.txt
- *  b) convert text to base64: ./cfgconv < profile.txt
+ *  a) convert base64 to commands: ./cfgconv base64data > profile.txt
+ *  b) convert commands to base64: ./cfgconv < profile.txt
+ *  c) convert base64 to tags: ./cfgconv -t base64data > profile.inf
+ *  d) convert tags to base64: ./cfgconv -t < profile.inf
  *
  * Build:
  *  gcc -o cfgconv cfgconv.c
  *
- * Version:		1.0 (2016/01/02)
+ * Version:		1.1 (2016/01/07)
  * Author:		Michael Balzer
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -244,6 +246,69 @@ struct twizy_cfg_profile {
 #define cfgvalue(VAL)   ((UINT8)((VAL)+1))
 
 
+char *tagname[] = {
+	"checksum",
+	
+	"speed",
+	"warn",
+	
+	"torque",
+	"power_low",
+	"power_high",
+	
+	"drive",
+	"neutral",
+	"brake",
+	
+	"tsmap.D.spd1",
+	"tsmap.D.spd2",
+	"tsmap.D.spd3",
+	"tsmap.D.spd4",
+	"tsmap.D.prc1",
+	"tsmap.D.prc2",
+	"tsmap.D.prc3",
+	"tsmap.D.prc4",
+	
+	"tsmap.N.spd1",
+	"tsmap.N.spd2",
+	"tsmap.N.spd3",
+	"tsmap.N.spd4",
+	"tsmap.N.prc1",
+	"tsmap.N.prc2",
+	"tsmap.N.prc3",
+	"tsmap.N.prc4",
+	
+	"tsmap.B.spd1",
+	"tsmap.B.spd2",
+	"tsmap.B.spd3",
+	"tsmap.B.spd4",
+	"tsmap.B.prc1",
+	"tsmap.B.prc2",
+	"tsmap.B.prc3",
+	"tsmap.B.prc4",
+	
+	"ramp_start",
+	"ramp_accel",
+	"ramp_decel",
+	"ramp_neutral",
+	"ramp_brake",
+	"smooth",
+	
+	"brakelight_on",
+	"brakelight_off",
+	
+	"ramplimit_accel",
+	"ramplimit_decel",
+	
+	"autorecup_minprc",
+	"autorecup_ref",
+	"autodrive_minprc",
+	"autodrive_ref",
+	
+	"current"
+};
+
+
 // vehicle_twizy_cfg_calc_checksum: get checksum for twizy_cfg_profile
 //
 // Note: for extendability of struct twizy_cfg_profile, 0-Bytes will
@@ -406,6 +471,39 @@ void commands2profile(void) {
 }
 
 
+// profile2tags:
+// 	convert twizy_cfg_profile to tag (key=value) format
+void profile2tags(void) {
+	
+	BYTE *tagvalue = (BYTE *) &twizy_cfg_profile;
+	int i;
+	
+	for (i = 1; i < sizeof(twizy_cfg_profile); i++ ) {
+		printf("%s=%d\n", tagname[i], (int) tagvalue[i] - 1);
+	}
+}
+
+
+// tags2profile:
+// 	convert tag (key=value) format to twizy_cfg_profile
+void tags2profile(void) {
+	
+	BYTE *tagvalue = (BYTE *) &twizy_cfg_profile;
+	int i;
+	char name[1000];
+	int value;
+	
+	while (!feof(stdin) && scanf(" %[^=]=%d ", name, &value)) {
+		for (i = 1; i < sizeof(twizy_cfg_profile); i++ ) {
+			if (strcasecmp(tagname[i], name) == 0) {
+				tagvalue[i] = cfgvalue(value);
+				break;
+			}
+		}
+	}
+}
+
+
 
 /*******************************************************************************
  *
@@ -413,12 +511,28 @@ void commands2profile(void) {
  * 
  */
 
+#define FORMAT_COMMANDS		1
+#define FORMAT_TAGS			2
+
+
 int main(int argc, char *argv[])
 {
+	int format = FORMAT_COMMANDS;
+	char *code = NULL;
+	int i;
+	
+	// process command arguments:
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] == '-' && argv[i][1] == 't')
+			format = FORMAT_TAGS;
+		else
+			code = argv[i];
+	}
+	
 	// clear profile:
 	memset(&twizy_cfg_profile, 0, sizeof(twizy_cfg_profile));
 	
-	if (argc >= 2) {
+	if (code) {
 		// MODE: convert base64 to text
 		
 		// check length:
@@ -429,7 +543,7 @@ int main(int argc, char *argv[])
 		}
 		
 		// decode base64 argument:
-		base64decode(argv[1], (BYTE *) &twizy_cfg_profile);
+		base64decode(code, (BYTE *) &twizy_cfg_profile);
 		
 		// check integrity:
 		if (twizy_cfg_profile.checksum != vehicle_twizy_cfg_calc_checksum((BYTE *) &twizy_cfg_profile)) {
@@ -437,15 +551,21 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		
-		// convert profile into command syntax:
-		profile2commands();
+		// convert profile into command/tag syntax:
+		if (format == FORMAT_TAGS)
+			profile2tags();
+		else
+			profile2commands();
 	}
 	
 	else {
 		// MODE: convert text to base64
 		
-		// parse commands:
-		commands2profile();
+		// parse commands/tags:
+		if (format == FORMAT_TAGS)
+			tags2profile();
+		else
+			commands2profile();
 		
 		// calculate checksum:
 		twizy_cfg_profile.checksum = vehicle_twizy_cfg_calc_checksum((BYTE *) &twizy_cfg_profile);

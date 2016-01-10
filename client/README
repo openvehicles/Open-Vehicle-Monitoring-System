@@ -12,13 +12,16 @@ The following perl modules from CPAN are used by the clients:
   Digest::HMAC
   Crypt::RC4::XS
   MIME::Base64
+  IO::Socket::INET
+  IO::Socket::Timeout
 
 ...additionally for the diag mode clients (serial connection):
   Device::SerialPort   (UNIX)
   Win32::SerialPort    (Windows)
 
 Install modules using cpanminus:
-  cpanm Config::IniFiles Digest::MD5 Digest::HMAC Crypt::RC4::XS MIME::Base64
+  cpanm Config::IniFiles Digest::MD5 Digest::HMAC Crypt::RC4::XS MIME::Base64 \
+    IO::Socket::INET IO::Socket::Timeout Device::SerialPort
 
 
 The clients
@@ -131,14 +134,16 @@ and you can resume a broken download using the "--start" option.
 Utilities: cfgconv
 ==================
 
-"cfgconv" converts SEVCON profiles from text commands to base64 and vice versa.
+"cfgconv" converts SEVCON profiles from text (commands/tags) to base64 and vice versa.
 See Twizy commands "CFG GET" and "CFG SET" for details.
 
 Build:
 	gcc -o cfgconv cfgconv.c
 
 Use:
-	a) convert base64 to text: ./cfgconv base64data > profile.txt
-	b) convert text to base64: ./cfgconv < profile.txt
+	a) convert base64 to commands: ./cfgconv base64data > profile.txt
+	b) convert commands to base64: ./cfgconv < profile.txt
+	c) convert base64 to tags: ./cfgconv -t base64data > profile.inf
+	d) convert tags to base64: ./cfgconv -t < profile.inf
 
 
