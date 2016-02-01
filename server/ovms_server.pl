@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.2.1-20151116";
+my $VERSION = "2.3.1-20160126";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -92,7 +92,11 @@ foreach (sort glob 'ovms_server*.vece')
 my $timeout_app      = $config->val('server','timeout_app',60*20);
 my $timeout_car      = $config->val('server','timeout_car',60*16);
 my $timeout_svr      = $config->val('server','timeout_svr',60*60);
+my $timeout_api      = $config->val('server','timeout_api',60*2);
 my $loghistory_tim   = $config->val('log','history',0);
+
+# User password encoding function:
+my $pw_encode        = $config->val('db','pw_encode','drupal_password($password)');
 
 # A database ticker
 $db = DBI->connect($config->val('db','path'),$config->val('db','user'),$config->val('db','pass'));
@@ -974,6 +978,13 @@ sub io_message
             undef,
             $vehicleid, $m_code, $m_paranoid, $ptoken, $m_data,
             $m_paranoid, $ptoken, $m_data);
+    if ($loghistory_tim > 0)
+      {
+      $db->do("INSERT IGNORE INTO ovms_historicalmessages (vehicleid,h_timestamp,h_recordtype,h_recordnumber,h_data,h_expires) "
+          . "VALUES (?,UTC_TIMESTAMP(),?,?,?,UTC_TIMESTAMP()+INTERVAL ? SECOND)",
+            undef,
+            $vehicleid, $m_code, 0, $m_data, $loghistory_tim);
+      }
     $db->do("UPDATE ovms_cars SET v_lastupdate=UTC_TIMESTAMP() WHERE vehicleid=?",undef,$vehicleid);
     # And send it on to the apps...
     AE::log info => "#$fn $clienttype $vehicleid msg handle $m_code $m_data";
@@ -1500,7 +1511,8 @@ sub http_request_api_cookie_login
     if (defined $row)
       {
       my $passwordhash = $row->{'pass'};
-      if (&drupal_password_check($passwordhash, $password))
+      my $encoded = eval $pw_encode;
+      if ($encoded eq $passwordhash)
         {
         # Password ok
         my $ug = new Data::UUID;
@@ -1650,12 +1662,19 @@ sub http_request_api_status
       }
     my ($soc,$units,$linevoltage,$chargecurrent,$chargestate,$chargemode,$idealrange,$estimatedrange,
         $chargelimit,$chargeduration,$chargeb4,$chargekwh,$chargesubstate,$chargestateN,$chargemodeN,
-        $chargetimer,$chargestarttime,$chargetimerstale) = split /,/,$rec->{'m_msg'};
+        $chargetimer,$chargestarttime,$chargetimerstale,$cac100,
+		$charge_etr_full,$charge_etr_limit,$charge_limit_range,$charge_limit_soc,
+		$cooldown_active,$cooldown_tbattery,$cooldown_timelimit,
+		$charge_estimate,$charge_etr_range,$charge_etr_soc,$idealrange_max) = split /,/,$rec->{'m_msg'};
     $result{'soc'} = $soc;
     $result{'units'} = $units;
     $result{'idealrange'} = $idealrange;
+    $result{'idealrange_max'} = $idealrange_max;
     $result{'estimatedrange'} = $estimatedrange,
     $result{'mode'} = $chargemode;
+    $result{'chargestate'} = $chargestate;
+    $result{'cac100'} = $cac100;
+    $result{'cooldown_active'} = $cooldown_active;
     }
   $rec= &api_vehiclerecord($vehicleid,'D');
   if (defined $rec)
@@ -1663,7 +1682,7 @@ sub http_request_api_status
     if (! $rec->{'m_paranoid'})
       {
       my ($doors1,$doors2,$lockunlock,$tpem,$tmotor,$tbattery,$trip,$odometer,$speed,$parktimer,$ambient,
-          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4) = split /,/,$rec->{'m_msg'};
+          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4,$vehicle12v_ref,$doors5) = split /,/,$rec->{'m_msg'};
       $result{'fl_dooropen'} =   $doors1 & 0b00000001;
       $result{'fr_dooropen'} =   $doors1 & 0b00000010;
       $result{'cp_dooropen'} =   $doors1 & 0b00000100;
@@ -1686,7 +1705,9 @@ sub http_request_api_status
       $result{'carawake'} =      $doors3 & 0b00000010;
       $result{'staletemps'} = $staletemps;
       $result{'staleambient'} = $staleambient;
+      $result{'charging_12v'} =  $doors5 & 0b00010000;
       $result{'vehicle12v'} = $vehicle12v;
+      $result{'vehicle12v_ref'} = $vehicle12v_ref;
       $result{'alarmsounding'} = $doors4 & 0b00000100;
       }
     }
@@ -1807,7 +1828,10 @@ sub http_request_api_charge_get
       }
     my ($soc,$units,$linevoltage,$chargecurrent,$chargestate,$chargemode,$idealrange,$estimatedrange,
         $chargelimit,$chargeduration,$chargeb4,$chargekwh,$chargesubstate,$chargestateN,$chargemodeN,
-        $chargetimer,$chargestarttime,$chargetimerstale) = split /,/,$rec->{'m_msg'};
+        $chargetimer,$chargestarttime,$chargetimerstale,$cac100,
+		$charge_etr_full,$charge_etr_limit,$charge_limit_range,$charge_limit_soc,
+		$cooldown_active,$cooldown_tbattery,$cooldown_timelimit,
+		$charge_estimate,$charge_etr_range,$charge_etr_soc,$idealrange_max) = split /,/,$rec->{'m_msg'};
     $result{'linevoltage'} = $linevoltage;
     $result{'chargecurrent'} = $chargecurrent;
     $result{'chargestate'} = $chargestate;
@@ -1822,6 +1846,18 @@ sub http_request_api_charge_get
     $result{'chargetimermode'} = $chargetimer;
     $result{'chargestarttime'} = $chargestarttime;
     $result{'chargetimerstale'} = $chargetimerstale;
+    $result{'cac100'} = $cac100;
+    $result{'charge_etr_full'} = $charge_etr_full;
+    $result{'charge_etr_limit'} = $charge_etr_limit;
+    $result{'charge_limit_range'} = $charge_limit_range;
+    $result{'charge_limit_soc'} = $charge_limit_soc;
+    $result{'cooldown_active'} = $cooldown_active;
+    $result{'cooldown_tbattery'} = $cooldown_tbattery;
+    $result{'cooldown_timelimit'} = $cooldown_timelimit;
+    $result{'charge_estimate'} = $charge_estimate;
+    $result{'charge_etr_rang'} = $charge_etr_range;
+    $result{'charge_etr_soc'} = $charge_etr_soc;
+    $result{'idealrange_max'} = $idealrange_max;
     }
   $rec= &api_vehiclerecord($vehicleid,'D');
   if (defined $rec)
@@ -1829,7 +1865,7 @@ sub http_request_api_charge_get
     if (! $rec->{'m_paranoid'})
       {
       my ($doors1,$doors2,$lockunlock,$tpem,$tmotor,$tbattery,$trip,$odometer,$speed,$parktimer,$ambient,
-          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4) = split /,/,$rec->{'m_msg'};
+          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4,$vehicle12v_ref,$doors5) = split /,/,$rec->{'m_msg'};
       $result{'cp_dooropen'} =   $doors1 & 0b00000100;
       $result{'pilotpresent'} =  $doors1 & 0b00001000;
       $result{'charging'} =      $doors1 & 0b00010000;
@@ -1841,6 +1877,9 @@ sub http_request_api_charge_get
       $result{'carawake'} =      $doors3 & 0b00000010;
       $result{'staletemps'} = $staletemps;
       $result{'staleambient'} = $staleambient;
+      $result{'charging_12v'} =  $doors5 & 0b00010000;
+      $result{'vehicle12v'} = $vehicle12v;
+      $result{'vehicle12v_ref'} = $vehicle12v_ref;
       }
     }
 
@@ -2108,7 +2147,7 @@ sub api_tim
   foreach my $session (keys %api_conns)
     {
     my $lastused = $api_conns{$session}{'sessionused'};
-    my $expire = AnyEvent->now - 120;
+    my $expire = AnyEvent->now - $timeout_api;
 
     if ($lastused < $expire)
       {
@@ -2276,9 +2315,9 @@ EOT
   $httpd->stop_request;
   }
 
-sub drupal_password_check
+sub drupal_password
   {
-  my ($ph,$password) = @_;
+  my ($password) = @_;
 
   my $iter_log2 = index($itoa64,substr($ph,3,1));
   my $iter_count = 1 << $iter_log2;
@@ -2295,7 +2334,7 @@ sub drupal_password_check
 
   my $encoded = substr($phash . &drupal_password_base64_encode($hash,length($hash)),0,55);
 
-  return ($encoded eq $ph);
+  return $encoded;
   }
 
 sub drupal_password_base64_encode
