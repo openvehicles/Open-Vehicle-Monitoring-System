@@ -2,7 +2,7 @@
 
 use Digest::MD5;
 use Digest::HMAC;
-use Crypt::RC4::XS;
+use Crypt::RC4;
 use MIME::Base64;
 use IO::Socket::INET;
 use Config::IniFiles;
@@ -71,9 +71,9 @@ $client_hmac->add($server_token);
 $client_hmac->add($client_token);
 my $client_key = $client_hmac->digest;
 
-my $txcipher = Crypt::RC4::XS->new($client_key);
+my $txcipher = Crypt::RC4->new($client_key);
 $txcipher->RC4(chr(0) x 1024); # Prime the cipher
-my $rxcipher = Crypt::RC4::XS->new($client_key);
+my $rxcipher = Crypt::RC4->new($client_key);
 $rxcipher->RC4(chr(0) x 1024); # Prime the cipher
 
 
