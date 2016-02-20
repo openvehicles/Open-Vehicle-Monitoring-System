@@ -247,6 +247,84 @@ BOOL vehicle_nissanleaf_ticker1(void)
   }
 
 ////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_cc_on()
+// Send Climate Control on message to VCU, normally sent by TCU, see
+// http://www.mynissanleaf.com/viewtopic.php?f=44&t=4131&hilit=open+CAN+discussion&start=416
+//
+// On Gen 1, turning on only works during charging, perhaps because the TCU has
+// a "wake up" logic line to the VCU in addition to the CAN bus which we need to
+// toggle as well as send this message.
+//
+// Tried without success to simulate wakeup by:
+// opening the door (difficult to send the message immediately after wakeup)
+// turning on the accessories
+// turning the whole car on
+//
+// CC *is* enabled if this function is called while the car is charging
+//
+
+void vehicle_nissanleaf_cc_on()
+  {
+  if (sys_features[FEATURE_CANWRITE] > 0)
+    {
+    net_puts_rom("\r\n# Turning on CC\r\n"); // TODO remove debug
+    while (TXB0CONbits.TXREQ)
+      {
+      } // Loop until TX is done
+    TXB0CON = 0;
+    TXB0SIDL = (0x56e & 0x7) << 5;
+    TXB0SIDH = 0x56e >> 3;
+    TXB0D0 = 0x4E;
+    TXB0DLC = 1; // data length
+    TXB0CON = 0b00001000; // mark for transmission
+    net_puts_rom("\r\n# Turned on CC\r\n"); // TODO remove debug
+    }
+  }
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_cc_off()
+// Send Climate Control off message to VCU, normally sent by TCU, see
+// vehicle_nissanleaf_cc_on() for details.
+
+void vehicle_nissanleaf_cc_off()
+  {
+  if (sys_features[FEATURE_CANWRITE] > 0)
+    {
+    net_puts_rom("\r\n# Turning off CC\r\n"); // TODO remove debug
+    while (TXB0CONbits.TXREQ)
+      {
+      } // Loop until TX is done
+    TXB0CON = 0;
+    TXB0SIDL = (0x56e & 0x7) << 5;
+    TXB0SIDH = 0x56e >> 3;
+    TXB0D0 = 0x56;
+    TXB0DLC = 1; // data length
+    TXB0CON = 0b00001000; // mark for transmission
+    net_puts_rom("\r\n# Turned off CC\r\n"); // TODO remove debug
+    }
+  }
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_fn_commandhandler()
+// Remote Command Handler, decodes command and delegates actual work elsewhere
+
+BOOL vehicle_nissanleaf_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
+  {
+  // TODO climate control shouldn't be hooked to these commands
+  switch (cmd)
+    {
+    case CMD_Homelink:
+      vehicle_nissanleaf_cc_on();
+      break;
+    case CMD_Alert:
+      vehicle_nissanleaf_cc_off();
+      break;
+    }
+  // we return false even on success so the framework takes care of the response
+  return FALSE;
+  }
+
+////////////////////////////////////////////////////////////////////////
 // vehicle_nissanleaf_initialise()
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to initialise itself.
@@ -327,6 +405,7 @@ BOOL vehicle_nissanleaf_initialise(void)
   vehicle_fn_poll0 = &vehicle_nissanleaf_poll0;
   vehicle_fn_poll1 = &vehicle_nissanleaf_poll1;
   vehicle_fn_ticker1 = &vehicle_nissanleaf_ticker1;
+  vehicle_fn_commandhandler = &vehicle_nissanleaf_fn_commandhandler;
 
   // TODO this causes a relay to click every 20 seconds or so while charging
   // TODO and on my gen 1 car at least, does not get the VIN number or speed
