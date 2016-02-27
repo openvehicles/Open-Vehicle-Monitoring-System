@@ -414,6 +414,15 @@ char *stp_s(char *dst, const rom char *prefix, char *val)
   return stp_ram(dst, val);
 }
 
+// string-print rom string with optional prefix:
+
+char *stp_rs(char *dst, const rom char *prefix, const rom char *val)
+{
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+  return stp_rom(dst, val);
+}
+
 // string-print integer with optional string prefix:
 
 char *stp_i(char *dst, const rom char *prefix, int val)

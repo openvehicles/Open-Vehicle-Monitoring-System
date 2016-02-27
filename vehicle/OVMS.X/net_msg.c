@@ -430,6 +430,7 @@ char net_msgp_firmware(char stat)
   if (vehicle_version)
     s = stp_rom(s, vehicle_version);
   s = stp_i(s, "/V", hwv);
+  s = stp_rs(s, "/", OVMS_BUILDCONFIG);
   s = stp_s(s, ",", car_vin);
   s = stp_i(s, ",", net_sq);
   s = stp_i(s, ",", sys_features[FEATURE_CANWRITE]);

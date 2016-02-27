@@ -949,7 +949,8 @@ BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
   if (vehicle_version)
     s = stp_rom(s, vehicle_version);
   s = stp_i(s, "/V", hwv);
-
+  s = stp_rs(s, "/", OVMS_BUILDCONFIG);
+  
   net_send_sms_start(caller);
   net_puts_ram(net_scratchpad);
   return TRUE;
