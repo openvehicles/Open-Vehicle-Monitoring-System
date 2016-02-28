@@ -97,29 +97,16 @@ BOOL vehicle_nissanleaf_poll1(void)
 
   switch (can_id)
     {
-    case 0x56e:
-      if (can_databuffer[0] == 0x86)
-        { // Car is driving
-        //        vehicle_poll_setstate(1);
-        car_doors1 &= ~0x40; // NOT PARK
-        car_doors1 |= 0x80; // CAR ON
-        if (car_parktime != 0)
-          {
-          car_parktime = 0; // No longer parking
-          net_req_notification(NET_NOTIFY_ENV);
-          }
-        }
-      else
-        { // Car is not driving
-        //        vehicle_poll_setstate(0);
-        car_doors1 |= 0x40; // PARK
-        car_doors1 &= ~0x80; // CAR OFF
-        car_speed = 0;
-        if (car_parktime == 0)
-          {
-          car_parktime = car_time - 1; // Record it as 1 second ago, so non zero report
-          net_req_notification(NET_NOTIFY_ENV);
-          }
+    case 0x11a:
+      // Inverter is on, assume car is on and handbrake is off
+      // vehicle_poll_setstate(1);
+      car_doors1bits.HandBrake = 0;
+      car_doors1bits.CarON = 1;
+      car_doors3bits.CarAwake = 1;
+      if (car_parktime != 0)
+        {
+        car_parktime = 0; // No longer parking
+        net_req_notification(NET_NOTIFY_ENV);
         }
       break;
     case 0x5bc:
@@ -171,6 +158,18 @@ BOOL vehicle_nissanleaf_ticker1(void)
   if (nl_busactive > 0) nl_busactive--;
   if (nl_busactive == 0)
     {
+    // no data on the CAN bus so assume everything is off
+    car_doors1bits.CarON = 0;
+    car_doors3bits.CarAwake = 0;
+    // vehicle_poll_setstate(0);
+    car_doors1bits.HandBrake = 1;
+    car_doors1bits.CarON = 0;
+    car_speed = 0;
+    if (car_parktime == 0)
+      {
+      car_parktime = car_time - 1; // Record it as 1 second ago, so non zero report
+      net_req_notification(NET_NOTIFY_ENV);
+      }
     if (car_chargestate == 1)
       { // Charge has completed
       car_doors1bits.ChargePort = 0;
