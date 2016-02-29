@@ -1,0 +1,33 @@
+New Style Connector (2015+)
+
+Possible unify with Model X, and support added for ethernet.
+
+Maybe: https://www.theplugdealer.com/shop/product/3451-12741nya20f-l-sumitomo-6098-5629-0-64ii-1-5-unsealed-20-position-female-housing-blue-18222
+
+Suggested pinout:
+
+1 = 12V/5A (F219)
+2 = CAN4+ Body Fault
+3 = CAN4- Body Fault
+6 = K/Serial
+9 = CAN2 Body +
+10 = CAN2 Body-
+13 = CAN6+ Chassis
+14 = CAN6 Chassis-
+18 = CAN3 Powertrain+
+19 = CAN3 Powertrain-
+20 = GND
+
+Connector PIN view:
+
+1 --- 12 (big pins)
+2 --- 13
+3 --- 14
+4 --- xx (keyway)
+5 --- 15 
+6 --- 16 
+7 --- 17 
+8 --- xx (keyway)
+9 --- 18 
+10 --- 19 
+11 --- 20 (big pins)
