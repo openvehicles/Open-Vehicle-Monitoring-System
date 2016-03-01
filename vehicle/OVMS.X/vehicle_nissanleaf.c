@@ -97,17 +97,19 @@ BOOL vehicle_nissanleaf_poll1(void)
 
   switch (can_id)
     {
-    case 0x11a:
-      // Inverter is on, assume car is on and handbrake is off
-      // vehicle_poll_setstate(1);
-      car_doors1bits.HandBrake = 0;
+    case 0x284:
+      // this is apparently data relayed from the ABS system, if we have
+      // that then we assume car is on.
       car_doors1bits.CarON = 1;
       car_doors3bits.CarAwake = 1;
+      // We don't know if handbrake is on or off, but it's usually off.
+      car_doors1bits.HandBrake = 0;
       if (car_parktime != 0)
         {
         car_parktime = 0; // No longer parking
         net_req_notification(NET_NOTIFY_ENV);
         }
+      // vehicle_poll_setstate(1);
       break;
     case 0x5bc:
       car_idealrange = ((int) can_databuffer[0] << 2) +
@@ -116,6 +118,7 @@ BOOL vehicle_nissanleaf_poll1(void)
       car_idealrange = (car_idealrange * 84 + 140) / 281;
       break;
     case 0x5bf:
+      // TODO this doesn't understand charger awake but waiting for charge timer
       car_chargelimit = can_databuffer[2] / 5;
       if ((car_chargelimit != 0)&&(can_databuffer[3] != 0))
         { // Car is charging
@@ -155,6 +158,11 @@ BOOL vehicle_nissanleaf_poll1(void)
 BOOL vehicle_nissanleaf_ticker1(void)
   {
   car_time++;
+  // TODO add check if we don't see 0x284 for a while then car isn't driving
+  // otherwise car can be parked and plugged in before the bus is quiet long
+  // enough to assume everything is off and we end up thinking that the car
+  // is driving and charging at the same time
+  // could also reduce the nl_busactive decay time.
   if (nl_busactive > 0) nl_busactive--;
   if (nl_busactive == 0)
     {
