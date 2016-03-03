@@ -10,7 +10,7 @@ The following perl modules from CPAN are used by the clients:
   Config::IniFiles
   Digest::MD5
   Digest::HMAC
-  Crypt::RC4::XS
+  Crypt::RC4
   MIME::Base64
   IO::Socket::INET
   IO::Socket::Timeout
@@ -20,9 +20,12 @@ The following perl modules from CPAN are used by the clients:
   Win32::SerialPort    (Windows)
 
 Install modules using cpanminus:
-  cpanm Config::IniFiles Digest::MD5 Digest::HMAC Crypt::RC4::XS MIME::Base64 \
+  cpanm Config::IniFiles Digest::MD5 Digest::HMAC Crypt::RC4 MIME::Base64 \
     IO::Socket::INET IO::Socket::Timeout Device::SerialPort
 
+Install modules using apt-get:
+  apt-get install libdigest-hmac-perl libcrypt-rc4-perl \
+    libconfig-inifiles-perl libdevice-serialport-perl
 
 The clients
 ===========
