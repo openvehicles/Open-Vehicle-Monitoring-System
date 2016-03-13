@@ -91,6 +91,7 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 rom char NET_WAKEUP_GPSON[] = "AT+CGPSPWR=1\r";
 rom char NET_WAKEUP_GPSOFF[] = "AT+CGPSPWR=0\r";
 rom char NET_REQGPS[] = "AT+CGPSINF=2;+CGPSINF=64;+CGPSPWR=1\r";
+rom char NET_INIT1_GPSON[] = "AT+CGPSRST=0;+CSMINS?\r";
 #else
 // Using external GPS from car:
 rom char NET_WAKEUP[] = "AT\r";
@@ -594,7 +595,20 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_HARDRESET;
       net_timeout_ticks = 95;
       net_state_vchar = 0;
+#ifdef OVMS_INTERNALGPS
+      // Using internal SIMx08 GPS:
+      if ((net_fnbits & NET_FN_INTERNALGPS) != 0)
+        {
+        net_puts_rom(NET_INIT1_GPSON);
+        }
+      else
+        {
+        net_puts_rom(NET_INIT1);
+        }
+#else
+      // Using external GPS from car:
       net_puts_rom(NET_INIT1);
+#endif
       break;
     case NET_STATE_DOINIT2:
       led_set(OVMS_LED_GRN,NET_LED_INITSIM2);
