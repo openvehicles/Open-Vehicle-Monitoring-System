@@ -22,6 +22,7 @@
       <itemPath>vehicle.h</itemPath>
       <itemPath>logging.h</itemPath>
       <itemPath>acc.h</itemPath>
+      <itemPath>ovms.def</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -132,7 +133,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_HW_V1;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_LOGGINGMODULE"/>
+                  value="OVMS_HW_V1;OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_LOGGINGMODULE;OVMS_BUILDCONFIG=\&quot;V1P\&quot;"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -172,25 +173,32 @@
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>
         <property key="memories.configurationmemory" value="false"/>
+        <property key="memories.configurationmemory2" value="true"/>
         <property key="memories.dataflash" value="true"/>
         <property key="memories.eeprom" value="true"/>
         <property key="memories.flashdata" value="true"/>
         <property key="memories.id" value="true"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0xffff"/>
+        <property key="memories.programmemory.partition2" value="true"/>
+        <property key="memories.programmemory.partition2.end"
+                  value="${memories.programmemory.partition2.end.value}"/>
+        <property key="memories.programmemory.partition2.start"
+                  value="${memories.programmemory.partition2.start.value}"/>
         <property key="memories.programmemory.start" value="0x0"/>
-        <property key="memories.userotp" value="false"/>
         <property key="poweroptions.powerenable" value="true"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmspeed" value="2"/>
+        <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preserveeeprom" value="false"/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
         <property key="programoptions.preserveprogramrange.start" value="0x0"/>
         <property key="programoptions.preserveuserid" value="false"/>
         <property key="programoptions.programcalmem" value="false"/>
+        <property key="programoptions.programuserotp" value="false"/>
         <property key="programoptions.testmodeentrymethod" value="VPPFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
@@ -401,7 +409,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_INTERNALGPS;OVMS_POLLER;OVMS_CAR_NONE;OVMS_CAR_OBDII;OVMS_CAR_NISSANLEAF;OVMS_CAR_THINKCITY;OVMS_CAR_TAZZARI;OVMS_CAR_MITSUBISHI;OVMS_CAR_TRACK;OVMS_CAR_KYBURZ"/>
+                  value="OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_INTERNALGPS;OVMS_POLLER;OVMS_CAR_NONE;OVMS_CAR_OBDII;OVMS_CAR_NISSANLEAF;OVMS_CAR_THINKCITY;OVMS_CAR_TAZZARI;OVMS_CAR_MITSUBISHI;OVMS_CAR_TRACK;OVMS_CAR_KYBURZ;OVMS_BUILDCONFIG=\&quot;V2E\&quot;"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -441,25 +449,32 @@
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>
         <property key="memories.configurationmemory" value="false"/>
+        <property key="memories.configurationmemory2" value="true"/>
         <property key="memories.dataflash" value="true"/>
         <property key="memories.eeprom" value="false"/>
         <property key="memories.flashdata" value="true"/>
         <property key="memories.id" value="false"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0x17fff"/>
+        <property key="memories.programmemory.partition2" value="true"/>
+        <property key="memories.programmemory.partition2.end"
+                  value="${memories.programmemory.partition2.end.value}"/>
+        <property key="memories.programmemory.partition2.start"
+                  value="${memories.programmemory.partition2.start.value}"/>
         <property key="memories.programmemory.start" value="0x0"/>
-        <property key="memories.userotp" value="false"/>
         <property key="poweroptions.powerenable" value="false"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmspeed" value="2"/>
+        <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preserveeeprom" value="true"/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveprogramrange.end" value="0x17fff"/>
         <property key="programoptions.preserveprogramrange.start" value="0x0"/>
         <property key="programoptions.preserveuserid" value="false"/>
         <property key="programoptions.programcalmem" value="false"/>
+        <property key="programoptions.programuserotp" value="false"/>
         <property key="programoptions.testmodeentrymethod" value="VPPFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
@@ -570,7 +585,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_TRACK;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_INTERNALGPS"/>
+                  value="OVMS_CAR_BASE;OVMS_CAR_TESLAROADSTER;OVMS_CAR_VOLTAMPERA;OVMS_CAR_RENAULTTWIZY;OVMS_CAR_TRACK;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_INTERNALGPS;OVMS_BUILDCONFIG=\&quot;V2P\&quot;"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -606,29 +621,37 @@
         <property key="ToolFirmwareFilePath"
                   value="Press to browse for a specific firmware version"/>
         <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>
         <property key="memories.configurationmemory" value="false"/>
+        <property key="memories.configurationmemory2" value="true"/>
         <property key="memories.dataflash" value="true"/>
         <property key="memories.eeprom" value="true"/>
         <property key="memories.flashdata" value="true"/>
         <property key="memories.id" value="true"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0xffff"/>
+        <property key="memories.programmemory.partition2" value="true"/>
+        <property key="memories.programmemory.partition2.end"
+                  value="${memories.programmemory.partition2.end.value}"/>
+        <property key="memories.programmemory.partition2.start"
+                  value="${memories.programmemory.partition2.start.value}"/>
         <property key="memories.programmemory.start" value="0x0"/>
-        <property key="memories.userotp" value="false"/>
-        <property key="poweroptions.powerenable" value="true"/>
+        <property key="poweroptions.powerenable" value="false"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmspeed" value="2"/>
+        <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preserveeeprom" value="false"/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
         <property key="programoptions.preserveprogramrange.start" value="0x0"/>
         <property key="programoptions.preserveuserid" value="false"/>
         <property key="programoptions.programcalmem" value="false"/>
+        <property key="programoptions.programuserotp" value="false"/>
         <property key="programoptions.testmodeentrymethod" value="VPPFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
@@ -839,7 +862,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_ACCMODULE;OVMS_INTERNALGPS"/>
+                  value="OVMS_CAR_NONE;OVMS_CAR_TESLAROADSTER;OVMS_HW_V2;OVMS_DIAGMODULE;OVMS_LOGGINGMODULE;OVMS_ACCMODULE;OVMS_BUILDCONFIG=\&quot;TRP\&quot;"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -879,25 +902,32 @@
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>
         <property key="memories.configurationmemory" value="false"/>
+        <property key="memories.configurationmemory2" value="true"/>
         <property key="memories.dataflash" value="true"/>
         <property key="memories.eeprom" value="false"/>
         <property key="memories.flashdata" value="true"/>
         <property key="memories.id" value="true"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0xffff"/>
+        <property key="memories.programmemory.partition2" value="true"/>
+        <property key="memories.programmemory.partition2.end"
+                  value="${memories.programmemory.partition2.end.value}"/>
+        <property key="memories.programmemory.partition2.start"
+                  value="${memories.programmemory.partition2.start.value}"/>
         <property key="memories.programmemory.start" value="0x0"/>
-        <property key="memories.userotp" value="false"/>
         <property key="poweroptions.powerenable" value="false"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmspeed" value="2"/>
+        <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preserveeeprom" value="true"/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
         <property key="programoptions.preserveprogramrange.start" value="0x0"/>
         <property key="programoptions.preserveuserid" value="false"/>
         <property key="programoptions.programcalmem" value="false"/>
+        <property key="programoptions.programuserotp" value="false"/>
         <property key="programoptions.testmodeentrymethod" value="VPPFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
@@ -1048,7 +1078,7 @@
         <property key="extra-include-directories" value=""/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros"
-                  value="OVMS_CAR_NONE;OVMS_CAR_RENAULTTWIZY;OVMS_HW_V2;OVMS_INTERNALGPS;OVMS_TWIZY_BATTMON;OVMS_TWIZY_CFG;OVMS_NO_CHARGECONTROL;OVMS_NO_CTP;OVMS_NO_VEHICLE_ALERTS;OVMS_NO_SMSTIME"/>
+                  value="OVMS_CAR_NONE;OVMS_CAR_RENAULTTWIZY;OVMS_HW_V2;OVMS_INTERNALGPS;OVMS_TWIZY_BATTMON;OVMS_TWIZY_CFG;OVMS_NO_CHARGECONTROL;OVMS_NO_CTP;OVMS_NO_VEHICLE_ALERTS;OVMS_NO_SMSTIME;OVMS_BUILDCONFIG=\&quot;RTP\&quot;"/>
         <property key="procedural-abstraction-passes" value="0"/>
         <property key="storage-class" value="sca"/>
         <property key="verbose" value="false"/>
@@ -1088,25 +1118,32 @@
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>
         <property key="memories.configurationmemory" value="false"/>
+        <property key="memories.configurationmemory2" value="true"/>
         <property key="memories.dataflash" value="true"/>
         <property key="memories.eeprom" value="false"/>
         <property key="memories.flashdata" value="true"/>
         <property key="memories.id" value="true"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0xffff"/>
+        <property key="memories.programmemory.partition2" value="true"/>
+        <property key="memories.programmemory.partition2.end"
+                  value="${memories.programmemory.partition2.end.value}"/>
+        <property key="memories.programmemory.partition2.start"
+                  value="${memories.programmemory.partition2.start.value}"/>
         <property key="memories.programmemory.start" value="0x0"/>
-        <property key="memories.userotp" value="false"/>
         <property key="poweroptions.powerenable" value="false"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmspeed" value="2"/>
+        <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preserveeeprom" value="true"/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
         <property key="programoptions.preserveprogramrange.start" value="0x0"/>
         <property key="programoptions.preserveuserid" value="false"/>
         <property key="programoptions.programcalmem" value="false"/>
+        <property key="programoptions.programuserotp" value="false"/>
         <property key="programoptions.testmodeentrymethod" value="VPPFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>

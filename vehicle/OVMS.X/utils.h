@@ -81,6 +81,7 @@ BOOL starts_with(char *s, const rom char *pfx);
 char *stp_rom(char *dst, const rom char *val);
 char *stp_ram(char *dst, const char *val);
 char *stp_s(char *dst, const rom char *prefix, char *val);
+char *stp_rs(char *dst, const rom char *prefix, const rom char *val);
 char *stp_i(char *dst, const rom char *prefix, int val);
 char *stp_l(char *dst, const rom char *prefix, long val);
 char *stp_ul(char *dst, const rom char *prefix, unsigned long val);

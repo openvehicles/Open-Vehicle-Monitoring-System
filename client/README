@@ -23,6 +23,22 @@ Install modules using cpanminus:
   cpanm Config::IniFiles Digest::MD5 Digest::HMAC Crypt::RC4::XS MIME::Base64 \
     IO::Socket::INET IO::Socket::Timeout Device::SerialPort
 
+A note on Crypt::RC4::XS
+========================
+
+There are two version of Crypt::RC4 in perl. The first is the pure perl implementation Crypt::RC4,
+and the second is the C code wrapped in an XS implementation Crypt::RC4::XS.
+
+A rough comparison:
+  10,000 iterations of RC4 encryption on a block of 26KB plain text.
+    Crypt::RC4         399.20 seconds
+    Crypt::RC4::XS       2.54 seconds
+
+In general, we recommend using Crypt::RC4::XS as it is significantly faster (at least 100x faster).
+
+However, if you want to use Crypt::RC4 (the slower pure perl implementation), perhaps because
+it is in your distribution and doesn't need to be installed via cpan, then you can. But change
+all references to Crypt::RC4::XS to Crypt::RC4 in the perl client code.
 
 The clients
 ===========

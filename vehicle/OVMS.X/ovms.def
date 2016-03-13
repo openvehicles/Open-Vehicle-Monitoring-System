@@ -70,3 +70,7 @@
 // The OVMS_POLLER code supports OBDII polling for various vehicles. It should
 // be enabled for those vehicles that require it.
 // #define OVMS_POLLER
+
+// The OVMS_BUILDCONFIG is a textual indication of the build configuration
+// It should normally be defined in the build config itself
+// #define OVMS_BUILDCONFIG

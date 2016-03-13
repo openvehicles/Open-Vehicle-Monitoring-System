@@ -205,6 +205,7 @@ void diag_handle_diag(char *command, char *arguments)
   if (vehicle_version)
     s = stp_rom(s, vehicle_version);
   s = stp_i(s, "/V", hwv);
+  s = stp_rs(s, "/", OVMS_BUILDCONFIG);
   s = stp_rom(s, "\r\n");
   net_puts_ram(net_scratchpad);
 
