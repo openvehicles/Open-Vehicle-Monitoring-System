@@ -274,6 +274,10 @@
     - Code size and stack depth optimization
     - Frequent CFG errors reported human-readable
     - Button reset result notification now sent via IP/SMS
+    
+ * 3.7.2  6 Mar 2016 (Michael Balzer)
+    - Fix: "CA?" outputs ETR SOC if ETR range is zero
+    - CAN control bits to disable emergency reset, kickdown & autopower
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -351,6 +355,20 @@
 #define FEATURE_MAXRANGE            0x0C // Maximum ideal range [Mi/km]
 #define FEATURE_CAPACITY            0x0D // Battery capacity [1/100 %]
 
+// Twizy specific FEATURE_CANWRITE bitmap:
+typedef struct {
+  unsigned EnableWrite:1;       // 0x01
+  unsigned DisableReset:1;      // 0x02
+  unsigned DisableKickdown:1;   // 0x04
+  unsigned DisableAutoPower:1;  // 0x08
+  unsigned :1;                  // 0x10
+  unsigned :1;                  // 0x20
+  unsigned :1;                  // 0x40
+  unsigned :1;                  // 0x80
+} sys_canbits_t;
+#define sys_can (*((sys_canbits_t*)&sys_features[FEATURE_CANWRITE]))
+
+
 
 // Twizy specific params:
 // (Note: these collide with ACC params, but ACC module will not be used for Twizy)
@@ -376,7 +394,7 @@
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.7.1";
+rom char vehicle_twizy_version[] = "3.7.2";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -994,7 +1012,7 @@ UINT vehicle_twizy_readsdo(UINT index, UINT8 subindex)
   UINT8 control;
 
   // check for CAN write access:
-  if (sys_features[FEATURE_CANWRITE] == 0)
+  if (!sys_can.EnableWrite)
     return ERR_NoCANWrite;
 
   // check component status (currently only SEVCON):
@@ -1042,7 +1060,7 @@ UINT vehicle_twizy_readsdo_buf(UINT index, UINT8 subindex, BYTE *dst, BYTE *maxl
   UINT8 n, toggle, dlen;
 
   // check for CAN write access:
-  if (sys_features[FEATURE_CANWRITE] == 0)
+  if (!sys_can.EnableWrite)
     return ERR_NoCANWrite;
 
   // check component status (currently only SEVCON):
@@ -1137,7 +1155,7 @@ UINT vehicle_twizy_writesdo(UINT index, UINT8 subindex, UINT32 data)
   UINT8 control;
 
   // check for CAN write access:
-  if (sys_features[FEATURE_CANWRITE] == 0)
+  if (!sys_can.EnableWrite)
     return ERR_NoCANWrite;
 
   // check component status (currently only SEVCON):
@@ -2007,7 +2025,7 @@ UINT vehicle_twizy_cfg_drive(int max_prc, int autodrive_ref, int autodrive_minpr
   else if (autodrive_minprc < 0 || autodrive_minprc > 100)
     return ERR_Range + 3;
 
-  if (autodrive_ref > 0)
+  if ((autodrive_ref > 0) && (!sys_can.DisableAutoPower))
   {
     // calculate max drive level:
     twizy_autodrive_level = LIMIT_MAX(((long) twizy_batt[0].max_drive_pwr * 5L * 1000L)
@@ -2072,7 +2090,7 @@ UINT vehicle_twizy_cfg_recup(int neutral_prc, int brake_prc, int autorecup_ref, 
   else if (autorecup_minprc < 0 || autorecup_minprc > 100)
     return ERR_Range + 4;
 
-  if (autorecup_ref > 0)
+  if ((autorecup_ref > 0) && (!sys_can.DisableAutoPower))
   {
     // calculate max recuperation level:
     twizy_autorecup_level = LIMIT_MAX(((long) twizy_batt[0].max_recup_pwr * 5L * 1000L)
@@ -2121,7 +2139,8 @@ void vehicle_twizy_cfg_autopower(void)
   int ref, minprc;
 
   // check for SEVCON write access:
-  if ((sys_features[FEATURE_CANWRITE] == 0) || ((twizy_status & CAN_STATUS_KEYON) == 0))
+  if ((!sys_can.EnableWrite) || (sys_can.DisableAutoPower)
+          || ((twizy_status & CAN_STATUS_KEYON) == 0))
     return;
 
   // adjust recup levels?
@@ -5017,7 +5036,8 @@ BOOL vehicle_twizy_idlepoll(void)
   //
   
   if ((twizy_kickdown_hold == 0) && (twizy_kickdown_level > 0)
-          && (sys_features[FEATURE_CANWRITE])
+          && (sys_can.EnableWrite)
+          && (!sys_can.DisableKickdown)
           && (sys_features[FEATURE_KICKDOWN_THRESHOLD] > 0)
           && (((cfgparam(drive) != -1) && (cfgparam(drive) != 100))
             || (twizy_autodrive_level < 1000))
@@ -5324,7 +5344,7 @@ BOOL vehicle_twizy_state_ticker1(void)
       twizy_button_cnt = 0;
 
       // login to SEVCON:
-      if (sys_features[FEATURE_CANWRITE])
+      if (sys_can.EnableWrite)
       {
         for (i=0; i<3; i++)
         {
@@ -5615,14 +5635,14 @@ BOOL vehicle_twizy_state_ticker1(void)
 
 #ifdef OVMS_TWIZY_CFG
 
-  if ((car_doors3bits.CarAwake) && (sys_features[FEATURE_CANWRITE]))
+  if ((car_doors3bits.CarAwake) && (sys_can.EnableWrite))
   {
 
     /***************************************************************************
      * Check for button presses in STOP mode => CFG RESET:
      */
 
-    if (twizy_button_cnt >= 3)
+    if ((twizy_button_cnt >= 3) && (!sys_can.DisableReset))
     {
       // reset SEVCON profile:
       memset(&twizy_cfg_profile, 0, sizeof(twizy_cfg_profile));
@@ -5659,7 +5679,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 #ifdef OVMS_TWIZY_BATTMON
 
     /***************************************************************************
-     * Auto recuperation adjustment (if enabled):
+     * Auto drive & recuperation adjustment (if enabled):
      */
 
     vehicle_twizy_cfg_autopower();
@@ -6887,7 +6907,7 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
     }
 
     // output smallest ETR:
-    s = stp_i(s, "\n Time: ", ((car_chargelimit_minsremaining_range >= 0)
+    s = stp_i(s, "\n Time: ", ((car_chargelimit_minsremaining_range > 0)
           && (car_chargelimit_minsremaining_range < car_chargelimit_minsremaining_soc))
           ? car_chargelimit_minsremaining_range
           : car_chargelimit_minsremaining_soc);
@@ -8179,7 +8199,7 @@ BOOL vehicle_twizy_initialise(void)
 
   CIOCON = 0b00100000; // CANTX pin will drive VDD when recessive
 
-  if (sys_features[FEATURE_CANWRITE] > 0)
+  if (sys_can.EnableWrite)
   {
     CANCON = 0b00000000; // Normal mode
   }
