@@ -942,6 +942,8 @@ BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
   hwv = 2;
   #endif
 
+  net_send_sms_start(caller);
+
   s = stp_i(net_scratchpad, "OVMS Firmware version: ", ovms_firmware[0]);
   s = stp_i(s, ".", ovms_firmware[1]);
   s = stp_i(s, ".", ovms_firmware[2]);
@@ -950,9 +952,8 @@ BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
     s = stp_rom(s, vehicle_version);
   s = stp_i(s, "/V", hwv);
   s = stp_rs(s, "/", OVMS_BUILDCONFIG);
-  
-  net_send_sms_start(caller);
   net_puts_ram(net_scratchpad);
+
   return TRUE;
   }
 
