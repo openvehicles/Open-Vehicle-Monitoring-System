@@ -266,27 +266,31 @@ BOOL vehicle_nissanleaf_ticker1(void)
 
 void vehicle_nissanleaf_cc(BOOL enable_cc)
   {
-  if (sys_features[FEATURE_CANWRITE] > 0)
+  if (sys_features[FEATURE_CANWRITE] == 0)
     {
-    net_puts_rom("\r\n# Turning on/off CC\r\n"); // TODO remove debug
-    while (TXB0CONbits.TXREQ)
-      {
-      } // Loop until TX is done
-    TXB0CON = 0;
-    TXB0SIDL = (0x56e & 0x7) << 5;
-    TXB0SIDH = 0x56e >> 3;
-    if (enable_cc)
-      {
-      TXB0D0 = 0x4e;
-      }
-    else
-      {
-      TXB0D0 = 0x56;
-      }
-    TXB0DLC = 1; // data length
-    TXB0CON = 0b00001000; // mark for transmission
-    net_puts_rom("\r\n# Turned on/off CC\r\n"); // TODO remove debug
+    net_puts_rom("\r\n# CANRITE disabled, not doing remote CC\r\n"); // TODO remove debug
+    // we don't want to transmit when CAN write is disabled.
+    return;
     }
+  net_puts_rom("\r\n# Turning on/off CC\r\n"); // TODO remove debug
+  while (TXB0CONbits.TXREQ)
+    {
+    // Loop until TX is done
+    }
+  TXB0CON = 0;
+  TXB0SIDL = (0x56e & 0x7) << 5;
+  TXB0SIDH = 0x56e >> 3;
+  if (enable_cc)
+    {
+    TXB0D0 = 0x4e;
+    }
+  else
+    {
+    TXB0D0 = 0x56;
+    }
+  TXB0DLC = 1; // data length
+  TXB0CON = 0b00001000; // mark for transmission
+  net_puts_rom("\r\n# Turned on/off CC\r\n"); // TODO remove debug
   }
 
 ////////////////////////////////////////////////////////////////////////
