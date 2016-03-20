@@ -64,14 +64,70 @@ rom vehicle_pid_t vehicle_nissanleaf_polls[]
     { 0, 0, 0}}
   };
 
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata high_isr_tmpdata
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_send_can_message()
+// Send the specified can frame, does nothing if FEATURE_CANWRITE is not set
+//
+// TODO move to util?
+
+void vehicle_nissanleaf_send_can_message(short id, unsigned char length, unsigned char *data)
+  {
+  if (sys_features[FEATURE_CANWRITE] == 0)
+    {
+    return;
+    }
+  while (TXB0CONbits.TXREQ)
+    {
+    } // Loop until TX is done
+  TXB0CON = 0;
+  TXB0SIDL = (id & 0x7) << 5;
+  TXB0SIDH = id >> 3;
+  // TODO it would be nicer to copy in a loop here, can we assume the CAN tx
+  // buffer is sequential? Would the code be smaller or faster?
+  if (length > 0)
+    {
+    TXB0D0 = data[0];
+    }
+  if (length > 1)
+    {
+    TXB0D1 = data[1];
+    }
+  if (length > 2)
+    {
+    TXB0D2 = data[2];
+    }
+  if (length > 3)
+    {
+    TXB0D3 = data[3];
+    }
+  if (length > 4)
+    {
+    TXB0D4 = data[4];
+    }
+  if (length > 5)
+    {
+    TXB0D5 = data[5];
+    }
+  if (length > 6)
+    {
+    TXB0D6 = data[6];
+    }
+  if (length > 7)
+    {
+    TXB0D7 = data[7];
+    }
+  TXB0DLC = length; // data length
+  TXB0CON = 0b00001000; // mark for transmission
+  }
+
 ////////////////////////////////////////////////////////////////////////
 // can_poll()
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
 //
-
-// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
-#pragma tmpdata high_isr_tmpdata
 
 BOOL vehicle_nissanleaf_poll0(void)
   {
@@ -266,6 +322,7 @@ BOOL vehicle_nissanleaf_ticker1(void)
 
 void vehicle_nissanleaf_cc(BOOL enable_cc)
   {
+  unsigned char data;
   if (sys_features[FEATURE_CANWRITE] == 0)
     {
     net_puts_rom("\r\n# CANRITE disabled, not doing remote CC\r\n"); // TODO remove debug
@@ -273,23 +330,8 @@ void vehicle_nissanleaf_cc(BOOL enable_cc)
     return;
     }
   net_puts_rom("\r\n# Turning on/off CC\r\n"); // TODO remove debug
-  while (TXB0CONbits.TXREQ)
-    {
-    // Loop until TX is done
-    }
-  TXB0CON = 0;
-  TXB0SIDL = (0x56e & 0x7) << 5;
-  TXB0SIDH = 0x56e >> 3;
-  if (enable_cc)
-    {
-    TXB0D0 = 0x4e;
-    }
-  else
-    {
-    TXB0D0 = 0x56;
-    }
-  TXB0DLC = 1; // data length
-  TXB0CON = 0b00001000; // mark for transmission
+  data = enable_cc ? 0x4e : 0x56;
+  vehicle_nissanleaf_send_can_message(0x56e, 1, &data);
   net_puts_rom("\r\n# Turned on/off CC\r\n"); // TODO remove debug
   }
 
