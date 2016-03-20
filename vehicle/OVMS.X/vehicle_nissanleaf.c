@@ -304,7 +304,8 @@ BOOL vehicle_nissanleaf_ticker1(void)
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_nissanleaf_cc()
-// Send Climate Control message to VCU, normally sent by TCU, see
+// Wake up the car & send Climate Control message to VCU, replaces Nissan's
+// CARWINGS and TCU module, see
 // http://www.mynissanleaf.com/viewtopic.php?f=44&t=4131&hilit=open+CAN+discussion&start=416
 //
 // On Gen 1, turning on only works during charging, perhaps because the TCU has
@@ -317,7 +318,11 @@ BOOL vehicle_nissanleaf_ticker1(void)
 // turning the whole car on
 //
 // CC *is* enabled if this function is called while the car is charging. Turn
-// off works if remote CC is enabled during charging.
+// off works if remote CC is active.
+//
+// On Generation 2 Cars, a CAN bus message is sent to wake up the VCU. This
+// function sends that message even to Generation 1 cars which doesn't seem to
+// cause any problems.
 //
 
 void vehicle_nissanleaf_cc(BOOL enable_cc)
@@ -330,6 +335,16 @@ void vehicle_nissanleaf_cc(BOOL enable_cc)
     return;
     }
   net_puts_rom("\r\n# Turning on/off CC\r\n"); // TODO remove debug
+
+  // TODO use GPIO to wake up GEN 1
+  // send GEN 2 wakeup frame
+  data = 0;
+  vehicle_nissanleaf_send_can_message(0x68c, 1, &data);
+
+  // wait 50 ms for things to wake up
+  delay5(10);
+
+  // send climate control command
   data = enable_cc ? 0x4e : 0x56;
   vehicle_nissanleaf_send_can_message(0x56e, 1, &data);
   net_puts_rom("\r\n# Turned on/off CC\r\n"); // TODO remove debug
