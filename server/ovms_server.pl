@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.1-20160126";
+my $VERSION = "2.3.2-20160324";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -1682,7 +1682,7 @@ sub http_request_api_status
     if (! $rec->{'m_paranoid'})
       {
       my ($doors1,$doors2,$lockunlock,$tpem,$tmotor,$tbattery,$trip,$odometer,$speed,$parktimer,$ambient,
-          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4,$vehicle12v_ref,$doors5) = split /,/,$rec->{'m_msg'};
+          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4,$vehicle12v_ref,$doors5,$tcharger) = split /,/,$rec->{'m_msg'};
       $result{'fl_dooropen'} =   $doors1 & 0b00000001;
       $result{'fr_dooropen'} =   $doors1 & 0b00000010;
       $result{'cp_dooropen'} =   $doors1 & 0b00000100;
@@ -1697,6 +1697,7 @@ sub http_request_api_status
       $result{'temperature_pem'} = $tpem;
       $result{'temperature_motor'} = $tmotor;
       $result{'temperature_battery'} = $tbattery;
+      $result{'temperature_charger'} = $tcharger;
       $result{'tripmeter'} = $trip;
       $result{'odometer'} = $odometer;
       $result{'speed'} = $speed;
@@ -1865,7 +1866,7 @@ sub http_request_api_charge_get
     if (! $rec->{'m_paranoid'})
       {
       my ($doors1,$doors2,$lockunlock,$tpem,$tmotor,$tbattery,$trip,$odometer,$speed,$parktimer,$ambient,
-          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4,$vehicle12v_ref,$doors5) = split /,/,$rec->{'m_msg'};
+          $doors3,$staletemps,$staleambient,$vehicle12v,$doors4,$vehicle12v_ref,$doors5,$tcharger) = split /,/,$rec->{'m_msg'};
       $result{'cp_dooropen'} =   $doors1 & 0b00000100;
       $result{'pilotpresent'} =  $doors1 & 0b00001000;
       $result{'charging'} =      $doors1 & 0b00010000;
@@ -1873,6 +1874,7 @@ sub http_request_api_charge_get
       $result{'temperature_pem'} = $tpem;
       $result{'temperature_motor'} = $tmotor;
       $result{'temperature_battery'} = $tbattery;
+      $result{'temperature_charger'} = $tcharger;
       $result{'temperature_ambient'} = $ambient;
       $result{'carawake'} =      $doors3 & 0b00000010;
       $result{'staletemps'} = $staletemps;

@@ -980,6 +980,7 @@ BOOL net_sms_handle_temps(char *caller, char *command, char *arguments)
   s = stp_i(s, "C\r\n  PEM: ", car_tpem);
   s = stp_i(s, "C\r\n  Motor: ", car_tmotor);
   s = stp_i(s, "C\r\n  Battery: ", car_tbattery);
+  s = stp_i(s, "C\r\n  Charger: ", car_tcharger);
   s = stp_rom(s, "C");
   if ((car_stale_ambient==0)||(car_stale_temps==0))
     s = stp_rom(s, "\r\n  (stale)");

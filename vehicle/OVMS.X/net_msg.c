@@ -468,6 +468,7 @@ char net_msgp_environment(char stat)
   s = stp_i(s, ",", car_doors4);
   s = stp_l2f(s, ",", car_12vline_ref, 1);
   s = stp_i(s, ",", car_doors5);
+  s = stp_i(s, ",", car_tcharger);
 
   return net_msg_encode_statputs(stat, &crc_environment);
 }

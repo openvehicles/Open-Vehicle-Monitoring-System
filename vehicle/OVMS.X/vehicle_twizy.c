@@ -275,9 +275,10 @@
     - Frequent CFG errors reported human-readable
     - Button reset result notification now sent via IP/SMS
     
- * 3.7.2  6 Mar 2016 (Michael Balzer)
+ * 3.7.2  25 Mar 2016 (Michael Balzer)
     - Fix: "CA?" outputs ETR SOC if ETR range is zero
     - CAN control bits to disable emergency reset, kickdown & autopower
+    - Fix: motor & PEM temperatures fixed, charger temperature added
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -4061,6 +4062,9 @@ char vehicle_twizy_pwrlog_msgp(char stat)
   // V3.6.1: battery capacity (%)
   s = stp_l2f(s, ",", twizy_bat_cap_prc, 2);
 
+  // V3.7.2: charger temperature
+  s = stp_i(s, ",", car_tcharger);
+  
   // send:
 
   if (stat == 2)
@@ -4203,7 +4207,7 @@ void vehicle_twizy_simulator_run(int chunk)
 BOOL vehicle_twizy_poll0(void)
 {
   unsigned int t;
-  unsigned char u;
+  UINT8 i, state;
 
   #ifdef OVMS_TWIZY_STACKDEBUG
   if (FSR1 > MAX_FSR1)
@@ -4225,11 +4229,17 @@ BOOL vehicle_twizy_poll0(void)
       can_filter = 1;
 
     can_datalength = twizy_sim_data[twizy_sim][2];
-    for (u = 0; u < 8; u++)
-      can_databuffer[u] = twizy_sim_data[twizy_sim][3 + u];
+    for (i = 0; i < 8; i++)
+      can_databuffer[i] = twizy_sim_data[twizy_sim][3 + i];
   }
 #endif // OVMS_CANSIM
 
+  
+  /*
+  Mask0		00011110100
+  Filter0	00001010100   ID 155, 554, 556, 557, 55E, 55F
+  Filter1       00000100100   ID 424
+  */
 
   // HANDLE CAN MESSAGE:
 
@@ -4238,7 +4248,6 @@ BOOL vehicle_twizy_poll0(void)
     if (can_id == 0x155)
     {
       /*****************************************************
-       * FILTER 0:
        * CAN ID 0x155: sent every 10 ms (100 per second)
        */
 
@@ -4272,7 +4281,7 @@ BOOL vehicle_twizy_poll0(void)
         {
           twizy_current = 2000 - (signed int) t;
           // ...in 1/4 A
-          
+
           // set min/max:
           if (twizy_current < twizy_current_min)
             twizy_current_min = twizy_current;
@@ -4321,49 +4330,197 @@ BOOL vehicle_twizy_poll0(void)
           // i.e. for lights etc. -- varies...
         }
       }
-    }
-  }
+    } // if (can_id == 0x155)
 
 
-#ifdef OVMS_TWIZY_CFG
+#ifdef OVMS_TWIZY_BATTMON
+    else
+    {
+      // CAN ID GROUP 0x55_: battery sensors.
+      //
+      // This group really needs to be processed as fast as possible;
+      // though only delivered once per second (except 556), the complete
+      // group comes at once and needs to be processed together to get
+      // a consistent sensor state.
+
+      // NEW INFO: group msgs can come in arbitrary order!
+      //  => using faster (100ms) 0x556 msgs as examination window
+      //    to detect mid-group fetch start
+
+      // volatile optimization:
+      state = twizy_batt_sensors_state;
+
+      switch (can_id)
+      {
+      case 0x554:
+        // CAN ID 0x554: Battery cell module temperatures
+        // (1000 ms = 1 per second)
+        if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
+        {
+          for (i = 0; i < BATT_CMODS; i++)
+            twizy_cmod[i].temp_act = CAN_BYTE(i);
+
+          state |= BATT_SENSORS_GOT554;
+
+          // detect fetch completion:
+          if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+            state = BATT_SENSORS_READY;
+
+          twizy_batt_sensors_state = state;
+        }
+        break;
+
+      case 0x556:
+        // CAN ID 0x556: Battery cell voltages 1-5
+        // 100 ms = 10 per second
+        //  => used to clock examination window
+        if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
+        {
+          // store values:
+          twizy_cell[0].volt_act = ((UINT) CAN_BYTE(0) << 4)
+                  | ((UINT) CAN_NIBH(1));
+          twizy_cell[1].volt_act = ((UINT) CAN_NIBL(1) << 8)
+                  | ((UINT) CAN_BYTE(2));
+          twizy_cell[2].volt_act = ((UINT) CAN_BYTE(3) << 4)
+                  | ((UINT) CAN_NIBH(4));
+          twizy_cell[3].volt_act = ((UINT) CAN_NIBL(4) << 8)
+                  | ((UINT) CAN_BYTE(5));
+          twizy_cell[4].volt_act = ((UINT) CAN_BYTE(6) << 4)
+                  | ((UINT) CAN_NIBH(7));
+
+          // detect fetch completion/failure:
+          if ((state & ~BATT_SENSORS_GOT556)
+                  == (BATT_SENSORS_READY & ~BATT_SENSORS_GOT556))
+          {
+            // read all sensor data: group complete
+            twizy_batt_sensors_state = BATT_SENSORS_READY;
+          }
+          else if ((state & ~BATT_SENSORS_GOT556))
+          {
+            // read some sensor data: count 0x556 cycles
+            i = (state & BATT_SENSORS_GOT556) + 1;
+
+            if (i == 3)
+              // not complete in 2 0x556s cycles: drop window (wait for next group)
+              state = BATT_SENSORS_START;
+            else
+              // store new fetch window state:
+              state = (state & ~BATT_SENSORS_GOT556) | i;
+
+            twizy_batt_sensors_state = state;
+          }
+
+        }
+
+        break;
+
+      case 0x557:
+        // CAN ID 0x557: Battery cell voltages 6-10
+        // (1000 ms = 1 per second)
+        if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
+        {
+          twizy_cell[5].volt_act = ((UINT) CAN_BYTE(0) << 4)
+                  | ((UINT) CAN_NIBH(1));
+          twizy_cell[6].volt_act = ((UINT) CAN_NIBL(1) << 8)
+                  | ((UINT) CAN_BYTE(2));
+          twizy_cell[7].volt_act = ((UINT) CAN_BYTE(3) << 4)
+                  | ((UINT) CAN_NIBH(4));
+          twizy_cell[8].volt_act = ((UINT) CAN_NIBL(4) << 8)
+                  | ((UINT) CAN_BYTE(5));
+          twizy_cell[9].volt_act = ((UINT) CAN_BYTE(6) << 4)
+                  | ((UINT) CAN_NIBH(7));
+
+          state |= BATT_SENSORS_GOT557;
+
+          // detect fetch completion:
+          if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+            state = BATT_SENSORS_READY;
+
+          twizy_batt_sensors_state = state;
+        }
+        break;
+
+      case 0x55E:
+        // CAN ID 0x55E: Battery cell voltages 11-14
+        // (1000 ms = 1 per second)
+        if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
+        {
+          twizy_cell[10].volt_act = ((UINT) CAN_BYTE(0) << 4)
+                  | ((UINT) CAN_NIBH(1));
+          twizy_cell[11].volt_act = ((UINT) CAN_NIBL(1) << 8)
+                  | ((UINT) CAN_BYTE(2));
+          twizy_cell[12].volt_act = ((UINT) CAN_BYTE(3) << 4)
+                  | ((UINT) CAN_NIBH(4));
+          twizy_cell[13].volt_act = ((UINT) CAN_NIBL(4) << 8)
+                  | ((UINT) CAN_BYTE(5));
+
+          state |= BATT_SENSORS_GOT55E;
+
+          // detect fetch completion:
+          if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+            state = BATT_SENSORS_READY;
+
+          twizy_batt_sensors_state = state;
+        }
+        break;
+
+      case 0x55F:
+        // CAN ID 0x55F: Battery pack voltages
+        // (1000 ms = 1 per second)
+        if ((CAN_BYTE(5) != 0x0ff) && (state != BATT_SENSORS_READY))
+        {
+          // we still don't know why there are two pack voltages
+          // best guess: take avg
+          UINT v1, v2;
+
+          v1 = ((UINT) CAN_BYTE(5) << 4)
+                  | ((UINT) CAN_NIBH(6));
+          v2 = ((UINT) CAN_NIBL(6) << 8)
+                  | ((UINT) CAN_BYTE(7));
+
+          twizy_batt[0].volt_act = (v1 + v2 + 1) >> 1;
+
+          state |= BATT_SENSORS_GOT55F;
+
+          // detect fetch completion:
+          if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+            state = BATT_SENSORS_READY;
+
+          twizy_batt_sensors_state = state;
+        }
+        break;
+
+      } // switch (canid)
+    } // else (canid = 0x55_)
+#endif // OVMS_TWIZY_BATTMON
+
+  } // if (filter == 0)
+
 
   else
   {
     /*****************************************************
-     * FILTER 1:
-     * CAN ID 0x_81: CANopen message from SEVCON (Node #1)
+     * FILTER 1: ID 424, (425), (426), (627)
      */
 
-    if (can_id == 0x081)
+    switch (can_id)
     {
+    
+    case 0x424:
       /*****************************************************
-       * FILTER 1:
-       * CAN ID 0x081: CANopen error message from SEVCON (Node #1)
+       * CAN ID 0x424: sent every 100 ms (10 per second)
        */
+      // max drive (discharge) + recup (charge) power:
+      if (CAN_BYTE(2) != 0xff)
+        twizy_batt[0].max_recup_pwr = CAN_BYTE(2);
+      if (CAN_BYTE(3) != 0xff)
+        twizy_batt[0].max_drive_pwr = CAN_BYTE(3);
 
-      // count errors to detect manual CFG RESET request:
-      if ((CAN_BYTE(1)==0x10) && (CAN_BYTE(2)==0x01))
-        twizy_button_cnt++;
-
+      break;
     }
-
-    else if (can_id == 0x581)
-    {
-      /*****************************************************
-       * FILTER 1:
-       * CAN ID 0x581: CANopen SDO reply from SEVCON (Node #1)
-       */
-
-      // copy message into twizy_sdo object:
-      for (u = 0; u < can_datalength; u++)
-        twizy_sdo.byte[u] = CAN_BYTE(u);
-      for (; u < 8; u++)
-        twizy_sdo.byte[u] = 0;
-    }
+    
 
   }
-
-#endif // OVMS_TWIZY_CFG
 
   return TRUE;
 }
@@ -4409,19 +4566,78 @@ BOOL vehicle_twizy_poll1(void)
 #endif // OVMS_CANSIM
 
 
+  /*
+  Mask1         10011101000
+  Filter2	00010000000   ID 081, 196
+  Filter3	10010000000   ID 581, 597
+  Filter4	10010001000   ID 599, 59B, 59E, 69F
+  Filter5	10011000000   ID 5D7
+  */
+  
   // HANDLE CAN MESSAGE:
 
   if (can_filter == 2)
   {
-    // Filter 2 = CAN ID GROUP 0x_9_:
-
+    // Filter 2 = ID 081, 196
     switch (can_id)
     {
+    
+#ifdef OVMS_TWIZY_CFG
+    case 0x081:
       /*****************************************************
-       * FILTER 2:
+       * CAN ID 0x081: CANopen error message from SEVCON (Node #1)
+       */
+
+      // count errors to detect manual CFG RESET request:
+      if ((CAN_BYTE(1)==0x10) && (CAN_BYTE(2)==0x01))
+        twizy_button_cnt++;
+
+      break;
+#endif // OVMS_TWIZY_CFG
+      
+      
+    case 0x196:
+      /*****************************************************
+       * CAN ID 0x196: 10 ms period
+       */
+      
+      // MOTOR TEMPERATURE:
+      if (CAN_BYTE(5) > 0 && CAN_BYTE(5) < 0xf0)
+        car_tmotor = (signed int) CAN_BYTE(5) - 40;
+      else
+        car_tmotor = 0;
+      
+      break;
+      
+    } 
+  }
+
+  else if (can_filter == 3)
+  {
+    // Filter 3 = ID 581, 597
+    switch (can_id)
+    {
+    
+#ifdef OVMS_TWIZY_CFG
+    case 0x581:
+      /*****************************************************
+       * CAN ID 0x581: CANopen SDO reply from SEVCON (Node #1)
+       */
+
+      // copy message into twizy_sdo object:
+      for (u = 0; u < can_datalength; u++)
+        twizy_sdo.byte[u] = CAN_BYTE(u);
+      for (; u < 8; u++)
+        twizy_sdo.byte[u] = 0;
+
+      break;
+#endif // OVMS_TWIZY_CFG
+      
+      
+    case 0x597:
+      /*****************************************************
        * CAN ID 0x597: sent every 100 ms (10 per second)
        */
-    case 0x597:
 
       // VEHICLE state:
       //  [0]: 0x20 = power line connected
@@ -4457,20 +4673,27 @@ BOOL vehicle_twizy_poll1(void)
 
       // Translation to car_doors1 done in ticker1()
 
-      // PEM temperature:
+      // CHARGER temperature:
       if (CAN_BYTE(7) > 0 && CAN_BYTE(7) < 0xf0)
-        car_tpem = (signed int) CAN_BYTE(7) - 40;
+        car_tcharger = (signed int) CAN_BYTE(7) - 40;
       else
-        car_tpem = 0;
+        car_tcharger = 0;
 
       break;
 
+    } 
+  }
 
+  else if (can_filter == 4)
+  {
+    // Filter 4 = ID 599, 59B, 59E, 69F
+    switch (can_id)
+    {
+      
+    case 0x599:
       /*****************************************************
-       * FILTER 2:
        * CAN ID 0x599: sent every 100 ms (10 per second)
        */
-    case 0x599:
 
       // RANGE:
       // we need to check for charging, as the Twizy
@@ -4531,11 +4754,10 @@ BOOL vehicle_twizy_poll1(void)
       break;
 
 
+    case 0x59B:
       /*****************************************************
-       * FILTER 2:
        * CAN ID 0x59B: sent every 100 ms (10 per second)
        */
-    case 0x59B:
 
       // twizy_status low nibble:
       twizy_status = (twizy_status & 0xF0) | (CAN_BYTE(1) & 0x09);
@@ -4566,30 +4788,28 @@ BOOL vehicle_twizy_poll1(void)
       break;
 
 
+    case 0x59E:
       /*****************************************************
-       * FILTER 2:
        * CAN ID 0x59E: sent every 100 ms (10 per second)
        */
-    case 0x59E:
 
       // CYCLIC DISTANCE COUNTER:
       twizy_dist = ((UINT) CAN_BYTE(0) << 8) + CAN_BYTE(1);
 
-      // MOTOR TEMPERATURE:
+      // SEVCON TEMPERATURE:
       if (CAN_BYTE(5) > 0 && CAN_BYTE(5) < 0xf0)
-        car_tmotor = (signed int) CAN_BYTE(5) - 40;
+        car_tpem = (signed int) CAN_BYTE(5) - 40;
       else
-        car_tmotor = 0;
+        car_tpem = 0;
 
 
       break;
 
 
+    case 0x69F:
       /*****************************************************
-       * FILTER 2:
        * CAN ID 0x69F: sent every 1000 ms (1 per second)
        */
-    case 0x69f:
       // VIN: last 7 digits of real VIN, in nibbles, reverse:
       // (assumption: no hex digits)
       if (car_vin[7]) // we only need to process this once
@@ -4607,204 +4827,17 @@ BOOL vehicle_twizy_poll1(void)
       break;
 
     }
-
   }
-
-#ifdef OVMS_TWIZY_BATTMON
-  else if (can_filter == 3)
-  {
-    // Filter 3 = CAN ID GROUP 0x_2_:
-
-    switch (can_id)
-    {
-      /*****************************************************
-       * FILTER 3:
-       * CAN ID 0x424: sent every 100 ms (10 per second)
-       */
-    case 0x424:
-      // max drive (discharge) + recup (charge) power:
-      if (CAN_BYTE(2) != 0xff)
-        twizy_batt[0].max_recup_pwr = CAN_BYTE(2);
-      if (CAN_BYTE(3) != 0xff)
-        twizy_batt[0].max_drive_pwr = CAN_BYTE(3);
-
-      break;
-    }
-  }
-
-  else if (can_filter == 4)
-  {
-    UINT8 i, state;
-
-    // Filter 4 = CAN ID GROUP 0x_5_: battery sensors.
-    //
-    // This group really needs to be processed as fast as possible;
-    // though only delivered once per second (except 556), the complete
-    // group comes at once and needs to be processed together to get
-    // a consistent sensor state.
-
-    // NEW INFO: group msgs can come in arbitrary order!
-    //  => using faster (100ms) 0x556 msgs as examination window
-    //    to detect mid-group fetch start
-
-    // volatile optimization:
-    state = twizy_batt_sensors_state;
-
-    switch (can_id)
-    {
-    case 0x554:
-      // CAN ID 0x554: Battery cell module temperatures
-      // (1000 ms = 1 per second)
-      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
-      {
-        for (i = 0; i < BATT_CMODS; i++)
-          twizy_cmod[i].temp_act = CAN_BYTE(i);
-
-        state |= BATT_SENSORS_GOT554;
-
-        // detect fetch completion:
-        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
-          state = BATT_SENSORS_READY;
-
-        twizy_batt_sensors_state = state;
-      }
-      break;
-
-    case 0x556:
-      // CAN ID 0x556: Battery cell voltages 1-5
-      // 100 ms = 10 per second
-      //  => used to clock examination window
-      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
-      {
-        // store values:
-        twizy_cell[0].volt_act = ((UINT) CAN_BYTE(0) << 4)
-                | ((UINT) CAN_NIBH(1));
-        twizy_cell[1].volt_act = ((UINT) CAN_NIBL(1) << 8)
-                | ((UINT) CAN_BYTE(2));
-        twizy_cell[2].volt_act = ((UINT) CAN_BYTE(3) << 4)
-                | ((UINT) CAN_NIBH(4));
-        twizy_cell[3].volt_act = ((UINT) CAN_NIBL(4) << 8)
-                | ((UINT) CAN_BYTE(5));
-        twizy_cell[4].volt_act = ((UINT) CAN_BYTE(6) << 4)
-                | ((UINT) CAN_NIBH(7));
-
-        // detect fetch completion/failure:
-        if ((state & ~BATT_SENSORS_GOT556)
-                == (BATT_SENSORS_READY & ~BATT_SENSORS_GOT556))
-        {
-          // read all sensor data: group complete
-          twizy_batt_sensors_state = BATT_SENSORS_READY;
-        }
-        else if ((state & ~BATT_SENSORS_GOT556))
-        {
-          // read some sensor data: count 0x556 cycles
-          i = (state & BATT_SENSORS_GOT556) + 1;
-
-          if (i == 3)
-            // not complete in 2 0x556s cycles: drop window (wait for next group)
-            state = BATT_SENSORS_START;
-          else
-            // store new fetch window state:
-            state = (state & ~BATT_SENSORS_GOT556) | i;
-
-          twizy_batt_sensors_state = state;
-        }
-
-      }
-
-      break;
-
-    case 0x557:
-      // CAN ID 0x557: Battery cell voltages 6-10
-      // (1000 ms = 1 per second)
-      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
-      {
-        twizy_cell[5].volt_act = ((UINT) CAN_BYTE(0) << 4)
-                | ((UINT) CAN_NIBH(1));
-        twizy_cell[6].volt_act = ((UINT) CAN_NIBL(1) << 8)
-                | ((UINT) CAN_BYTE(2));
-        twizy_cell[7].volt_act = ((UINT) CAN_BYTE(3) << 4)
-                | ((UINT) CAN_NIBH(4));
-        twizy_cell[8].volt_act = ((UINT) CAN_NIBL(4) << 8)
-                | ((UINT) CAN_BYTE(5));
-        twizy_cell[9].volt_act = ((UINT) CAN_BYTE(6) << 4)
-                | ((UINT) CAN_NIBH(7));
-
-        state |= BATT_SENSORS_GOT557;
-
-        // detect fetch completion:
-        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
-          state = BATT_SENSORS_READY;
-
-        twizy_batt_sensors_state = state;
-      }
-      break;
-
-    case 0x55E:
-      // CAN ID 0x55E: Battery cell voltages 11-14
-      // (1000 ms = 1 per second)
-      if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
-      {
-        twizy_cell[10].volt_act = ((UINT) CAN_BYTE(0) << 4)
-                | ((UINT) CAN_NIBH(1));
-        twizy_cell[11].volt_act = ((UINT) CAN_NIBL(1) << 8)
-                | ((UINT) CAN_BYTE(2));
-        twizy_cell[12].volt_act = ((UINT) CAN_BYTE(3) << 4)
-                | ((UINT) CAN_NIBH(4));
-        twizy_cell[13].volt_act = ((UINT) CAN_NIBL(4) << 8)
-                | ((UINT) CAN_BYTE(5));
-
-        state |= BATT_SENSORS_GOT55E;
-
-        // detect fetch completion:
-        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
-          state = BATT_SENSORS_READY;
-
-        twizy_batt_sensors_state = state;
-      }
-      break;
-
-    case 0x55F:
-      // CAN ID 0x55F: Battery pack voltages
-      // (1000 ms = 1 per second)
-      if ((CAN_BYTE(5) != 0x0ff) && (state != BATT_SENSORS_READY))
-      {
-        // we still don't know why there are two pack voltages
-        // best guess: take avg
-        UINT v1, v2;
-
-        v1 = ((UINT) CAN_BYTE(5) << 4)
-                | ((UINT) CAN_NIBH(6));
-        v2 = ((UINT) CAN_NIBL(6) << 8)
-                | ((UINT) CAN_BYTE(7));
-
-        twizy_batt[0].volt_act = (v1 + v2 + 1) >> 1;
-
-        state |= BATT_SENSORS_GOT55F;
-
-        // detect fetch completion:
-        if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
-          state = BATT_SENSORS_READY;
-
-        twizy_batt_sensors_state = state;
-      }
-      break;
-
-    } // switch (CANsid)
-  }
-#endif // OVMS_TWIZY_BATTMON
 
   else if (can_filter == 5)
   {
-    // Filter 5 = CAN ID GROUP 0x_D_: exact speed & odometer
-
+    // Filter 5 = ID 5D7
     switch (can_id)
     {
+    case 0x5D7:
       /*****************************************************
-       * FILTER 5:
        * CAN ID 0x5D7: sent every 100 ms (10 per second)
        */
-    case 0x5d7:
 
       // ODOMETER:
       twizy_odometer = ((unsigned long) CAN_BYTE(5) >> 4)
@@ -8107,61 +8140,32 @@ BOOL vehicle_twizy_initialise(void)
   // ID masks and filters are 11 bit as High-8 + Low-MSB-3
   // (Filter bit n must match if mask bit n = 1)
 
-
   // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
   RXB0CON = 0b00000000;
-
-  // Setup Filter0 and Mask for CAN ID 0x155
-
-  /*
-  Mask0		010 1111 1111
-  Filter0	x0x 0101 0101 		_55		155
-  Filter1	x0x 1000 0001 		_81		081 581
-  */
-
-  // Mask0 =
-  RXM0SIDH = 0b01011111;
-  RXM0SIDL = 0b11100000;
-
-  // Filter0 = ID 0x155 (Power + SOC):
-  RXF0SIDH = 0b00001010;
-  RXF0SIDL = 0b10100000;
-
-  // Filter1 = ID 0x081 + 0x581 (CANopen message from SEVCON):
-  RXF1SIDH = 0b00010000;
-  RXF1SIDL = 0b00100000;
-
-
   // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
   RXB1CON = 0b00000000;
 
   /*
-  Mask1         100 1111 0000 
-  Filter2	1xx 1001 xxxx		_9_		597 599 59B 59E 69F
-  Filter3	1xx 0010 xxxx		_2_		424 (423) (425) (426) (627) (628) (629)
-  Filter4	1xx 0101 xxxx		_5_		554 556 557 55E 55F (659)
-  Filter5	1xx 1101 xxxx		_D_		5D7
+  Mask0		00011110100
+  Filter0	00001010100   ID 155, 554, 556, 557, 55E, 55F
+  Filter1       00000100100   ID 424, (425), (426), (627)
   */
+  RXM0SIDH = 0b00011110;  RXM0SIDL = 0b10000000;
+  RXF0SIDH = 0b00001010;  RXF0SIDL = 0b10000000;
+  RXF1SIDH = 0b00000100;  RXF1SIDL = 0b10000000;
 
-  // Mask1 = 
-  RXM1SIDH = 0b10011110;
-  RXM1SIDL = 0b00000000;
-
-  // Filter2 = GROUP 0x_9_:
-  RXF2SIDH = 0b10010010;
-  RXF2SIDL = 0b00000000;
-
-  // Filter3 = GROUP 0x_2_:
-  RXF3SIDH = 0b10000100;
-  RXF3SIDL = 0b00000000;
-
-  // Filter4 = GROUP 0x_5_:
-  RXF4SIDH = 0b10001010;
-  RXF4SIDL = 0b00000000;
-
-  // Filter5 = GROUP 0x_D_:
-  RXF5SIDH = 0b10011010;
-  RXF5SIDL = 0b00000000;
+  /*
+  Mask1         10011101000
+  Filter2	00010000000   ID 081, 196
+  Filter3	10010000000   ID 581, 597
+  Filter4	10010001000   ID 599, 59B, 59E, 69F
+  Filter5	10011000000   ID 5D7
+  */
+  RXM1SIDH = 0b10011101;  RXM1SIDL = 0b00000000;
+  RXF2SIDH = 0b00010000;  RXF2SIDL = 0b00000000;
+  RXF3SIDH = 0b10010000;  RXF3SIDL = 0b00000000;
+  RXF4SIDH = 0b10010001;  RXF4SIDL = 0b00000000;
+  RXF5SIDH = 0b10011000;  RXF5SIDL = 0b00000000;
 
 
   // SET BAUDRATE (tool: Intrepid CAN Timing Calculator / 20 MHz)
