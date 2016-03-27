@@ -30,6 +30,7 @@
 #include "ovms.h"
 #include "params.h"
 #include "net_msg.h"
+#include "inputs.h"
 
 // Nissan Leaf state variables
 
@@ -308,17 +309,11 @@ BOOL vehicle_nissanleaf_ticker1(void)
 // CARWINGS and TCU module, see
 // http://www.mynissanleaf.com/viewtopic.php?f=44&t=4131&hilit=open+CAN+discussion&start=416
 //
-// On Gen 1, turning on only works during charging, perhaps because the TCU has
-// a "wake up" logic line to the VCU in addition to the CAN bus which we need to
-// toggle as well as send this message.
-//
-// Tried without success to simulate wakeup by:
-// opening the door (difficult to send the message immediately after wakeup)
-// turning on the accessories
-// turning the whole car on
-//
-// CC *is* enabled if this function is called while the car is charging. Turn
-// off works if remote CC is active.
+// On Generation 1 Cars, TCU pin 11's "EV system activation request signal" is
+// driven to 12V to wake up the VCU. This function drives RC3 high to
+// activate the "EV system activation request signal". Without a circuit
+// connecting RC3 to the activation signal wire, remote climate control will
+// only work during charging.
 //
 // On Generation 2 Cars, a CAN bus message is sent to wake up the VCU. This
 // function sends that message even to Generation 1 cars which doesn't seem to
@@ -336,13 +331,17 @@ void vehicle_nissanleaf_cc(BOOL enable_cc)
     }
   net_puts_rom("\r\n# Turning on/off CC\r\n"); // TODO remove debug
 
-  // TODO use GPIO to wake up GEN 1
+  // Use GPIO to wake up GEN 1 Leaf with EV SYSTEM ACTIVATION REQUEST
+  output_gpo3(TRUE);
   // send GEN 2 wakeup frame
   data = 0;
   vehicle_nissanleaf_send_can_message(0x68c, 1, &data);
 
   // wait 50 ms for things to wake up
   delay5(10);
+
+  // turn off EV SYSTEM ACTIVATION REQUEST
+  output_gpo3(FALSE);
 
   // send climate control command
   data = enable_cc ? 0x4e : 0x56;
