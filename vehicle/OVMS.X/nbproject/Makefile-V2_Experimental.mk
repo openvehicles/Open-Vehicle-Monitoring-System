@@ -90,7 +90,7 @@ endif
 # Rules for buildStep: compile
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 ${OBJECTDIR}/UARTIntC.o: UARTIntC.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/UARTIntC.o.d 
 	@${RM} ${OBJECTDIR}/UARTIntC.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/UARTIntC.o   UARTIntC.c 
@@ -98,7 +98,7 @@ ${OBJECTDIR}/UARTIntC.o: UARTIntC.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/UARTIntC.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_base64.o: crypt_base64.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/crypt_base64.o.d 
 	@${RM} ${OBJECTDIR}/crypt_base64.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_base64.o   crypt_base64.c 
@@ -106,7 +106,7 @@ ${OBJECTDIR}/crypt_base64.o: crypt_base64.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/crypt_base64.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_hmac.o: crypt_hmac.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/crypt_hmac.o.d 
 	@${RM} ${OBJECTDIR}/crypt_hmac.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_hmac.o   crypt_hmac.c 
@@ -114,7 +114,7 @@ ${OBJECTDIR}/crypt_hmac.o: crypt_hmac.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/crypt_hmac.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_md5.o: crypt_md5.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/crypt_md5.o.d 
 	@${RM} ${OBJECTDIR}/crypt_md5.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_md5.o   crypt_md5.c 
@@ -122,7 +122,7 @@ ${OBJECTDIR}/crypt_md5.o: crypt_md5.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/crypt_md5.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_rc4.o: crypt_rc4.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/crypt_rc4.o.d 
 	@${RM} ${OBJECTDIR}/crypt_rc4.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_rc4.o   crypt_rc4.c 
@@ -130,7 +130,7 @@ ${OBJECTDIR}/crypt_rc4.o: crypt_rc4.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/crypt_rc4.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/led.o: led.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/led.o.d 
 	@${RM} ${OBJECTDIR}/led.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/led.o   led.c 
@@ -138,7 +138,7 @@ ${OBJECTDIR}/led.o: led.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/led.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net.o: net.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/net.o.d 
 	@${RM} ${OBJECTDIR}/net.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net.o   net.c 
@@ -146,7 +146,7 @@ ${OBJECTDIR}/net.o: net.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/net.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net_msg.o: net_msg.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/net_msg.o.d 
 	@${RM} ${OBJECTDIR}/net_msg.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_msg.o   net_msg.c 
@@ -154,7 +154,7 @@ ${OBJECTDIR}/net_msg.o: net_msg.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/net_msg.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net_sms.o: net_sms.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/net_sms.o.d 
 	@${RM} ${OBJECTDIR}/net_sms.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_sms.o   net_sms.c 
@@ -162,7 +162,7 @@ ${OBJECTDIR}/net_sms.o: net_sms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/net_sms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/ovms.o: ovms.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/ovms.o.d 
 	@${RM} ${OBJECTDIR}/ovms.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/ovms.o   ovms.c 
@@ -170,7 +170,7 @@ ${OBJECTDIR}/ovms.o: ovms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/ovms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/params.o: params.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/params.o.d 
 	@${RM} ${OBJECTDIR}/params.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/params.o   params.c 
@@ -178,7 +178,7 @@ ${OBJECTDIR}/params.o: params.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/params.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/utils.o: utils.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/utils.o.d 
 	@${RM} ${OBJECTDIR}/utils.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/utils.o   utils.c 
@@ -186,7 +186,7 @@ ${OBJECTDIR}/utils.o: utils.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/utils.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/inputs.o: inputs.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/inputs.o.d 
 	@${RM} ${OBJECTDIR}/inputs.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/inputs.o   inputs.c 
@@ -194,7 +194,7 @@ ${OBJECTDIR}/inputs.o: inputs.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/inputs.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/diag.o: diag.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/diag.o.d 
 	@${RM} ${OBJECTDIR}/diag.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/diag.o   diag.c 
@@ -202,7 +202,7 @@ ${OBJECTDIR}/diag.o: diag.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/diag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle.o: vehicle.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle.o.d 
 	@${RM} ${OBJECTDIR}/vehicle.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle.o   vehicle.c 
@@ -210,7 +210,7 @@ ${OBJECTDIR}/vehicle.o: vehicle.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/vehicle.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_none.o: vehicle_none.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_none.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_none.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_none.o   vehicle_none.c 
@@ -218,7 +218,7 @@ ${OBJECTDIR}/vehicle_none.o: vehicle_none.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_none.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_obdii.o: vehicle_obdii.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_obdii.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_obdii.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_obdii.o   vehicle_obdii.c 
@@ -226,7 +226,7 @@ ${OBJECTDIR}/vehicle_obdii.o: vehicle_obdii.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_obdii.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_thinkcity.o: vehicle_thinkcity.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_thinkcity.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_thinkcity.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_thinkcity.o   vehicle_thinkcity.c 
@@ -234,7 +234,7 @@ ${OBJECTDIR}/vehicle_thinkcity.o: vehicle_thinkcity.c  nbproject/Makefile-${CND_
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_thinkcity.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_nissanleaf.o: vehicle_nissanleaf.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_nissanleaf.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_nissanleaf.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_nissanleaf.o   vehicle_nissanleaf.c 
@@ -242,7 +242,7 @@ ${OBJECTDIR}/vehicle_nissanleaf.o: vehicle_nissanleaf.c  nbproject/Makefile-${CN
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_nissanleaf.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_tazzari.o: vehicle_tazzari.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_tazzari.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_tazzari.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_tazzari.o   vehicle_tazzari.c 
@@ -250,7 +250,7 @@ ${OBJECTDIR}/vehicle_tazzari.o: vehicle_tazzari.c  nbproject/Makefile-${CND_CONF
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_tazzari.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/logging.o: logging.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/logging.o.d 
 	@${RM} ${OBJECTDIR}/logging.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/logging.o   logging.c 
@@ -258,7 +258,7 @@ ${OBJECTDIR}/logging.o: logging.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/logging.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_mitsubishi.o: vehicle_mitsubishi.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_mitsubishi.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_mitsubishi.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_mitsubishi.o   vehicle_mitsubishi.c 
@@ -266,7 +266,7 @@ ${OBJECTDIR}/vehicle_mitsubishi.o: vehicle_mitsubishi.c  nbproject/Makefile-${CN
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_mitsubishi.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_track.o: vehicle_track.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_track.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_track.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_track.o   vehicle_track.c 
@@ -274,7 +274,7 @@ ${OBJECTDIR}/vehicle_track.o: vehicle_track.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_track.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_kyburz.o: vehicle_kyburz.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_kyburz.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_kyburz.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_kyburz.o   vehicle_kyburz.c 
@@ -283,7 +283,7 @@ ${OBJECTDIR}/vehicle_kyburz.o: vehicle_kyburz.c  nbproject/Makefile-${CND_CONF}.
 	
 else
 ${OBJECTDIR}/UARTIntC.o: UARTIntC.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/UARTIntC.o.d 
 	@${RM} ${OBJECTDIR}/UARTIntC.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/UARTIntC.o   UARTIntC.c 
@@ -291,7 +291,7 @@ ${OBJECTDIR}/UARTIntC.o: UARTIntC.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/UARTIntC.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_base64.o: crypt_base64.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/crypt_base64.o.d 
 	@${RM} ${OBJECTDIR}/crypt_base64.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_base64.o   crypt_base64.c 
@@ -299,7 +299,7 @@ ${OBJECTDIR}/crypt_base64.o: crypt_base64.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/crypt_base64.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_hmac.o: crypt_hmac.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/crypt_hmac.o.d 
 	@${RM} ${OBJECTDIR}/crypt_hmac.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_hmac.o   crypt_hmac.c 
@@ -307,7 +307,7 @@ ${OBJECTDIR}/crypt_hmac.o: crypt_hmac.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/crypt_hmac.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_md5.o: crypt_md5.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/crypt_md5.o.d 
 	@${RM} ${OBJECTDIR}/crypt_md5.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_md5.o   crypt_md5.c 
@@ -315,7 +315,7 @@ ${OBJECTDIR}/crypt_md5.o: crypt_md5.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/crypt_md5.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/crypt_rc4.o: crypt_rc4.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/crypt_rc4.o.d 
 	@${RM} ${OBJECTDIR}/crypt_rc4.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/crypt_rc4.o   crypt_rc4.c 
@@ -323,7 +323,7 @@ ${OBJECTDIR}/crypt_rc4.o: crypt_rc4.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/crypt_rc4.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/led.o: led.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/led.o.d 
 	@${RM} ${OBJECTDIR}/led.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/led.o   led.c 
@@ -331,7 +331,7 @@ ${OBJECTDIR}/led.o: led.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/led.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net.o: net.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/net.o.d 
 	@${RM} ${OBJECTDIR}/net.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net.o   net.c 
@@ -339,7 +339,7 @@ ${OBJECTDIR}/net.o: net.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/net.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net_msg.o: net_msg.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/net_msg.o.d 
 	@${RM} ${OBJECTDIR}/net_msg.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_msg.o   net_msg.c 
@@ -347,7 +347,7 @@ ${OBJECTDIR}/net_msg.o: net_msg.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/net_msg.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/net_sms.o: net_sms.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/net_sms.o.d 
 	@${RM} ${OBJECTDIR}/net_sms.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/net_sms.o   net_sms.c 
@@ -355,7 +355,7 @@ ${OBJECTDIR}/net_sms.o: net_sms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/net_sms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/ovms.o: ovms.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/ovms.o.d 
 	@${RM} ${OBJECTDIR}/ovms.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/ovms.o   ovms.c 
@@ -363,7 +363,7 @@ ${OBJECTDIR}/ovms.o: ovms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/ovms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/params.o: params.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/params.o.d 
 	@${RM} ${OBJECTDIR}/params.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/params.o   params.c 
@@ -371,7 +371,7 @@ ${OBJECTDIR}/params.o: params.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/params.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/utils.o: utils.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/utils.o.d 
 	@${RM} ${OBJECTDIR}/utils.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/utils.o   utils.c 
@@ -379,7 +379,7 @@ ${OBJECTDIR}/utils.o: utils.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/utils.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/inputs.o: inputs.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/inputs.o.d 
 	@${RM} ${OBJECTDIR}/inputs.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/inputs.o   inputs.c 
@@ -387,7 +387,7 @@ ${OBJECTDIR}/inputs.o: inputs.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/inputs.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/diag.o: diag.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/diag.o.d 
 	@${RM} ${OBJECTDIR}/diag.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/diag.o   diag.c 
@@ -395,7 +395,7 @@ ${OBJECTDIR}/diag.o: diag.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/diag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle.o: vehicle.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle.o.d 
 	@${RM} ${OBJECTDIR}/vehicle.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle.o   vehicle.c 
@@ -403,7 +403,7 @@ ${OBJECTDIR}/vehicle.o: vehicle.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/vehicle.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_none.o: vehicle_none.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_none.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_none.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_none.o   vehicle_none.c 
@@ -411,7 +411,7 @@ ${OBJECTDIR}/vehicle_none.o: vehicle_none.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_none.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_obdii.o: vehicle_obdii.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_obdii.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_obdii.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_obdii.o   vehicle_obdii.c 
@@ -419,7 +419,7 @@ ${OBJECTDIR}/vehicle_obdii.o: vehicle_obdii.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_obdii.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_thinkcity.o: vehicle_thinkcity.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_thinkcity.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_thinkcity.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_thinkcity.o   vehicle_thinkcity.c 
@@ -427,7 +427,7 @@ ${OBJECTDIR}/vehicle_thinkcity.o: vehicle_thinkcity.c  nbproject/Makefile-${CND_
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_thinkcity.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_nissanleaf.o: vehicle_nissanleaf.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_nissanleaf.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_nissanleaf.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_nissanleaf.o   vehicle_nissanleaf.c 
@@ -435,7 +435,7 @@ ${OBJECTDIR}/vehicle_nissanleaf.o: vehicle_nissanleaf.c  nbproject/Makefile-${CN
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_nissanleaf.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_tazzari.o: vehicle_tazzari.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_tazzari.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_tazzari.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_tazzari.o   vehicle_tazzari.c 
@@ -443,7 +443,7 @@ ${OBJECTDIR}/vehicle_tazzari.o: vehicle_tazzari.c  nbproject/Makefile-${CND_CONF
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_tazzari.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/logging.o: logging.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/logging.o.d 
 	@${RM} ${OBJECTDIR}/logging.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/logging.o   logging.c 
@@ -451,7 +451,7 @@ ${OBJECTDIR}/logging.o: logging.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/logging.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_mitsubishi.o: vehicle_mitsubishi.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_mitsubishi.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_mitsubishi.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_mitsubishi.o   vehicle_mitsubishi.c 
@@ -459,7 +459,7 @@ ${OBJECTDIR}/vehicle_mitsubishi.o: vehicle_mitsubishi.c  nbproject/Makefile-${CN
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_mitsubishi.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_track.o: vehicle_track.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_track.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_track.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_track.o   vehicle_track.c 
@@ -467,7 +467,7 @@ ${OBJECTDIR}/vehicle_track.o: vehicle_track.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} "${OBJECTDIR}/vehicle_track.o.d" $(SILENT) -rsi ${MP_CC_DIR}../ -c18 
 	
 ${OBJECTDIR}/vehicle_kyburz.o: vehicle_kyburz.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
+	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/vehicle_kyburz.o.d 
 	@${RM} ${OBJECTDIR}/vehicle_kyburz.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) -k -DOVMS_HW_V2 -DOVMS_DIAGMODULE -DOVMS_LOGGINGMODULE -DOVMS_INTERNALGPS -DOVMS_POLLER -DOVMS_CAR_NONE -DOVMS_CAR_OBDII -DOVMS_CAR_NISSANLEAF -DOVMS_CAR_THINKCITY -DOVMS_CAR_TAZZARI -DOVMS_CAR_MITSUBISHI -DOVMS_CAR_TRACK -DOVMS_CAR_KYBURZ -ml --extended -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/vehicle_kyburz.o   vehicle_kyburz.c 

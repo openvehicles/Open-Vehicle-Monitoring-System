@@ -27,11 +27,11 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 PROJECTNAME=OVMS.X
 
 # Active Configuration
-DEFAULTCONF=V2_TR_Production
+DEFAULTCONF=V2_KS_Production
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=V1_Production V2_Experimental V2_Production V2_TR_Production V2_RT_Production 
+ALLCONFS=V1_Production V2_Experimental V2_Production V2_TR_Production V2_RT_Production V2_KS_Production 
 
 
 # build
@@ -50,6 +50,7 @@ ALLCONFS=V1_Production V2_Experimental V2_Production V2_TR_Production V2_RT_Prod
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TR_Production clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RT_Production clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_KS_Production clean
 
 
 
@@ -60,6 +61,7 @@ ALLCONFS=V1_Production V2_Experimental V2_Production V2_TR_Production V2_RT_Prod
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TR_Production build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RT_Production build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_KS_Production build
 
 
 
