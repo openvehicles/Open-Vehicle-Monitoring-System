@@ -91,6 +91,31 @@ BOOL vehicle_nissanleaf_poll0(void)
   return TRUE;
   }
 
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_car_on()
+// Takes care of setting all the state appropriate when the car is on
+// or off. Centralized so we can more easily make on and off mirror
+// images.
+//
+
+void vehicle_nissanleaf_car_on(BOOL isOn)
+  {
+  car_doors1bits.CarON = isOn ? 1 : 0;
+  car_doors3bits.CarAwake = isOn ? 1 : 0;
+  // We don't know if handbrake is on or off, but it's usually off when the car is on.
+  car_doors1bits.HandBrake = isOn ? 0 : 1;
+  if (isOn && car_parktime != 0)
+    {
+    car_parktime = 0; // No longer parking
+    net_req_notification(NET_NOTIFY_ENV);
+    }
+  else if (!isOn && car_parktime == 0)
+    {
+    car_parktime = car_time - 1; // Record it as 1 second ago, so non zero report
+    net_req_notification(NET_NOTIFY_ENV);
+    }
+  }
+
 BOOL vehicle_nissanleaf_poll1(void)
   {
   nl_busactive = 10; // Reset the per-second charge timer
@@ -100,15 +125,7 @@ BOOL vehicle_nissanleaf_poll1(void)
     case 0x284:
       // this is apparently data relayed from the ABS system, if we have
       // that then we assume car is on.
-      car_doors1bits.CarON = 1;
-      car_doors3bits.CarAwake = 1;
-      // We don't know if handbrake is on or off, but it's usually off.
-      car_doors1bits.HandBrake = 0;
-      if (car_parktime != 0)
-        {
-        car_parktime = 0; // No longer parking
-        net_req_notification(NET_NOTIFY_ENV);
-        }
+      vehicle_nissanleaf_car_on(TRUE);
       // vehicle_poll_setstate(1);
       break;
     case 0x5bc:
@@ -166,18 +183,8 @@ BOOL vehicle_nissanleaf_ticker1(void)
   if (nl_busactive > 0) nl_busactive--;
   if (nl_busactive == 0)
     {
-    // no data on the CAN bus so assume everything is off
-    car_doors1bits.CarON = 0;
-    car_doors3bits.CarAwake = 0;
-    // vehicle_poll_setstate(0);
-    car_doors1bits.HandBrake = 1;
-    car_doors1bits.CarON = 0;
+    vehicle_nissanleaf_car_on(FALSE);
     car_speed = 0;
-    if (car_parktime == 0)
-      {
-      car_parktime = car_time - 1; // Record it as 1 second ago, so non zero report
-      net_req_notification(NET_NOTIFY_ENV);
-      }
     if (car_chargestate == 1)
       { // Charge has completed
       car_doors1bits.ChargePort = 0;
