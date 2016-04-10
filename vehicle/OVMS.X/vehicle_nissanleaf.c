@@ -36,6 +36,7 @@
 #pragma udata overlay vehicle_overlay_data
 
 unsigned char nl_busactive; // An indication that bus is active
+UINT8 nl_abs_active; // non-zero if we recently received data from the ABS system
 
 #pragma udata
 
@@ -125,6 +126,7 @@ BOOL vehicle_nissanleaf_poll1(void)
     case 0x284:
       // this is apparently data relayed from the ABS system, if we have
       // that then we assume car is on.
+      nl_abs_active = 10;
       vehicle_nissanleaf_car_on(TRUE);
       // vehicle_poll_setstate(1);
       break;
@@ -175,12 +177,17 @@ BOOL vehicle_nissanleaf_poll1(void)
 BOOL vehicle_nissanleaf_ticker1(void)
   {
   car_time++;
-  // TODO add check if we don't see 0x284 for a while then car isn't driving
-  // otherwise car can be parked and plugged in before the bus is quiet long
-  // enough to assume everything is off and we end up thinking that the car
-  // is driving and charging at the same time
-  // could also reduce the nl_busactive decay time.
   if (nl_busactive > 0) nl_busactive--;
+  if (nl_abs_active > 0) nl_abs_active--;
+
+  // have the messages from the ABS system stopped?
+  if (nl_abs_active == 0)
+    {
+    vehicle_nissanleaf_car_on(FALSE);
+    car_speed = 0;
+    }
+
+  // has the whole CAN bus gone quiet?
   if (nl_busactive == 0)
     {
     vehicle_nissanleaf_car_on(FALSE);
