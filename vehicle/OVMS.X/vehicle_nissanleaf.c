@@ -137,9 +137,20 @@ BOOL vehicle_nissanleaf_poll1(void)
       car_idealrange = (car_idealrange * 84 + 140) / 281;
       break;
     case 0x5bf:
-      // TODO this doesn't understand charger awake but waiting for charge timer
+      // TODO car_chargelimit calculation doesn't look right
       car_chargelimit = can_databuffer[2] / 5;
-      if ((car_chargelimit != 0)&&(can_databuffer[3] != 0))
+
+      if (can_databuffer[2] == 0x4d && car_chargesubstate != 5)
+        {
+        // plugged in waiting for charge timer
+        car_doors1bits.ChargePort = 1;
+        car_doors1bits.Charging = 0;
+        car_doors1bits.PilotSignal = 1;
+        car_chargestate = 13; // preparing to charge
+        car_chargesubstate = 5; // time wait
+        net_req_notification(NET_NOTIFY_STAT);
+        }
+      else if (can_databuffer[2] == 0x4c)
         { // Car is charging
         if (car_chargestate != 1)
           {
