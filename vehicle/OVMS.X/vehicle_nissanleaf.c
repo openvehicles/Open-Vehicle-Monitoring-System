@@ -35,8 +35,17 @@
 
 #pragma udata overlay vehicle_overlay_data
 
+typedef enum
+  {
+  CHARGER_STATUS_IDLE,
+  CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT,
+  CHARGER_STATUS_CHARGING,
+  CHARGER_STATUS_FINISHED
+  } ChargerStatus;
+
 unsigned char nl_busactive; // An indication that bus is active
 UINT8 nl_abs_active; // non-zero if we recently received data from the ABS system
+ChargerStatus nl_charger_status; // the current charger status
 
 #pragma udata
 
@@ -109,12 +118,71 @@ void vehicle_nissanleaf_car_on(BOOL isOn)
     {
     car_parktime = 0; // No longer parking
     net_req_notification(NET_NOTIFY_ENV);
+    car_doors1bits.ChargePort = 0;
+    car_doors1bits.Charging = 0;
+    car_doors1bits.PilotSignal = 0;
+    car_chargestate = 0;
+    car_chargesubstate = 0;
     }
   else if (!isOn && car_parktime == 0)
     {
     car_parktime = car_time - 1; // Record it as 1 second ago, so non zero report
     net_req_notification(NET_NOTIFY_ENV);
     }
+  }
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_charger_status()
+// Takes care of setting all the charger state bit when the charger
+// switches on or off. Separate from vehicle_nissanleaf_poll1() to make
+// it clearer what is going on.
+//
+
+void vehicle_nissanleaf_charger_status(ChargerStatus status)
+  {
+  switch (status)
+    {
+    case CHARGER_STATUS_IDLE:
+      car_doors1bits.ChargePort = 0;
+      car_doors1bits.Charging = 0;
+      car_doors1bits.PilotSignal = 0;
+      car_chargestate = 0;
+      car_chargesubstate = 0;
+      break;
+    case CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT:
+      car_doors1bits.ChargePort = 1;
+      car_doors1bits.Charging = 0;
+      car_doors1bits.PilotSignal = 1;
+      car_chargestate = 0;
+      car_chargesubstate = 0;
+      break;
+    case CHARGER_STATUS_CHARGING:
+      car_doors1bits.ChargePort = 1;
+      car_doors1bits.Charging = 1;
+      car_doors1bits.PilotSignal = 1;
+      car_chargestate = 1;
+      car_chargesubstate = 3; // Charging by request
+      if (nl_charger_status != status)
+        {
+        car_chargeduration = 0; // Reset charge duration
+        car_chargekwh = 0; // Reset charge kWh
+        }
+      break;
+    case CHARGER_STATUS_FINISHED:
+      // Charging finished
+      car_chargecurrent = 0;
+      car_doors1bits.ChargePort = 1;
+      car_doors1bits.Charging = 0;
+      car_doors1bits.PilotSignal = 1;
+      car_chargestate = 4; // Charge DONE
+      car_chargesubstate = 3; // Charging by request
+      break;
+    }
+  if (nl_charger_status != status)
+    {
+    net_req_notification(NET_NOTIFY_STAT);
+    }
+  nl_charger_status = status;
   }
 
 BOOL vehicle_nissanleaf_poll1(void)
@@ -140,44 +208,21 @@ BOOL vehicle_nissanleaf_poll1(void)
       // TODO car_chargelimit calculation doesn't look right
       car_chargelimit = can_databuffer[2] / 5;
 
-      if (can_databuffer[2] == 0x4d && car_chargesubstate != 5)
+      switch (can_databuffer[4])
         {
-        // plugged in waiting for charge timer
-        car_doors1bits.ChargePort = 1;
-        car_doors1bits.Charging = 0;
-        car_doors1bits.PilotSignal = 1;
-        car_chargestate = 13; // preparing to charge
-        car_chargesubstate = 5; // time wait
-        net_req_notification(NET_NOTIFY_STAT);
+        case 0x28:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_IDLE);
+          break;
+        case 0x30:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT);
+          break;
+        case 0x60:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_CHARGING);
+          break;
+        case 0x40:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_FINISHED);
+          break;
         }
-      else if (can_databuffer[2] == 0x4c)
-        { // Car is charging
-        if (car_chargestate != 1)
-          {
-          car_doors1bits.ChargePort = 1;
-          car_doors1bits.Charging = 1;
-          car_doors1bits.PilotSignal = 1;
-          car_chargemode = 0; // Standard charge mode
-          car_charge_b4 = 0; // Not required
-          car_chargestate = 1; // Charging state
-          car_chargesubstate = 3; // Charging by request
-          car_chargeduration = 0; // Reset charge duration
-          car_chargekwh = 0; // Reset charge kWh
-          net_req_notification(NET_NOTIFY_STAT);
-          }
-        }
-      /*      else if ((car_chargelimit==0)&&(car_chargestate==1))
-              { // Charge has been interrupted
-              car_doors1bits.ChargePort = 0;
-              car_doors1bits.Charging = 0;
-              car_doors1bits.PilotSignal = 0;
-              car_chargemode = 0;     // Standard charge mode
-              car_charge_b4 = 0;      // Not required
-              car_chargestate = 21;    // Charge STOPPED
-              car_chargesubstate = 14; // Charge INTERRUPTED
-              net_req_notification(NET_NOTIFY_CHARGE);
-              net_req_notification(NET_NOTIFY_STAT);
-              } */
       break;
     }
   return TRUE;
