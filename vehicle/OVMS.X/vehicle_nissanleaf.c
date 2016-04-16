@@ -341,9 +341,13 @@ BOOL vehicle_nissanleaf_initialise(void)
   vehicle_fn_poll0 = &vehicle_nissanleaf_poll0;
   vehicle_fn_poll1 = &vehicle_nissanleaf_poll1;
   vehicle_fn_ticker1 = &vehicle_nissanleaf_ticker1;
-  if (sys_features[FEATURE_CANWRITE] > 0)
-    vehicle_poll_setpidlist(vehicle_nissanleaf_polls);
-  vehicle_poll_setstate(0);
+
+  // TODO this causes a relay to click every 20 seconds or so while charging
+  // TODO and on my gen 1 car at least, does not get the VIN number or speed
+  //if (sys_features[FEATURE_CANWRITE] > 0)
+  //vehicle_poll_setpidlist(vehicle_nissanleaf_polls);
+  //
+  //vehicle_poll_setstate(0);
 
   net_fnbits |= NET_FN_INTERNALGPS; // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR; // Require 12v monitor
