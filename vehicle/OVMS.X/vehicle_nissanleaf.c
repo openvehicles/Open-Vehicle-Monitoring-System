@@ -45,6 +45,7 @@ typedef enum
 
 unsigned char nl_busactive; // An indication that bus is active
 UINT8 nl_abs_active; // non-zero if we recently received data from the ABS system
+UINT16 nl_gids; // current gids in the battery
 ChargerStatus nl_charger_status; // the current charger status
 
 #pragma udata
@@ -199,10 +200,10 @@ BOOL vehicle_nissanleaf_poll1(void)
       // vehicle_poll_setstate(1);
       break;
     case 0x5bc:
-      car_idealrange = ((int) can_databuffer[0] << 2) +
-        ((can_databuffer[1]&0xc0) >> 6);
-      car_SOC = (car_idealrange * 100 + 140) / 281; // convert Gids to percent
-      car_idealrange = (car_idealrange * 84 + 140) / 281;
+      nl_gids = ((unsigned int) can_databuffer[0] << 2) +
+        ((can_databuffer[1] & 0xc0) >> 6);
+      car_SOC = (nl_gids * 100 + 140) / 281;
+      car_idealrange = (nl_gids * 84 + 140) / 281;
       break;
     case 0x5bf:
       // TODO car_chargelimit calculation doesn't look right
