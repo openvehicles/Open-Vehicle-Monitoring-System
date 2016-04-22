@@ -249,17 +249,6 @@ BOOL vehicle_nissanleaf_ticker1(void)
     {
     vehicle_nissanleaf_car_on(FALSE);
     car_speed = 0;
-    if (car_chargestate == 1)
-      { // Charge has completed
-      car_doors1bits.ChargePort = 0;
-      car_doors1bits.Charging = 0;
-      car_doors1bits.PilotSignal = 0;
-      car_chargemode = 0; // Standard charge mode
-      car_charge_b4 = 0; // Not required
-      car_chargestate = 4; // Charge DONE
-      car_chargesubstate = 3; // Leave it as is
-      net_req_notification(NET_NOTIFY_STAT);
-      }
     }
   }
 
