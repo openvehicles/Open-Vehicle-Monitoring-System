@@ -144,23 +144,17 @@ void vehicle_nissanleaf_charger_status(ChargerStatus status)
   switch (status)
     {
     case CHARGER_STATUS_IDLE:
-      car_doors1bits.ChargePort = 0;
       car_doors1bits.Charging = 0;
-      car_doors1bits.PilotSignal = 0;
       car_chargestate = 0;
       car_chargesubstate = 0;
       break;
     case CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT:
-      car_doors1bits.ChargePort = 1;
       car_doors1bits.Charging = 0;
-      car_doors1bits.PilotSignal = 1;
       car_chargestate = 0;
       car_chargesubstate = 0;
       break;
     case CHARGER_STATUS_CHARGING:
-      car_doors1bits.ChargePort = 1;
       car_doors1bits.Charging = 1;
-      car_doors1bits.PilotSignal = 1;
       car_chargestate = 1;
       car_chargesubstate = 3; // Charging by request
       if (nl_charger_status != status)
@@ -172,9 +166,7 @@ void vehicle_nissanleaf_charger_status(ChargerStatus status)
     case CHARGER_STATUS_FINISHED:
       // Charging finished
       car_chargecurrent = 0;
-      car_doors1bits.ChargePort = 1;
       car_doors1bits.Charging = 0;
-      car_doors1bits.PilotSignal = 1;
       car_chargestate = 4; // Charge DONE
       car_chargesubstate = 3; // Charging by request
       break;
@@ -206,8 +198,10 @@ BOOL vehicle_nissanleaf_poll1(void)
       car_idealrange = (nl_gids * 84 + 140) / 281;
       break;
     case 0x5bf:
-      // TODO car_chargelimit calculation doesn't look right
+      // this is the J1772 maximum available current, 0 if we're not plugged in
       car_chargelimit = can_databuffer[2] / 5;
+      car_doors1bits.ChargePort = car_chargelimit == 0 ? 0 : 1;
+      car_doors1bits.PilotSignal = car_chargelimit == 0 ? 0 : 1;
 
       switch (can_databuffer[4])
         {
