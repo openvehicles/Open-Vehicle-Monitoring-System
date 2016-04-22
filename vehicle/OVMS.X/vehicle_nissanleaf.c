@@ -325,11 +325,9 @@ void vehicle_nissanleaf_cc(BOOL enable_cc)
   unsigned char data;
   if (sys_features[FEATURE_CANWRITE] == 0)
     {
-    net_puts_rom("\r\n# CANRITE disabled, not doing remote CC\r\n"); // TODO remove debug
     // we don't want to transmit when CAN write is disabled.
     return;
     }
-  net_puts_rom("\r\n# Turning on/off CC\r\n"); // TODO remove debug
 
   // Use GPIO to wake up GEN 1 Leaf with EV SYSTEM ACTIVATION REQUEST
   output_gpo3(TRUE);
@@ -346,7 +344,6 @@ void vehicle_nissanleaf_cc(BOOL enable_cc)
   // send climate control command
   data = enable_cc ? 0x4e : 0x56;
   vehicle_nissanleaf_send_can_message(0x56e, 1, &data);
-  net_puts_rom("\r\n# Turned on/off CC\r\n"); // TODO remove debug
   }
 
 ////////////////////////////////////////////////////////////////////////
