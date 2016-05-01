@@ -83,6 +83,9 @@ UINT8 nl_remote_command_ticker; // number of tenths remaining to send remote com
 UINT16 nl_gids; // current gids in the battery
 ChargerStatus nl_charger_status; // the current charger status
 
+INT16 nl_battery_current; // battery current from LBC, 0.5A per bit
+UINT16 nl_battery_voltage; // battery voltage from LBC, 0.5V per bit
+
 #pragma udata
 
 ////////////////////////////////////////////////////////////////////////
@@ -222,6 +225,21 @@ void vehicle_nissanleaf_charger_status(ChargerStatus status)
       car_doors1bits.Charging = 1;
       car_chargestate = 1;
       car_chargesubstate = 3; // Charging by request
+
+      // TODO we should return AC line current and voltage, not battery
+      if (nl_battery_current < 0)
+        {
+        // battery current can go negative when climate control draws more than
+        // is available from the charger. We're abusing the line current which
+        // is unsigned, so don't underflow it
+        car_chargecurrent = 0;
+        }
+      else
+        {
+        car_chargecurrent = (nl_battery_current + 1) / 2;
+        }
+      car_linevoltage = (nl_battery_voltage + 1) / 2;
+
       if (nl_charger_status != status)
         {
         car_chargeduration = 0; // Reset charge duration
@@ -236,6 +254,13 @@ void vehicle_nissanleaf_charger_status(ChargerStatus status)
       car_chargesubstate = 3; // Charging by request
       break;
     }
+  if (status != CHARGER_STATUS_CHARGING)
+    {
+    car_chargecurrent = 0;
+    // TODO the charger probably knows the line voltage, when we find where it's
+    // coded, don't zero it out when we're plugged in but not charging
+    car_linevoltage = 0;
+    }
   if (nl_charger_status != status)
     {
     net_req_notification(NET_NOTIFY_STAT);
@@ -249,6 +274,18 @@ BOOL vehicle_nissanleaf_poll1(void)
 
   switch (can_id)
     {
+    case 0x1db:
+      // sent by the LBC, measured inside the battery box
+      // current is 11 bit twos complement big endian starting at bit 0
+      nl_battery_current = ((INT16) can_databuffer[0] << 3) | (can_databuffer[1] & 0xe0) >> 5;
+      if (nl_battery_current & 0x0400)
+        {
+        // negative so extend the sign bit
+        nl_battery_current |= 0xf800;
+        }
+      // voltage is 10 bits unsigned big endian starting at bit 16
+      nl_battery_voltage = ((UINT16) can_databuffer[2] << 2) | (can_databuffer[3] & 0xc0) >> 6;
+      break;
     case 0x284:
       // this is apparently data relayed from the ABS system, if we have
       // that then we assume car is on.
@@ -532,19 +569,7 @@ BOOL vehicle_nissanleaf_initialise(void)
   RXB1CON = 0b00000000; // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
 
   RXM1SIDL = 0b00000000;
-  RXM1SIDH = 0b11100000; // Set Mask1 to 11100000000
-
-  RXF2SIDL = 0b00000000; // Setup Filter2 so that CAN ID 0x500 - 0x5FF will be accepted
-  RXF2SIDH = 0b10100000;
-
-  RXF3SIDL = 0b00000000; // Setup Filter3 so that CAN ID 0x200 - 0x2FF will be accepted
-  RXF3SIDH = 0b01000000;
-
-  RXF4SIDL = 0b00000000; // Setup Filter4 so that CAN ID 0x300 - 0x3FF will be accepted
-  RXF4SIDH = 0b01100000;
-
-  RXF5SIDL = 0b00000000; // Setup Filter5 so that CAN ID 0x000 - 0x0FF will be accepted
-  RXF5SIDH = 0b00000000;
+  RXM1SIDH = 0b00000000; // Set Mask1 to accept all frames
 
   // CAN bus baud rate
 
