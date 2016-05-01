@@ -91,6 +91,8 @@ void net_msg_cmd_do(void);
 #define CMD_Reboot              5   // ()
 #define CMD_Alert               6   // ()
 
+#define CMD_StartCharge         11  // ()
+
 #define CMD_Lock                20  // (pin)
 #define CMD_UnLock              22  // (pin)
 #define CMD_ValetOn             21  // (pin)

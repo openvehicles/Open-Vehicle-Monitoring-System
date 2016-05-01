@@ -44,6 +44,13 @@ typedef enum
   CHARGER_STATUS_FINISHED
   } ChargerStatus;
 
+typedef enum
+  {
+  ENABLE_CLIMATE_CONTROL,
+  DISABLE_CLIMATE_CONTROL,
+  START_CHARGING
+  } RemoteCommand;
+
 UINT8 nl_busactive; // non-zero if we recently received data
 UINT8 nl_abs_active; // non-zero if we recently received data from the ABS system
 UINT16 nl_gids; // current gids in the battery
@@ -304,23 +311,24 @@ BOOL vehicle_nissanleaf_ticker1(void)
   }
 
 ////////////////////////////////////////////////////////////////////////
-// vehicle_nissanleaf_cc()
-// Wake up the car & send Climate Control message to VCU, replaces Nissan's
-// CARWINGS and TCU module, see
+// vehicle_nissanleaf_remote_command()
+// Wake up the car & send Climate Control or Remote Charge message to VCU,
+// replaces Nissan's CARWINGS and TCU module, see
 // http://www.mynissanleaf.com/viewtopic.php?f=44&t=4131&hilit=open+CAN+discussion&start=416
 //
 // On Generation 1 Cars, TCU pin 11's "EV system activation request signal" is
 // driven to 12V to wake up the VCU. This function drives RC3 high to
 // activate the "EV system activation request signal". Without a circuit
 // connecting RC3 to the activation signal wire, remote climate control will
-// only work during charging.
+// only work during charging and for obvious reasons remote charging won't
+// work at all.
 //
 // On Generation 2 Cars, a CAN bus message is sent to wake up the VCU. This
 // function sends that message even to Generation 1 cars which doesn't seem to
 // cause any problems.
 //
 
-void vehicle_nissanleaf_cc(BOOL enable_cc)
+void vehicle_nissanleaf_remote_command(RemoteCommand command)
   {
   unsigned char data;
   if (sys_features[FEATURE_CANWRITE] == 0)
@@ -342,7 +350,18 @@ void vehicle_nissanleaf_cc(BOOL enable_cc)
   output_gpo3(FALSE);
 
   // send climate control command
-  data = enable_cc ? 0x4e : 0x56;
+  switch (command)
+    {
+    case ENABLE_CLIMATE_CONTROL:
+      data = 0x4e;
+      break;
+    case DISABLE_CLIMATE_CONTROL:
+      data = 0x56;
+      break;
+    case START_CHARGING:
+      data = 0x66;
+      break;
+    }
   vehicle_nissanleaf_send_can_message(0x56e, 1, &data);
   }
 
@@ -355,11 +374,14 @@ BOOL vehicle_nissanleaf_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
   // TODO climate control shouldn't be hooked to these commands
   switch (cmd)
     {
+    case CMD_StartCharge:
+      vehicle_nissanleaf_remote_command(START_CHARGING);
+      break;
     case CMD_Homelink:
-      vehicle_nissanleaf_cc(TRUE);
+      vehicle_nissanleaf_remote_command(ENABLE_CLIMATE_CONTROL);
       break;
     case CMD_Alert:
-      vehicle_nissanleaf_cc(FALSE);
+      vehicle_nissanleaf_remote_command(DISABLE_CLIMATE_CONTROL);
       break;
     }
   // we return false even on success so the framework takes care of the response
