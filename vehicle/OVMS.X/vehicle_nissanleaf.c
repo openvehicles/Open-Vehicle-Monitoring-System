@@ -43,7 +43,7 @@ typedef enum
   CHARGER_STATUS_FINISHED
   } ChargerStatus;
 
-unsigned char nl_busactive; // An indication that bus is active
+UINT8 nl_busactive; // non-zero if we recently received data
 UINT8 nl_abs_active; // non-zero if we recently received data from the ABS system
 UINT16 nl_gids; // current gids in the battery
 ChargerStatus nl_charger_status; // the current charger status
