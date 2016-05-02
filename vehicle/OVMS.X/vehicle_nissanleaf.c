@@ -266,6 +266,9 @@ BOOL vehicle_nissanleaf_initialise(void)
   car_stale_timer = -1; // Timed charging is not supported for OVMS NL
   car_time = 0;
 
+  // initialize SOC and SOC alert limit to avoid SMS on startup
+  car_SOC = car_SOCalertlimit = 2;
+
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
