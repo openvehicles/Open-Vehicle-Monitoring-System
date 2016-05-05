@@ -371,20 +371,36 @@ void vehicle_nissanleaf_remote_command(RemoteCommand command)
 
 BOOL vehicle_nissanleaf_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
   {
-  int button;
+  // Temporary support via homelink command
+  // TODO remove when the app supports CMD_ClimateControl
+  if (cmd == CMD_Homelink)
+    {
+    int button = atoi(msg);
+    if (button == 0)
+      {
+      cmd = CMD_ClimateControl;
+      strcpypgm2ram(msg, "ON");
+      }
+    else if (button == 1)
+      {
+      cmd = CMD_ClimateControl;
+      strcpypgm2ram(msg, "OFF");
+      }
+    }
+  // end of temporary support
+
   switch (cmd)
     {
     case CMD_StartCharge:
       vehicle_nissanleaf_remote_command(START_CHARGING);
       break;
-    case CMD_Homelink:
-      // TODO remove when the app supports CMD_EnableClimateControl et al
-      button = atoi(msg);
-      if (button == 0)
+    case CMD_ClimateControl:
+      strupr(msg);
+      if (strcmppgm2ram(msg, "ON") == 0)
         {
         vehicle_nissanleaf_remote_command(ENABLE_CLIMATE_CONTROL);
         }
-      else if (button == 1)
+      else if (strcmppgm2ram(msg, "OFF") == 0)
         {
         vehicle_nissanleaf_remote_command(DISABLE_CLIMATE_CONTROL);
         }
@@ -393,6 +409,10 @@ BOOL vehicle_nissanleaf_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
         // TODO should return invalid syntax
         return FALSE;
         }
+      break;
+    default:
+      // not one of our commands, return FALSE and the framework will handle it
+      return FALSE;
     }
   // we return false even on success so the framework takes care of the response
   return FALSE;

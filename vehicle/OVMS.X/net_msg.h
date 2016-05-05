@@ -103,6 +103,8 @@ void net_msg_cmd_do(void);
 #define CMD_SendUSSD            41  // (USSD_CODE)
 #define CMD_SendRawAT           42  // (raw AT command)
 
+#define CMD_ClimateControl      43  // (ON or OFF)
+
 void net_msg_forward_sms(char* caller, char* SMS);
 void net_msg_reply_ussd(char *buf, unsigned char buflen);
 
