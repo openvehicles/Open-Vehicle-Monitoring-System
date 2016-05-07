@@ -51,6 +51,13 @@ typedef enum
   START_CHARGING
   } RemoteCommand;
 
+typedef enum
+  {
+  CAN_READ_ONLY,
+  INVALID_SYNTAX,
+  OK
+  } CommandResult;
+
 UINT8 nl_busactive; // non-zero if we recently received data
 UINT8 nl_abs_active; // non-zero if we recently received data from the ABS system
 UINT16 nl_gids; // current gids in the battery
@@ -328,13 +335,13 @@ BOOL vehicle_nissanleaf_ticker1(void)
 // cause any problems.
 //
 
-void vehicle_nissanleaf_remote_command(RemoteCommand command)
+CommandResult vehicle_nissanleaf_remote_command(RemoteCommand command)
   {
   unsigned char data;
   if (sys_features[FEATURE_CANWRITE] == 0)
     {
     // we don't want to transmit when CAN write is disabled.
-    return;
+    return CAN_READ_ONLY;
     }
 
   // Use GPIO to wake up GEN 1 Leaf with EV SYSTEM ACTIVATION REQUEST
@@ -363,6 +370,8 @@ void vehicle_nissanleaf_remote_command(RemoteCommand command)
       break;
     }
   vehicle_nissanleaf_send_can_message(0x56e, 1, &data);
+
+  return OK;
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -371,6 +380,8 @@ void vehicle_nissanleaf_remote_command(RemoteCommand command)
 
 BOOL vehicle_nissanleaf_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
   {
+  CommandResult result;
+
   // Temporary support via homelink command
   // TODO remove when the app supports CMD_ClimateControl
   if (cmd == CMD_Homelink)
@@ -392,30 +403,50 @@ BOOL vehicle_nissanleaf_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
   switch (cmd)
     {
     case CMD_StartCharge:
-      vehicle_nissanleaf_remote_command(START_CHARGING);
+      result = vehicle_nissanleaf_remote_command(START_CHARGING);
       break;
     case CMD_ClimateControl:
       strupr(msg);
       if (strcmppgm2ram(msg, "ON") == 0)
         {
-        vehicle_nissanleaf_remote_command(ENABLE_CLIMATE_CONTROL);
+        result = vehicle_nissanleaf_remote_command(ENABLE_CLIMATE_CONTROL);
         }
       else if (strcmppgm2ram(msg, "OFF") == 0)
         {
-        vehicle_nissanleaf_remote_command(DISABLE_CLIMATE_CONTROL);
+        result = vehicle_nissanleaf_remote_command(DISABLE_CLIMATE_CONTROL);
         }
       else
         {
-        // TODO should return invalid syntax
-        return FALSE;
+        result = INVALID_SYNTAX;
         }
       break;
     default:
       // not one of our commands, return FALSE and the framework will handle it
       return FALSE;
     }
-  // we return false even on success so the framework takes care of the response
-  return FALSE;
+
+  // we need to put the appropriate message in the buffer and do the sending
+  // dance to keep the framework happy
+  switch (result)
+    {
+    case CAN_READ_ONLY:
+      STP_NOCANWRITE(net_scratchpad, cmd);
+      break;
+    case INVALID_SYNTAX:
+      STP_INVALIDSYNTAX(net_scratchpad, cmd);
+      break;
+    case OK:
+      STP_OK(net_scratchpad, cmd);
+      break;
+    }
+
+  if (msgmode)
+    {
+    net_msg_encode_puts();
+    }
+
+  // we handled this command so return TRUE
+  return TRUE;
   }
 
 ////////////////////////////////////////////////////////////////////////
