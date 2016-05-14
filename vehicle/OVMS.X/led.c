@@ -46,7 +46,7 @@ void led_set(unsigned char led, signed char digit)
   if (digit == OVMS_LED_ON)
     {
     // Turn ON the LED, immediately
-    PORTC |= (1<<(OVMS_LED_O+digit));
+    PORTC |= (1 << (OVMS_LED_O + led));
     led_stat[led] = 0;
     }
   // N.B. We don't otherwise alter it for this run, as that would confuse the user
