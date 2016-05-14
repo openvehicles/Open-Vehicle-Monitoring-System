@@ -62,6 +62,7 @@ void led_start(void)
 void led_initialise(void)
   {
   PORTC &= 0b11001111; // Turn off both LEDs
+  TRISC &= 0b11001111; // Set both LEDs to outputs
 
   led_carticker = 0;
 
