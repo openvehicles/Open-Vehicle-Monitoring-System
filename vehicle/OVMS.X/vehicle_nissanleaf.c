@@ -32,6 +32,13 @@
 #include "net_msg.h"
 #include "inputs.h"
 
+// When the the Nissan TCU recieves a request from CARWINGS, it sends the
+// command CAN bus message 25 times at 10Hz. We send it once during the command
+// handler then ...ticker10th sends the rest.
+
+#define REMOTE_COMMAND_REPEAT_COUNT 24 // number of times to send the remote command after the first time
+#define ACTIVATION_REQUEST_TIME 10 // tenths of a second to hold activation request signal
+
 // Nissan Leaf state variables
 
 #pragma udata overlay vehicle_overlay_data
@@ -60,6 +67,10 @@ typedef enum
 
 UINT8 nl_busactive; // non-zero if we recently received data
 UINT8 nl_abs_active; // non-zero if we recently received data from the ABS system
+
+RemoteCommand nl_remote_command; // command to send, see ticker10th()
+UINT8 nl_remote_command_ticker; // number of tenths remaining to send remote command frames
+
 UINT16 nl_gids; // current gids in the battery
 ChargerStatus nl_charger_status; // the current charger status
 
@@ -296,6 +307,58 @@ BOOL vehicle_nissanleaf_poll1(void)
 
 #pragma tmpdata
 
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_remote_command()
+// Send a RemoteCommand on the CAN bus.
+//
+// Does nothing if transmit isn't enabled or if @command is out of range
+
+void vehicle_nissanleaf_send_command(RemoteCommand command)
+  {
+  unsigned char data;
+  switch (command)
+    {
+    case ENABLE_CLIMATE_CONTROL:
+      data = 0x4e;
+      break;
+    case DISABLE_CLIMATE_CONTROL:
+      data = 0x56;
+      break;
+    case START_CHARGING:
+      data = 0x66;
+      break;
+    default:
+      // shouldn't be possible, but lets not send random data on the bus
+      return;
+    }
+  vehicle_nissanleaf_send_can_message(0x56e, 1, &data);
+  }
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_ticker10th()
+// implements the repeated sending of remote commands and releases
+// EV SYSTEM ACTIVATION REQUEST after an appropriate amount of time
+
+BOOL vehicle_nissanleaf_ticker10th(void)
+  {
+  if (nl_remote_command_ticker > 0)
+    {
+    nl_remote_command_ticker--;
+    vehicle_nissanleaf_send_command(nl_remote_command);
+
+    // nl_remote_command_ticker is set to REMOTE_COMMAND_REPEAT_COUNT in
+    // vehicle_nissanleaf_remote_command() and we decrement it every 10th of a
+    // second, hence the following if statement evaluates to true
+    // ACTIVATION_REQUEST_TIME tenths after we start
+    if (nl_remote_command_ticker == REMOTE_COMMAND_REPEAT_COUNT - ACTIVATION_REQUEST_TIME)
+      {
+      // release EV SYSTEM ACTIVATION REQUEST
+      output_gpo3(FALSE);
+      }
+    }
+  return TRUE;
+  }
+
 BOOL vehicle_nissanleaf_ticker1(void)
   {
   car_time++;
@@ -338,6 +401,7 @@ BOOL vehicle_nissanleaf_ticker1(void)
 CommandResult vehicle_nissanleaf_remote_command(RemoteCommand command)
   {
   unsigned char data;
+
   if (sys_features[FEATURE_CANWRITE] == 0)
     {
     // we don't want to transmit when CAN write is disabled.
@@ -350,26 +414,17 @@ CommandResult vehicle_nissanleaf_remote_command(RemoteCommand command)
   data = 0;
   vehicle_nissanleaf_send_can_message(0x68c, 1, &data);
 
-  // wait 50 ms for things to wake up
+  // the GEN 2 sends the command 50ms after the wakeup message, so wait
   delay5(10);
 
-  // turn off EV SYSTEM ACTIVATION REQUEST
-  output_gpo3(FALSE);
+  // send the command once right now
+  vehicle_nissanleaf_send_command(command);
 
-  // send climate control command
-  switch (command)
-    {
-    case ENABLE_CLIMATE_CONTROL:
-      data = 0x4e;
-      break;
-    case DISABLE_CLIMATE_CONTROL:
-      data = 0x56;
-      break;
-    case START_CHARGING:
-      data = 0x66;
-      break;
-    }
-  vehicle_nissanleaf_send_can_message(0x56e, 1, &data);
+  // The GEN 2 Nissan TCU module sends the command repeatedly, so we instruct
+  // vehicle_nissanleaf_ticker10th() to do this
+  // EV SYSTEM ACTIVATION REQUEST will be released in ticker10th() too
+  nl_remote_command = command;
+  nl_remote_command_ticker = REMOTE_COMMAND_REPEAT_COUNT;
 
   return OK;
   }
@@ -468,6 +523,7 @@ BOOL vehicle_nissanleaf_initialise(void)
   // Vehicle specific data initialisation
   car_stale_timer = -1; // Timed charging is not supported for OVMS NL
   car_time = 0;
+  nl_remote_command_ticker = 0;
 
   // initialize SOC and SOC alert limit to avoid SMS on startup
   car_SOC = car_SOCalertlimit = 2;
@@ -529,6 +585,7 @@ BOOL vehicle_nissanleaf_initialise(void)
   // Hook in...
   vehicle_fn_poll0 = &vehicle_nissanleaf_poll0;
   vehicle_fn_poll1 = &vehicle_nissanleaf_poll1;
+  vehicle_fn_ticker10th = &vehicle_nissanleaf_ticker10th;
   vehicle_fn_ticker1 = &vehicle_nissanleaf_ticker1;
   vehicle_fn_commandhandler = &vehicle_nissanleaf_fn_commandhandler;
 
