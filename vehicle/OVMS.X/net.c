@@ -1890,8 +1890,6 @@ void net_ticker10th(void)
 //
 void net_initialise(void)
   {
-  // I/O configuration PORT C
-  TRISC = 0x80; // Port C RC0-6 output, RC7 input
   UARTIntInit();
 
   net_reg = 0;

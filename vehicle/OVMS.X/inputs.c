@@ -48,6 +48,10 @@ void inputs_initialise(void)
    //   Automatic Acquisition Time = 20 TAD = 32 us
    ADCON2=0b10111010;
 #endif // #ifdef OVMS_HW_??
+  // set PORTC outputs we manage low so they're in a consistent state on startup
+  PORTC &= 0b11110000;
+  // switch PORTC outputs we manage to output mode
+  TRISC &= 0b11110000;
   }
 
 unsigned char inputs_gsmgprs(void)
