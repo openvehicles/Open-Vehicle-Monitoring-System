@@ -35,7 +35,18 @@
 
 #pragma udata overlay vehicle_overlay_data
 
-unsigned char nl_busactive; // An indication that bus is active
+typedef enum
+  {
+  CHARGER_STATUS_IDLE,
+  CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT,
+  CHARGER_STATUS_CHARGING,
+  CHARGER_STATUS_FINISHED
+  } ChargerStatus;
+
+UINT8 nl_busactive; // non-zero if we recently received data
+UINT8 nl_abs_active; // non-zero if we recently received data from the ABS system
+UINT16 nl_gids; // current gids in the battery
+ChargerStatus nl_charger_status; // the current charger status
 
 #pragma udata
 
@@ -91,73 +102,122 @@ BOOL vehicle_nissanleaf_poll0(void)
   return TRUE;
   }
 
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_car_on()
+// Takes care of setting all the state appropriate when the car is on
+// or off. Centralized so we can more easily make on and off mirror
+// images.
+//
+
+void vehicle_nissanleaf_car_on(BOOL isOn)
+  {
+  car_doors1bits.CarON = isOn ? 1 : 0;
+  car_doors3bits.CarAwake = isOn ? 1 : 0;
+  // We don't know if handbrake is on or off, but it's usually off when the car is on.
+  car_doors1bits.HandBrake = isOn ? 0 : 1;
+  if (isOn && car_parktime != 0)
+    {
+    car_parktime = 0; // No longer parking
+    net_req_notification(NET_NOTIFY_ENV);
+    car_doors1bits.ChargePort = 0;
+    car_doors1bits.Charging = 0;
+    car_doors1bits.PilotSignal = 0;
+    car_chargestate = 0;
+    car_chargesubstate = 0;
+    }
+  else if (!isOn && car_parktime == 0)
+    {
+    car_parktime = car_time - 1; // Record it as 1 second ago, so non zero report
+    net_req_notification(NET_NOTIFY_ENV);
+    }
+  }
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_charger_status()
+// Takes care of setting all the charger state bit when the charger
+// switches on or off. Separate from vehicle_nissanleaf_poll1() to make
+// it clearer what is going on.
+//
+
+void vehicle_nissanleaf_charger_status(ChargerStatus status)
+  {
+  switch (status)
+    {
+    case CHARGER_STATUS_IDLE:
+      car_doors1bits.Charging = 0;
+      car_chargestate = 0;
+      car_chargesubstate = 0;
+      break;
+    case CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT:
+      car_doors1bits.Charging = 0;
+      car_chargestate = 0;
+      car_chargesubstate = 0;
+      break;
+    case CHARGER_STATUS_CHARGING:
+      car_doors1bits.Charging = 1;
+      car_chargestate = 1;
+      car_chargesubstate = 3; // Charging by request
+      if (nl_charger_status != status)
+        {
+        car_chargeduration = 0; // Reset charge duration
+        car_chargekwh = 0; // Reset charge kWh
+        }
+      break;
+    case CHARGER_STATUS_FINISHED:
+      // Charging finished
+      car_chargecurrent = 0;
+      car_doors1bits.Charging = 0;
+      car_chargestate = 4; // Charge DONE
+      car_chargesubstate = 3; // Charging by request
+      break;
+    }
+  if (nl_charger_status != status)
+    {
+    net_req_notification(NET_NOTIFY_STAT);
+    }
+  nl_charger_status = status;
+  }
+
 BOOL vehicle_nissanleaf_poll1(void)
   {
   nl_busactive = 10; // Reset the per-second charge timer
 
   switch (can_id)
     {
-    case 0x56e:
-      if (can_databuffer[0] == 0x86)
-        { // Car is driving
-        //        vehicle_poll_setstate(1);
-        car_doors1 &= ~0x40; // NOT PARK
-        car_doors1 |= 0x80; // CAR ON
-        if (car_parktime != 0)
-          {
-          car_parktime = 0; // No longer parking
-          net_req_notification(NET_NOTIFY_ENV);
-          }
-        }
-      else
-        { // Car is not driving
-        //        vehicle_poll_setstate(0);
-        car_doors1 |= 0x40; // PARK
-        car_doors1 &= ~0x80; // CAR OFF
-        car_speed = 0;
-        if (car_parktime == 0)
-          {
-          car_parktime = car_time - 1; // Record it as 1 second ago, so non zero report
-          net_req_notification(NET_NOTIFY_ENV);
-          }
-        }
+    case 0x284:
+      // this is apparently data relayed from the ABS system, if we have
+      // that then we assume car is on.
+      nl_abs_active = 10;
+      vehicle_nissanleaf_car_on(TRUE);
+      // vehicle_poll_setstate(1);
       break;
     case 0x5bc:
-      car_idealrange = ((int) can_databuffer[0] << 2) +
-        ((can_databuffer[1]&0xc0) >> 6);
-      car_SOC = (car_idealrange * 100 + 140) / 281; // convert Gids to percent
-      car_idealrange = (car_idealrange * 84 + 140) / 281;
+      nl_gids = ((unsigned int) can_databuffer[0] << 2) +
+        ((can_databuffer[1] & 0xc0) >> 6);
+      car_SOC = (nl_gids * 100 + 140) / 281;
+      car_idealrange = (nl_gids * 84 + 140) / 281;
       break;
     case 0x5bf:
+      // this is the J1772 maximum available current, 0 if we're not plugged in
       car_chargelimit = can_databuffer[2] / 5;
-      if ((car_chargelimit != 0)&&(can_databuffer[3] != 0))
-        { // Car is charging
-        if (car_chargestate != 1)
-          {
-          car_doors1bits.ChargePort = 1;
-          car_doors1bits.Charging = 1;
-          car_doors1bits.PilotSignal = 1;
-          car_chargemode = 0; // Standard charge mode
-          car_charge_b4 = 0; // Not required
-          car_chargestate = 1; // Charging state
-          car_chargesubstate = 3; // Charging by request
-          car_chargeduration = 0; // Reset charge duration
-          car_chargekwh = 0; // Reset charge kWh
-          net_req_notification(NET_NOTIFY_STAT);
-          }
+      car_doors1bits.ChargePort = car_chargelimit == 0 ? 0 : 1;
+      car_doors1bits.PilotSignal = car_chargelimit == 0 ? 0 : 1;
+
+      switch (can_databuffer[4])
+        {
+        case 0x28:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_IDLE);
+          break;
+        case 0x30:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT);
+          break;
+        case 0x60:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_CHARGING);
+          break;
+        case 0x40:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_FINISHED);
+          break;
         }
-      /*      else if ((car_chargelimit==0)&&(car_chargestate==1))
-              { // Charge has been interrupted
-              car_doors1bits.ChargePort = 0;
-              car_doors1bits.Charging = 0;
-              car_doors1bits.PilotSignal = 0;
-              car_chargemode = 0;     // Standard charge mode
-              car_charge_b4 = 0;      // Not required
-              car_chargestate = 21;    // Charge STOPPED
-              car_chargesubstate = 14; // Charge INTERRUPTED
-              net_req_notification(NET_NOTIFY_CHARGE);
-              net_req_notification(NET_NOTIFY_STAT);
-              } */
       break;
     }
   return TRUE;
@@ -169,19 +229,20 @@ BOOL vehicle_nissanleaf_ticker1(void)
   {
   car_time++;
   if (nl_busactive > 0) nl_busactive--;
+  if (nl_abs_active > 0) nl_abs_active--;
+
+  // have the messages from the ABS system stopped?
+  if (nl_abs_active == 0)
+    {
+    vehicle_nissanleaf_car_on(FALSE);
+    car_speed = 0;
+    }
+
+  // has the whole CAN bus gone quiet?
   if (nl_busactive == 0)
     {
-    if (car_chargestate == 1)
-      { // Charge has completed
-      car_doors1bits.ChargePort = 0;
-      car_doors1bits.Charging = 0;
-      car_doors1bits.PilotSignal = 0;
-      car_chargemode = 0; // Standard charge mode
-      car_charge_b4 = 0; // Not required
-      car_chargestate = 4; // Charge DONE
-      car_chargesubstate = 3; // Leave it as is
-      net_req_notification(NET_NOTIFY_STAT);
-      }
+    vehicle_nissanleaf_car_on(FALSE);
+    car_speed = 0;
     }
   }
 
@@ -204,6 +265,9 @@ BOOL vehicle_nissanleaf_initialise(void)
   // Vehicle specific data initialisation
   car_stale_timer = -1; // Timed charging is not supported for OVMS NL
   car_time = 0;
+
+  // initialize SOC and SOC alert limit to avoid SMS on startup
+  car_SOC = car_SOCalertlimit = 2;
 
   CANCON = 0b10010000; // Initialize CAN
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
@@ -263,9 +327,13 @@ BOOL vehicle_nissanleaf_initialise(void)
   vehicle_fn_poll0 = &vehicle_nissanleaf_poll0;
   vehicle_fn_poll1 = &vehicle_nissanleaf_poll1;
   vehicle_fn_ticker1 = &vehicle_nissanleaf_ticker1;
-  if (sys_features[FEATURE_CANWRITE] > 0)
-    vehicle_poll_setpidlist(vehicle_nissanleaf_polls);
-  vehicle_poll_setstate(0);
+
+  // TODO this causes a relay to click every 20 seconds or so while charging
+  // TODO and on my gen 1 car at least, does not get the VIN number or speed
+  //if (sys_features[FEATURE_CANWRITE] > 0)
+  //vehicle_poll_setpidlist(vehicle_nissanleaf_polls);
+  //
+  //vehicle_poll_setstate(0);
 
   net_fnbits |= NET_FN_INTERNALGPS; // Require internal GPS
   net_fnbits |= NET_FN_12VMONITOR; // Require 12v monitor
