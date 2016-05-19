@@ -364,6 +364,7 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", (*p == 'M')
           ? car_max_idealrange
           : KmFromMi(car_max_idealrange));
+  s = stp_i(s, ",", car_chargetype);
 
   return net_msg_encode_statputs(stat, &crc_stat);
 }
