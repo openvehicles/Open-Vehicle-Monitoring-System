@@ -86,12 +86,18 @@ char net_buf[NET_BUF_MAX];                  // The network buffer itself
 
 // ROM Constants
 
-#ifdef OVMS_INTERNALGPS
+#if defined(OVMS_INTERNALGPS) && defined(OVMS_SIMCOM_SIM908)
 // Using internal SIM908 GPS:
 rom char NET_WAKEUP_GPSON[] = "AT+CGPSPWR=1\r";
 rom char NET_WAKEUP_GPSOFF[] = "AT+CGPSPWR=0\r";
 rom char NET_REQGPS[] = "AT+CGPSINF=2;+CGPSINF=64;+CGPSPWR=1\r";
 rom char NET_INIT1_GPSON[] = "AT+CGPSRST=0;+CSMINS?\r";
+#elif defined(OVMS_INTERNALGPS) && defined(OVMS_SIMCOM_SIM808)
+// Using internal SIM808 GPS:
+rom char NET_WAKEUP_GPSON[] = "AT+CGNSPWR=1\r";
+rom char NET_WAKEUP_GPSOFF[] = "AT+CGNSPWR=0\r";
+rom char NET_REQGPS[] = "AT+CNSINF\r";
+rom char NET_INIT1_GPSON[] = "AT+CSMINS?\r";
 #else
 // Using external GPS from car:
 rom char NET_WAKEUP[] = "AT\r";
@@ -1049,7 +1055,7 @@ void net_state_activity()
             }
           }
         }
-#ifdef OVMS_INTERNALGPS
+#if defined(OVMS_INTERNALGPS) && defined(OVMS_SIMCOM_SIM908)
       else if ((memcmppgm2ram(net_buf, (char const rom far*)"2,", 2) == 0)&&
                ((net_fnbits & NET_FN_INTERNALGPS)>0))
         {
@@ -1129,6 +1135,59 @@ void net_state_activity()
         }
 
       }
+#elif defined(OVMS_INTERNALGPS) && defined(OVMS_SIMCOM_SIM808)
+      else if ((memcmppgm2ram(net_buf, (char const rom far*)"+CGNSINF:", 9) == 0)&&
+               ((net_fnbits & NET_FN_INTERNALGPS)>0))
+        {
+        // Incoming GPS coordinates
+        // +CGNSINF: <GNSS run status>,<Fix status>, <UTC date & Time>,<Latitude>,<Longitude>,
+        // <MSL Altitude>,<Speed Over Ground>, <Course Over Ground>,
+        // <Fix Mode>,<Reserved1>,<HDOP>,<PDOP>, <VDOP>,<Reserved2>,<GNSS Satellites in View>,
+        // <GNSS Satellites Used>,<GLONASS Satellites Used>,<Reserved3>,<C/N0 max>,<HPA>,<VPA>
+        long lat, lon;
+        char fix;
+        int alt;
+        int dir;
+      
+        // Parse string:
+        if( b = strtokpgmram( net_buf+9, "," ) )
+            ;                                     // GNSS run status
+        if( b = strtokpgmram( NULL, "," ) )
+            fix = *b;                             // GNSS Fix status
+        if( b = strtokpgmram( NULL, "," ) )
+            ;                                     // UTC date & time
+        if( b = strtokpgmram( NULL, "," ) )
+            lat = gps2latlon( b );                // Latitude
+        if( b = strtokpgmram( NULL, "," ) )
+            lon = gps2latlon( b );                // Longitude
+        if( b = strtokpgmram( NULL, "," ) )
+            alt = atoi( b );                      // Altitude
+        if( b = strtokpgmram( NULL, "," ) )
+            ;                                     // Speed over ground
+        if( b = strtokpgmram( NULL, "," ) )
+            dir = atoi( b );                      // Course over ground
+
+        if( b )
+          {
+          // data set complete, store:
+
+          car_gpslock = fix & 0x01;
+
+          if( car_gpslock )
+            {
+            car_latitude = lat;
+            car_longitude = lon;
+            car_altitude = alt;
+            car_direction = dir;
+          
+            car_stale_gps = 120; // Reset stale indicator
+            }
+          else
+            {
+            car_stale_gps = 0;
+            }
+          }
+        }
 #endif
       else if (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT OK", 10) == 0)
         {

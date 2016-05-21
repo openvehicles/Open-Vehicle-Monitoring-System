@@ -27,11 +27,11 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 PROJECTNAME=OVMS.X
 
 # Active Configuration
-DEFAULTCONF=V2_TR_Production
+DEFAULTCONF=V2_Production_SIM808
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=V1_Production V2_Experimental V2_Production V2_TR_Production V2_RT_Production 
+ALLCONFS=V1_Production_SIM908 V2_Experimental_SIM908 V2_Experimental_SIM808 V2_Production_SIM908 V2_Production_SIM808 V2_TR_Production_SIM908 V2_TR_Production_SIM808 V2_RT_Production_SIM908 V2_RT_Production_SIM808 
 
 
 # build
@@ -45,21 +45,29 @@ ALLCONFS=V1_Production V2_Experimental V2_Production V2_TR_Production V2_RT_Prod
 
 # clobber
 .clobber-impl: .clobber-pre .depcheck-impl
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Production clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TR_Production clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RT_Production clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Production_SIM908 clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental_SIM908 clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental_SIM808 clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production_SIM908 clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production_SIM808 clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TR_Production_SIM908 clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TR_Production_SIM808 clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RT_Production_SIM908 clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RT_Production_SIM808 clean
 
 
 
 # all
 .all-impl: .all-pre .depcheck-impl
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Production build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TR_Production build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RT_Production build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V1_Production_SIM908 build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental_SIM908 build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Experimental_SIM808 build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production_SIM908 build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_Production_SIM808 build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TR_Production_SIM908 build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_TR_Production_SIM808 build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RT_Production_SIM908 build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=V2_RT_Production_SIM808 build
 
 
 
