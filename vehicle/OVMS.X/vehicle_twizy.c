@@ -4511,11 +4511,12 @@ BOOL vehicle_twizy_poll0(void)
        * CAN ID 0x424: sent every 100 ms (10 per second)
        */
       // max drive (discharge) + recup (charge) power:
+#ifdef OVMS_TWIZY_BATTMON
       if (CAN_BYTE(2) != 0xff)
         twizy_batt[0].max_recup_pwr = CAN_BYTE(2);
       if (CAN_BYTE(3) != 0xff)
         twizy_batt[0].max_drive_pwr = CAN_BYTE(3);
-
+#endif //#ifdef OVMS_TWIZY_BATTMON
       break;
     }
     

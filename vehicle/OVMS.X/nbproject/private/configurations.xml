@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurationDescriptor version="62">
   <projectmakefile>Makefile</projectmakefile>
-  <defaultConf>3</defaultConf>
+  <defaultConf>4</defaultConf>
   <confs>
-    <conf name="V1_Production" type="2">
+    <conf name="V1_Production_SIM908" type="2">
       <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
@@ -21,7 +21,7 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="V2_Experimental" type="2">
+    <conf name="V2_Experimental_SIM908" type="2">
       <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=end</platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
@@ -39,7 +39,25 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="V2_Production" type="2">
+    <conf name="V2_Experimental_SIM808" type="2">
+      <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=end</platformToolSN>
+      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
+      <mdbdebugger version="1">
+        <placeholder1>place holder 1</placeholder1>
+        <placeholder2>place holder 2</placeholder2>
+      </mdbdebugger>
+      <runprofile version="6">
+        <args></args>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <console-type>0</console-type>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+    <conf name="V2_Production_SIM908" type="2">
       <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=&lt;xpt>h:=end</platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
@@ -57,7 +75,7 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="V2_TR_Production" type="2">
+    <conf name="V2_Production_SIM808" type="2">
       <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=&lt;xpt>h:=end</platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
@@ -75,7 +93,61 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="V2_RT_Production" type="2">
+    <conf name="V2_TR_Production_SIM908" type="2">
+      <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=&lt;xpt>h:=end</platformToolSN>
+      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
+      <mdbdebugger version="1">
+        <placeholder1>place holder 1</placeholder1>
+        <placeholder2>place holder 2</placeholder2>
+      </mdbdebugger>
+      <runprofile version="6">
+        <args></args>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <console-type>0</console-type>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+    <conf name="V2_TR_Production_SIM808" type="2">
+      <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=&lt;xpt>h:=end</platformToolSN>
+      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
+      <mdbdebugger version="1">
+        <placeholder1>place holder 1</placeholder1>
+        <placeholder2>place holder 2</placeholder2>
+      </mdbdebugger>
+      <runprofile version="6">
+        <args></args>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <console-type>0</console-type>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+    <conf name="V2_RT_Production_SIM908" type="2">
+      <platformToolSN></platformToolSN>
+      <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
+      <mdbdebugger version="1">
+        <placeholder1>place holder 1</placeholder1>
+        <placeholder2>place holder 2</placeholder2>
+      </mdbdebugger>
+      <runprofile version="6">
+        <args></args>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <console-type>0</console-type>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+    <conf name="V2_RT_Production_SIM808" type="2">
       <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
