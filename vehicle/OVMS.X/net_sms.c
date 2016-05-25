@@ -70,8 +70,8 @@ rom char NET_MSG_ALARM[] = "Vehicle alarm is sounding!";
 rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
 #endif //OVMS_NO_VEHICLE_ALERTS
 
-//rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttp://maps.google.com/maps/api/staticmap?zoom=15&size=500x640&scale=2&sensor=false&markers=icon:http://goo.gl/pBcX7%7C";
-rom char NET_MSG_GOOGLEMAPS[] = "Car location:\r\nhttps://maps.google.com/maps?q=";
+rom char NET_MSG_GOOGLEMAPS[] = "Car location:\nhttps://maps.google.com/maps?q=";
+rom char NET_MSG_OPENSTREETMAP[] = "\nhttp://osm.org?mlat=";
 
 
 
@@ -383,8 +383,13 @@ BOOL net_sms_handle_gps(char *caller, char *command, char *arguments)
   delay100(2);
   net_send_sms_start(caller);
   
+  // Google Maps:
   s = stp_latlon(net_scratchpad, NET_MSG_GOOGLEMAPS, car_latitude);
-  s = stp_latlon(s, ",", car_longitude);
+  s = stp_latlon(s, "+", car_longitude);
+  
+  // OpenStreetMap:
+  s = stp_latlon(s, NET_MSG_OPENSTREETMAP, car_latitude);
+  s = stp_latlon(s, "&mlon=", car_longitude);
 
   net_puts_ram(net_scratchpad);
 

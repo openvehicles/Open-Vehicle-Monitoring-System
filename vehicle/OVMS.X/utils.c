@@ -282,16 +282,25 @@ unsigned long axtoul(char *s)
 }
 
 
-// Convert GPS coordinate form DDDMM.MMMMMM to internal latlon value
+// Convert GPS coordinate form to internal latlon value
+// SIM908: DDDMM.MMMMMM (separate South/West handling, see net.c)
+// SIM808: ±ddd.dddddd
 
 long gps2latlon(char *gpscoord)
 {
   float f;
+#ifdef OVMS_SIMCOM_SIM908
   long d;
+#endif //OVMS_SIMCOM_SIM908
 
   f = myatof(gpscoord);
+
+#ifdef OVMS_SIMCOM_SIM908
+  // SIM908: DDDMM.MMMMMM
   d = (long) (f / 100); // extract degrees
   f = (float) d + (f - (d * 100)) / 60; // convert to decimal format
+#endif //OVMS_SIMCOM_SIM908
+
   return (long) (f * 3600 * 2048); // convert to raw format
 }
 

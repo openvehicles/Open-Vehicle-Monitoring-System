@@ -96,7 +96,7 @@ rom char NET_INIT1_GPSON[] = "AT+CGPSRST=0;+CSMINS?\r";
 // Using internal SIM808 GPS:
 rom char NET_WAKEUP_GPSON[] = "AT+CGNSPWR=1\r";
 rom char NET_WAKEUP_GPSOFF[] = "AT+CGNSPWR=0\r";
-rom char NET_REQGPS[] = "AT+CNSINF\r";
+rom char NET_REQGPS[] = "AT+CGNSINF\r";
 rom char NET_INIT1_GPSON[] = "AT+CSMINS?\r";
 #else
 // Using external GPS from car:
