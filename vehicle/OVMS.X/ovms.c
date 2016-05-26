@@ -209,7 +209,10 @@ void main(void)
 
   // Port configuration
   inputs_initialise();
+  
+  // Power up modem:
   TRISB = 0xFE;
+  modem_reboot();
 
   // Timer 0 enabled, Fosc/4, 16 bit mode, prescaler 1:256
   // This gives us one tick every 51.2uS before prescale (13.1ms after)

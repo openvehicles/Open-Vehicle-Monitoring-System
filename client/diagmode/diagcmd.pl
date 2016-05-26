@@ -104,7 +104,7 @@ $port->handshake("none");
 
 $port->read_char_time(0);
 $port->read_const_time(1000);
-$port->are_match("\r\n");
+$port->are_match("\r","\n");
 
 $port->write_settings;
 
@@ -209,8 +209,8 @@ sub do_init {
 
 	GODIAG: while (1) {
 		print STDOUT "*** INIT: PLEASE POWER UP OR RESET OVMS MODULE NOW\n";
-		$line = wait_for('GPS Ready') || next GODIAG;
-		@response = do_cmd('SETUP', 1, 'OVMS DIAGNOSTICS MODE') && last GODIAG;
+		$line = wait_for('RDY') || next GODIAG;
+		@response = do_cmd('SETUP', 1, 'OVMS DIAGNOSTICS MODE', 30) && last GODIAG;
 	}
 
 	print STDOUT "*** INIT: DIAG MODE ESTABLISHED\n";
