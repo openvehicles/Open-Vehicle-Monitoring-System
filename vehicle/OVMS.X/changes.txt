@@ -28,6 +28,40 @@
 ; THE SOFTWARE.
 */
 
+2016-05-29 2.8.6       Firmware 2.8.6 SIM808 GSM/GPS production support
+                       # Framework: - Support for separate charger temperature (car_tcharger)
+                       # Twizy user guide v1.8 (BMS power limit bypass)
+                       # Twizy documentation: - Added command overview
+                       # Twizy documentation: - Added limiter designer to powermap calculator
+                       # Twizy documentation: - Added some more registers to SDO list
+                       # Leaf: reformat using mplabx 'whitesmiths' formatting rules, no code changes
+                       # Merge carrott/nissan-leaf-reformat enhancements for Nissan Leaf
+                       # Twizy: minor documentation fixes & additions
+                       # Merged Kia Soul 0.46  06 Mar 2016  (Geir Øyvind Vælidalo)
+                       # Leaf: - TCU messages aren't suitable for car state selection
+                       # Leaf: - Use presence of inverter messages to indicate car on and driving
+                       # Leaf: - Use bus inactivity to indicate car off
+                       # Leaf: - use presence of ABS messages to indicate driving - add some TODO
+                       # Leaf: extract car on-off to a function
+                       # Leaf: when ABS messages stop, car must be off, even if CAN bus is still active
+                       # Leaf: understand waiting for charge timer
+                       # Leaf: Refactor charger status logic
+                       # Leaf: extract gids out to a separate value
+                       # Leaf: turn off polling as it causes a relay to click every 20 seconds while charging
+                       # Leaf: don't update charger state when the can bus goes quiet as charger has already told us what happened
+                       # Leaf: use J1772 pilot maximum current to set the pilot and charge door bits
+                       # Leaf: use unambiguous variable types
+                       # Leaf: initialize SOC and SOC alert to avoid SMS on startup
+                       # Merge pull request #147 from carrott/nissan-leaf
+                       # Deterministic TRISC & PORTC init in each module
+                       # led_set should turn on the chosen led, not OVMS_LED_O - 1 == RC3 when digit == OVMS_LED_ON
+                       # Merge pull request #148 from carrott/deterministic-portc
+                       # Fix for twizy to allow production builds with OVMS_TWIZY_BATTMON
+                       # Firmware build restructuring for SIM808 support, and basic GPS support for SIM808
+                       # SIM808 GPS fetch & coordinate processing - "GPS?" command optimized GM link, extended by OSM link
+                       # Added modem power up on module power up - Diag mode clients reworked for SIM808 operation
+                       # RT documentation: added modem terminal speed fix for diag mode
+
 2016-03-14 2.8.5       Firmware 2.8.5 SIM808 GSM/GPS module support
                        # Fix for Twizy build w/o BATTMON
                        # Twizy: ideal range calculated with temperature influence approximation
