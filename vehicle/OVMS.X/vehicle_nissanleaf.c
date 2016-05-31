@@ -332,6 +332,16 @@ BOOL vehicle_nissanleaf_poll1(void)
         }
     }
       break;
+    case 0x54c:
+      if (can_databuffer[6] == 0xff)
+        {
+        break;
+        }
+      // TODO this temperature isn't quite right
+      car_ambient_temp = ((int) can_databuffer[6]) - 56; // Fahrenheit
+      car_ambient_temp = (car_ambient_temp - 32) / 1.8f; // Celsius
+      car_stale_ambient = 10;
+      break;
     case 0x5bc:
     {
       UINT16 nl_gids_candidate = ((UINT16) can_databuffer[0] << 2) | ((can_databuffer[1] & 0xc0) >> 6);
@@ -491,6 +501,7 @@ BOOL vehicle_nissanleaf_ticker1(void)
   car_time++;
   if (nl_busactive > 0) nl_busactive--;
   if (nl_abs_active > 0) nl_abs_active--;
+  if (car_stale_ambient > 0) car_stale_ambient--;
 
   // have the messages from the ABS system stopped?
   if (nl_abs_active == 0)
