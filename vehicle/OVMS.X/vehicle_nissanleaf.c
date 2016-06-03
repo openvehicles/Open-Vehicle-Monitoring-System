@@ -32,6 +32,15 @@
 #include "net_msg.h"
 #include "inputs.h"
 
+// Nissan Leaf module version:
+rom char nissanleaf_version[] = "1.0";
+
+// Nissan Leaf capabilities:
+// - CMD_StartCharge (11)
+// - CMD_Homelink (24)
+// - CMD_ClimateControl (26)
+rom char nissanleaf_capabilities[] = "C11,C24,C26";
+
 // When the the Nissan TCU recieves a request from CARWINGS, it sends the
 // command CAN bus message 25 times at 10Hz. We send it once during the command
 // handler then ...ticker10th sends the rest.
@@ -557,6 +566,10 @@ BOOL vehicle_nissanleaf_initialise(void)
   nl_busactive = 10;
 
   // Hook in...
+  
+  vehicle_version = nissanleaf_version;
+  can_capabilities = nissanleaf_capabilities;
+  
   vehicle_fn_poll0 = &vehicle_nissanleaf_poll0;
   vehicle_fn_poll1 = &vehicle_nissanleaf_poll1;
   vehicle_fn_ticker10th = &vehicle_nissanleaf_ticker10th;
