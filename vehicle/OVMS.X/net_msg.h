@@ -91,6 +91,8 @@ void net_msg_cmd_do(void);
 #define CMD_Reboot              5   // ()
 #define CMD_Alert               6   // ()
 
+#define CMD_StartCharge         11  // ()
+
 #define CMD_Lock                20  // (pin)
 #define CMD_UnLock              22  // (pin)
 #define CMD_ValetOn             21  // (pin)
@@ -100,6 +102,8 @@ void net_msg_cmd_do(void);
 #define CMD_SendSMS             40  // (phone number, SMS message)
 #define CMD_SendUSSD            41  // (USSD_CODE)
 #define CMD_SendRawAT           42  // (raw AT command)
+
+#define CMD_ClimateControl      43  // (ON or OFF)
 
 void net_msg_forward_sms(char* caller, char* SMS);
 void net_msg_reply_ussd(char *buf, unsigned char buflen);
