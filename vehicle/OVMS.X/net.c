@@ -105,9 +105,15 @@ rom char NET_WAKEUP[] = "AT\r";
 
 rom char NET_INIT1[] = "AT+CSMINS?\r";
 rom char NET_INIT2[] = "AT+CCID;+CPBF=\"O-\";+CPIN?\r";
+#ifdef OVMS_DIAGDATA
+// using DIAG port for data output: enable modem echo
+rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;+CLTS=1;E1\r";
+#else
+// default: disable modem echo
 rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;+CLTS=1;E0\r";
-//rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;+CLTS=1;E1\r";
+#endif // OVMS_DIAGDATA
 // NOTE: changing IP mode to QSEND=0 needs handling change for "SEND OK"/"DATA ACCEPT" in net_state_activity()
+
 rom char NET_COPS[] = "AT+COPS=0,1;+COPS?\r";
 
 rom char NET_HANGUP[] = "ATH\r";
@@ -1953,4 +1959,9 @@ void net_initialise(void)
 
   net_reg = 0;
   net_state_enter(NET_STATE_FIRSTRUN);
+
+#ifdef OVMS_FIXED_DIAGMODE
+  delay100(50); // give modem some init time
+  net_state_enter(NET_STATE_DIAGMODE);
+#endif // OVMS_FIXED_DIAGMODE
   }

@@ -324,6 +324,8 @@
  * Twizy optional compile switches:
  * 
  *  OVMS_TWIZY_DEBUG -- enable DEBUG cmd
+ *  OVMS_TWIZY_HELP -- enable HELP cmd extension
+ *  OVMS_DIAGDATA -- enable data output via DIAG port
  *  OVMS_CANSIM -- include CAN simulation data (needs DEBUG cmd)
  *  OVMS_TWIZY_BATTMON -- enable battery pack/cell monitoring
  *  OVMS_TWIZY_CFG -- enable SEVCON configuration
@@ -5726,6 +5728,24 @@ BOOL vehicle_twizy_state_ticker1(void)
 #endif // OVMS_TWIZY_CFG
 
 
+#ifdef OVMS_DIAGDATA
+  // Send vehicle data status to serial port:
+  if ((net_buf_mode == NET_BUF_CRLF) && (net_buf_pos == 0))
+    {
+    char *s;
+    s = stp_rom(net_scratchpad, "#RT1");
+    s = stp_l2f(s, ",", twizy_odometer, 2);
+    s = stp_x(s, ",", twizy_status);
+    s = stp_l2f(s, ",", twizy_soc, 2);
+    s = stp_i(s, ",", twizy_range);
+    s = stp_l2f(s, ",", twizy_speed, 2);
+    s = stp_l(s, ",", ((long) twizy_power * 64L + 5) / 10);
+    s = stp_rom(s, "\r\n");
+    net_puts_ram(net_scratchpad);
+    }
+#endif // OVMS_DIAGDATA
+  
+
   return FALSE;
 }
 
@@ -7890,7 +7910,10 @@ rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] = {
   "3CFG",         // Twizy: SEVCON configuration tweaking
 #endif // OVMS_TWIZY_CFG
 
+#ifdef OVMS_TWIZY_HELP
   "3HELP", // extend HELP output
+#endif // OVMS_TWIZY_HELP
+  
   ""
 };
 
@@ -7909,10 +7932,12 @@ rom far BOOL(*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *com
 #endif // OVMS_TWIZY_BATTMON
 
 #ifdef OVMS_TWIZY_CFG
-  &vehicle_twizy_cfg_sms,
+  &vehicle_twizy_cfg_sms
 #endif // OVMS_TWIZY_CFG
 
-  &vehicle_twizy_help_sms
+#ifdef OVMS_TWIZY_HELP
+  , &vehicle_twizy_help_sms
+#endif // OVMS_TWIZY_HELP
 };
 
 
@@ -7985,6 +8010,7 @@ BOOL vehicle_twizy_fn_smsextensions(char *caller, char *command, char *arguments
 // - add Twizy commands
 //
 
+#ifdef OVMS_TWIZY_HELP
 BOOL vehicle_twizy_help_sms(BOOL premsg, char *caller, char *command, char *arguments)
 {
   int k;
@@ -8005,7 +8031,7 @@ BOOL vehicle_twizy_help_sms(BOOL premsg, char *caller, char *command, char *argu
 
   return TRUE;
 }
-
+#endif // OVMS_TWIZY_HELP
 
 ////////////////////////////////////////////////////////////////////////
 // vehicle_twizy_initialise()
