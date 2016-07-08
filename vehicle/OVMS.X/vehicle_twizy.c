@@ -280,6 +280,10 @@
     - CAN control bits to disable emergency reset, kickdown & autopower
     - Fix: motor & PEM temperatures fixed, charger temperature added
 
+ * 3.7.3  8 Jul 2016 (Michael Balzer)
+    - Power efficiency report: energy usage correction
+    - Power totals report: trip length from odo (for consistency)
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -397,7 +401,7 @@ typedef struct {
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.7.2";
+rom char vehicle_twizy_version[] = "3.7.3";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -5978,7 +5982,7 @@ void vehicle_twizy_power_collect(void)
 
 void vehicle_twizy_power_prepmsg(char mode)
 {
-  unsigned long pwr_dist, pwr_use, pwr_rec;
+  unsigned long pwr_dist, pwr_use, pwr_rec, odo_dist;
   UINT8 prc_const = 0, prc_accel = 0, prc_decel = 0;
   char *s;
 
@@ -5994,6 +5998,8 @@ void vehicle_twizy_power_prepmsg(char mode)
   pwr_rec = twizy_speedpwr[CAN_SPEED_CONST].rec
           + twizy_speedpwr[CAN_SPEED_ACCEL].rec
           + twizy_speedpwr[CAN_SPEED_DECEL].rec;
+  
+  odo_dist = twizy_odometer - twizy_odometer_tripstart;
 
   // distribution:
   if (pwr_dist > 0)
@@ -6017,7 +6023,7 @@ void vehicle_twizy_power_prepmsg(char mode)
     // power totals:
     s = stp_ul(s, "Power -", (pwr_use + WH_RND) / WH_DIV);
     s = stp_ul(s, " +", (pwr_rec + WH_RND) / WH_DIV);
-    s = stp_l2f(s, " Wh ", pwr_dist / 1000, 1);
+    s = stp_l2f(s, " Wh ", (odo_dist + 5) / 10, 1);
     s = stp_i(s, " km\r Const ", prc_const);
     s = stp_ul(s, "% -", (twizy_speedpwr[CAN_SPEED_CONST].use + WH_RND) / WH_DIV);
     s = stp_ul(s, " +", (twizy_speedpwr[CAN_SPEED_CONST].rec + WH_RND) / WH_DIV);
@@ -6041,7 +6047,11 @@ void vehicle_twizy_power_prepmsg(char mode)
     long pwr;
     long dist;
 
-    // speed distances are in ~ 1/10 m
+    // speed distances are in ~ 1/10 m based on cyclic counter in ID 59E
+    // real distances per odometer (10 m resolution) are ~ 8-9% lower
+    // compensate:
+    
+    float correction = ((float) odo_dist * 100) / pwr_dist;
 
     // Template:
     //   Trip 12.3km 12.3kph 123Wpk/12% SOC-12.3%=12.3%
@@ -6049,14 +6059,14 @@ void vehicle_twizy_power_prepmsg(char mode)
     //   --- 12% 12.3kps 123Wpk/12% ^^^ 123m 123Wpk/12%
     //   vvv 123m 123Wpk/12%
 
-    s = stp_l2f(s, "Trip ", (twizy_odometer - twizy_odometer_tripstart + 5) / 10, 1);
+    s = stp_l2f(s, "Trip ", (odo_dist + 5) / 10, 1);
     s = stp_l2f(s, "km ", (twizy_speedpwr[CAN_SPEED_CONST].spdcnt > 0)
             ? (twizy_speedpwr[CAN_SPEED_CONST].spdsum
              / twizy_speedpwr[CAN_SPEED_CONST].spdcnt + 5) / 10
             : 0, 1); // avg speed kph
     s = stp_rom(s, "kph");
 
-    dist = pwr_dist;
+    dist = (float) pwr_dist * correction;
     pwr = pwr_use - pwr_rec;
     if ((pwr_use > 0) && (dist > 0))
     {
@@ -6074,7 +6084,7 @@ void vehicle_twizy_power_prepmsg(char mode)
 
     pwr_use = twizy_speedpwr[CAN_SPEED_CONST].use;
     pwr_rec = twizy_speedpwr[CAN_SPEED_CONST].rec;
-    dist = twizy_speedpwr[CAN_SPEED_CONST].dist;
+    dist = (float) twizy_speedpwr[CAN_SPEED_CONST].dist * correction;
     pwr = pwr_use - pwr_rec;
     if ((pwr_use > 0) && (dist > 0))
     {
@@ -6086,7 +6096,7 @@ void vehicle_twizy_power_prepmsg(char mode)
 
     pwr_use = twizy_speedpwr[CAN_SPEED_ACCEL].use;
     pwr_rec = twizy_speedpwr[CAN_SPEED_ACCEL].rec;
-    dist = twizy_speedpwr[CAN_SPEED_ACCEL].dist;
+    dist = (float) twizy_speedpwr[CAN_SPEED_ACCEL].dist * correction;
     pwr = pwr_use - pwr_rec;
     if ((pwr_use > 0) && (dist > 0))
     {
@@ -6102,7 +6112,7 @@ void vehicle_twizy_power_prepmsg(char mode)
 
     pwr_use = twizy_speedpwr[CAN_SPEED_DECEL].use;
     pwr_rec = twizy_speedpwr[CAN_SPEED_DECEL].rec;
-    dist = twizy_speedpwr[CAN_SPEED_DECEL].dist;
+    dist = (float) twizy_speedpwr[CAN_SPEED_DECEL].dist * correction;
     pwr = pwr_use - pwr_rec;
     if ((pwr_use > 0) && (dist > 0))
     {
@@ -6116,7 +6126,8 @@ void vehicle_twizy_power_prepmsg(char mode)
       s = stp_rom(s, "%");
     }
 
-    // level distances are in 1 m
+    // level distances are in 1 m and based on odometer
+    // (no correction necessary)
 
     pwr_use = twizy_levelpwr[CAN_LEVEL_UP].use;
     pwr_rec = twizy_levelpwr[CAN_LEVEL_UP].rec;
