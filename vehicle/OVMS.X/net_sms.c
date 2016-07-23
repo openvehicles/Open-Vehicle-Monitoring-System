@@ -479,6 +479,13 @@ BOOL net_sms_handle_ap(char *caller, char *command, char *arguments)
   return FALSE;
   }
 
+char *stp_vehicletype(char *s)
+  {
+  s = stp_s(s, "\r\n VehicleType:", par_get(PARAM_VEHICLETYPE));
+  s = stp_s(s, "\r\n CarType:", car_type);
+  return s;
+  }
+
 BOOL net_sms_handle_moduleq(char *caller, char *command, char *arguments)
   {
   char *s;
@@ -491,7 +498,7 @@ BOOL net_sms_handle_moduleq(char *caller, char *command, char *arguments)
   s = stp_s(s, "\r\n VehicleID:", par_get(PARAM_VEHICLEID));
   s = stp_s(s, "\r\n Units:", par_get(PARAM_MILESKM));
   s = stp_s(s, "\r\n Notifications:", par_get(PARAM_NOTIFIES));
-  s = stp_s(s, "\r\n VehicleType:", par_get(PARAM_VEHICLETYPE));
+  s = stp_vehicletype(s);
 
   net_puts_ram(net_scratchpad);
 
@@ -519,8 +526,10 @@ BOOL net_sms_handle_module(char *caller, char *command, char *arguments)
         }
       }
     }
-  moduleq_result = net_sms_handle_moduleq(caller, command, arguments);
+
   vehicle_initialise();
+  
+  moduleq_result = net_sms_handle_moduleq(caller, command, arguments);
 
   if (net_state != NET_STATE_DIAGMODE)
     {
@@ -540,7 +549,7 @@ BOOL net_sms_handle_vehicleq(char *caller, char *command, char *arguments)
   net_send_sms_start(caller);
 
   s = stp_rom(net_scratchpad, "Vehicle:");
-  s = stp_s(s, "\r\n VehicleType: ", par_get(PARAM_VEHICLETYPE));
+  s = stp_vehicletype(s);
 
   net_puts_ram(net_scratchpad);
 
@@ -555,8 +564,9 @@ BOOL net_sms_handle_vehicle(char *caller, char *command, char *arguments)
   if (arguments[0]=='-') arguments[0]=0;
   par_set(PARAM_VEHICLETYPE, arguments);
 
-  vehicleq_result = net_sms_handle_vehicleq(caller, command, arguments);
   vehicle_initialise();
+  
+  vehicleq_result = net_sms_handle_vehicleq(caller, command, arguments);
 
   if (net_state != NET_STATE_DIAGMODE)
     {
@@ -957,6 +967,8 @@ BOOL net_sms_handle_version(char *caller, char *command, char *arguments)
     s = stp_rom(s, vehicle_version);
   s = stp_i(s, "/V", hwv);
   s = stp_rs(s, "/", OVMS_BUILDCONFIG);
+  s = stp_s(s, "\r\n CarType:", car_type);
+  s = stp_s(s, "\r\n VIN:", car_vin);
   net_puts_ram(net_scratchpad);
 
   return TRUE;
