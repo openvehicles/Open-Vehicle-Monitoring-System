@@ -991,7 +991,7 @@ BOOL vehicle_kiasoul_ticker1(void) {
     } else {
       car_chargestate = 0x0f; //Heating?
     }
-    car_chargekwh = (UINT8) ((ks_battery_cum_charge - ks_cum_charge_start) / 10);
+    car_chargekwh = (UINT) (ks_battery_cum_charge - ks_cum_charge_start);
     ks_last_soc = car_SOC;
     ks_last_ideal_range = (UINT8) car_idealrange;
   } else if (car_doors1bits.Charging) {
@@ -1005,7 +1005,7 @@ BOOL vehicle_kiasoul_ticker1(void) {
     else
       car_chargestate = 21; // Charge STOPPED
     car_chargelimit = 0;
-    car_chargekwh = (UINT8) (ks_battery_cum_charge - ks_cum_charge_start) / 10;
+    car_chargekwh = (UINT) (ks_battery_cum_charge - ks_cum_charge_start);
     ks_cum_charge_start = 0;
     net_req_notification(NET_NOTIFY_CHARGE);
     net_req_notification(NET_NOTIFY_STAT);

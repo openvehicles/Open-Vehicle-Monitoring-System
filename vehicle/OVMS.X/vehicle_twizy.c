@@ -280,9 +280,13 @@
     - CAN control bits to disable emergency reset, kickdown & autopower
     - Fix: motor & PEM temperatures fixed, charger temperature added
 
- * 3.7.3  8 Jul 2016 (Michael Balzer)
+ * 3.7.3  31 Jul 2016 (Michael Balzer)
     - Power efficiency report: energy usage correction
     - Power totals report: trip length from odo (for consistency)
+    - Trip report also gives SOC difference if positive
+    - Added car_chargepower (at battery) & car_battvoltage
+    - car_chargecurrent now set from current battery charge current
+    - Added car_chargekwh support
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -522,14 +526,13 @@ volatile unsigned int twizy_dist; // cyclic distance counter in 1/10 m = 10 cm
 unsigned char twizy_lock_speed; // if Lock mode: fix speed to this (kph)
 unsigned long twizy_valet_odo; // if Valet mode: reduce speed if odometer > this
 
-// NOTE: the interpretation of CAN PDO 0x155 as "power" should be regarded as
-//       an estimation, as the value more likely is the electrical current (A).
-//       So all W/Wh data should probably better be read as A/Ah data.
-//       A possible translation is: current[A] = power[W] / 64
+// NOTE: the power values are derived by...
+//    twizy_power = ( twizy_current * twizy_batt[0].volt_act + 128 ) / 256
+// The twizy_current measurement has a high time resolution of 1/100 s,
+// but the battery voltage has a low time resolution of just 1 s, so the
+// power values need to be seen as an estimation.
 
-// twizy_power = ( twizy_current * twizy_batt[0].volt_act ) / 40
-
-signed int twizy_power; // momentary battery power in 16 W, negative=charging
+signed int twizy_power; // momentary battery power in 256/40 W = 6.4 W, negative=charging
 signed int twizy_power_min; // min "power" in current GPS log section
 signed int twizy_power_max; // max "power" in current GPS log section
 
@@ -4652,12 +4655,10 @@ BOOL vehicle_twizy_poll1(void)
       if (CAN_BYTE(0) & 0x20)
       {
         car_linevoltage = 230; // fix 230 V
-        car_chargecurrent = 10; // fix 10 A
       }
       else
       {
         car_linevoltage = 0;
-        car_chargecurrent = 0;
       }
 
       // twizy_status high nibble:
@@ -5446,6 +5447,9 @@ BOOL vehicle_twizy_state_ticker1(void)
    *
    */
 
+  car_chargepower = 0;
+  car_chargecurrent = 0;
+  
   if (car_doors1bits.Charging)
   {
     /*******************************************************************
@@ -5455,7 +5459,12 @@ BOOL vehicle_twizy_state_ticker1(void)
     unsigned char twizy_curr_SOC = twizy_soc / 100; // unrounded SOC% for charge alerts
 
     car_chargeduration++;
-
+    car_chargekwh = ((twizy_speedpwr[CAN_SPEED_CONST].rec + WH_RND) / WH_DIV) / 100;
+    if (twizy_power < 0)
+      {
+      car_chargepower = ((long) (-twizy_power) * 64L + 500) / 1000;
+      car_chargecurrent = ((-twizy_current) + 2) >> 2;
+      }
 
     // Calculate range during charging:
     // scale twizy_soc_min_range to twizy_soc
@@ -5645,6 +5654,7 @@ BOOL vehicle_twizy_state_ticker1(void)
       // Close charging port:
       car_doors1bits.ChargePort = 0;
       car_chargeduration = 0;
+      car_chargekwh = 0;
 
       // Set charge state to "done":
       car_chargestate = 4;
@@ -5769,7 +5779,6 @@ BOOL vehicle_twizy_state_ticker10(void)
     // yes, offline: implies...
     twizy_status = CAN_STATUS_OFFLINE;
     car_linevoltage = 0;
-    car_chargecurrent = 0;
     twizy_speed = 0;
     twizy_power = 0;
     twizy_power_min = twizy_current_min = 32767;
@@ -6076,11 +6085,11 @@ void vehicle_twizy_power_prepmsg(char mode)
     }
 
     if (twizy_soc_tripend <= twizy_soc_tripstart)
-    {
       s = stp_l2f(s, " SOC-", (twizy_soc_tripstart - twizy_soc_tripend + 5) / 10, 1);
-      s = stp_l2f(s, "%=", (twizy_soc + 5) / 10, 1);
-      s = stp_rom(s, "%");
-    }
+    else
+      s = stp_l2f(s, " SOC+", (twizy_soc_tripend - twizy_soc_tripstart + 5) / 10, 1);
+    s = stp_l2f(s, "%=", (twizy_soc + 5) / 10, 1);
+    s = stp_rom(s, "%");
 
     pwr_use = twizy_speedpwr[CAN_SPEED_CONST].use;
     pwr_rec = twizy_speedpwr[CAN_SPEED_CONST].rec;
@@ -7230,6 +7239,9 @@ void vehicle_twizy_battstatus_collect(void)
   // ********** Voltages: ************
 
   // Battery pack:
+  
+  car_battvoltage = twizy_batt[0].volt_act;
+
   if ((twizy_batt[0].volt_min == 0) || (twizy_batt[0].volt_act < twizy_batt[0].volt_min))
     twizy_batt[0].volt_min = twizy_batt[0].volt_act;
   if ((twizy_batt[0].volt_max == 0) || (twizy_batt[0].volt_act > twizy_batt[0].volt_max))
@@ -7261,7 +7273,7 @@ void vehicle_twizy_battstatus_collect(void)
   if (i == BATT_CELLS)
   {
     // All values valid, process:
-
+    
     m = (float) sum / BATT_CELLS;
 
     //stddev = (unsigned int) sqrt( ((float)sqrsum/BATT_CELLS) - SQR((float)sum/BATT_CELLS) ) + 1;

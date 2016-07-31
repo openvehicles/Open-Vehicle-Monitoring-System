@@ -305,7 +305,7 @@ BOOL vehicle_mitsubishi_ticker1(void)
           mi_charge_wm += (car_chargecurrent*car_linevoltage);
           if (mi_charge_wm >= 60000L)
             { // Let's move 1kWh to the virtual car
-            car_chargekwh += 1;
+            car_chargekwh += 10;
             mi_charge_wm -= 60000L;
             }
           }

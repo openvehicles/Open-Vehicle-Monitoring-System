@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.2-20160324";
+my $VERSION = "2.3.3-20160727";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -1665,7 +1665,8 @@ sub http_request_api_status
         $chargetimer,$chargestarttime,$chargetimerstale,$cac100,
 		$charge_etr_full,$charge_etr_limit,$charge_limit_range,$charge_limit_soc,
 		$cooldown_active,$cooldown_tbattery,$cooldown_timelimit,
-		$charge_estimate,$charge_etr_range,$charge_etr_soc,$idealrange_max) = split /,/,$rec->{'m_msg'};
+		$charge_estimate,$charge_etr_range,$charge_etr_soc,$idealrange_max,
+		$chargetype,$chargepower,$battvoltage) = split /,/,$rec->{'m_msg'};
     $result{'soc'} = $soc;
     $result{'units'} = $units;
     $result{'idealrange'} = $idealrange;
@@ -1832,9 +1833,13 @@ sub http_request_api_charge_get
         $chargetimer,$chargestarttime,$chargetimerstale,$cac100,
 		$charge_etr_full,$charge_etr_limit,$charge_limit_range,$charge_limit_soc,
 		$cooldown_active,$cooldown_tbattery,$cooldown_timelimit,
-		$charge_estimate,$charge_etr_range,$charge_etr_soc,$idealrange_max) = split /,/,$rec->{'m_msg'};
+		$charge_estimate,$charge_etr_range,$charge_etr_soc,$idealrange_max,
+		$chargetype,$chargepower,$battvoltage) = split /,/,$rec->{'m_msg'};
     $result{'linevoltage'} = $linevoltage;
+    $result{'battvoltage'} = $battvoltage;
     $result{'chargecurrent'} = $chargecurrent;
+    $result{'chargepower'} = $chargepower;
+    $result{'chargetype'} = $chargetype;
     $result{'chargestate'} = $chargestate;
     $result{'soc'} = $soc;
     $result{'units'} = $units;

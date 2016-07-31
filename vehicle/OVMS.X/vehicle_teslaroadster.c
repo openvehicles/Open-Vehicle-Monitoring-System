@@ -228,7 +228,7 @@ BOOL vehicle_teslaroadster_poll0(void)                // CAN ID 100 and 102
           net_req_notification(NET_NOTIFY_STAT);
           }
         car_charge_b4 = can_databuffer[3];
-        car_chargekwh = can_databuffer[7];
+        car_chargekwh = ((UINT) can_databuffer[7]) * 10;
         break;
       case 0x96: // Doors / Charging yes/no
         if (car_chargestate == 0x0f) can_databuffer[1] |= 0x10; // Fudge for heating state, to be charging=on

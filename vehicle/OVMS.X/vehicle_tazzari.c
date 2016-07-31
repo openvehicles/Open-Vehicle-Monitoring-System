@@ -114,7 +114,7 @@ BOOL vehicle_tazzari_ticker1(void)
         if (tz_charge_wm >= 60000L)
           {
           // Let's move 1kWh to the virtual car
-          car_chargekwh += 1;
+          car_chargekwh += 10;
           tz_charge_wm -= 60000L;
           }
         }

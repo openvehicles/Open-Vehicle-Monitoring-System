@@ -355,9 +355,13 @@ char net_msgp_stat(char stat)
           ? car_chargelimit_rangelimit
           : KmFromMi(car_chargelimit_rangelimit));
   s = stp_i(s, ",", car_chargelimit_soclimit);
+#ifndef OVMS_NO_CHARGECONTROL
   s = stp_i(s, ",", car_coolingdown);
   s = stp_i(s, ",", car_cooldown_tbattery);
   s = stp_i(s, ",", car_cooldown_timelimit);
+#else
+  s = stp_rom(s, ",-1,0,0");
+#endif
   s = stp_i(s, ",", car_chargeestimate);
   s = stp_i(s, ",", car_chargelimit_minsremaining_range);
   s = stp_i(s, ",", car_chargelimit_minsremaining_soc);
@@ -365,6 +369,8 @@ char net_msgp_stat(char stat)
           ? car_max_idealrange
           : KmFromMi(car_max_idealrange));
   s = stp_i(s, ",", car_chargetype);
+  s = stp_l2f(s, ",", car_chargepower, 1);
+  s = stp_l2f(s, ",", car_battvoltage, 1);
 
   return net_msg_encode_statputs(stat, &crc_stat);
 }
@@ -1055,6 +1061,7 @@ char *net_prep_stat(char *s)
     unit = " km";
   }
 
+#ifndef OVMS_NO_CHARGECONTROL
   if (car_coolingdown>=0)
     {
     s = stp_i(s, "Cooldown: ", car_tbattery);
@@ -1063,6 +1070,7 @@ char *net_prep_stat(char *s)
     s = stp_i(s, "cycles, ",car_cooldown_timelimit);
     s = stp_rom(s, "mins remain)");
     }
+#endif
 
   if (car_doors1bits.ChargePort)
   {

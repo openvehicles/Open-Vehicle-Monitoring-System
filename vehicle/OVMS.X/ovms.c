@@ -80,8 +80,11 @@ unsigned char car_chargestate = 4; // 1=charging, 2=top off, 4=done, 13=preparin
 unsigned char car_chargesubstate = 0;
 unsigned char car_chargemode = 0; // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_charge_b4 = 0; // B4 byte of charge state
-unsigned char car_chargekwh = 0; // KWh of charge
+unsigned int car_chargekwh = 0; // Energy charged (1/10 kWh)
 chargetype car_chargetype = UNDEFINED; // Undefined chargetype 
+unsigned int car_chargepower = 0; // Charge Power (1/10 kW)
+unsigned int car_battvoltage = 0; // Battery Voltage (1/10 V)
+
 unsigned char car_doors1 = 0; //
 unsigned char car_doors2 = 0; //
 unsigned char car_doors3 = 0; //
@@ -137,12 +140,14 @@ unsigned char car_chargelimit_soclimit = 0;    // SOC% limit
 
 unsigned int car_max_idealrange = 0; // Maximum ideal range in miles
 
+#ifndef OVMS_NO_CHARGECONTROL
 signed char car_coolingdown = -1;              // >=0 if car is cooling down
 unsigned char car_cooldown_chargemode = 0;     // 0=standard, 1=storage, 3=range, 4=performance
 unsigned char car_cooldown_chargelimit = 0;    // Charge Limit (amps)
 signed int car_cooldown_tbattery = 0;          // Cooldown temperature limit
 unsigned int car_cooldown_timelimit = 0;       // Cooldown time limit (minutes) remaining
 unsigned char car_cooldown_wascharging = 0;    // TRUE if car was charging when cooldown started
+#endif
 
 int car_chargeestimate = -1;                   // ACC: charge time estimation for current charger capabilities (min.)
 
@@ -204,8 +209,10 @@ void main(void)
     sys_features[x] = atoi(par_get(PARAM_FEATURE_S + (x - FEATURES_MAP_PARAM)));
   }
 
+#ifndef OVMS_NO_CHARGECONTROL
   // Make sure cooldown is off
   car_coolingdown = -1;
+#endif
 
   // Port configuration
   inputs_initialise();

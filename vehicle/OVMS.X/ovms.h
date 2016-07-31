@@ -106,8 +106,10 @@ extern unsigned char car_chargestate; // 1=charging, 2=top off, 4=done, 13=prepa
 extern unsigned char car_chargesubstate;
 extern unsigned char car_chargemode; // 0=standard, 1=storage, 3=range, 4=performance
 extern unsigned char car_charge_b4; // B4 byte of charge state
-extern unsigned char car_chargekwh; // KWh of charge
+extern unsigned int car_chargekwh; // Energy charged (1/10 kWh)
 extern chargetype car_chargetype;  
+extern unsigned int car_chargepower; // Charge Power (1/10 kW)
+extern unsigned int car_battvoltage; // Battery Voltage (1/10 V)
 
 
 //
