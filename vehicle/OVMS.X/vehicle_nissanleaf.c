@@ -285,6 +285,8 @@ BOOL vehicle_nissanleaf_poll1(void)
         }
       // voltage is 10 bits unsigned big endian starting at bit 16
       nl_battery_voltage = ((UINT16) can_databuffer[2] << 2) | (can_databuffer[3] & 0xc0) >> 6;
+      // can bus data is 0.5v per bit, car_battvoltage is 0.1v per bit, so multiply by 5
+      car_battvoltage = nl_battery_voltage * 5;
       break;
     case 0x284:
       // this is apparently data relayed from the ABS system, if we have
