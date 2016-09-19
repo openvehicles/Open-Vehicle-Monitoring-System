@@ -428,12 +428,12 @@ BOOL vehicle_nissanleaf_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
     if (button == 0)
       {
       cmd = CMD_ClimateControl;
-      strcpypgm2ram(msg, "ON");
+      strcpypgm2ram(msg, "1");
       }
     else if (button == 1)
       {
       cmd = CMD_ClimateControl;
-      strcpypgm2ram(msg, "OFF");
+      strcpypgm2ram(msg, "0");
       }
     }
   // end of temporary support
@@ -444,12 +444,11 @@ BOOL vehicle_nissanleaf_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
       result = vehicle_nissanleaf_remote_command(START_CHARGING);
       break;
     case CMD_ClimateControl:
-      strupr(msg);
-      if (strcmppgm2ram(msg, "ON") == 0)
+      if (strcmppgm2ram(msg, "1") == 0)
         {
         result = vehicle_nissanleaf_remote_command(ENABLE_CLIMATE_CONTROL);
         }
-      else if (strcmppgm2ram(msg, "OFF") == 0)
+      else if (strcmppgm2ram(msg, "0") == 0)
         {
         result = vehicle_nissanleaf_remote_command(DISABLE_CLIMATE_CONTROL);
         }
@@ -566,10 +565,10 @@ BOOL vehicle_nissanleaf_initialise(void)
   nl_busactive = 10;
 
   // Hook in...
-  
+
   vehicle_version = nissanleaf_version;
   can_capabilities = nissanleaf_capabilities;
-  
+
   vehicle_fn_poll0 = &vehicle_nissanleaf_poll0;
   vehicle_fn_poll1 = &vehicle_nissanleaf_poll1;
   vehicle_fn_ticker10th = &vehicle_nissanleaf_ticker10th;
