@@ -114,6 +114,7 @@ void net_msg_start(void)
   {
   if (net_state == NET_STATE_DIAGMODE)
     {
+    net_msg_sendpending = 1;
     net_puts_rom("# ");
     }
   else
@@ -130,7 +131,8 @@ void net_msg_send(void)
   {
   if (net_state == NET_STATE_DIAGMODE)
     {
-    net_puts_rom("\r\n");
+    net_msg_sendpending = 0;
+    net_puts_rom("\n#.\n");
     }
   else
     {

@@ -86,6 +86,7 @@ void net_send_sms_start(char* number)
   else if (net_state == NET_STATE_DIAGMODE)
     {
     // DIAG mode: screen output
+    net_msg_sendpending = 1;
     net_puts_rom("# ");
     }
 #endif // OVMS_DIAGMODULE
@@ -128,7 +129,8 @@ void net_send_sms_finish(void)
   else if (net_state == NET_STATE_DIAGMODE)
     {
     // DIAG mode:
-    net_puts_rom("\r\n");
+    net_msg_sendpending = 0;
+    net_puts_rom("\n#.\n");
     }
 #endif // OVMS_DIAGMODULE
   else

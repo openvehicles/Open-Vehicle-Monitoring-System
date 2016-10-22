@@ -146,17 +146,15 @@ sub wait_for {
 #
 # do_cmd: send OVMS command, retry on timeout, return response (array of lines)
 # 
-# Example: send a command, read response lines until timeout:
+# Example: send a command, read response lines until end tag or timeout:
 # 	@response = do_cmd('S STAT');
 # 
-# To speed up processing set $linecnt.
-#
 sub do_cmd {
 	my $cmd = shift // '';			# empty = don't send, just listen
-	my $linecnt = shift // 0;		# 0 = read lines until timeout
 	my $expect = shift // '^# ';	# response intro pattern (will be removed from result)
 	my $timeout = shift // 10;		# read timeout in seconds
 	my $tries = shift // 3;			# number of send attempts
+	my $endtag = shift // '^#.$';	# response end pattern (will be removed from result)
 	
 	my @result;
 	my $line;
@@ -189,6 +187,8 @@ sub do_cmd {
 		# read more lines:
 		while (($linecnt == 0 || --$linecnt > 0) && defined($line = wait_for('.', 1))) {
 			print STDOUT "+ $line\n" if $debug;
+			$line =~ s/$expect//;
+			last if $line =~ /$endtag/;
 			push @result, $line;
 		}
 		
@@ -211,7 +211,7 @@ sub do_init {
 	GODIAG: while (1) {
 		print STDOUT "*** INIT: PLEASE POWER UP OR RESET OVMS MODULE NOW\n";
 		$line = wait_for('RDY') || next GODIAG;
-		@response = do_cmd('SETUP', 1, 'OVMS DIAGNOSTICS MODE', 30) && last GODIAG;
+		@response = do_cmd('SETUP', 'OVMS DIAGNOSTICS MODE', 30) && last GODIAG;
 	}
 
 	print STDOUT "*** INIT: DIAG MODE ESTABLISHED\n";
@@ -241,7 +241,7 @@ sub check_response {
 #
 sub do_cfg {
 	my $cmd = shift;
-	@response = do_cmd("S CFG $cmd", 1);
+	@response = do_cmd("S CFG $cmd");
 	return check_response();
 }
 
@@ -254,7 +254,7 @@ sub sdo_read {
 	my $subindex = shift;
 	
 	# read SDO:
-	@response = do_cmd(sprintf("S CFG READ %04x %02x", $index, $subindex), 1);
+	@response = do_cmd(sprintf("S CFG READ %04x %02x", $index, $subindex));
 	return undef if !check_response();
 	
 	# extract value:
@@ -271,7 +271,7 @@ sub sdo_readstr {
 	my $subindex = shift;
 	
 	# read SDO:
-	@response = do_cmd(sprintf("S CFG READS %04x %02x", $index, $subindex), 1);
+	@response = do_cmd(sprintf("S CFG READS %04x %02x", $index, $subindex));
 	return undef if !check_response();
 	
 	# extract value:
@@ -289,7 +289,7 @@ sub sdo_write {
 	my $val = shift;
 	
 	# write SDO:
-	@response = do_cmd(sprintf("S CFG WRITE %04x %02x %ld", $index, $subindex, $val), 1);
+	@response = do_cmd(sprintf("S CFG WRITE %04x %02x %ld", $index, $subindex, $val));
 	return undef if !check_response();
 	
 	# extract new value:
@@ -307,7 +307,7 @@ sub sdo_writeonly {
 	my $val = shift;
 	
 	# write SDO:
-	@response = do_cmd(sprintf("S CFG WRITEO %04x %02x %ld", $index, $subindex, $val), 1);
+	@response = do_cmd(sprintf("S CFG WRITEO %04x %02x %ld", $index, $subindex, $val));
 	return undef if !check_response();
 	
 	return 1;

@@ -83,12 +83,13 @@ rom unsigned char DummyData[DATA_COUNT * 9]
 
 void diag_initialise(void)
   {
-  led_set(OVMS_LED_GRN,NET_LED_ERRDIAGMODE);
-  led_set(OVMS_LED_RED,NET_LED_ERRDIAGMODE);
+  led_set(OVMS_LED_GRN,OVMS_LED_ON);
+  led_set(OVMS_LED_RED,OVMS_LED_OFF);
   led_start();
   net_timeout_ticks = 0;
   net_timeout_goto = 0;
-  net_puts_rom("\x1B[2J\x1B[01;01H\r# OVMS DIAGNOSTICS MODE\r\n\n");
+  net_timeout_rxdata = 0;
+  net_puts_rom("\x1B[2J\x1B[01;01H\r# OVMS DIAGNOSTICS MODE\n\n");
 
 #ifdef OVMS_CAR_TESLAROADSTER
   orig_canwrite = sys_features[FEATURE_CANWRITE];
@@ -129,18 +130,18 @@ void diag_ticker(void)
 
   if (net_notify & (NET_NOTIFY_NET_CHARGE|NET_NOTIFY_SMS_CHARGE))
     {
-    net_puts_rom("\r\n# NOTIFY CHARGE ALERT\r\n");
+    net_puts_rom("\n# NOTIFY CHARGE ALERT\n");
     net_notify &= ~(NET_NOTIFY_NET_CHARGE|NET_NOTIFY_SMS_CHARGE);
     }
 #ifndef OVMS_NO_VEHICLE_ALERTS
   if (net_notify & (NET_NOTIFY_NET_TRUNK|NET_NOTIFY_SMS_TRUNK))
     {
-    net_puts_rom("\r\n# NOTIFY TRUNK ALERT\r\n");
+    net_puts_rom("\n# NOTIFY TRUNK ALERT\n");
     net_notify &= ~(NET_NOTIFY_NET_TRUNK|NET_NOTIFY_SMS_TRUNK);
     }
   if (net_notify & (NET_NOTIFY_NET_ALARM|NET_NOTIFY_SMS_ALARM))
     {
-    net_puts_rom("\r\n# NOTIFY ALARM ALERT\r\n");
+    net_puts_rom("\n# NOTIFY ALARM ALERT\n");
     net_notify &= ~(NET_NOTIFY_NET_ALARM|NET_NOTIFY_SMS_ALARM);
     }
 #endif //OVMS_NO_VEHICLE_ALERTS
@@ -150,14 +151,14 @@ void diag_ticker(void)
 
 void diag_handle_sms(char *command, char *arguments)
   {
-  net_puts_rom("\r\n");
+  net_puts_rom("\n");
   net_assert_caller(NULL); // set net_caller to PARAM_REGPHONE
   net_sms_in(net_caller,arguments);
   }
 
 void diag_handle_msg(char *command, char *arguments)
 {
-    net_puts_rom("\r\n");
+    net_puts_rom("\n");
     net_msg_cmd_in(arguments);
     if( net_msg_cmd_code && (net_msg_sendpending==0) )
         net_msg_cmd_do();
@@ -165,13 +166,13 @@ void diag_handle_msg(char *command, char *arguments)
 
 void diag_handle_help(char *command, char *arguments)
   {
-  net_puts_rom("\r\n");
+  net_puts_rom("\n");
   delay100(1);
-  net_puts_rom("# COMMANDS: HELP ? DIAG RESET or S ...\r\n");
-  net_puts_rom("# 'S' COMMANDS:\r\n  ");
-  diag_handle_sms(command,command);
-  net_puts_rom("# 'M' COMMANDS:\r\n  ");
+  net_puts_rom("# COMMANDS: HELP ? DIAG RESET or M/S ...\n");
+  net_puts_rom("# 'M' COMMANDS:\n# ");
   net_msgp_capabilities(0);
+  net_puts_rom("# 'S' COMMANDS:");
+  diag_handle_sms(command,command);
   }
 
 void diag_handle_reset(char *command, char *arguments)
@@ -179,9 +180,7 @@ void diag_handle_reset(char *command, char *arguments)
   led_set(OVMS_LED_GRN,OVMS_LED_OFF);
   led_set(OVMS_LED_RED,OVMS_LED_OFF);
   led_start();
-  net_puts_rom("\r\n");
-  delay100(1);
-  net_puts_rom("# Leaving Diagnostics Mode\r\n");
+  net_puts_rom("\n# Leaving Diagnostics Mode\n");
   delay100(10);
   reset_cpu();
 }
@@ -196,7 +195,7 @@ void diag_handle_diag(char *command, char *arguments)
   hwv = 2;
   #endif
 
-  net_puts_rom("\r\n# DIAG\r\n\n");
+  net_puts_rom("\n# DIAG\n\n");
 
   s = stp_i(net_scratchpad, "# Firmware: ", ovms_firmware[0]);
   s = stp_i(s, ".", ovms_firmware[1]);
@@ -206,58 +205,58 @@ void diag_handle_diag(char *command, char *arguments)
     s = stp_rom(s, vehicle_version);
   s = stp_i(s, "/V", hwv);
   s = stp_rs(s, "/", OVMS_BUILDCONFIG);
-  s = stp_rom(s, "\r\n");
+  s = stp_rom(s, "\n");
   net_puts_ram(net_scratchpad);
 
   s = stp_i(net_scratchpad, "#  SWITCH:   ", inputs_gsmgprs());
-  s = stp_rom(s, "\r\n");
+  s = stp_rom(s, "\n");
   net_puts_ram(net_scratchpad);
 
 #ifndef OVMS_NO_CRASHDEBUG
   s = stp_i(net_scratchpad, "#  CRASH:    ", debug_crashcnt);
   s = stp_i(s, " / ", debug_crashreason );
   s = stp_i(s, " / ", debug_checkpoint );
-  s = stp_rom(s, "\r\n");
+  s = stp_rom(s, "\n");
   net_puts_ram(net_scratchpad);
 #endif // OVMS_NO_CRASHDEBUG
 
   #ifdef OVMS_HW_V2
   x = inputs_voltage()*10;
   s = stp_l2f(net_scratchpad, "#  12V Line: ", x, 1);
-  s = stp_rom(s, " V\r\n");
+  s = stp_rom(s, " V\n");
   net_puts_ram(net_scratchpad);
   #endif // #ifdef OVMS_HW_V2
 
   #ifdef OVMS_LOGGINGMODULE
   s = stp_i(net_scratchpad, "#  LOGGING:  ", log_state);
-  s = stp_rom(s, "\r\n");
+  s = stp_rom(s, "\n");
   net_puts_ram(net_scratchpad);
   #endif
 
   #ifdef OVMS_ACCMODULE
   s = stp_i(net_scratchpad, "#  ACC:      ", acc_state);
-  s = stp_rom(s, "\r\n");
+  s = stp_rom(s, "\n");
   net_puts_ram(net_scratchpad);
   #endif
 
   s = stp_i(net_scratchpad, "#  Signal:   ", net_sq);
-  s = stp_rom(s, "\r\n\n");
+  s = stp_rom(s, "\n\n");
   net_puts_ram(net_scratchpad);
 
   s = stp_s(net_scratchpad, "#  VIN:      ", car_vin);
   s = stp_s(s, " (", car_type);
-  s = stp_rom(s, ")\r\n");
+  s = stp_rom(s, ")\n");
   net_puts_ram(net_scratchpad);
 
   s = stp_i(net_scratchpad, "#  SOC:      ", car_SOC);
   s = stp_i(s, "% (", car_idealrange);
   s = stp_i(s, " ideal, ", car_estrange);
-  s = stp_rom(s, " est miles)\r\n");
+  s = stp_rom(s, " est miles)\n");
   net_puts_ram(net_scratchpad);
 
   s = stp_i(net_scratchpad, "#  CHARGE:   ", car_chargestate);
   s = stp_i(s, " / ", car_chargesubstate);
-  s = stp_rom(s, "\r\n");
+  s = stp_rom(s, "\n");
   net_puts_ram(net_scratchpad);
 
 #ifdef OVMS_CAR_TESLAROADSTER
@@ -265,7 +264,7 @@ void diag_handle_diag(char *command, char *arguments)
     {
     s = stp_i(net_scratchpad, "#  Sim Tx: ", canwrite_state);
     s = stp_i(s, "/", DATA_COUNT);
-    s = stp_rom(s, "\r\n");
+    s = stp_rom(s, "\n");
     net_puts_ram(net_scratchpad);
     }
 #endif //OVMS_CAR_TESLAROADSTER
@@ -295,7 +294,7 @@ void diag_handle_cantxstart(char *command, char *arguments)
   vehicle_initialise();
   canwrite_state = 0;
 
-  net_puts_rom("# Starting CAN sim\r\n");
+  net_puts_rom("# Starting CAN sim\n");
   delay100(2);
   }
 
@@ -306,7 +305,7 @@ void diag_handle_cantxstop(char *command, char *arguments)
   vehicle_initialise();
   canwrite_state = -1;
 
-  net_puts_rom("# Stopped CAN sim\r\n");
+  net_puts_rom("# Stopped CAN sim\n");
   delay100(2);
   }
 

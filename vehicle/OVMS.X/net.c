@@ -339,13 +339,26 @@ void net_puts_rom(const rom char *data)
       if ( *data == '\n' && lastdata != '\r' )
         UART_WAIT_PUTC('\r') // insert \r before \n if missing:
       else if( lastdata == '\r' && *data != '\n' )
-         UART_WAIT_PUTC('\n') // insert \n after \r if missing
+        {
+        UART_WAIT_PUTC('\n') // insert \n after \r if missing
+        if (net_msg_sendpending)
+          {
+          UART_WAIT_PUTC('#')
+          UART_WAIT_PUTC(' ')
+          }
+        }
 
       if ( !*data )
         break;
 
       // output char
       UART_WAIT_PUTC(*data)
+      
+      if (net_msg_sendpending && *data=='\n')
+        {
+        UART_WAIT_PUTC('#')
+        UART_WAIT_PUTC(' ')
+        }
 
       lastdata = *data++;
       }
@@ -386,13 +399,26 @@ void net_puts_ram(const char *data)
       if ( *data == '\n' && lastdata != '\r' )
         UART_WAIT_PUTC('\r') // insert \r before \n if missing
       else if( lastdata == '\r' && *data != '\n' )
+        {
         UART_WAIT_PUTC('\n') // insert \n after \r if missing
+        if (net_msg_sendpending)
+          {
+          UART_WAIT_PUTC('#')
+          UART_WAIT_PUTC(' ')
+          }
+        }
 
       if ( !*data )
         break;
 
       // output char
       UART_WAIT_PUTC(*data)
+
+      if (net_msg_sendpending && *data=='\n')
+        {
+        UART_WAIT_PUTC('#')
+        UART_WAIT_PUTC(' ')
+        }
 
       lastdata = *data++;
       }
@@ -825,8 +851,12 @@ void net_state_activity()
         if (net_buf[strlen(net_buf)-1] != '1')
           {
           // The SIM card is not inserted
+#ifdef OVMS_DIAGMODULE
+          net_state_enter(NET_STATE_DIAGMODE);
+#else
           led_set(OVMS_LED_RED,NET_LED_ERRSIM1);
           net_state_vchar = 1;
+#endif //OVMS_DIAGMODULE
           }
         }
       else if ((net_state_vchar==0)&&(net_buf_pos >= 2)&&(net_buf[0] == 'O')&&(net_buf[1] == 'K'))
@@ -1922,7 +1952,7 @@ void net_ticker(void)
     net_granular_tick -= 3600;
     }
 
-  if (--net_timeout_rxdata == 0)
+  if ((net_timeout_rxdata > 0)&&(--net_timeout_rxdata == 0))
     {
     // A major problem - we've lost connectivity to the modem
     // Best solution is to reset everything
