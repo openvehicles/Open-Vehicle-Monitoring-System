@@ -52,7 +52,9 @@ rom char NET_MSG_REGISTERED[] = "Your phone has been registered as the owner.";
 rom char NET_MSG_PASSWORD[] = "Module password has been changed.";
 rom char NET_MSG_PARAMS[] = "Parameters have been set.";
 rom char NET_MSG_FEATURE[] = "Feature has been set.";
+#ifndef OVMS_NO_HOMELINK
 rom char NET_MSG_HOMELINK[] = "Homelink activated";
+#endif // OVMS_NO_HOMELINK
 rom char NET_MSG_LOCK[] = "Vehicle lock requested";
 rom char NET_MSG_UNLOCK[] = "Vehicle unlock requested";
 rom char NET_MSG_VALET[] = "Valet mode requested";
@@ -840,6 +842,7 @@ BOOL net_sms_handle_feature(char *caller, char *command, char *arguments)
   return FALSE;
   }
 
+#ifndef OVMS_NO_HOMELINK
 BOOL net_sms_handle_homelink(char *caller, char *command, char *arguments)
   {
   if (vehicle_fn_commandhandler != NULL)
@@ -848,6 +851,7 @@ BOOL net_sms_handle_homelink(char *caller, char *command, char *arguments)
   net_puts_rom(NET_MSG_HOMELINK);
   return TRUE;
   }
+#endif // OVMS_NO_HOMELINK
 
 BOOL net_sms_handle_lock(char *caller, char *command, char *arguments)
   {
@@ -1049,7 +1053,9 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
     "3DIAG",
     "3FEATURES?",
     "2FEATURE ",
+#ifndef OVMS_NO_HOMELINK
     "2HOMELINK",
+#endif // OVMS_NO_HOMELINK
     "2LOCK",
     "2UNLOCK",
     "2VALET",
@@ -1096,7 +1102,9 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
   &net_sms_handle_diag,
   &net_sms_handle_featuresq,
   &net_sms_handle_feature,
+#ifndef OVMS_NO_HOMELINK
   &net_sms_handle_homelink,
+#endif // OVMS_NO_HOMELINK
   &net_sms_handle_lock,
   &net_sms_handle_unlock,
   &net_sms_handle_valet,

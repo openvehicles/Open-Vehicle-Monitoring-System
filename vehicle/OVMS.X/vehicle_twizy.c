@@ -280,13 +280,14 @@
     - CAN control bits to disable emergency reset, kickdown & autopower
     - Fix: motor & PEM temperatures fixed, charger temperature added
 
- * 3.7.3  31 Jul 2016 (Michael Balzer)
+ * 3.7.3  4 Sep 2016 (Michael Balzer)
     - Power efficiency report: energy usage correction
     - Power totals report: trip length from odo (for consistency)
     - Trip report also gives SOC difference if positive
     - Added car_chargepower (at battery) & car_battvoltage
     - car_chargecurrent now set from current battery charge current
     - Added car_chargekwh support
+    - Added text alert on key input while car is off (for custom alert sensors)
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -346,6 +347,7 @@
  *  OVMS_NO_CTP -- excludes framework charge time prediction
  *  OVMS_NO_VEHICLE_ALERTS -- excludes cabin & trunk alerts
  *  OVMS_NO_CRASHDEBUG -- excludes *-OVM-DebugCrash record generation
+ *  OVMS_NO_HOMELINK -- excludes unused SMS command "HOMELINK"
  * 
  */
 
@@ -614,7 +616,7 @@ unsigned int twizy_max_pwr_hi;      // CFG: max power high speed (W: 0..17000)
 
 #pragma udata overlay vehicle_overlay_data2
 
-unsigned int twizy_sevcon_fault;    // SEVCON highest active fault
+unsigned int twizy_alert_code;      // alert code from SEVCON/inputs
 
 volatile UINT8 twizy_accel_pedal;           // accelerator pedal (running avg)
 volatile UINT8 twizy_kickdown_level;        // kickdown detection & pedal max level
@@ -672,7 +674,7 @@ volatile UINT8 twizy_notify; // bit set of...
 #define SEND_DataUpdate             0x04  // regular data update (per minute)
 #define SEND_StreamUpdate           0x08  // stream data update (per second)
 #define SEND_BatteryStats           0x10  // separate battery stats (large)
-#define SEND_FaultsAlert            0x20  // text alert: SEVCON fault(s)
+#define SEND_CodeAlert              0x20  // text alert: fault code (SEVCON/inputs/...)
 #define SEND_PowerLog               0x40  // RT-PWR-Log history entry
 #define SEND_ResetResult            0x80  // text alert: RESET OK/FAIL
 
@@ -3480,7 +3482,7 @@ BOOL vehicle_twizy_cfg_restrict_cmd(BOOL msgmode, int cmd, char *arguments)
 
 
 
-void vehicle_twizy_faults_prepmsg(void)
+void vehicle_twizy_codealert_prepmsg(void)
 {
   char *s;
   UINT8 len;
@@ -3489,14 +3491,21 @@ void vehicle_twizy_faults_prepmsg(void)
   s = strchr(net_scratchpad, 0);
 
   // ...fault code:
-  s = stp_x(s, "SEVCON ALERT 0x", twizy_sevcon_fault);
+  if (twizy_alert_code < 0x10)
+  {
+    s = stp_x(s, "INPUT ALERT 0x", twizy_alert_code);
+  }
+  else
+  {
+    s = stp_x(s, "SEVCON ALERT 0x", twizy_alert_code);
 
-  // ...fault description:
-  if (writesdo(0x5610,0x01,twizy_sevcon_fault) == 0) {
-    if (readsdo_buf(0x5610,0x02,s+1,(len=50,&len)) == 0) {
-      *s = ' ';
-      s += 51-len;
-      *s = 0;
+    // ...fault description:
+    if (writesdo(0x5610,0x01,twizy_alert_code) == 0) {
+      if (readsdo_buf(0x5610,0x02,s+1,(len=50,&len)) == 0) {
+        *s = ' ';
+        s += 51-len;
+        *s = 0;
+      }
     }
   }
 }
@@ -4902,30 +4911,30 @@ void vehicle_twizy_notify(void)
   
 #ifdef OVMS_TWIZY_CFG
   
-    // Send SEVCON faults alert:
-    if ((twizy_notify & SEND_FaultsAlert) && (twizy_sevcon_fault != 0))
+    // Send fault code alert:
+    if ((twizy_notify & SEND_CodeAlert) && (twizy_alert_code != 0))
     {
       if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
       {
         net_msg_start();
         // push alert:
         stp_rom(net_scratchpad, "MP-0 PA");
-        vehicle_twizy_faults_prepmsg();
+        vehicle_twizy_codealert_prepmsg();
         net_msg_encode_puts();
-        // add active faults history data:
+        // add active SEVCON faults history data (if available):
         vehicle_twizy_querylogs_msgp(1, 0, NULL);
         net_msg_send();
-        twizy_notify &= ~SEND_FaultsAlert;
+        twizy_notify &= ~SEND_CodeAlert;
       }
 
       if (notify_sms)
       {
         net_scratchpad[0] = 0;
-        vehicle_twizy_faults_prepmsg();
+        vehicle_twizy_codealert_prepmsg();
         net_send_sms_start(par_get(PARAM_REGPHONE));
         net_puts_ram(net_scratchpad);
         net_send_sms_finish();
-        twizy_notify &= ~SEND_FaultsAlert;
+        twizy_notify &= ~SEND_CodeAlert;
       }
     }
 
@@ -5152,9 +5161,18 @@ BOOL vehicle_twizy_state_ticker10th(void)
   // SimpleConsole input & LED handling:
   //
 
+  // Read input port:
+  bits = (PORTA & 0b00111100) >> 2;
+
   if (!car_doors3bits.CarAwake || car_doors1bits.Charging) {
     // Twizy off or charging: switch off LEDs
     PORTC = (PORTC & 0b11110000);
+    
+    // send alert on input activation:
+    if ((bits != twizy_alert_code) && !(twizy_notify & SEND_CodeAlert)) {
+      if (twizy_alert_code = bits)
+        twizy_notify |= SEND_CodeAlert;
+    }
   }
   else {
     // LED control:
@@ -5171,9 +5189,6 @@ BOOL vehicle_twizy_state_ticker10th(void)
       // show user profile status and kickdown status:
       PORTC = (PORTC & 0b11110000) | (1 << twizy_cfg.profile_user) | kickdown_led;
     }
-
-    // Read input port:
-    bits = (PORTA & 0b00111100) >> 2;
 
     if (bits == 0) {
       twizy_cfg.keystate = 0;
@@ -5789,17 +5804,12 @@ BOOL vehicle_twizy_state_ticker10(void)
     // Clear online flag to test for CAN activity:
     twizy_status &= ~CAN_STATUS_ONLINE;
 
-    // Check for new SEVCON fault:
 #ifdef OVMS_TWIZY_CFG
+    // Check for new SEVCON fault:
     if (readsdo(0x5320,0x00) == 0) {
-      if (twizy_sdo.data == 0) {
-        // reset fault status:
-        twizy_sevcon_fault = 0;
-      }
-      else if (twizy_sdo.data != twizy_sevcon_fault) {
-        // new fault:
-        twizy_sevcon_fault = twizy_sdo.data;
-        twizy_notify |= SEND_FaultsAlert;
+      if (twizy_sdo.data && (twizy_sdo.data != twizy_alert_code)) {
+        twizy_alert_code = twizy_sdo.data;
+        twizy_notify |= SEND_CodeAlert;
       }
     }
 #endif // #ifdef #ifdef OVMS_TWIZY_CFG
@@ -8137,7 +8147,7 @@ BOOL vehicle_twizy_initialise(void)
     twizy_max_pwr_lo = 0;
     twizy_max_pwr_hi = 0;
 
-    twizy_sevcon_fault = 0;
+    twizy_alert_code = 0;
 
     twizy_cfg.type = 0;
     
