@@ -1952,7 +1952,7 @@ void net_ticker(void)
     net_granular_tick -= 3600;
     }
 
-  if ((net_timeout_rxdata > 0)&&(--net_timeout_rxdata == 0))
+  if ((net_state!=NET_STATE_DIAGMODE)&&(--net_timeout_rxdata == 0))
     {
     // A major problem - we've lost connectivity to the modem
     // Best solution is to reset everything

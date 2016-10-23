@@ -88,7 +88,6 @@ void diag_initialise(void)
   led_start();
   net_timeout_ticks = 0;
   net_timeout_goto = 0;
-  net_timeout_rxdata = 0;
   net_puts_rom("\x1B[2J\x1B[01;01H\r# OVMS DIAGNOSTICS MODE\n\n");
 
 #ifdef OVMS_CAR_TESLAROADSTER
