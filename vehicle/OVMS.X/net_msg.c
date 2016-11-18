@@ -838,7 +838,7 @@ BOOL net_msg_cmd_exec(void)
       break;
 
     case 6: // CHARGE ALERT (params unused)
-      net_msg_alert();
+      net_msg_stat();
       net_msg_encode_puts();
       break;
 
@@ -1284,7 +1284,7 @@ char *net_prep_ctp(char *s, char *argument)
 }
 #endif //OVMS_NO_CTP
 
-void net_msg_alert(void)
+void net_msg_stat(void)
 {
   char *s;
 
@@ -1294,57 +1294,24 @@ void net_msg_alert(void)
   net_prep_stat(s);
 }
 
-#ifndef OVMS_NO_VEHICLE_ALERTS
-void net_msg_alarm(void)
-  {
-  char *p;
 
-  delay100(2);
-  net_msg_start();
-  stp_rom(net_scratchpad,(char const rom far*)"MP-0 PAVehicle alarm is sounding!");
-  net_msg_encode_puts();
-  net_msg_send();
-  }
-
-void net_msg_valettrunk(void)
-  {
-  char *p;
-
-  delay100(2);
-  net_msg_start();
-  stp_rom(net_scratchpad,(char const rom far*)"MP-0 PATrunk has been opened (valet mode).");
-  net_msg_encode_puts();
-  net_msg_send();
-  }
-#endif //OVMS_NO_VEHICLE_ALERTS
-
-void net_msg_socalert(void)
+void net_msg_alert(alert_type alert)
   {
   char *s;
+  
+  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SVALERTS)
+    return;
 
   delay100(2);
   net_msg_start();
-  s = stp_i(net_scratchpad, "MP-0 PAALERT!!! CRITICAL SOC LEVEL APPROACHED (", car_SOC); // 95%
-  s = stp_rom(s, "% SOC)");
+  
+  s = stp_rom(net_scratchpad, "MP-0 PA");
+  net_prep_alert(s, alert);
+  
   net_msg_encode_puts();
   net_msg_send();
   }
 
-void net_msg_12v_alert(void)
-  {
-  char *s;
-
-  delay100(2);
-  net_msg_start();
-  if (can_minSOCnotified & CAN_MINSOC_ALERT_12V)
-    s = stp_l2f(net_scratchpad, "MP-0 PAALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
-  else
-    s = stp_l2f(net_scratchpad, "MP-0 PA12V BATTERY OK (", car_12vline, 1);
-  s = stp_l2f(s, "V, ref=", car_12vline_ref, 1);
-  s = stp_rom(s, "V)");
-  net_msg_encode_puts();
-  net_msg_send();
-  }
 
 void net_msg_erroralert(unsigned int errorcode, unsigned long errordata)
   {

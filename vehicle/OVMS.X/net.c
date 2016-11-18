@@ -1475,7 +1475,7 @@ void net_state_ticker1(void)
           if ((net_notify & NET_NOTIFY_NET_ALARM)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_ALARM); // Clear notification flag
-            net_msg_alarm();
+            net_msg_alert(ALERT_ALARM);
             return;
             }
           else
@@ -1496,17 +1496,23 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_NET_12VLOW)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_12VLOW); // Clear notification flag
-            if (net_fnbits & NET_FN_12VMONITOR) net_msg_12v_alert();
+            if (net_fnbits & NET_FN_12VMONITOR) net_msg_alert(ALERT_12VLOW);
             return;
             }
 #ifndef OVMS_NO_VEHICLE_ALERTS
           else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_TRUNK); // Clear notification flag
-            net_msg_valettrunk();
+            net_msg_alert(ALERT_TRUNK);
             return;
             }
 #endif //OVMS_NO_VEHICLE_ALERTS
+          else if ((net_notify & NET_NOTIFY_NET_CARON)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_NET_CARON); // Clear notification flag
+            net_msg_alert(ALERT_CARON);
+            return;
+            }
           else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_STAT); // Clear notification flag
@@ -1540,7 +1546,7 @@ void net_state_ticker1(void)
           if ((net_notify & NET_NOTIFY_SMS_ALARM)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_ALARM); // Clear notification flag
-            net_sms_alarm(net_caller);
+            net_sms_alert(net_caller, ALERT_ALARM);
             return;
             }
           else
@@ -1558,17 +1564,23 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_SMS_12VLOW)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_12VLOW); // Clear notification flag
-            if (net_fnbits & NET_FN_12VMONITOR) net_sms_12v_alert(net_caller);
+            if (net_fnbits & NET_FN_12VMONITOR) net_sms_alert(net_caller, ALERT_12VLOW);
             return;
             }
 #ifndef OVMS_NO_VEHICLE_ALERTS
           else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_TRUNK); // Clear notification flag
-            net_sms_valettrunk(net_caller);
+            net_sms_alert(net_caller, ALERT_TRUNK);
             return;
             }
 #endif //OVMS_NO_VEHICLE_ALERTS
+          else if ((net_notify & NET_NOTIFY_SMS_CARON)>0)
+            {
+            net_notify &= ~(NET_NOTIFY_SMS_CARON); // Clear notification flag
+            net_sms_alert(net_caller, ALERT_CARON);
+            return;
+            }
           else if ((net_notify & NET_NOTIFY_SMS_STAT)>0)
             {
             net_notify &= ~(NET_NOTIFY_SMS_STAT); // Clear notification flag
@@ -1827,7 +1839,7 @@ void net_state_ticker600(void)
           {
           if ((net_link==1)&&(net_msg_sendpending==0))
             {
-            if (net_fnbits & NET_FN_SOCMONITOR) net_msg_socalert();
+            if (net_fnbits & NET_FN_SOCMONITOR) net_msg_alert(ALERT_SOCLOW);
             net_socalert_msg = 72; // 72x10mins = 12hours
             }
           }
@@ -1836,7 +1848,7 @@ void net_state_ticker600(void)
         if (net_socalert_sms==0)
           {
           p = par_get(PARAM_REGPHONE);
-          if (net_fnbits & NET_FN_SOCMONITOR) net_sms_socalert(p);
+          if (net_fnbits & NET_FN_SOCMONITOR) net_sms_alert(p, ALERT_SOCLOW);
           net_socalert_sms = 72; // 72x10mins = 12hours
           }
         else
@@ -1995,3 +2007,46 @@ void net_initialise(void)
   net_state_enter(NET_STATE_DIAGMODE);
 #endif // OVMS_FIXED_DIAGMODE
   }
+
+
+////////////////////////////////////////////////////////////////////////
+// net_prep_alert()
+// Prepare alert message in buffer for SMS/MSG
+//
+char *net_prep_alert(char *s, alert_type alert)
+  {
+  switch (alert)
+    {
+    case ALERT_SOCLOW:
+      s = stp_i(net_scratchpad, "ALERT!!! CRITICAL SOC LEVEL APPROACHED (", car_SOC); // 95%
+      s = stp_rom(s, "% SOC)");
+      break;
+      
+    case ALERT_12VLOW:
+      if (can_minSOCnotified & CAN_MINSOC_ALERT_12V)
+        s = stp_l2f(s, "ALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
+      else
+        s = stp_l2f(s, "12V BATTERY OK (", car_12vline, 1);
+      s = stp_l2f(s, "V, ref=", car_12vline_ref, 1);
+      s = stp_rom(s, "V)");
+      break;
+      
+#ifndef OVMS_NO_VEHICLE_ALERTS
+    case ALERT_TRUNK:
+      s = stp_rom(s, "Trunk has been opened (valet mode).");
+      break;
+      
+    case ALERT_ALARM:
+      s = stp_rom(s, "Vehicle alarm is sounding!");
+      break;
+#endif
+      
+    case ALERT_CARON:
+      s = stp_rom(s, "Vehicle is stopped turned on");
+      break;
+    }
+  
+  return s;
+  }
+
+

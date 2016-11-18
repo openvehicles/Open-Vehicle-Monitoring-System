@@ -148,6 +148,7 @@ extern unsigned char net_notify_suppresscount; // To suppress STAT notifications
 #define NET_NOTIFY_NET_12VLOW 0x0008   // Set to 1 to NET notify 12V alert event
 #define NET_NOTIFY_NET_TRUNK  0x0010   // Set to 1 to NET notify trunk open
 #define NET_NOTIFY_NET_ALARM  0x0020   // Set to 1 to NET notify alarm sounding
+#define NET_NOTIFY_NET_CARON  0x0040   // Set to 1 to NET notify car is turned on
 
 #define NET_NOTIFY_SMS_ENV    0x0100   // NOT IMPLEMENTED / REQUIRED
 #define NET_NOTIFY_SMS_STAT   0x0200   // NOT IMPLEMENTED / REQUIRED
@@ -155,6 +156,7 @@ extern unsigned char net_notify_suppresscount; // To suppress STAT notifications
 #define NET_NOTIFY_SMS_12VLOW 0x0800   // Set to 1 to SMS notify 12V alert event
 #define NET_NOTIFY_SMS_TRUNK  0x1000   // Set to 1 to SMS notify trunk open
 #define NET_NOTIFY_SMS_ALARM  0x2000   // Set to 1 to SMS notify alarm sounding
+#define NET_NOTIFY_SMS_CARON  0x4000   // Set to 1 to SMS notify car is turned on
 
 // Convenience constants for net_notify() call
 #define NET_NOTIFY_ENV        NET_NOTIFY_NET_ENV
@@ -163,6 +165,18 @@ extern unsigned char net_notify_suppresscount; // To suppress STAT notifications
 #define NET_NOTIFY_12VLOW     NET_NOTIFY_NET_12VLOW
 #define NET_NOTIFY_TRUNK      NET_NOTIFY_NET_TRUNK
 #define NET_NOTIFY_ALARM      NET_NOTIFY_NET_ALARM
+#define NET_NOTIFY_CARON      NET_NOTIFY_NET_CARON
+
+// Alert types:
+enum _alert_type {
+    ALERT_SOCLOW = 1,
+    ALERT_12VLOW,
+    ALERT_TRUNK,
+    ALERT_ALARM,
+    ALERT_CARON
+};
+typedef enum _alert_type alert_type;
+
 
 extern char net_scratchpad[NET_BUF_MAX];
 extern char net_buf[NET_BUF_MAX];
@@ -185,5 +199,8 @@ void net_req_notification_error(unsigned int errorcode, unsigned long errordata)
 void net_req_notification(unsigned int notify);
 
 char *net_assert_caller(char *caller);
+
+char *net_prep_alert(char *s, alert_type alert);
+
 
 #endif // #ifndef __OVMS_NET_H

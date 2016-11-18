@@ -43,11 +43,8 @@ char* net_sms_nextarg(char *lastarg);
 void net_sms_params(char* number);
 void net_sms_gps(char* number);
 BOOL net_sms_stat(char* number);
-void net_sms_alarm(char* number);
-void net_sms_valettrunk(char* number);
+void net_sms_alert(char *number, alert_type alert);
 BOOL net_sms_checkauth(char authmode, char *caller, char **arguments);
 BOOL net_sms_in(char *caller, char *buf);
-void net_sms_socalert(char* number);
-void net_sms_12v_alert(char* number);
 
 #endif // #ifndef __OVMS_SMS_H

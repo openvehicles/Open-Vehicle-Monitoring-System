@@ -97,6 +97,7 @@ unsigned int car_idealrange = 0; // Ideal Range in miles
 unsigned int car_estrange = 0; // Estimated Range
 unsigned long car_time = 1; // UTC Time
 unsigned long car_parktime = 0; // UTC time car was parked (or 0 if not)
+unsigned char car_stopped_mincnt = 15; // Minute countdown while stopped
 signed int car_ambient_temp = -127; // Ambient Temperature (celcius)
 unsigned char car_vin[18] = "-----------------"; // VIN
 unsigned char car_type[5]; // Car Type, intentionally uninitialised for vehicle init

@@ -88,11 +88,8 @@ void net_msg_reply_ussd(char *buf, unsigned char buflen);
 
 char *net_prep_stat(char *s);
 char *net_prep_ctp(char *s, char *arguments);
-void net_msg_alert(void);
-void net_msg_valettrunk(void);
-void net_msg_alarm(void);
-void net_msg_socalert(void);
-void net_msg_12v_alert(void);
+void net_msg_stat(void);
+void net_msg_alert(alert_type alert);
 void net_msg_erroralert(unsigned int errorcode, unsigned long errordata);
 
 

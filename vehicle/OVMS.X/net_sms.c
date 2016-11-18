@@ -67,11 +67,6 @@ rom char NET_MSG_CHARGESTOP[] = "Charge stop requested";
 rom char NET_MSG_COOLDOWN[] = "Cooldown requested";
 #endif //OVMS_NO_CHARGECONTROL
 
-#ifndef OVMS_NO_VEHICLE_ALERTS
-rom char NET_MSG_ALARM[] = "Vehicle alarm is sounding!";
-rom char NET_MSG_VALETTRUNK[] = "Trunk has been opened (valet mode).";
-#endif //OVMS_NO_VEHICLE_ALERTS
-
 rom char NET_MSG_GOOGLEMAPS[] = "Car location:\nhttps://maps.google.com/maps?q=";
 rom char NET_MSG_OPENSTREETMAP[] = "\nhttp://osm.org?mlat=";
 
@@ -151,21 +146,8 @@ void net_send_sms_rom(char* number, const rom char* message)
   net_send_sms_finish();
   }
 
-#if 0 // unused code
-void net_send_sms_ram(char* number, const char* message)
-  {
-  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
-
-  net_send_sms_start(number);
-  net_puts_ram(message);
-  net_send_sms_finish();
-  }
-#endif
-
 BOOL net_sms_stat(char* number)
   {
-  char *p;
-
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return FALSE;
 
   delay100(2);
@@ -196,65 +178,22 @@ BOOL net_sms_ctp(char* number, char *arguments)
   }
 #endif //OVMS_NO_CTP
 
-#ifndef OVMS_NO_VEHICLE_ALERTS
-void net_sms_alarm(char* number)
-  {
-  char *p;
 
-  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
+void net_sms_alert(char* number, alert_type alert)
+  {
+  if (sys_features[FEATURE_CARBITS]&(FEATURE_CB_SOUT_SMS|FEATURE_CB_SVALERTS))
+    return;
 
   delay100(2);
   net_send_sms_start(number);
-  net_puts_rom(NET_MSG_ALARM);
-  net_send_sms_finish();
-  }
-
-void net_sms_valettrunk(char* number)
-  {
-  char *p;
-
-  if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SOUT_SMS) return;
-
-  delay100(2);
-  net_send_sms_start(number);
-  net_puts_rom(NET_MSG_VALETTRUNK);
-  net_send_sms_finish();
-  }
-#endif //OVMS_NO_VEHICLE_ALERTS
-
-void net_sms_socalert(char* number)
-  {
-  char *s;
-
-  delay100(10);
-  net_send_sms_start(number);
-
-  s = stp_i(net_scratchpad, "ALERT!!! CRITICAL SOC LEVEL APPROACHED (", car_SOC); // 95%
-  s = stp_rom(s, "% SOC)");
+  
+  net_prep_alert(net_scratchpad, alert);
+  cr2lf(net_scratchpad);
+  
   net_puts_ram(net_scratchpad);
-
   net_send_sms_finish();
-  delay100(5);
   }
 
-void net_sms_12v_alert(char* number)
-  {
-  char *s;
-
-  delay100(10);
-  net_send_sms_start(number);
-
-  if (can_minSOCnotified & CAN_MINSOC_ALERT_12V)
-    s = stp_l2f(net_scratchpad, "MP-0 PAALERT!!! 12V BATTERY CRITICAL (", car_12vline, 1);
-  else
-    s = stp_l2f(net_scratchpad, "MP-0 PA12V BATTERY OK (", car_12vline, 1);
-  s = stp_l2f(s, "V, ref=", car_12vline_ref, 1);
-  s = stp_rom(s, "V)");
-  net_puts_ram(net_scratchpad);
-
-  net_send_sms_finish();
-  delay100(5);
-  }
 
 // SMS Command Handlers
 //

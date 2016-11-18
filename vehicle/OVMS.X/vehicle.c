@@ -557,6 +557,10 @@ void vehicle_ticker(void)
       COMSTATbits.RXB1OVFL = 0; // clear buffer overflow bit
       }
 
+  // Reset car stopped countdown when off or moving:
+  if ((!car_doors3bits.CarAwake) || (car_speed > 0))
+    car_stopped_mincnt = 15; // first alert after 15 minutes
+  
   // And give the vehicle module a chance...
   if (vehicle_fn_ticker1 != NULL)
     {
@@ -582,7 +586,6 @@ void vehicle_ticker(void)
       }
     }
 
-  // minSOC alerts
   if ((can_granular_tick % 60)==0)
     {
     int minSOC;
@@ -599,6 +602,17 @@ void vehicle_ticker(void)
       // reset the alert sent flag when SOC is 2% point higher than threshold
       can_minSOCnotified &= ~CAN_MINSOC_ALERT_MAIN;
       }
+    
+    // Check if car is stopped turned on:
+    if (car_doors3bits.CarAwake && (car_speed == 0))
+      {
+      if (--car_stopped_mincnt == 0)
+        {
+        net_req_notification(NET_NOTIFY_CARON);
+        car_stopped_mincnt = 60; // next alert after 60 minutes
+        }
+      }
+    
     if (vehicle_fn_ticker60 != NULL) vehicle_fn_ticker60();
     }
 
