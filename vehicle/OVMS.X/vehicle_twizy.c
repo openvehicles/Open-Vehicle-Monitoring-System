@@ -288,6 +288,9 @@
     - car_chargecurrent now set from current battery charge current
     - Added car_chargekwh support
     - Added text alert on key input while car is off (for custom alert sensors)
+ 
+ * 3.8.1  24 Nov 2016 (Michael Balzer)
+    - New: charge power override (feature #7)
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -340,6 +343,7 @@
  *  OVMS_TWIZY_CFG -- enable SEVCON configuration
  *  OVMS_TWIZY_CFG_BRAKELIGHT -- enable CFG BRAKELIGHT
  *  OVMS_TWIZY_STACKDEBUG -- enable stack depth debugging
+ *  OVMS_CUSTOM_CAN_ISR -- necessary for charge power limiting
  * 
  * Compile switches to exclude unused framework features:
  * 
@@ -362,6 +366,8 @@
 
 #define FEATURE_KICKDOWN_THRESHOLD  0x01 // Kickdown threshold (pedal change)
 #define FEATURE_KICKDOWN_COMPZERO   0x02 // Kickdown pedal compensation zero point
+
+#define FEATURE_CHARGEPOWER         0x07 // Charge power limit [1-7 x 300W]
 
 #define FEATURE_SUFFSOC             0x0A // Sufficient SOC [%]
 #define FEATURE_SUFFRANGE           0x0B // Sufficient range [Mi/km]
@@ -407,7 +413,7 @@ typedef struct {
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.7.3";
+rom char vehicle_twizy_version[] = "3.8.1";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -3852,7 +3858,7 @@ BOOL vehicle_twizy_logs_cmd(BOOL msgmode, int cmd, char *arguments)
 
 int vehicle_twizy_chargetime(int dstsoc)
 {
-  int minutes;
+  int minutes, d;
 
   if (dstsoc > 10000)
     dstsoc = 10000;
@@ -3877,8 +3883,18 @@ int vehicle_twizy_chargetime(int dstsoc)
 
   // CC phase
   if (twizy_soc < dstsoc)
-    minutes += (((long) dstsoc - twizy_soc) * CHARGETIME_CC
+  {
+    // default time:
+    d = (((long) dstsoc - twizy_soc) * CHARGETIME_CC
             + (CHARGETIME_CVSOC/2)) / CHARGETIME_CVSOC;
+    // correction for reduced charge power:
+    // (current is 32A at level 7, else level * 5A)
+    if ((sys_can.EnableWrite)
+            && (sys_features[FEATURE_CHARGEPOWER] > 0) 
+            && (sys_features[FEATURE_CHARGEPOWER] < 7))
+      d = (d * 32) / (sys_features[FEATURE_CHARGEPOWER] * 5);
+    minutes += d;
+  }
 
   return minutes;
 }
@@ -3967,7 +3983,7 @@ char vehicle_twizy_gpslog_msgp(char stat)
     s = stp_l2f(s, ",", ((long) curr_min * 100L) / 4, 2); // section min current (A)
     s = stp_l2f(s, ",", ((long) curr_max * 100L) / 4, 2); // section max current (A)
   }
-
+  
   return net_msg_encode_statputs(stat, &crc);
 }
 
@@ -4210,6 +4226,121 @@ void vehicle_twizy_simulator_run(int chunk)
 
 
 ////////////////////////////////////////////////////////////////////////
+// CAN Interrupt Service Routine (High Priority)
+//
+// Interupts here will interrupt Uart Interrupts
+//
+
+#ifdef OVMS_CUSTOM_CAN_ISR
+
+void high_isr(void);
+
+#pragma code can_int_service = 0x08
+void can_int_service(void)
+{
+  _asm goto high_isr _endasm
+}
+
+#pragma code
+// ISR optimization, see http://www.xargs.com/pic/c18-isr-optim.pdf
+#pragma tmpdata high_isr_tmpdata
+#pragma	interrupt high_isr nosave=section(".tmpdata")
+void high_isr(void)
+{
+  // High priority CAN interrupt
+  do
+  {
+    
+    // Check RX buffer 0:
+    if (RXB0CONbits.RXFUL)
+    {
+      
+      // Fast ID 0x155 processing:
+      if ((RXB0CONbits.FILHIT0 == 0) 
+              && (RXB0SIDH == 0b00101010))
+      {
+        // Overwrite BMS>>CHG protocol to limit charge power:
+        // Feature #7 = maximum power, 1..7 = 300..2100 W
+        if ((sys_features[FEATURE_CHARGEPOWER] > 0)
+                && (sys_can.EnableWrite)
+                && (twizy_status & CAN_STATUS_CHARGING)
+                && (RXB0D0 != 0xff)
+                && (RXB0D0 > sys_features[FEATURE_CHARGEPOWER]))
+        {
+          // init transmit:
+          TXB1CONbits.TXREQ = 0;
+
+          // dest ID 0x155:
+          TXB1SIDH = 0b00101010;
+          TXB1SIDL = 0b10100000;
+
+          // data length:
+          TXB1DLC = 8;
+
+          TXB1D0 = sys_features[FEATURE_CHARGEPOWER];
+          TXB1D1 = RXB0D1;
+          TXB1D2 = RXB0D2;
+          TXB1D3 = RXB0D3;
+          TXB1D4 = RXB0D4;
+          TXB1D5 = RXB0D5;
+          TXB1D6 = RXB0D6;
+          TXB1D7 = RXB0D7;
+
+          // queue send with highest priority:
+          TXB1CON = 0b00001011;
+        }
+      }
+
+      // Continue with normal processing:
+
+      can_id = ((unsigned int)RXB0SIDL >>5)
+             + ((unsigned int)RXB0SIDH <<3);
+      can_filter = RXB0CON & 0x01;
+      can_datalength = RXB0DLC & 0x0F; // number of received bytes
+      can_databuffer[0] = RXB0D0;
+      can_databuffer[1] = RXB0D1;
+      can_databuffer[2] = RXB0D2;
+      can_databuffer[3] = RXB0D3;
+      can_databuffer[4] = RXB0D4;
+      can_databuffer[5] = RXB0D5;
+      can_databuffer[6] = RXB0D6;
+      can_databuffer[7] = RXB0D7;
+      RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
+      PIR3bits.RXB0IF = 0;   // reset interrupt flag
+
+      vehicle_twizy_poll0();
+    }
+    
+    // Check RX buffer 1:
+    if (RXB1CONbits.RXFUL)
+    {
+      can_id = ((unsigned int)RXB1SIDL >>5)
+             + ((unsigned int)RXB1SIDH <<3);
+      can_filter = RXB1CON & 0x07;
+      can_datalength = RXB1DLC & 0x0F; // number of received bytes
+      can_databuffer[0] = RXB1D0;
+      can_databuffer[1] = RXB1D1;
+      can_databuffer[2] = RXB1D2;
+      can_databuffer[3] = RXB1D3;
+      can_databuffer[4] = RXB1D4;
+      can_databuffer[5] = RXB1D5;
+      can_databuffer[6] = RXB1D6;
+      can_databuffer[7] = RXB1D7;
+      RXB1CONbits.RXFUL = 0;        // All bytes read, Clear flag
+      PIR3bits.RXB1IF = 0;          // reset interrupt flag
+      
+      vehicle_twizy_poll1();
+    }
+
+  } while (PIR3bits.RXB0IF || PIR3bits.RXB1IF);
+  
+}
+#pragma tmpdata
+
+#endif // OVMS_CUSTOM_CAN_ISR
+
+
+////////////////////////////////////////////////////////////////////////
 // twizy_poll()
 // This function is an entry point from the main() program loop, and
 // gives the CAN framework an opportunity to poll for data.
@@ -4256,7 +4387,7 @@ BOOL vehicle_twizy_poll0(void)
   /*
   Mask0		00011110100
   Filter0	00001010100   ID 155, 554, 556, 557, 55E, 55F
-  Filter1       00000100100   ID 424
+  Filter1       00000100100   ID 424, (425), (426), (627)
   */
 
   // HANDLE CAN MESSAGE:
@@ -4370,24 +4501,6 @@ BOOL vehicle_twizy_poll0(void)
 
       switch (can_id)
       {
-      case 0x554:
-        // CAN ID 0x554: Battery cell module temperatures
-        // (1000 ms = 1 per second)
-        if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
-        {
-          for (i = 0; i < BATT_CMODS; i++)
-            twizy_cmod[i].temp_act = CAN_BYTE(i);
-
-          state |= BATT_SENSORS_GOT554;
-
-          // detect fetch completion:
-          if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
-            state = BATT_SENSORS_READY;
-
-          twizy_batt_sensors_state = state;
-        }
-        break;
-
       case 0x556:
         // CAN ID 0x556: Battery cell voltages 1-5
         // 100 ms = 10 per second
@@ -4430,6 +4543,24 @@ BOOL vehicle_twizy_poll0(void)
 
         }
 
+        break;
+
+      case 0x554:
+        // CAN ID 0x554: Battery cell module temperatures
+        // (1000 ms = 1 per second)
+        if ((CAN_BYTE(0) != 0x0ff) && (state != BATT_SENSORS_READY))
+        {
+          for (i = 0; i < BATT_CMODS; i++)
+            twizy_cmod[i].temp_act = CAN_BYTE(i);
+
+          state |= BATT_SENSORS_GOT554;
+
+          // detect fetch completion:
+          if ((state & BATT_SENSORS_READY) >= BATT_SENSORS_GOTALL)
+            state = BATT_SENSORS_READY;
+
+          twizy_batt_sensors_state = state;
+        }
         break;
 
       case 0x557:
@@ -4587,7 +4718,7 @@ BOOL vehicle_twizy_poll1(void)
 
   /*
   Mask1         10011101000
-  Filter2	00010000000   ID 081, 196
+  Filter2	00010000000   ID (080), 081, 196
   Filter3	10010000000   ID 581, 597
   Filter4	10010001000   ID 599, 59B, 59E, 69F
   Filter5	10011000000   ID 5D7
@@ -4597,24 +4728,10 @@ BOOL vehicle_twizy_poll1(void)
 
   if (can_filter == 2)
   {
-    // Filter 2 = ID 081, 196
+    // Filter 2 = ID (080), 081, 196
     switch (can_id)
     {
     
-#ifdef OVMS_TWIZY_CFG
-    case 0x081:
-      /*****************************************************
-       * CAN ID 0x081: CANopen error message from SEVCON (Node #1)
-       */
-
-      // count errors to detect manual CFG RESET request:
-      if ((CAN_BYTE(1)==0x10) && (CAN_BYTE(2)==0x01))
-        twizy_button_cnt++;
-
-      break;
-#endif // OVMS_TWIZY_CFG
-      
-      
     case 0x196:
       /*****************************************************
        * CAN ID 0x196: 10 ms period
@@ -4627,6 +4744,19 @@ BOOL vehicle_twizy_poll1(void)
         car_tmotor = 0;
       
       break;
+      
+#ifdef OVMS_TWIZY_CFG
+    case 0x081:
+      /*****************************************************
+       * CAN ID 0x081: CANopen error message from SEVCON (Node #1)
+       */
+
+      // count errors to detect manual CFG RESET request:
+      if ((CAN_BYTE(1)==0x10) && (CAN_BYTE(2)==0x01))
+        twizy_button_cnt++;
+      
+      break;
+#endif // OVMS_TWIZY_CFG
       
     } 
   }
@@ -5417,7 +5547,7 @@ BOOL vehicle_twizy_state_ticker1(void)
   {
     // CAR has just been turned OFF
     car_doors3bits.CarAwake = 0;
-
+    
     car_parktime = car_time-1; // Record it as 1 second ago, so non zero report
 
     // set trip references:
@@ -8216,7 +8346,7 @@ BOOL vehicle_twizy_initialise(void)
 
   /*
   Mask1         10011101000
-  Filter2	00010000000   ID 081, 196
+  Filter2	00010000000   ID (080), 081, 196
   Filter3	10010000000   ID 581, 597
   Filter4	10010001000   ID 599, 59B, 59E, 69F
   Filter5	10011000000   ID 5D7
@@ -8277,8 +8407,11 @@ BOOL vehicle_twizy_initialise(void)
   vehicle_version = vehicle_twizy_version;
   can_capabilities = vehicle_twizy_capabilities;
 
+#ifndef OVMS_CUSTOM_CAN_ISR
   vehicle_fn_poll0 = &vehicle_twizy_poll0;
   vehicle_fn_poll1 = &vehicle_twizy_poll1;
+#endif
+  
   vehicle_fn_idlepoll = &vehicle_twizy_idlepoll;
   vehicle_fn_ticker1 = &vehicle_twizy_state_ticker1;
   vehicle_fn_ticker10 = &vehicle_twizy_state_ticker10;
