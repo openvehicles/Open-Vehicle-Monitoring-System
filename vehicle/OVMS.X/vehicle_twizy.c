@@ -292,6 +292,12 @@
  * 3.8.1  24 Nov 2016 (Michael Balzer)
     - New: charge power override (feature #7)
 
+ * 3.8.2  27 Nov 2016 (Michael Balzer)
+    - Fill framework car_chargelimit from feature #7
+    - Added charge power to MSG CMDs #203,204 (Query/Set ChargeAlerts)
+    - Skip feature init on CPU reset
+    - Inhibit CPU reset during charging with charge power override
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -352,6 +358,7 @@
  *  OVMS_NO_VEHICLE_ALERTS -- excludes cabin & trunk alerts
  *  OVMS_NO_CRASHDEBUG -- excludes *-OVM-DebugCrash record generation
  *  OVMS_NO_HOMELINK -- excludes unused SMS command "HOMELINK"
+ *  OVMS_NO_ERROR_NOTIFY -- exclude unused error code notification
  * 
  */
 
@@ -413,7 +420,7 @@ typedef struct {
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.8.1";
+rom char vehicle_twizy_version[] = "3.8.2";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -5414,6 +5421,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 
   suffSOC = sys_features[FEATURE_SUFFSOC];
   suffRange = sys_features[FEATURE_SUFFRANGE];
+  car_chargelimit = sys_features[FEATURE_CHARGEPOWER] * 5;
   maxRange = vehicle_twizy_get_maxrange();
 
   if (can_mileskm == 'K')
@@ -5609,6 +5617,13 @@ BOOL vehicle_twizy_state_ticker1(void)
       {
       car_chargepower = ((long) (-twizy_power) * 64L + 500) / 1000;
       car_chargecurrent = ((-twizy_current) + 2) >> 2;
+      }
+
+    // Inhibit modem timeout during charge power override:
+    if ((sys_features[FEATURE_CHARGEPOWER] > 0)
+            && (sys_can.EnableWrite))
+      {
+      net_timeout_rxdata = NET_RXDATA_TIMEOUT;
       }
 
     // Calculate range during charging:
@@ -6896,11 +6911,12 @@ BOOL vehicle_twizy_range_sms(BOOL premsg, char *caller, char *command, char *arg
  *  SMS: CA?
  *      - output current charge alerts
  *
- *  MSG: CMD_SetChargeAlerts(range,soc)
+ *  MSG: CMD_SetChargeAlerts(range,soc,[power])
  *  SMS: CA [range] [SOC"%"]
- *      - set/clear charge alerts
+ *      - set/clear charge alerts & charge power level
  *      - range: in user units (mi/km)
  *      - SMS recognizes 0-2 args, unit "%" = SOC
+ *      - MSG adds power level (0..7)
  *
  */
 
@@ -7002,6 +7018,7 @@ char vehicle_twizy_ca_msgp(char stat, int cmd)
   s = stp_i(s, ",", car_chargelimit_minsremaining_range);
   s = stp_i(s, ",", car_chargelimit_minsremaining_soc);
   s = stp_i(s, ",", car_chargefull_minsremaining);
+  s = stp_i(s, ",", sys_features[FEATURE_CHARGEPOWER]);
 
   //return net_msg_encode_statputs( stat, &crc );
   net_msg_encode_puts();
@@ -7012,16 +7029,19 @@ BOOL vehicle_twizy_ca_cmd(BOOL msgmode, int cmd, char *arguments)
 {
   if (cmd == CMD_SetChargeAlerts)
   {
-    char *range = NULL, *soc = NULL;
+    char *range = NULL, *soc = NULL, *power = NULL;
 
     if (arguments && *arguments)
     {
       range = strtokpgmram(arguments, ",");
       soc = strtokpgmram(NULL, ",");
+      power = strtokpgmram(NULL, ",");
     }
 
     sys_features[FEATURE_SUFFRANGE] = range ? atoi(range) : 0;
     sys_features[FEATURE_SUFFSOC] = soc ? atoi(soc) : 0;
+    if (power)
+      sys_features[FEATURE_CHARGEPOWER] = atoi(power);
 
     // store new alerts into EEPROM:
     par_set(PARAM_FEATURE_BASE + FEATURE_SUFFRANGE, range);
@@ -8296,6 +8316,10 @@ BOOL vehicle_twizy_initialise(void)
     twizy_kickdown_hold = 0;
     twizy_kickdown_level = 0;
 
+    // Init temporary feature slot defaults:
+    sys_features[FEATURE_KICKDOWN_THRESHOLD] = CAN_KICKDOWN_THRESHOLD;
+    sys_features[FEATURE_KICKDOWN_COMPZERO] = CAN_KICKDOWN_COMPZERO;
+
 #endif // OVMS_TWIZY_CFG
 
   }
@@ -8304,12 +8328,6 @@ BOOL vehicle_twizy_initialise(void)
   twizy_autorecup_level = twizy_autodrive_level = 1000;
   twizy_autorecup_checkpoint = twizy_autodrive_checkpoint = 0;
   
-  // Init temporary feature slot defaults on each start:
-#ifdef OVMS_TWIZY_CFG
-  sys_features[FEATURE_KICKDOWN_THRESHOLD] = CAN_KICKDOWN_THRESHOLD;
-  sys_features[FEATURE_KICKDOWN_COMPZERO] = CAN_KICKDOWN_COMPZERO;
-#endif // OVMS_TWIZY_CFG
-
 #ifdef OVMS_TWIZY_BATTMON
   twizy_batt_sensors_state = BATT_SENSORS_START;
 #endif // OVMS_TWIZY_BATTMON

@@ -70,10 +70,13 @@ unsigned char net_socalert_sms = 0;         // SOC Alert (msg) 10min ticks remai
 unsigned char net_socalert_msg = 0;         // SOC Alert (sms) 10min ticks remaining
 #endif //#ifdef OVMS_SOCALERT
 
+#ifndef OVMS_NO_ERROR_NOTIFY
 unsigned int  net_notify_errorcode = 0;     // An error code to be notified
 unsigned long net_notify_errordata = 0;     // Ancilliary data
 unsigned int  net_notify_lasterrorcode = 0; // Last error code to be notified
 unsigned char net_notify_lastcount = 0;     // A counter used to clear error codes
+#endif //OVMS_NO_ERROR_NOTIFY
+
 unsigned int  net_notify = 0;               // Bitmap of notifications outstanding
 unsigned char net_notify_suppresscount = 0; // To suppress STAT notifications (seconds)
 
@@ -452,6 +455,7 @@ void net_putc_ram(const char data)
     }
   }
 
+#ifndef OVMS_NO_ERROR_NOTIFY
 ////////////////////////////////////////////////////////////////////////
 // net_req_notification_error()
 // Request notification of an error
@@ -484,6 +488,7 @@ void net_req_notification_error(unsigned int errorcode, unsigned long errordata)
     net_notify_lastcount = 0;
     }
   }
+#endif //OVMS_NO_ERROR_NOTIFY
 
 ////////////////////////////////////////////////////////////////////////
 // net_req_notification()
@@ -1342,6 +1347,7 @@ void net_state_ticker1(void)
 
   CHECKPOINT(0x38)
 
+#ifndef OVMS_NO_ERROR_NOTIFY
   // Time out error codes
   if (net_notify_lastcount>0)
     {
@@ -1351,6 +1357,7 @@ void net_state_ticker1(void)
       net_notify_lasterrorcode = 0;
       }
     }
+#endif //OVMS_NO_ERROR_NOTIFY
 
   switch (net_state)
     {
@@ -1454,6 +1461,7 @@ void net_state_ticker1(void)
           return;
           }
 
+#ifndef OVMS_NO_ERROR_NOTIFY
         if ((net_notify_errorcode>0)
                 && (net_msg_serverok==1) && (net_msg_sendpending==0))
           {
@@ -1466,6 +1474,7 @@ void net_state_ticker1(void)
           net_notify_errordata = 0;
           return;
           }
+#endif //OVMS_NO_ERROR_NOTIFY
 
         if (((net_notify & NET_NOTIFY_NETPART)>0)
                 && (net_msg_serverok==1) && (net_msg_sendpending==0))

@@ -190,6 +190,10 @@ void main(void)
 #ifdef OVMS_LOGGINGMODULE
     logging_initialise();
 #endif
+    
+    // init volatile features:
+    for (y = 0; y < FEATURES_MAP_PARAM; y++)
+      sys_features[y] = 0;
   }
   else
   {
@@ -201,13 +205,10 @@ void main(void)
 
   CHECKPOINT(0x20)
 
-  for (x = 0; x < FEATURES_MAP_PARAM; x++)
-    sys_features[x] = 0; // Turn off the features
-
   // The top N features are persistent
-  for (x = FEATURES_MAP_PARAM; x < FEATURES_MAX; x++)
+  for (y = FEATURES_MAP_PARAM; y < FEATURES_MAX; y++)
   {
-    sys_features[x] = atoi(par_get(PARAM_FEATURE_S + (x - FEATURES_MAP_PARAM)));
+    sys_features[y] = atoi(par_get(PARAM_FEATURE_S + (y - FEATURES_MAP_PARAM)));
   }
 
 #ifndef OVMS_NO_CHARGECONTROL
