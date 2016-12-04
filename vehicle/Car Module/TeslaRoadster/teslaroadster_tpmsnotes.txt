@@ -1,0 +1,222 @@
+Some notes on TPMS in v2.x roadsters
+
+https://teslamotorsclub.com/tmc/threads/that-tpms-issue-summarized.81509/
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+scotty2541, Today at 6:42 AM  Last edited: Today at 6:49 AM
+
+New Here is what I determined to the consistently failing TMPS issue:
+
+This is a followup to:
+TPMS - Again on my LEMON. 4 times 37,000 miles
+
+To solve this, thry this first: Go back to your Tesla service center, and have them get their proprietary, confidential, only for Tesla use, TPMS programmer and simply reset the system to the sensor addresses. A process that can be done in less than 5 minutes.
+
+What follows is the result of my investigating the failed TPMS system on my Tesla Roadster. This report is rather technical, but in an abstract summary, something caused the antenna modules (both of them) to simply erase the memorized addresses of the rear tires. Such stuff doesn't (or shouldn't) happen on its own. Did something decide to mess up my sensor addresses, generating a service visit? Whatever it was, it had to be internal to the car.
+
+The system has (obviously) 4 sensors in the tires, and they transmit every minute or so. The content of that message is the 32 bit address of the transmitter, plus the sensor data. There are two antennas which listen for the sensors to transmit and then forward that information to a master CPU. The antennas have little CPU's in them and must be told what transmitter address to listen to, otherwise you get tire information from the guy's car next to you... or even a dozen other guys next to you at a traffic light.
+
+Before you try doing what I did, do yourself a favor... Go to the local hardware store and buy nine 5mm Hex head screws. The ones on the car are crappy, and the ones I purchased are infinitely better. They get a better bite with a 4mm hex drive, and won't strip out.
+crappyscrew.jpg  screws.jpg  betterscrew.jpg 
+
+I purchased a new rear antenna unit from Tesla, and installed it. Of course it didn't work, because the unit didn't know my tire address codes. I also bought a LIN diagnostic device, to allow me to monitor the communication, or even insert messages.
+pinned.jpg  sniffer.jpg 
+So I attached my diagnostic device and collected some data. (I've got tons of logs of data, if anyone wants to consult them...)
+
+Then I went back and had Tesla reprogram the unit. I then read the data out of the unit again, and compared it to my failed unit. I could see what was wrong.
+
+Here's how it works:
+
+The system is a "Local Interconnect Network" (LIN) which is commonly used in the automotive industry to have sensors and systems communicate with a master controller, such as a CPU. Communication is accomplished by the master sending out an "address ID" on a bus, all slaves listening, and one (or more) doing something. There are exactly 8 bytes following the ID, but they could come from the master or a slave. I know that's vague, but it's all at the whim of the guy (or gal) who designed the communication specifications. For example, sending out an id of "2" and 8 bytes could mean "every slave do such-and-such, while sending out a "3" and 8 bytes could mean "only slave X, you need to do something". Then, maybe, sending a "4" could mean the slave needs to send 8 bytes back in, because the master doesn't send anything (data comes in, rather than goes out). Clearly, two slave units hearing a number they think is theirs, and both trying to send data back to the master would collide, and the data would be garbage.
+
+As for that ID number, there are 64 ID numbers (6 bits) sent as an 8 bit (1 byte) ID. Two of the bits in the ID are used as parity checking, totaling 8 bits. The higher order bits are the parity. So, for people who know base 16 (hexadecimal), an ID of 24 (hex) is the same as an ID of 64 (hex), because of the extra parity. As I compose this, I may list ID with or without the parity bits. Because my notes have them all mixed. Forgive me if I do so, it's mostly the lower nibble that matters anyway…
+
+From this point forward, all ID numbers and data will be in HEX notation, except where obvious (like the PSI).
+
+With that foundation, let's take a look at the system.
+There are two antennas; each seems to have several ID numbers that is responds to. Let's look at them:
+24 and 34 are responded to by the rear unit, because there was no reply when it was disconnected.
+23 and 33 are responded to by the front unit, (logic by elimination).
+Then there are less frequent 14, 15 which are responded to by the front as address confirmations.
+And 16, 17 which are responded to by the rear as address confirmations.
+
+Every 2 seconds, the master sends out 4 ID's and the slaves should respond. It appears that "23" replies with the 8 bytes, two bytes for each tire. This is the front antenna. Then ID "24" which is the rear, also replies with the same data (or maybe slightly different if it missed a message that the other antenna heard).
+
+So, next we have to ask: how does the antenna know what tire transmitter is what? Each tire transmitter has a 4 byte (32 bit) address is sends out. Since all mine were replaced about the same time, each one had to have an address that was close to each other. The service tech let me write down the addresses as he walked around the car reading each tire:
+Front R 08 06 66 ec
+Front L 08 06 66 2e
+Rear R 08 06 67 2f
+Rear L 08 06 66 05
+
+As I'm examining the data, I see that every thirty seconds, the master also sends out the following address IDs: 14, 15, 16, 17. Also, when the rear unit was disconnected, 16 and 17 were not responded to, so they clearly belong to the rear antenna. The front antenna responds with the following (left column is the ID):
+
+ID 8 bytes of Data
+-------------------------------------
+14 08 06 66 2E 08 06 66 EC
+15 08 06 66 05 08 06 67 2F
+Look! Those are my tire transmitter addresses!
+
+Also, when IDs 16 and 17 are sent, it also gave the same replies (after the device was reprogrammed).
+16 08 06 66 2E 08 06 66 EC
+17 08 06 66 05 08 06 67 2F 
+
+Clearly, both antennas are aware of all four tires.
+
+So, what we have learned so far is there are 4 ID address sent every two seconds that tell it to reply with the tire pressure/temp, and 4 ID addresses sent every 30 seconds that tell it to reply with the tire sensor addresses. Here is a complete data dump, with time stamps on the left, and my comments on the right:
+
+(I left the parity bits on second column, which is the ID)
+Time ID Data My comments
+----------------------------------------------------------------
+613.164944 14 08 06 66 2E 08 06 66 EC (front antenna, tell me your front addresses)
+613.189484 55 08 06 66 05 08 06 67 2F (front antenna, tell me your rear addresses)
+613.214024 D6 08 06 66 2E 08 06 66 EC (rear antenna, tell me your front addresses)
+613.238564 97 08 06 66 05 08 06 67 2F (rear antenna, tell me your rear addresses)
+(the above four ID's are sent every 30 seconds)
+
+613.268830 A3 52 44 51 44 6D 43 72 43 (front antenna, tell me your data)
+613.292961 73 07 00 04 00 0C 00 02 00 (front antenna, tell me your data)
+613.317092 64 52 44 51 44 6D 43 72 43 (rear antenna, tell me your data [it's the same] )
+613.341632 B4 07 00 04 00 0C 00 02 00 (rear antenna, tell me your data [it's the same] )
+(the above four IDs are send every 2 seconds)
+
+Lastly, from power on, I've seen it take up to 190 seconds for data to appear on all four slots.
+
+Examining the data:
+I lowered a tire pressure to see what would change. Here is a sample message where the front tires are 28 PSI, and the rear tires are 37 and 38, and all four tires are the same temperature 64 degrees F:
+23 52 44 51 44 6D 44 6E 43 (with the parity bits, this is "A3" from the data above)
+Here is a message where the right rear tire has been lowered to 23 PSI
+23 52 44 51 44 6D 44 42 43
+The 6E went down to 42. When I filled the tire back up, the value went back up.
+
+These messages came from both ID 23 and 24 (front and rear antennas). A little algebra and we could easily determine the conversion from the hex value to the displayed PSI and temperature. But I won't get into that now.
+
+ID numbers 33 and 34 I'm not sure about. But they gave the same message from both the front and rear antenna. The message that matches the above tire pressure of 37/38 was this:
+24 07 00 04 00 0B 00 0F 00
+
+When I lowered the right rear tire, the temperature also dropped from 64F to 62F. This changed
+24 07 00 04 00 0B 00 01 00
+I'm not going to worry about what these mean for now. The goal was to get the system functioning, and make that message go away.
+
+What went wrong:
+When I initially did the diagnostic, I attached the device, spliced into the wires, and inserted pins so I could attach the monitor device. These are the values which I read from the system:
+16 55 53 00 00 00 00 AF 00 ( Supposed to be addresses, but are not! )
+17 55 53 00 00 00 00 AE 00
+
+These ID's are supposed to be the addresses of all four tire sensors (I didn't know that at the time, only later when I diagnosed the working system). Clearly they are not. Somehow, they became corrupted.
+
+Also, examining the data, it is apparent that the rear wheel addresses for the *front* antenna are also corrupted:
+14 08 06 66 2E 08 06 66 EC ( Front Tire addresses - correct )
+15 70 53 70 52 27 00 A9 00 ( Supposed to be addresses, but are not! )
+
+The addresses on ID 14 are correct for my front tires, but the addresses on 15 are wrong.
+
+Also, 14 should match 16. And 15 should match 17. As they do in the system after Tesla reprogrammed it. But here, none of them do.
+
+Here is a block of data, again from the monitor, when I initially read the data from the old, failed antenna. Comments again, are on the right:
+(Addresses of tires) 
+359.650363 14 08 06 66 2E 08 06 66 EC front antenna has correct address for front tires
+359.674903 55 70 53 70 52 27 00 A9 00 front antenna has incorrect address for rear tires
+359.699443 D6 55 53 00 00 00 00 AF 00 rear antenna has incorrect address for front tires
+359.723983 97 55 53 00 00 00 00 AE 00 rear antenna has incorrect address for front tires
+(Tire pressure data)
+361.652418 A3 52 40 55 41 00 00 00 00 front antenna has data on only front tires
+361.676549 73 03 00 05 00 00 00 00 00 front antenna has data on only front tires
+361.701089 64 00 00 00 00 00 00 00 00 rear antenna has nothing….
+361.725629 B4 00 00 00 00 00 00 00 00 rear antenna has nothing….
+
+The rear antenna was sending all zeros for all the tire data. The front antenna was sending all zeros for the rear tires, because it no longer knew the addresses of the rear tire sensors.
+
+What next?
+
+Well, there are 8 ID code we have determined so far. And all of them are codes that tell the system to send data into the master. By playing and predicting which individual bits are used, and was able to try some guesses. I pulled the bad unit, placed in on my workbench, and powered it up. Then I used my PC and the diagnostic (sniffer) device as a host, and started sending IDs to the device. I found that I could actually set the value that appears in ID 16 and 17 using ID's 12 and 13. I then have to predict that I could set the values in 14 and 15 using IDs 10 and 11. However, that unit is in the front, and I didn't remove it to test it.
+
+So I went ahead and reprogrammed the tire transmitter addresses on the old rear unit to match what the Tesla technician had programmed the new device for. I plugged it in, replacing the new unit and viola! Both units replied with the 14, 15, 16, 17 IDs properly. Eventually, tire data started appearing from the front antenna. When all four tires were heard from, the display showed the tire information.
+
+By the way, the new unit looked very old, dirty and used. He told me it was likely that someone had tried replacing it before, and decided it was not the failed part, so took it back out. However, my unit, after I cleaned it, looked newer than the one I purchased.
+
+Because I pried opened my old unit, and generally messed with it, I did not leave it in my car. I am using the replacement unit instead. For a reason that will become apparent later. See entry #43 on the other page:
+TPMS - Again on my LEMON. 4 times 37,000 miles
+
+Now, I let the old, reprogrammed, unit run for several minutes, and it never heard anything, so it never sent any tire information. Everything it sent was all zeros. But the front unit was taking up the slack for it. Here is a sample data dump:
+Data block from reprogrammed old antenna:
+258.779638 A3 52 45 52 45 6E 45 6E 45 (front antenna, all four tires)
+258.803769 73 06 00 06 00 09 00 09 00 (front antenna, not sure what it is)
+258.828309 64 00 00 00 00 00 00 00 00 (rear antenna hasn't heard anything)
+258.852849 B4 00 00 00 00 00 00 00 00 (rear antenna hasn't heard anything)
+260.958381 14 08 06 66 2E 08 06 66 EC (front antenna address confirmation)
+260.982921 55 08 06 66 05 08 06 67 2F (front antenna address confirmation)
+261.007461 D6 08 06 66 2E 08 06 66 EC (rear antenna address confirmation)
+261.032001 97 08 06 66 05 08 06 67 2F (rear antenna address confirmation)
+
+What I don't know is what the system would do if, after 10 or so minutes, it still never got anything from the rear unit. Would it care?
+
+Here is a summary of the ID numbers I found, and what they do:
+
+ID Purpose
+-----------------------------------------------------------------------
+To a slave unit:
+10 Set the transmitter addresses for the front tires in the front antenna
+11 Set the transmitter addresses for the rear tires in the front antenna
+12 Set the transmitter addresses for the front tires in the rear antenna
+13 Set the transmitter addresses for the rear tires in the rear antenna
+From a slave unit:
+14 Read the transmitter addresses for the front tires in the front antenna
+15 Read the transmitter addresses for the rear tires in the front antenna
+16 Read the transmitter addresses for the front tires in the rear antenna
+17 Read the transmitter addresses for the rear tires in the rear antenna
+From a slave unit:
+23 Read the tire data (press and temp?) from the front antenna
+33 Read the data (unknown) from the front antenna
+24 Read the tire data (press and temp?) from the rear antenna
+34 Read the data (unknown) from the rear antenna
+
+In summary, something, somewhere, decided to corrupt the tire transmitter addresses, resulting in a failure. Even if the antenna itself isn't hearing from the tires, and may not have been for several months for all I know, the other one can work.
+
+The process of reprogramming the correct addresses is easy, as long as you go to Tesla and have them do it. He walked around the car, reading each 32 bit address from the tire with his Tesla customer proprietary device, then plugs in his device in the ODBC II plug, and tells the host to update all the antennas. Even if one antenna isn't picking up data, the other one can take up the workload, provided the units are given the correct tire sensor addresses.
+
+This does open the possibility of creating a phony device that can fake out the system, just to shut it up next time it fails. You just need to know what the tire sensor addresses are that the system is expecting to hear from. Because it doesn't tell you that.
+OTOH... Maybe it's doesn't need to know, Maybe it's only important that the addresses all match up (which they didn't when my rear antenna failed).
+
+I hope this has been educational.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+gregd, Today at 8:51 AM
+
+New Excellent write-up. The November Sherlock award to you! Thanks for posting.
+
+But I'm a little confused... Has your original unit failed, or is something else wrong? You say it responded after you reprogrammed it, but then never heard anything after letting it run for a few minutes. Is the receiver part not working?
+ 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
+scotty2541, Today at 10:05 AM
+
+New Yes, perhaps I should have tried to be more clear. First draft, after all. More anxious to post it than to clean it up.
+
+So, referring to the original post (linked at the beginning of this one, where I called it a lemon), plus the diagnosis steps that "MLAuto" recommended, it was determined that the rear unit had failed.
+
+After re-attaching the reprogrammed rear antenna which we decided had failed, it never seemed to receive any RF signal, and always sends all zeros for the data. I ran it for over five minutes. I would conclude that it is not working, and I could dig into it from the RF point of view to figure out why it died. It's possible that my action of attempting to clean the rubber like material from the circuit board actually hurt the receiver circuit. Regardless, the small MCU still communicates, so it still has the micro-code in it, and I doubt that my cleaning would have caused it to forget the tire sensor address. I conclude that some other factor actually erased, reprogrammed, corrupted those rear tire sensor addresses.
+
+What freaked me out was that fact that the antennas get signals from all 4 tires. So even if the rear receiver failed, the other antenna would still get the messages. So, the unit really isn't needed, except that it's memory was messed up.
+
+And regardless of if the rear unit was correctly receiving any signals from the tires, if the addresses were reprogrammed by Tesla, the error would have gone away and I would have gotten valid readings. 
+
+Thanks for the "Sherlock award".
+ 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
+scotty2541, Today at 10:11 AM
+
+New Followup... I forgot to include in my write up.
+Something else I was told when I picked up the replacement receiver antenna: These are the sames units that are used in the "S". So the ID commands have to be the same for both vehicles. Therefore, pretty much everything here would apply to that model as well.
+
+And, obviously, there are different part numbers for the front and rear antenna units. Which would be needed since they react to different ID commands.
+     
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+gregd, Today at 11:56 AM
+
+New
+scotty2541 said: ↑
+These are the sames units that are used in the "S".
+I'm sorry for the owners of the MS... :(
+
+So, final question... I'm guessing that if one of the two units has lost its memory, the bad one messes up the valid reports from the remaining good unit, right? Perhaps the overall system is actually more reliable with one of the units removed? Maybe switch one of them into "cold standby" with a toggle switch to the power line, and manually fail over when one dies? (Like having a spare bulb in your overhead projector.)
+
+
