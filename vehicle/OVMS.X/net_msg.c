@@ -387,6 +387,8 @@ char net_msgp_gps(char stat)
   s = stp_i(s, ",", car_altitude);
   s = stp_i(s, ",", car_gpslock);
   s = stp_i(s, ",", car_stale_gps);
+  s = stp_i(s, ",", car_speed); // no conversion, stored in user unit
+  s = stp_i(s, ",", (can_mileskm=='M') ? car_trip : KmFromMi(car_trip));
 
   return net_msg_encode_statputs(stat, &crc_gps);
 }

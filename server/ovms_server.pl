@@ -1788,13 +1788,15 @@ sub http_request_api_location
       $httpd->stop_request;
       return;
       }
-    my ($latitude,$longitude,$direction,$altitude,$gpslock,$stalegps) = split /,/,$rec->{'m_msg'};
+    my ($latitude,$longitude,$direction,$altitude,$gpslock,$stalegps,$speed,$tripmeter) = split /,/,$rec->{'m_msg'};
     $result{'latitude'} = $latitude;
     $result{'longitude'} = $longitude;
     $result{'direction'} = $direction;
     $result{'altitude'} = $altitude;
     $result{'gpslock'} = $gpslock;
     $result{'stalegps'} = $stalegps;
+    $result{'speed'} = $speed;
+    $result{'tripmeter'} = $tripmeter;
     }
 
   my $json = JSON::XS->new->utf8->canonical->encode (\%result) . "\n";
@@ -1848,7 +1850,9 @@ sub http_request_api_charge_get
     $result{'mode'} = $chargemode;
     $result{'chargelimit'} = $chargelimit;
     $result{'chargeduration'} = $chargeduration;
+    $result{'chargeb4'} = $chargeb4;
     $result{'chargekwh'} = $chargekwh;
+    $result{'chargesubstate'} = $chargesubstate;
     $result{'chargetimermode'} = $chargetimer;
     $result{'chargestarttime'} = $chargestarttime;
     $result{'chargetimerstale'} = $chargetimerstale;
@@ -1861,7 +1865,7 @@ sub http_request_api_charge_get
     $result{'cooldown_tbattery'} = $cooldown_tbattery;
     $result{'cooldown_timelimit'} = $cooldown_timelimit;
     $result{'charge_estimate'} = $charge_estimate;
-    $result{'charge_etr_rang'} = $charge_etr_range;
+    $result{'charge_etr_range'} = $charge_etr_range;
     $result{'charge_etr_soc'} = $charge_etr_soc;
     $result{'idealrange_max'} = $idealrange_max;
     }
