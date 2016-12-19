@@ -73,7 +73,7 @@ void par_read(unsigned char param)
 void par_write(unsigned char param)
   {
   int k = 0;
-  char savint;
+  unsigned char savint;
   unsigned int eeaddress;
 
   // Protect PARAM_REGPHONE & PARAM_MODULEPASS against empty writes:
@@ -84,10 +84,9 @@ void par_write(unsigned char param)
   eeaddress = (int)param;
   eeaddress = eeaddress*PARAM_MAX_LENGTH;
   EEADRH = eeaddress >> 8;
-  EEADR = eeaddress & 0x00ff;
   for (k=0;k<PARAM_MAX_LENGTH;k++)
     {
-    EEADR = (char)&EEparam[param][k];
+    EEADR = (unsigned char)&EEparam[param][k]; // get low byte of address
     EECON1 = 0; //ensure CFGS=0 and EEPGD=0
     EECON1bits.WREN = 1; //enable write to EEPROM
     EEDATA = par_value[k]; // and data
@@ -114,6 +113,7 @@ char* par_get(unsigned char param)
 #endif //OVMS_TWIZY_CFG
 
   par_read(param);
+  par_value[PARAM_MAX_LENGTH-1]='\0'; // harden against garbage data
 
   return par_value;
   }

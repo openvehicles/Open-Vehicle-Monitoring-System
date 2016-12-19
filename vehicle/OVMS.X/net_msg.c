@@ -1290,8 +1290,6 @@ void net_msg_stat(void)
 {
   char *s;
 
-  delay100(2);
-
   s = stp_rom(net_scratchpad, "MP-0 PA");
   net_prep_stat(s);
 }
@@ -1304,7 +1302,6 @@ void net_msg_alert(alert_type alert)
   if (sys_features[FEATURE_CARBITS]&FEATURE_CB_SVALERTS)
     return;
 
-  delay100(2);
   net_msg_start();
   
   s = stp_rom(net_scratchpad, "MP-0 PA");
@@ -1315,11 +1312,11 @@ void net_msg_alert(alert_type alert)
   }
 
 
+#ifndef OVMS_NO_ERROR_NOTIFY
 void net_msg_erroralert(unsigned int errorcode, unsigned long errordata)
   {
   char *s;
 
-  delay100(2);
   net_msg_start();
   s = stp_s(net_scratchpad, "MP-0 PE", car_type);
   s = stp_ul(s, ",", (unsigned long)errorcode);
@@ -1327,3 +1324,4 @@ void net_msg_erroralert(unsigned int errorcode, unsigned long errordata)
   net_msg_encode_puts();
   net_msg_send();
   }
+#endif // OVMS_NO_ERROR_NOTIFY

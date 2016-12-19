@@ -197,115 +197,164 @@ void net_poll(void)
 
   while(UARTIntGetChar(&x))
     {
+    
     if (net_buf_mode==NET_BUF_CRLF)
       { // CRLF (either normal or SMS second line) mode
+      
+      // Special handling in FIRSTRUN and DIAGMODE (= human input):
       if ((net_state==NET_STATE_FIRSTRUN)||(net_state==NET_STATE_DIAGMODE))
         {
-        // Special handling in FIRSTRUN and DIAGMODE
         if (x == 0x0a) // Skip 0x0a (LF)
           continue;
         else if (x == 0x0d) // Treat CR as LF
           x = 0x0a;
-        else if (x == 0x08 && net_buf_pos > 0) // Backspace
+        else if (x == 0x08) // Backspace
           {
-          net_buf[--net_buf_pos] = 0;
+          if (net_buf_pos > 0)
+            net_buf[--net_buf_pos] = 0;
           continue;
           }
         else if (x == 0x01 || x == 0x03) // Ctrl-A / Ctrl-C
           {
           net_buf_pos = 0;
-          net_buf[0] = 0;
           net_puts_rom("\r\n");
           continue;
           }
-        }
-      if (x == 0x0d) continue; // Skip 0x0d (CR)
+        } // NET_STATE_FIRSTRUN || NET_STATE_DIAGMODE
+      
+      // Skip 0x0d (CR)
+      if (x == 0x0d) continue;
+      
+      // Add char to buffer:
       net_buf[net_buf_pos++] = x;
       if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
+      
+      // Switch to IP data mode (NET_BUF_IPD)?
       if ((x == ':')&&(net_buf_pos>=6)&&
           (net_buf[0]=='+')&&(net_buf[1]=='I')&&
           (net_buf[2]=='P')&&(net_buf[3]=='D'))
         {
         CHECKPOINT(0x31)
+        // Syntax: +IPD,<length>:<msg>
+        
+        // Get message length:
         net_buf[net_buf_pos-1] = 0; // Change the ':' to an end
-        net_buf_todo = atoi(net_buf+5);
+        net_buf_todo = atoi(net_buf+5); // Length of IP message
+        
         net_buf_todotimeout = 60; // 60 seconds to receive the rest
-        net_buf_mode = NET_BUF_IPD;
         net_buf_pos = 0;
+        net_buf_mode = NET_BUF_IPD;
         continue; // We have switched to IPD mode
         }
-      if (x == 0x0A) // Newline?
+      
+      // Newline?
+      if (x == 0x0A)
         {
         CHECKPOINT(0x32)
         net_buf_pos--;
         net_buf[net_buf_pos] = 0; // mark end of string for string search functions.
+        
+        // Switch to SMS data mode (NET_BUF_SMS)?
         if ((net_buf_pos>=4)&&
             (net_buf[0]=='+')&&(net_buf[1]=='C')&&
             (net_buf[2]=='M')&&(net_buf[3]=='T'))
           {
+          // Syntax: +CMT: "<caller>","","yy/mm/dd,HH:MM:SS+04",145,32,0,0,"gateway",145,<length>
+          
+          // Get caller phone number:
           x = 7;
-          while ((net_buf[x++] != '\"') && (x < net_buf_pos)); // Search for start of Phone number
-          net_buf[x - 1] = '\0'; // mark end of string
-          net_caller[0] = '\0';
+          while ((net_buf[x] != '\"') && (x < net_buf_pos)) x++; // search for end of phone number
+          net_buf[x] = '\0'; // mark end of string
           strncpy(net_caller,net_buf+7,NET_TEL_MAX);
           net_caller[NET_TEL_MAX-1] = '\0';
+          
+          // Get message length:
           x = net_buf_pos;
-          while ((net_buf[x--] != ',')&&(x>0)); // Search for last comma seperator
-          net_buf_todo = atoi(net_buf+x+2); // Length of SMS message
+          while ((net_buf[x] != ',') && (x > 0)) x--; // Search for last comma seperator
+          net_buf_todo = atoi(net_buf+x+1); // Length of SMS message
+          
           net_buf_todotimeout = 60; // 60 seconds to receive the rest
           net_buf_pos = 0;
           net_buf_mode = NET_BUF_SMS;
-          continue;
+          continue; // We have switched to SMS mode
           }
-        net_timeout_rxdata = NET_RXDATA_TIMEOUT;
+        
+        // Handle message:
         net_state_activity();
+        
+        // Reset buffer, stay in CRLF mode:
         net_buf_pos = 0;
-        net_buf[0] = 0;
         net_buf_mode = NET_BUF_CRLF;
-        }
-      }
+        
+        } // Newline
+      
+      } // (net_buf_mode==NET_BUF_CRLF)
+    
     else if (net_buf_mode==NET_BUF_SMS)
       { // SMS data mode
       CHECKPOINT(0x33)
+      
+      // Add char to buffer:
       if ((x==0x0d)||(x==0x0a))
         net_buf[net_buf_pos++] = ' '; // \d, \r => space
       else
         net_buf[net_buf_pos++] = x;
       if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
       net_buf_todo--;
+
+      // Message complete?
       if (net_buf_todo==0)
         {
         net_buf[net_buf_pos] = 0; // Zero-terminate
-        net_timeout_rxdata = NET_RXDATA_TIMEOUT;
+        
+        // Handle message:
         net_state_activity();
+        
+        // Reset buffer, switch back to CRLF mode:
         net_buf_pos = 0;
         net_buf_mode = NET_BUF_CRLF;
         }
-      }
-    else
-      { // IP data modea
+      } // (net_buf_mode==NET_BUF_SMS)
+    
+    else // (net_buf_mode==NET_BUF_IPD)
+      { // IP data mode
       CHECKPOINT(0x34)
-      if (x != 0x0d)
+      
+      // Add char to buffer:
+      if (x != 0x0d) // Swallow CR
         {
-        net_buf[net_buf_pos++] = x; // Swallow CR
+        net_buf[net_buf_pos++] = x;
         if (net_buf_pos == NET_BUF_MAX) net_buf_pos--;
         }
       net_buf_todo--;
-      if (x == 0x0A) // Newline?
+      
+      // Newline = message protocol termination?
+      if (x == 0x0A)
         {
         net_buf_pos--;
         net_buf[net_buf_pos] = 0; // mark end of string for string search functions.
-        net_timeout_rxdata = NET_RXDATA_TIMEOUT;
+        
+        // Handle message:
         net_state_activity();
+        
+        // Reset buffer, stay in IPD mode:
         net_buf_pos = 0;
         }
+      
+      // IP message complete?
       if (net_buf_todo==0)
         {
+        // Reset buffer, switch back to CRLF mode:
         net_buf_pos = 0;
         net_buf_mode = NET_BUF_CRLF;
         }
-      }
-    }
+      
+      } // (net_buf_mode==NET_BUF_IPD)
+    
+    } // while(UARTIntGetChar(&x))
+  
+    // Zero-terminate buffer at current write position for overrun security:
+    net_buf[net_buf_pos] = 0;
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -795,6 +844,10 @@ void net_state_enter(unsigned char newstate)
 void net_state_activity()
   {
   char *b;
+
+  // Reset timeouts:
+  net_buf_todotimeout = 0;
+  net_timeout_rxdata = NET_RXDATA_TIMEOUT;
 
   CHECKPOINT(0x35)
 
@@ -1422,6 +1475,7 @@ void net_state_ticker1(void)
           {
           // Timeout waiting for arrival of SMS/IP data
           net_buf_todotimeout = 0;
+          net_buf_pos = 0;
           net_buf_mode = NET_BUF_CRLF;
           net_state_enter(NET_STATE_COPS); // Reset network connection
           return;
@@ -1465,7 +1519,7 @@ void net_state_ticker1(void)
         if ((net_notify_errorcode>0)
                 && (net_msg_serverok==1) && (net_msg_sendpending==0))
           {
-          delay100(10);
+          //delay100(10);
           if (net_notify_errorcode > 0)
             {
             net_msg_erroralert(net_notify_errorcode, net_notify_errordata);
@@ -1479,7 +1533,7 @@ void net_state_ticker1(void)
         if (((net_notify & NET_NOTIFY_NETPART)>0)
                 && (net_msg_serverok==1) && (net_msg_sendpending==0))
           {
-          delay100(10);
+          //delay100(10);
 #ifndef OVMS_NO_VEHICLE_ALERTS
           if ((net_notify & NET_NOTIFY_NET_ALARM)>0)
             {
@@ -1525,7 +1579,6 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_STAT); // Clear notification flag
-            delay100(10);
             if (net_msgp_stat(2) != 2);
               net_msg_send();
             return;
@@ -1533,23 +1586,18 @@ void net_state_ticker1(void)
           else if ((net_notify & NET_NOTIFY_NET_ENV)>0)
             {
             net_notify &= ~(NET_NOTIFY_NET_ENV); // Clear notification flag
-            // A bit of a kludge, but only notify environment if an app connected
-            if ((net_apps_connected>0))
-              {
-              stat = 2;
-              delay100(10);
-              stat = net_msgp_environment(stat);
-              stat = net_msgp_stat(stat);
-              if (stat != 2)
-                net_msg_send();
-              return;
-              }
+            stat = 2;
+            stat = net_msgp_environment(stat);
+            stat = net_msgp_stat(stat);
+            if (stat != 2)
+              net_msg_send();
+            return;
             }
           } // if NET_NOTIFY_NETPART
 
         if ((net_notify & NET_NOTIFY_SMSPART)>0)
           {
-          delay100(10);
+          //delay100(10);
           net_assert_caller(NULL); // set net_caller to PARAM_REGPHONE
 #ifndef OVMS_NO_VEHICLE_ALERTS
           if ((net_notify & NET_NOTIFY_SMS_ALARM)>0)
