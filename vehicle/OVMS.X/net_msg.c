@@ -686,33 +686,28 @@ void net_msg_in(char* msg)
   switch (*msg)
     {
     case 'A': // PING
-      stp_rom(net_scratchpad,(char const rom far*)"MP-0 a");
       if (net_msg_sendpending==0)
         {
+        stp_rom(net_scratchpad,(char const rom far*)"MP-0 a");
         net_msg_start();
         net_msg_encode_puts();
         net_msg_send();
         }
       break;
-    case 'Z': // PEER connection
-      if (msg[1] != '0')
+    case 'Z': // PEER connections
+      k = atoi(msg+1); // get new peer count
+      // Send data update for new listener(s)?
+      if ((k > net_apps_connected) && (net_msg_sendpending==0))
         {
-        net_apps_connected = 1;
-        if (net_msg_sendpending==0)
-          {
-          net_msg_start();
-          net_msgp_stat(0);
-          net_msgp_gps(0);
-          net_msgp_tpms(0);
-          net_msgp_firmware(0);
-          net_msgp_environment(0);
-          net_msg_send();
-          }
+        net_msg_start();
+        net_msgp_stat(0);
+        net_msgp_gps(0);
+        net_msgp_tpms(0);
+        net_msgp_firmware(0);
+        net_msgp_environment(0);
+        net_msg_send();
         }
-      else
-        {
-        net_apps_connected = 0;
-        }
+      net_apps_connected = k;
       break;
     case 'h': // Historical data acknowledgement
 #ifdef OVMS_LOGGINGMODULE
@@ -722,6 +717,7 @@ void net_msg_in(char* msg)
     case 'C': // COMMAND
       net_msg_cmd_in(msg+1);
       if (net_msg_sendpending==0) net_msg_cmd_do();
+      // else retry in next net_state_ticker1() run
       break;
     }
   }

@@ -109,10 +109,10 @@ signed int car_tpms_t[4] = {0,0,0,0}; // TPMS temperature
 unsigned char car_tpms_p[4] = {0,0,0,0}; // TPMS pressure
 unsigned int car_trip = 0; // ODO trip in miles /10
 unsigned long car_odometer = 0; //Odometer in miles /10
-signed long car_latitude = 0x16DEC6D9; // Raw GPS Latitude  (52.04246 zero in converted result)
-signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not verified if this is correct)
-unsigned int car_direction = 0; // GPS direction of the car
-signed int car_altitude = 0; // GPS altitude of the car
+signed long car_latitude; // Raw GPS Latitude
+signed long car_longitude; // Raw GPS Longitude
+unsigned int car_direction; // GPS direction of the car
+signed int car_altitude; // GPS altitude of the car
 signed char car_timermode = 0; // Timer mode (0=onplugin, 1=timer)
 unsigned int car_timerstart = 0; // Timer start
 unsigned char car_gpslock = 0; // GPS lock status
@@ -194,6 +194,12 @@ void main(void)
     // init volatile features:
     for (y = 0; y < FEATURES_MAP_PARAM; y++)
       sys_features[y] = 0;
+    
+    // init car model:
+    car_latitude = 0x16DEC6D9; // Raw GPS Latitude (52.04246)
+    car_longitude = 0xFE444A36; // Raw GPS Longitude (-3.94409)
+    car_direction = 0;
+    car_altitude = 0;
   }
   else
   {
