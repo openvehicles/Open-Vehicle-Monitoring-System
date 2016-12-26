@@ -48,7 +48,8 @@ my $client_hmac = Digest::HMAC->new($server_password, "Digest::MD5");
 $client_hmac->add($client_token);
 my $client_digest = $client_hmac->b64digest();
 
-print $sock "MP-A 0 $client_token $client_digest $vehicle_id\r\n";
+# Register as batch client (type "B"):
+print $sock "MP-B 0 $client_token $client_digest $vehicle_id\r\n";
 
 my $line = <$sock>;
 chop $line;

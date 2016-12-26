@@ -45,6 +45,7 @@ $client_hmac->add($client_token);
 my $client_digest = $client_hmac->b64digest();
 print STDERR "  Client digest is $client_digest\n";
 
+# Register as App client (type "A"):
 print $sock "MP-A 0 $client_token $client_digest $vehicle_id\r\n";
 
 my $line = <$sock>;

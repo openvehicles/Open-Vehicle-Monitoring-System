@@ -33,14 +33,15 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.3-20160727";
+my $VERSION = "2.3.4-20161224";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
 my $utilisations;
 my %car_conns;
 my %app_conns;
-my $svr_conns;
+my %btc_conns;
+my %svr_conns;
 my %api_conns;
 my %group_msgs;
 my %group_subs;
@@ -98,7 +99,7 @@ my $loghistory_tim   = $config->val('log','history',0);
 # User password encoding function:
 my $pw_encode        = $config->val('db','pw_encode','drupal_password($password)');
 
-# A database ticker
+# Database ticker
 $db = DBI->connect($config->val('db','path'),$config->val('db','user'),$config->val('db','pass'));
 if (!defined $db)
   {
@@ -108,13 +109,13 @@ if (!defined $db)
 $db->{mysql_auto_reconnect} = 1;
 my $dbtim = AnyEvent->timer (after => 60, interval => 60, cb => \&db_tim);
 
-# An APNS ticker
+# Apple push notifications ticker:
 my $apnstim = AnyEvent->timer (after => 1, interval => 1, cb => \&apns_tim);
 
-# GCM ticker
+# Google push notifications ticker:
 my $gcmtim = AnyEvent->timer (after => 1, interval => 1, cb => \&gcm_tim);
 
-# A MAIL ticker
+# Mail push notifications ticker:
 my $mail_enabled = $config->val('mail','enabled',0);
 my $mail_sender = $config->val('mail','sender','notifications@openvehicles.com');
 my $mail_interval = $config->val('mail','interval',10);
@@ -215,7 +216,7 @@ sub io_timeout
     if ( (($lastrx+$timeout_car-60)<$now) && (($lastping+300)<$now) )
       {
       # The CAR has been unresponsive for timeout_car-60 seconds - time to ping it
-      AE::log info => "#$fn $clienttype $vid ping car (due to lack of response)"
+      AE::log info => "#$fn $clienttype $vid ping car due to inactivity";
       &io_tx($fn, $conns{$fn}{'handle'}, 'A', 'FA');
       $conns{$fn}{'lastping'} = $now;
       }
@@ -238,6 +239,9 @@ sub io_line
 
   if ($line =~ /^MP-(\S)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.+))?/)
     {
+    #
+    # CONNECTION INIT (WELCOME MESSAGE)
+    #
     my ($clienttype,$protscheme,$clienttoken,$clientdigest,$vehicleid,$rest) = ($1,$2,$3,$4,uc($5),$7);
     if ($protscheme ne '0')
       {
@@ -336,8 +340,12 @@ sub io_line
 #      &io_tx($fn, $hdl, 'C', '4,4,54.197.255.127');
 #      }
     }
+  
   elsif ($line =~ /^AP-C\s+(\S)\s+(\S+)/)
     {
+    #
+    # AUTO PROVISIONING
+    #
     my ($protscheme,$apkey) = ($1,$2);
     my $vehicleid = $conns{$fn}{'vehicleid'}; $vehicleid='-' if (!defined $vehicleid);
     if ($protscheme ne '0')
@@ -373,9 +381,12 @@ sub io_line
     $conns{$fn}{'tx'} += length($towrite);
     $hdl->push_write($towrite);
     }
+  
   elsif (defined $conns{$fn}{'vehicleid'})
     {
-    # Let's process this as an encrypted message line...
+    #
+    # STANDARD PROTOCOL MESSAGE
+    #
     my $message = $conns{$fn}{'rxcipher'}->RC4(decode_base64($line));
     if ($message =~ /^MP-0\s(\S)(.*)/)
       {
@@ -389,10 +400,12 @@ sub io_line
       return;
       }
     }
+  
   else
     {
     AE::log info => "#$fn $clienttype $vid error - unrecognised message from vehicle";
     }
+
   }
 
 sub io_login
@@ -401,7 +414,9 @@ sub io_login
 
   if ($clienttype eq 'A')
     {
+    #
     # An APP login
+    #
     $app_conns{$vehicleid}{$fn} = $fn;
     # Notify any listening cars
     my $cfn = $car_conns{$vehicleid};
@@ -434,9 +449,44 @@ sub io_login
       }
     &io_tx($fn, $hdl, 'T', $vrec->{'v_lastupdatesecs'});
     }
+  
+  elsif ($clienttype eq 'B')
+    {
+    #
+    # A BATCHCLIENT (btc) login
+    #
+    $btc_conns{$vehicleid}{$fn} = $fn;
+    # Send peer status
+    &io_tx($fn, $hdl, 'Z', (defined $car_conns{$vehicleid})?"1":"0");
+    # Send current stored messages
+    my $vrec = &db_get_vehicle($vehicleid);
+    my $v_ptoken = $vrec->{'v_ptoken'};
+    my $sth = $db->prepare('SELECT * FROM ovms_carmessages WHERE vehicleid=? and m_valid=1 order by field(m_code,"S","F") DESC,m_code ASC');
+    $sth->execute($vehicleid);
+    while (my $row = $sth->fetchrow_hashref())
+      {
+      if ($row->{'m_paranoid'})
+        {
+        if ($v_ptoken ne '')
+          {
+          &io_tx($fn, $hdl, 'E', 'T'.$v_ptoken);
+          $v_ptoken = ''; # Make sure it only gets sent once
+          }
+        &io_tx($fn, $hdl, 'E', 'M'.$row->{'m_code'}.$row->{'m_msg'});
+        }
+      else
+        {
+        &io_tx($fn, $hdl, $row->{'m_code'},$row->{'m_msg'});
+        }
+      }
+    &io_tx($fn, $hdl, 'T', $vrec->{'v_lastupdatesecs'});
+    }
+  
   elsif ($clienttype eq 'S')
     {
-    # An SVR login
+    #
+    # A SERVER login
+    #
     if (defined $svr_conns{$vehicleid})
       {
       # Server is already logged in - terminate it
@@ -448,17 +498,22 @@ sub io_login
     $conns{$fn}{'svrupdate_o'} = $svrupdate_o;
     &svr_push($fn,$vehicleid);
     }
+  
   elsif ($clienttype eq 'C')
     {
+    #
+    # A CAR login
+    #
     if (defined $car_conns{$vehicleid})
       {
       # Car is already logged in - terminate it
       &io_terminate($car_conns{$vehicleid},$conns{$car_conns{$vehicleid}}{'handle'},$vehicleid, "#$car_conns{$vehicleid} $vehicleid error - duplicate car login - clearing first connection");
       }
     $car_conns{$vehicleid} = $fn;
-    # Notify any listening apps
+    # Notify any listening apps & batch clients
     &io_tx_apps($vehicleid, 'Z', '1');
-    # And notify the car itself
+    &io_tx_btcs($vehicleid, 'Z', '1');
+    # And notify the car itself about listening apps
     my $appcount = (defined $app_conns{$vehicleid})?(scalar keys %{$app_conns{$vehicleid}}):0;
     &io_tx($fn, $hdl, 'Z', $appcount);
     }
@@ -475,12 +530,9 @@ sub io_terminate
     if ($conns{$fn}{'clienttype'} eq 'C')
       {
       delete $car_conns{$vehicleid};
-      # Notify any listening apps
-      foreach (keys %{$app_conns{$vehicleid}})
-        {
-        my $afn = $_;
-        &io_tx($afn, $conns{$afn}{'handle'}, 'Z', '0');
-        }
+      # Notify any listening apps & batch clients
+      &io_tx_apps($vehicleid, 'Z', '0');
+      &io_tx_btcs($vehicleid, 'Z', '0');
       # Cleanup group messages
       if (defined $conns{$fn}{'cargroups'})
         {
@@ -493,12 +545,8 @@ sub io_terminate
     elsif ($conns{$fn}{'clienttype'} eq 'A')
       {
       delete $app_conns{$vehicleid}{$fn};
-      # Notify any listening cars
-      my $cfn = $car_conns{$vehicleid};
-      if (defined $cfn)
-        {
-        &io_tx($cfn, $conns{$cfn}{'handle'}, 'Z', scalar keys %{$app_conns{$vehicleid}});
-        }
+      # Notify car about new app count
+      &io_tx_car($vehicleid, 'Z', scalar keys %{$app_conns{$vehicleid}});
       # Cleanup group messages
       if (defined $conns{$fn}{'appgroups'})
         {   
@@ -507,6 +555,10 @@ sub io_terminate
           delete $group_subs{$_}{$fn};
           }
         }
+      }
+    elsif ($conns{$fn}{'clienttype'} eq 'B')
+      {
+      delete $btc_conns{$vehicleid}{$fn};
       }
     elsif ($conns{$fn}{'clienttype'} eq 'S')
       {
@@ -534,6 +586,7 @@ sub io_tx
   $handle->push_write($encoded."\r\n");
   }
 
+# Send message to a CAR
 sub io_tx_car
   {
   my ($vehicleid, $code, $data) = @_;
@@ -545,11 +598,11 @@ sub io_tx_car
     }
   }
 
+# Send message to all APPs (for a vehicleid)
 sub io_tx_apps
   {
   my ($vehicleid, $code, $data) = @_;
 
-  # Notify any listening apps
   foreach (keys %{$app_conns{$vehicleid}})
     {
     my $afn = $_;
@@ -557,7 +610,22 @@ sub io_tx_apps
     }
   }
 
-# A TCP listener
+# Send message to all BATCH CLIENTs (for a vehicleid)
+sub io_tx_btcs
+  {
+  my ($vehicleid, $code, $data) = @_;
+
+  foreach (keys %{$btc_conns{$vehicleid}})
+    {
+    my $afn = $_;
+    &io_tx($afn, $conns{$afn}{'handle'}, $code, $data);
+    }
+  }
+
+
+########################################################
+# MAIN TCP server
+#
 tcp_server undef, 6867, sub
   {
   my ($fh, $host, $port) = @_;
@@ -579,7 +647,10 @@ tcp_server undef, 6867, sub
   $conns{$fn}{'port'} = $port;
   };
 
-# An HTTP server
+
+########################################################
+# API HTTP server
+#
 my $http_server = AnyEvent::HTTPD->new (port => 6868, request_timeout => 30, allowed_methods => [GET,PUT,POST,DELETE]);
 $http_server->reg_cb (
                 '/group' => \&http_request_in_group,
@@ -627,11 +698,19 @@ if (-e 'ovms_server.pem')
                   );
   }
 
-# Main event loop...
+
+########################################################
+# Main event loop entry
+#
 EV::loop();
 
+
+#
+# Utilisation statistics timer (executed every 60 seconds)
+#
 sub util_tim
   {
+  # Add collected utilisations to database
   CONN: foreach (keys %utilisations)
     {
     my $key = $_;
@@ -675,6 +754,15 @@ sub util_tim
             $vid,$u_a_tx,$u_c_tx);
     }
   %utilisations = ();
+  
+  # Log current server connection counts
+  my $concount = keys %conns;
+  my $carcount = keys %car_conns;
+  my $appcount = keys %app_conns;
+  my $btccount = keys %btc_conns;
+  my $svrcount = keys %svr_conns;
+  my $apicount = keys %api_conns;
+  AE::log info => "- - - connection statistics: tcp_api=$concount, cars=$carcount, apps=$appcount, batchclients=$btccount, servers=$svrcount, http_api=$apicount";
   }
 
 sub db_tim
@@ -731,6 +819,7 @@ sub io_message
     AE::log info => "#$fn $clienttype $vehicleid msg push notification '$data' => $vehicleid";
     # Send it to any listening apps
     &io_tx_apps($vehicleid, $code, $data);
+    &io_tx_btcs($vehicleid, $code, $data);
     # And also send via the mobile networks
     if ($data =~ /^(.)(.+)/)
       {
@@ -778,6 +867,7 @@ sub io_message
       # The paranoid token is being set
       $conns{$fn}{'ptoken'} = $paranoidtoken;
       &io_tx_apps($vehicleid, $code, $data); # Send it on to connected apps
+      &io_tx_btcs($vehicleid, $code, $data); # and batch clients
       if ($vrec->{'v_ptoken'} ne $paranoidtoken)
         {
         # Invalidate any stored paranoid messages for this vehicle
@@ -805,9 +895,9 @@ sub io_message
   # Check for App<->Server<->Car command and response messages...
   if ($m_code eq 'C')
     {
-    if ($clienttype ne 'A')
+    if (($clienttype ne 'A')&&($clienttype ne 'B'))
       {
-      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'C' message from non-App";
+      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'C' message from non-App/Batchclient";
       return;
       }
     if (($m_code eq $code)&&($data =~ /^(\d+)(,(.+))?$/)&&($1 == 30))
@@ -889,7 +979,9 @@ sub io_message
       AE::log info => "#$fn $clienttype $vehicleid msg invalid 'c' message from non-Car";
       return;
       }
-    &io_tx_apps($vehicleid, $code, $data); # Send it on to the apps
+    # Forward to apps and batch clients
+    &io_tx_apps($vehicleid, $code, $data);
+    &io_tx_btcs($vehicleid, $code, $data);
     return;
     }
   elsif ($m_code eq 'g')
@@ -989,12 +1081,15 @@ sub io_message
     # And send it on to the apps...
     AE::log info => "#$fn $clienttype $vehicleid msg handle $m_code $m_data";
     &io_tx_apps($vehicleid, $code, $data);
+    &io_tx_btcs($vehicleid, $code, $data);
     if ($m_code eq "F")
       {
       # Let's follow up with server version...
       &io_tx_apps($vehicleid, "f", $VERSION);
+      &io_tx_btcs($vehicleid, "f", $VERSION);
       }
     &io_tx_apps($vehicleid, "T", 0);
+    &io_tx_btcs($vehicleid, "T", 0);
     }
   elsif ($clienttype eq 'A')
     {
@@ -1569,8 +1664,9 @@ sub http_request_api_vehicles
     my $vehicleid = $_;
     my $connected = (defined $car_conns{$vehicleid})?1:0;
     my $appcount = scalar keys %{$app_conns{$vehicleid}};
+    my $btccount = scalar keys %{$btc_conns{$vehicleid}};
 
-    my %h = ( 'id'=>$vehicleid, 'v_net_connected'=>$connected, 'v_apps_connected'=>$appcount );
+    my %h = ( 'id'=>$vehicleid, 'v_net_connected'=>$connected, 'v_apps_connected'=>$appcount, 'v_btcs_connected'=>$btccount );
     push @result, \%h;
     }
 
