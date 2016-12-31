@@ -6,8 +6,34 @@ use Crypt::RC4::XS;
 use MIME::Base64;
 use IO::Socket::INET;
 use Config::IniFiles;
+use Getopt::Long;
 
-# Read command line arguments:
+
+#
+# Command line arguments:
+#
+
+my $help = '';
+my $retrieve = '';
+
+GetOptions (
+	'help|h' => \$help,
+	'retrieve|r' => \$retrieve );
+
+if ($help) {
+	print STDOUT
+		"Usage: $0 [options] [msgcode]\n",
+		"\n",
+		"Get message status from server (default) or car (retrieve).\n",
+		"Message code defaults to 'S'.\n",
+		"\n",
+		"Options:\n",
+		" --help|-h       show this help\n",
+		" --retrieve|-r   retrieve update from car module\n",
+		"\n";
+	exit;
+}
+
 my $cmd_code = $ARGV[0];
 
 if (!$cmd_code) {
@@ -15,9 +41,11 @@ if (!$cmd_code) {
   $cmd_code = "S";
 }
 
-my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-# Configuration
+#
+# Read configuration
+#
+
 my $config = Config::IniFiles->new(-file => 'ovms_client.conf');
 
 my $vehicle_id       = $config->val('client','vehicle_id','TESTCAR');
@@ -39,6 +67,8 @@ my $sock = IO::Socket::INET->new(PeerAddr => $server_ip,
 ##### REGISTER
 #####
 
+my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 rand;
 my $client_token;
 foreach (0 .. 21)
@@ -48,8 +78,19 @@ my $client_hmac = Digest::HMAC->new($server_password, "Digest::MD5");
 $client_hmac->add($client_token);
 my $client_digest = $client_hmac->b64digest();
 
-# Register as batch client (type "B"):
-print $sock "MP-B 0 $client_token $client_digest $vehicle_id\r\n";
+my $skipcnt;
+if ($retrieve)
+  {
+  # Register as active client (type "A"):
+  print $sock "MP-A 0 $client_token $client_digest $vehicle_id\r\n";
+  $skipcnt = 1; # skip server status, wait for car status
+  }
+else
+  {
+  # Register as batch client (type "B"):
+  print $sock "MP-B 0 $client_token $client_digest $vehicle_id\r\n";
+  $skipcnt = 0; # use server status
+  }
 
 my $line = <$sock>;
 chop $line;
@@ -102,8 +143,7 @@ while(1)
 	chop $data; chop $data;
 	my $decoded = $rxcipher->RC4(decode_base64($data));
 
-	if ($decoded =~ /^MP-0 ET(.+)/)
-	{
+	if ($decoded =~ /^MP-0 ET(.+)/) {
 		$ptoken = $1;
 		my $paranoid_hmac = Digest::HMAC->new($module_password, "Digest::MD5");
 		$paranoid_hmac->add($ptoken);
@@ -111,8 +151,7 @@ while(1)
 		# discard:
 		$decoded = "";
 	}
-	elsif ($decoded =~ /^MP-0 EM(.)(.*)/)
-	{
+	elsif ($decoded =~ /^MP-0 EM(.)(.*)/) {
 		my ($code,$data) = ($1,$2);
 		my $pmcipher = Crypt::RC4::XS->new($pdigest);
 		$pmcipher->RC4(chr(0) x 1024); # Prime the cipher
@@ -121,19 +160,18 @@ while(1)
 		$decoded = "MP-0 ".$code.$decoded;
 	}
 	
-	if ($decoded =~ /^MP-0 $cmd_code/)
-	{
-		print STDOUT $decoded,"\n";
-		$discardcnt = 0;
-		# first result will do
-		exit;
+	if ($decoded =~ /^MP-0 $cmd_code/) {
+		if ($skipcnt eq 0) {
+			print STDOUT $decoded,"\n";
+			exit;
+		} else {
+			$skipcnt--;
+		}
 	}
-	else
-	{
-		# exit if more than 25 other msgs received in series (assuming cmd done):
+	else {
+		# exit if more than 25 other msgs received in series (assuming timeout):
 		$discardcnt++;
-		if ($discardcnt > 25)
-		{
+		if ($discardcnt > 25) {
 			print STDERR "No more results, exit.\n";
 			exit;
 		}
