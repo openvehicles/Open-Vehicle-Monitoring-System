@@ -300,6 +300,13 @@
     - Added charge control to commands CA & #203,204
     - Tightened SDO bus timing
     - Minor code size optimizations
+ 
+ * 3.8.3  31 Dec 2016 (Michael Balzer)
+    - Charge start/stop notifications changed to ENV to update flags immediately
+    - Network streaming/update rework & timing optimization
+    - PORTA inputs now disabled by default, enabled by feature #15 + 0x10
+    - Support for new car model variables (drivemode, power, energy)
+    - Removed power/energy/trip value rounding on log entries
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -354,7 +361,7 @@
  *  OVMS_TWIZY_STACKDEBUG -- enable stack depth debugging
  *  OVMS_CUSTOM_CAN_ISR -- necessary for charge power limiting
  * 
- * Compile switches to exclude unused framework features:
+ * Recommended compile switches to exclude unused framework features:
  * 
  *  OVMS_NO_CHARGECONTROL -- excludes CHARGEMODE, CHARGESTART, CHARGESTOP, COOLDOWN
  *  OVMS_NO_CTP -- excludes framework charge time prediction
@@ -362,6 +369,10 @@
  *  OVMS_NO_CRASHDEBUG -- excludes *-OVM-DebugCrash record generation
  *  OVMS_NO_HOMELINK -- excludes unused SMS command "HOMELINK"
  *  OVMS_NO_ERROR_NOTIFY -- exclude unused error code notification
+ *  OVMS_NO_PHONEBOOKAP -- exclude SIM phonebook auto provisioning
+ *  OVMS_NO_TPMS -- exclude tire pressure monitoring
+ *  OVMS_NO_GPIOFN -- exclude general purpose I/O functions
+ *  OVMS_NO_STD_STAT -- exclude standard STAT message formatter
  * 
  */
 
@@ -394,7 +405,7 @@ typedef struct {
   unsigned DisableReset:1;      // 0x02
   unsigned DisableKickdown:1;   // 0x04
   unsigned DisableAutoPower:1;  // 0x08
-  unsigned :1;                  // 0x10
+  unsigned EnableInputs:1;      // 0x10
   unsigned :1;                  // 0x20
   unsigned :1;                  // 0x40
   unsigned :1;                  // 0x80
@@ -427,7 +438,7 @@ typedef struct {
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.8.2";
+rom char vehicle_twizy_version[] = "3.8.3";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -582,13 +593,19 @@ unsigned char twizy_status; // Car + charge status from CAN:
 
 volatile signed char twizy_button_cnt; // will count key presses in STOP mode (msg 081)
 
-struct {
-  unsigned type:1;                  // CFG: 0=Twizy80, 1=Twizy45
-  unsigned profile_user:2;          // CFG: user selected profile: 0=Default, 1..3=Custom
-  unsigned profile_cfgmode:2;       // CFG: profile, cfgmode params were last loaded from
-  unsigned unsaved:1;               // CFG: RAM profile changed & not yet saved to EEPROM
-  unsigned keystate:1;              // CFG: key state change detection
-  unsigned applied:1;               // CFG: applyprofile success flag
+union {
+  
+  UINT8 drivemode;
+  
+  struct {
+    unsigned type:1;                  // CFG: 0=Twizy80, 1=Twizy45
+    unsigned profile_user:2;          // CFG: user selected profile: 0=Default, 1..3=Custom
+    unsigned profile_cfgmode:2;       // CFG: profile, cfgmode params were last loaded from
+    unsigned unsaved:1;               // CFG: RAM profile changed & not yet saved to EEPROM
+    unsigned keystate:1;              // CFG: key state change detection
+    unsigned applied:1;               // CFG: applyprofile success flag
+  };
+  
 } twizy_cfg;
 
 
@@ -3358,7 +3375,6 @@ BOOL vehicle_twizy_cfg_switchprofile_cmd(BOOL msgmode, int cmd, char *arguments)
 
   if (msgmode) {
     // send cmd reply:
-    delay100(2);
     if (err == 0) {
       STP_OK(net_scratchpad, cmd);
     }
@@ -3478,7 +3494,6 @@ BOOL vehicle_twizy_cfg_restrict_cmd(BOOL msgmode, int cmd, char *arguments)
 
   if (msgmode) {
     // send cmd reply:
-    delay100(2);
     if (err == 0) {
       STP_OK(net_scratchpad, cmd);
     }
@@ -3920,6 +3935,10 @@ char vehicle_twizy_gpslog_msgp(char stat)
   unsigned long pwr_dist, pwr_use, pwr_rec;
   signed int pwr_min, pwr_max, curr_min, curr_max;
 
+#ifdef OVMS_STRESSTEST
+  crc = 0;
+#endif
+  
   // Read power stats:
 
   pwr_dist = twizy_speedpwr[CAN_SPEED_CONST].dist
@@ -3959,10 +3978,10 @@ char vehicle_twizy_gpslog_msgp(char stat)
   s = stp_i(s, ",", net_sq); // GPRS signal quality
 
   // Twizy specific (standard model candidates):
-  s = stp_l(s, ",", ((long) twizy_power * 64L + 5) / 10);     // current power (W)
-  s = stp_ul(s, ",", (pwr_use + WH_RND) / WH_DIV);  // power usage sum (Wh)
-  s = stp_ul(s, ",", (pwr_rec + WH_RND) / WH_DIV);  // recuperation sum (Wh)
-  s = stp_ul(s, ",", (pwr_dist + 5) / 10);        // distance driven (m)
+  s = stp_l(s, ",", ((long) twizy_power * 64L) / 10);     // current power (W)
+  s = stp_ul(s, ",", pwr_use / WH_DIV);     // power usage sum (Wh)
+  s = stp_ul(s, ",", pwr_rec / WH_DIV);     // recuperation sum (Wh)
+  s = stp_ul(s, ",", pwr_dist / 10);        // distance driven (m)
   
   // V3.4.0: GPS section power min+max
   if (pwr_min == 32767) {
@@ -5066,8 +5085,11 @@ void vehicle_twizy_notify(void)
   else
 #endif // OVMS_DIAGMODULE
 
-    // GPRS ready & available?
+    // Connection ready & available?
     if ((net_state != NET_STATE_READY))
+    return;
+  
+  if (!MODEM_READY())
     return;
 
   // Read user config: notification channels
@@ -5087,7 +5109,7 @@ void vehicle_twizy_notify(void)
     // Send fault code alert:
     if ((twizy_notify & SEND_CodeAlert) && (twizy_alert_code != 0))
     {
-      if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
+      if ((notify_msg) && (net_msg_serverok))
       {
         net_msg_start();
         // push alert:
@@ -5098,6 +5120,7 @@ void vehicle_twizy_notify(void)
         vehicle_twizy_querylogs_msgp(1, 0, NULL);
         net_msg_send();
         twizy_notify &= ~SEND_CodeAlert;
+        return;
       }
 
       if (notify_sms)
@@ -5108,6 +5131,7 @@ void vehicle_twizy_notify(void)
         net_puts_ram(net_scratchpad);
         net_send_sms_finish();
         twizy_notify &= ~SEND_CodeAlert;
+        return;
       }
     }
 
@@ -5120,12 +5144,13 @@ void vehicle_twizy_notify(void)
       stp_rom(net_scratchpad+7, (twizy_cfg.applied)
               ? "RESET OK" : "RESET FAILED, PLEASE RETRY!");
       
-      if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
+      if ((notify_msg) && (net_msg_serverok))
       {
         net_msg_start();
         net_msg_encode_puts();
         net_msg_send();
         twizy_notify &= ~SEND_ResetResult;
+        return;
       }
 
       if (notify_sms)
@@ -5134,6 +5159,7 @@ void vehicle_twizy_notify(void)
         net_puts_ram(net_scratchpad+7);
         net_send_sms_finish();
         twizy_notify &= ~SEND_ResetResult;
+        return;
       }
     }
 
@@ -5146,10 +5172,11 @@ void vehicle_twizy_notify(void)
   // Send battery alert:
   if ((twizy_notify & SEND_BatteryAlert))
   {
-    if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
+    if ((notify_msg) && (net_msg_serverok))
     {
       vehicle_twizy_battstatus_cmd(FALSE, CMD_BatteryAlert, NULL);
       twizy_notify &= ~SEND_BatteryAlert;
+      return;
     }
 
     if (notify_sms)
@@ -5157,6 +5184,7 @@ void vehicle_twizy_notify(void)
       if (vehicle_twizy_battstatus_sms(TRUE, NULL, NULL, NULL))
         net_send_sms_finish();
       twizy_notify &= ~SEND_BatteryAlert;
+      return;
     }
   }
 #endif // OVMS_TWIZY_BATTMON
@@ -5165,10 +5193,11 @@ void vehicle_twizy_notify(void)
   // Send power usage statistics?
   if ((twizy_notify & SEND_PowerNotify))
   {
-    if ((notify_msg) && (net_msg_serverok) && (net_msg_sendpending == 0))
+    if ((notify_msg) && (net_msg_serverok))
     {
       vehicle_twizy_power_cmd(FALSE, CMD_PowerUsageNotify, NULL);
       twizy_notify &= ~SEND_PowerNotify;
+      return;
     }
 
     if (notify_sms)
@@ -5176,6 +5205,7 @@ void vehicle_twizy_notify(void)
       if (vehicle_twizy_power_sms(TRUE, NULL, NULL, NULL))
         net_send_sms_finish();
       twizy_notify &= ~SEND_PowerNotify;
+      return;
     }
   }
 
@@ -5183,13 +5213,14 @@ void vehicle_twizy_notify(void)
   // Send power usage log?
   if ((twizy_notify & SEND_PowerLog))
   {
-    if ((net_msg_serverok) && (net_msg_sendpending == 0))
+    if ((net_msg_serverok))
     {
       stat = vehicle_twizy_pwrlog_msgp(2);
       if (stat != 2)
         net_msg_send();
       
       twizy_notify &= ~SEND_PowerLog;
+      return;
     }
   }
 
@@ -5198,10 +5229,11 @@ void vehicle_twizy_notify(void)
   // Send battery status update:
   if ((twizy_notify & SEND_BatteryStats))
   {
-    if ((net_msg_serverok == 1) && (net_msg_sendpending == 0))
+    if ((net_msg_serverok))
     {
       vehicle_twizy_battstatus_cmd(FALSE, CMD_BatteryStatus, NULL);
       twizy_notify &= ~SEND_BatteryStats;
+      return;
     }
   }
 #endif // OVMS_TWIZY_BATTMON
@@ -5210,20 +5242,19 @@ void vehicle_twizy_notify(void)
   // Send regular data update:
   if ((twizy_notify & SEND_DataUpdate))
   {
-    if ((net_msg_serverok == 1) && (net_msg_sendpending == 0))
+    if ((net_msg_serverok))
     {
       stat = 2;
       stat = vehicle_twizy_power_msgp(stat, CMD_PowerUsageStats);
+      if (sys_features[FEATURE_STREAM] == 3)
+        stat = net_msgp_gps(stat);
       stat = vehicle_twizy_gpslog_msgp(stat);
       if (stat != 2)
         net_msg_send();
 
       twizy_notify &= ~SEND_DataUpdate;
 
-#ifdef OVMS_TWIZY_BATTMON
-      // send battery status update separately, may need a full CIPSEND length:
-      twizy_notify |= SEND_BatteryStats;
-#endif // OVMS_TWIZY_BATTMON
+      return;
     }
   }
 
@@ -5231,11 +5262,17 @@ void vehicle_twizy_notify(void)
   // Send streaming updates:
   if ((twizy_notify & SEND_StreamUpdate))
   {
-    if ((net_msg_serverok == 1) && (net_msg_sendpending == 0))
+    if ((net_msg_serverok))
     {
-      if (vehicle_twizy_gpslog_msgp(2) != 2)
+      stat = 2;
+      if (sys_features[FEATURE_STREAM] & 1)
+        stat = net_msgp_gps(stat);
+      if (sys_features[FEATURE_STREAM] & 2)
+        stat = vehicle_twizy_gpslog_msgp(stat);
+      if (stat != 2)
         net_msg_send();
       twizy_notify &= ~SEND_StreamUpdate;
+      return;
     }
   }
 
@@ -5335,7 +5372,10 @@ BOOL vehicle_twizy_state_ticker10th(void)
   //
 
   // Read input port:
-  bits = (PORTA & 0b00111100) >> 2;
+  if (sys_can.EnableInputs)
+    bits = (PORTA & 0b00111100) >> 2;
+  else
+    bits = 0;
 
   if (!car_doors3bits.CarAwake || car_doors1bits.Charging) {
     // Twizy off or charging: switch off LEDs
@@ -5443,6 +5483,7 @@ void vehicle_twizy_get_capacity(void)
 BOOL vehicle_twizy_state_ticker1(void)
 {
   int suffSOC, suffRange, maxRange;
+  unsigned long pwr;
   UINT8 i;
 
 
@@ -5450,6 +5491,10 @@ BOOL vehicle_twizy_state_ticker1(void)
   // so we do this ourselves:
   vehicle_twizy_state_ticker10th();
 
+#ifdef OVMS_STRESSTEST
+  twizy_status = CAN_STATUS_GO;
+  twizy_speed = 5000;
+#endif
 
   /***************************************************************************
    * Read feature configuration:
@@ -5498,6 +5543,20 @@ BOOL vehicle_twizy_state_ticker1(void)
   else
     car_speed = (twizy_speed + 50) / 100; // km/hour
 
+  car_drivemode = twizy_cfg.drivemode;
+  
+  car_power = ((long) twizy_power * 64L) / 1000L;
+  
+  pwr = twizy_speedpwr[CAN_SPEED_CONST].use
+      + twizy_speedpwr[CAN_SPEED_ACCEL].use
+      + twizy_speedpwr[CAN_SPEED_DECEL].use;
+  car_energy_used = pwr / WH_DIV;
+
+  pwr = twizy_speedpwr[CAN_SPEED_CONST].rec
+      + twizy_speedpwr[CAN_SPEED_ACCEL].rec
+      + twizy_speedpwr[CAN_SPEED_DECEL].rec;
+  car_energy_recd = pwr / WH_DIV;
+  
 
   // STATUS: convert Twizy flags to car_doors:
   // Door state #1
@@ -5711,7 +5770,7 @@ BOOL vehicle_twizy_state_ticker1(void)
       car_chargestate = 1;
 
       // Send charge stat:
-      net_req_notification(NET_NOTIFY_STAT);
+      net_req_notification(NET_NOTIFY_ENV);
       
       // Send charge start notification?
       if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SCHGSTART)
@@ -5847,7 +5906,7 @@ BOOL vehicle_twizy_state_ticker1(void)
 
       // Send charge alert:
       net_req_notification(NET_NOTIFY_CHARGE);
-      net_req_notification(NET_NOTIFY_STAT);
+      net_req_notification(NET_NOTIFY_ENV);
 
       // Notifications will be sent in about 1 second
       // and will need car_doors1 & 0x04 set for proper text.
@@ -5882,16 +5941,37 @@ BOOL vehicle_twizy_state_ticker1(void)
 
   /***************************************************************************
    * Notifications:
+   * 
+   * Note: these are distributed within a full minute to minimize
+   * current load on the modem and match GPS requests
    */
 
-  // send stream updates (GPS log) while car is moving:
-  // (every 5 seconds for debug/test, should be per second if possible...)
-  if ((twizy_speed > 0) && (sys_features[FEATURE_STREAM] & 2)
-          && ((can_granular_tick % 5) == 0))
+  // Send standard data update (incl. stream update) once per minute
+  // after modem GPS request:
+  if ((net_granular_tick % 60) == 21)
+  {
+    // calculate current ETR values:
+    vehicle_twizy_calculate_chargetimes();
+    twizy_notify |= SEND_DataUpdate;
+  }
+  
+#ifdef OVMS_TWIZY_BATTMON
+  // Send battery update once per minute on even second
+  // between our and framework per minute update:
+  else if ((net_granular_tick % 60) == 42)
+  {
+    twizy_notify |= SEND_BatteryStats;
+  }
+#endif // OVMS_TWIZY_BATTMON
+
+  // Send stream updates (GPS log) while car is moving
+  // every odd second, after modem GPS request:
+  else if ((twizy_speed > 0) && (sys_features[FEATURE_STREAM] > 1)
+          && ((net_granular_tick % 3) == 1))
   {
     twizy_notify |= SEND_StreamUpdate;
   }
-
+  
 
 #ifdef OVMS_TWIZY_CFG
 
@@ -6012,26 +6092,6 @@ BOOL vehicle_twizy_state_ticker10(void)
 
   return FALSE;
 }
-
-
-////////////////////////////////////////////////////////////////////////
-// twizy_state_ticker60()
-// State Model: Per-minute ticker
-// This function is called approximately once per minute (since state
-// was first entered), and gives the state a timeslice for activity.
-//
-
-BOOL vehicle_twizy_state_ticker60(void)
-{
-  // calculate current ETR values:
-  vehicle_twizy_calculate_chargetimes();
-
-  // Queue regular data update:
-  twizy_notify |= SEND_DataUpdate;
-
-  return FALSE;
-}
-
 
 
 
@@ -6377,11 +6437,15 @@ char vehicle_twizy_power_msgp(char stat, int cmd)
   char *s;
   UINT8 i;
 
+#ifdef OVMS_STRESSTEST
+  crc = 0;
+#endif
+  
   if (cmd == CMD_PowerUsageStats)
   {
     /* Output power usage statistics:
      *
-     * MP-0 HRT-PWR-UsageStats,0,86400
+     * MP-0 HRT-PWR-Stats,0,86400
      *  ,<speed_CONST_dist>,<speed_CONST_use>,<speed_CONST_rec>
      *  ,<speed_ACCEL_dist>,<speed_ACCEL_use>,<speed_ACCEL_rec>
      *  ,<speed_DECEL_dist>,<speed_DECEL_use>,<speed_DECEL_rec>
@@ -6400,9 +6464,9 @@ char vehicle_twizy_power_msgp(char stat, int cmd)
 
     for (i=0; i<=2; i++)
     {
-      s = stp_ul(s, ",", (twizy_speedpwr[i].dist + 5) / 10);
-      s = stp_ul(s, ",", (twizy_speedpwr[i].use + WH_RND) / WH_DIV);
-      s = stp_ul(s, ",", (twizy_speedpwr[i].rec + WH_RND) / WH_DIV);
+      s = stp_ul(s, ",", twizy_speedpwr[i].dist / 10);
+      s = stp_ul(s, ",", twizy_speedpwr[i].use / WH_DIV);
+      s = stp_ul(s, ",", twizy_speedpwr[i].rec / WH_DIV);
       s = stp_ul(s, ",", twizy_speedpwr[i].spdcnt);
       s = stp_ul(s, ",", twizy_speedpwr[i].spdsum);
     }
@@ -6411,13 +6475,14 @@ char vehicle_twizy_power_msgp(char stat, int cmd)
     {
       s = stp_ul(s, ",", twizy_levelpwr[i].dist);
       s = stp_ul(s, ",", twizy_levelpwr[i].hsum);
-      s = stp_ul(s, ",", (twizy_levelpwr[i].use + WH_RND) / WH_DIV);
-      s = stp_ul(s, ",", (twizy_levelpwr[i].rec + WH_RND) / WH_DIV);
+      s = stp_ul(s, ",", twizy_levelpwr[i].use / WH_DIV);
+      s = stp_ul(s, ",", twizy_levelpwr[i].rec / WH_DIV);
     }
     
     // V3.6.0: coulomb count discharge/charge (Ah)
-    s = stp_l2f(s, ",", (twizy_charge_use + CAH_RND) / CAH_DIV, 2);
-    s = stp_l2f(s, ",", (twizy_charge_rec + CAH_RND) / CAH_DIV, 2);
+    s = stp_l2f(s, ",", twizy_charge_use / CAH_DIV, 2);
+    s = stp_l2f(s, ",", twizy_charge_rec / CAH_DIV, 2);
+    
     
     stat = net_msg_encode_statputs(stat, &crc);
   }
@@ -6447,7 +6512,6 @@ BOOL vehicle_twizy_power_sms(BOOL premsg, char *caller, char *command, char *arg
   cr2lf(net_scratchpad);
 
   // OK, send SMS:
-  delay100(2);
   net_send_sms_start(caller);
   net_puts_ram(net_scratchpad);
 
@@ -6830,7 +6894,6 @@ BOOL vehicle_twizy_stat_sms(BOOL premsg, char *caller, char *command, char *argu
   cr2lf(net_scratchpad);
 
   // OK, start SMS:
-  delay100(2);
   net_send_sms_start(caller);
   net_puts_ram(net_scratchpad);
 
@@ -7058,7 +7121,6 @@ char vehicle_twizy_ca_msgp(char stat, int cmd)
 {
   //static WORD crc; // diff crc for push msgs
   char *s;
-  int etr_soc = 0, etr_range = 0, maxrange;
 
   // Send command reply:
   s = stp_rom(net_scratchpad, "MP-0 ");
@@ -7713,13 +7775,20 @@ char vehicle_twizy_battstatus_msgp(char stat, int cmd)
   UINT8 volt_alert, temp_alert;
   char *s;
 
-
+#ifdef OVMS_STRESSTEST
+  memset(crc_alert, 0, sizeof crc_alert);
+  memset(crc_pack, 0, sizeof crc_pack);
+  memset(crc_cell, 0, sizeof crc_cell);
+#endif
+  
   // Try to wait for consistent sensor data:
   if (vehicle_twizy_battstatus_wait4sensors() == FALSE)
   {
     // no sensor data available, abort if in diff mode:
+#ifndef OVMS_STRESSTEST
     if (stat > 0)
       return stat;
+#endif
   }
 
 

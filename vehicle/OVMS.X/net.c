@@ -32,6 +32,7 @@
 #include <usart.h>
 #include <string.h>
 #include <stdlib.h>
+#include <delays.h>
 #include "ovms.h"
 #include "net_sms.h"
 #include "net_msg.h"
@@ -107,15 +108,20 @@ rom char NET_WAKEUP[] = "AT\r";
 #endif
 
 rom char NET_INIT1[] = "AT+CSMINS?\r";
+
+#ifndef OVMS_NO_PHONEBOOKAP
 rom char NET_INIT2[] = "AT+CCID;+CPBF=\"O-\";+CPIN?\r";
+#else
+rom char NET_INIT2[] = "AT+CCID;+CPIN?\r";
+#endif
+
 #ifdef OVMS_DIAGDATA
 // using DIAG port for data output: enable modem echo
-rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;+CLTS=1;E1\r";
+rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CMEE=2;+CIPSPRT=1;+CIPQSEND=1;+CLTS=1;E1\r";
 #else
 // default: disable modem echo
-rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CIPSPRT=0;+CIPQSEND=1;+CLTS=1;E0\r";
+rom char NET_INIT3[] = "AT+IPR?;+CREG=1;+CLIP=1;+CMGF=1;+CNMI=2,2;+CSDH=1;+CMEE=2;+CIPSPRT=1;+CIPQSEND=1;+CLTS=1;E0\r";
 #endif // OVMS_DIAGDATA
-// NOTE: changing IP mode to QSEND=0 needs handling change for "SEND OK"/"DATA ACCEPT" in net_state_activity()
 
 rom char NET_COPS[] = "AT+COPS=0,1;+COPS?\r";
 
@@ -232,7 +238,8 @@ void net_poll(void)
       // Switch to IP data mode (NET_BUF_IPD)?
       if ((x == ':')&&(net_buf_pos>=6)&&
           (net_buf[0]=='+')&&(net_buf[1]=='I')&&
-          (net_buf[2]=='P')&&(net_buf[3]=='D'))
+          (net_buf[2]=='P')&&(net_buf[3]=='D')&&
+          (!vUARTIntStatus.UARTIntRxOverFlow))
         {
         CHECKPOINT(0x31)
         // Syntax: +IPD,<length>:<msg>
@@ -257,7 +264,8 @@ void net_poll(void)
         // Switch to SMS data mode (NET_BUF_SMS)?
         if ((net_buf_pos>=4)&&
             (net_buf[0]=='+')&&(net_buf[1]=='C')&&
-            (net_buf[2]=='M')&&(net_buf[3]=='T'))
+            (net_buf[2]=='M')&&(net_buf[3]=='T')&&
+            (!vUARTIntStatus.UARTIntRxOverFlow))
           {
           // Syntax: +CMT: "<caller>","","yy/mm/dd,HH:MM:SS+04",145,32,0,0,"gateway",145,<length>
           
@@ -273,7 +281,7 @@ void net_poll(void)
           while ((net_buf[x] != ',') && (x > 0)) x--; // Search for last comma seperator
           net_buf_todo = atoi(net_buf+x+1); // Length of SMS message
           
-          net_buf_todotimeout = 60; // 60 seconds to receive the rest
+          net_buf_todotimeout = NET_BUF_TIMEOUT; // seconds to receive the rest
           net_buf_pos = 0;
           net_buf_mode = NET_BUF_SMS;
           continue; // We have switched to SMS mode
@@ -356,6 +364,79 @@ void net_poll(void)
     // Zero-terminate buffer at current write position for overrun security:
     net_buf[net_buf_pos] = 0;
   }
+
+
+////////////////////////////////////////////////////////////////////////
+// net_wait4modem()
+// 
+// Wait for the modem to be PROBABLY ready for the next command.
+// Use if you need to issue a command without being able to retry later
+// if the modem is not ready.
+// Note: waits for RX silence, which can also result from the
+// RX buffer being full or the modem needing more time to respond.
+//
+void net_wait4modem()
+  {
+  UINT8 c, len;
+  
+  // wait for TX flush:
+  if (!vUARTIntStatus.UARTIntTxBufferEmpty)
+    {
+    while (!vUARTIntStatus.UARTIntTxBufferEmpty);
+    // add 25 ms processing time:
+    delay5(5);
+    }
+  
+  // wait for 50 ms RX silence (may also mean RX buffer is full...)
+  for (c=0, len=vUARTIntRxBufDataCnt; c<10; len=vUARTIntRxBufDataCnt)
+    {
+    delay5b();
+    if (vUARTIntRxBufDataCnt != len)
+      c = 0;
+    else
+      c++;
+    }
+  
+  }
+
+
+////////////////////////////////////////////////////////////////////////
+// net_wait4prompt()
+// 
+// Wait for the IP/SMS send prompt "> " or "ER"(ROR)
+// Returns TRUE if prompt has been received.
+// Timeout: ~1 s
+// Note: does not fetch characters from the UART RX buffer, so net_poll()
+// can read errors afterwards.
+//
+BOOL net_wait4prompt()
+  {
+  char c1, c2;
+  UINT timeout = 5000; // x 0.2 ms = ~1 s
+  
+  do
+    {
+    // Peek last 2 characters from RX buffer:
+    c1 = vUARTIntRxBuffer[((RX_BUFFER_SIZE-2)+vUARTIntRxBufWrPtr)%RX_BUFFER_SIZE];
+    c2 = vUARTIntRxBuffer[((RX_BUFFER_SIZE-1)+vUARTIntRxBufWrPtr)%RX_BUFFER_SIZE];
+    
+    if (c1=='>' && c2==' ')
+      return TRUE; // Prompt detected
+    else if (c1=='E' && c2=='R')
+      return FALSE; // Error detected
+    
+    // wait 0.2 ms
+    Delay1KTCYx(1);
+    
+    } while(--timeout);
+    
+    // account prompt timeout:
+    if (net_timeout_rxdata > 1) // leave 1s for ticker
+      --net_timeout_rxdata;
+    
+    return FALSE;
+  }
+
 
 ////////////////////////////////////////////////////////////////////////
 // net_puts_rom()
@@ -558,6 +639,8 @@ void net_req_notification(unsigned int notify)
     }
   }
 
+
+#ifndef OVMS_NO_PHONEBOOKAP
 ////////////////////////////////////////////////////////////////////////
 // net_phonebook: SIM phonebook auto provisioning system
 //
@@ -603,6 +686,8 @@ void net_phonebook(char *pb)
       }
     }
   }
+#endif //OVMS_NO_PHONEBOOKAP
+
 
 ////////////////////////////////////////////////////////////////////////
 // net_state_enter(newstate)
@@ -624,7 +709,6 @@ void net_state_enter(unsigned char newstate)
   switch(net_state)
     {
     case NET_STATE_FIRSTRUN:
-      net_msg_bufpos = NULL;
       net_timeout_rxdata = NET_RXDATA_TIMEOUT;
       led_set(OVMS_LED_GRN,OVMS_LED_ON);
       led_set(OVMS_LED_RED,OVMS_LED_ON);
@@ -632,11 +716,13 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_START;
       net_timeout_ticks = 10; // Give everything time to start slowly
       break;
+      
 #ifdef OVMS_DIAGMODULE
     case NET_STATE_DIAGMODE:
       diag_initialise();
       break;
 #endif // #ifdef OVMS_DIAGMODULE
+      
     case NET_STATE_START:
       led_set(OVMS_LED_GRN,NET_LED_WAKEUP);
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
@@ -648,11 +734,14 @@ void net_state_enter(unsigned char newstate)
     case NET_STATE_SOFTRESET:
       net_timeout_goto = 0;
       break;
+      
     case NET_STATE_HARDRESET:
       led_set(OVMS_LED_GRN,OVMS_LED_ON);
       led_set(OVMS_LED_RED,OVMS_LED_ON);
       led_start();
-      modem_reboot();
+      // Power modem down, up:
+      modem_pwrkey();
+      modem_pwrkey();
       net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 2;
       net_state_vchar = 0;
@@ -660,9 +749,10 @@ void net_state_enter(unsigned char newstate)
       net_msg_disconnected();
       net_cops_tries = 0; // Reset the COPS counter
       break;
+      
     case NET_STATE_HARDSTOP:
       net_timeout_goto = NET_STATE_HARDSTOP2;
-      net_timeout_ticks = 10;
+      net_timeout_ticks = 3;
       net_state_vchar = NETINIT_START;
       net_apps_connected = 0;
       net_msg_disconnected();
@@ -673,7 +763,9 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_STOP;
       net_timeout_ticks = 2;
       net_state_vchar = 0;
-      modem_reboot();
+      // Power modem down, up:
+      modem_pwrkey();
+      modem_pwrkey();
       break;
     case NET_STATE_STOP:
       led_set(OVMS_LED_GRN,OVMS_LED_OFF);
@@ -681,6 +773,7 @@ void net_state_enter(unsigned char newstate)
       CHECKPOINT(0xF0)
       reset_cpu();
       break;
+      
     case NET_STATE_DOINIT:
       led_set(OVMS_LED_GRN,NET_LED_INITSIM1);
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
@@ -718,8 +811,10 @@ void net_state_enter(unsigned char newstate)
       net_state_vchar = 0;
       net_puts_rom(NET_INIT3);
       break;
+    
     case NET_STATE_NETINITP:
       led_set(OVMS_LED_GRN,NET_LED_NETINIT);
+      // Check retry count:
       if (--net_state_vint > 0)
         {
         led_set(OVMS_LED_RED,NET_LED_ERRGPRSRETRY);
@@ -730,12 +825,14 @@ void net_state_enter(unsigned char newstate)
         led_set(OVMS_LED_RED,NET_LED_ERRGPRSFAIL);
         net_timeout_goto = NET_STATE_SOFTRESET;
         }
-      net_timeout_ticks = (NET_GPRS_RETRIES-net_state_vint)*15;
+      net_timeout_ticks = (NET_GPRS_RETRIES-net_state_vint)*5;
       break;
+    
     case NET_STATE_NETINITCP:
       led_set(OVMS_LED_GRN,NET_LED_NETINIT);
       net_puts_rom("AT+CIPCLOSE\r");
       led_set(OVMS_LED_RED,NET_LED_ERRCONNFAIL);
+      // Check retry count:
       if (--net_state_vint > 0)
         {
         net_timeout_goto = NET_STATE_DONETINITC;
@@ -744,7 +841,7 @@ void net_state_enter(unsigned char newstate)
         {
         net_timeout_goto = NET_STATE_SOFTRESET;
         }
-      net_timeout_ticks = (NET_GPRS_RETRIES-net_state_vint)*15;
+      net_timeout_ticks = (NET_GPRS_RETRIES-net_state_vint)*5;
       break;
     case NET_STATE_DONETINITC:
       led_set(OVMS_LED_GRN,NET_LED_NETINIT);
@@ -760,6 +857,7 @@ void net_state_enter(unsigned char newstate)
       net_puts_rom("AT+CLPORT=\"TCP\",\"6867\"\r");
       net_state = NET_STATE_DONETINIT;
       break;
+      
     case NET_STATE_DONETINIT:
       led_set(OVMS_LED_GRN,NET_LED_NETINIT);
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
@@ -787,7 +885,7 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = 0;
       net_state_vchar = 0;
       if ((net_reg != 0x01)&&(net_reg != 0x05))
-        net_watchdog = 120; // I need a network within 2 mins, else reset
+        net_watchdog = NET_REG_TIMEOUT; // I need a network within 2 mins, else reset
       else
         net_watchdog = 0; // Disable net watchdog
       break;
@@ -876,20 +974,22 @@ void net_state_activity()
     return;
     }
 
+  /*
   if ((net_buf_pos >= 8)&&
-      (memcmppgm2ram(net_buf, (char const rom far*)"*PSUTTZ:", 8) == 0))
+      (memcmppgm2ram(net_buf, "*PSUTTZ:", 8) == 0))
     {
     // We have a time source from the GSM provider
     // e.g.; *PSUTTZ: 2013, 12, 16, 15, 45, 17, "+32", 1
     return;
     }
+   */
 
   switch (net_state)
     {
 #ifdef OVMS_DIAGMODULE
     case NET_STATE_FIRSTRUN:
       if ((net_buf_pos >= 5)&&
-          (memcmppgm2ram(net_buf, (char const rom far*)"SETUP", 5) == 0))
+          (memcmppgm2ram(net_buf, "SETUP", 5) == 0))
         {
         net_state_enter(NET_STATE_DIAGMODE);
         }
@@ -931,11 +1031,13 @@ void net_state_activity()
         strncpy(net_iccid,net_buf,MAX_ICCID);
         net_iccid[MAX_ICCID-1] = 0;
         }
+#ifndef OVMS_NO_PHONEBOOKAP
       else if ((net_buf_pos >= 8)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='P')&&
                (net_buf[3]=='B')&&(net_buf[4]=='F')&&(net_buf[5]==':'))
         {
         net_phonebook(net_buf);
         }
+#endif // OVMS_NO_PHONEBOOKAP
       else if ((net_buf_pos >= 8)&&(net_buf[0]=='+')&&(net_buf[1]=='C')&&(net_buf[2]=='P')&&(net_buf[3]=='I'))
         {
         if (net_buf[7] != 'R')
@@ -973,11 +1075,11 @@ void net_state_activity()
         net_state_enter(NET_STATE_COPSSETTLE); // COPS reconnect was OK
         }
       else if ( ((net_buf_pos >= 5)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R')) ||
-              (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0) )
+              (memcmppgm2ram(net_buf, "+CME ERROR", 10) == 0) )
         {
         net_state_enter(NET_STATE_COPSWAIT); // Try to wait a bit to see if we get a CREG
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+COPS:", 6) == 0)
+      else if (memcmppgm2ram(net_buf, "+COPS:", 6) == 0)
         {
         // COPS network registration
         b = strtokpgmram(net_buf,"\"");
@@ -993,7 +1095,7 @@ void net_state_activity()
         }
       break;
     case NET_STATE_COPSWAIT:
-      if (memcmppgm2ram(net_buf, (char const rom far*)"+CREG", 5) == 0)
+      if (memcmppgm2ram(net_buf, "+CREG", 5) == 0)
         { // "+CREG" Network registration
         if (net_buf[8]==',')
           net_reg = net_buf[9]&0x07; // +CREG: 1,x
@@ -1008,14 +1110,13 @@ void net_state_activity()
         }
       break;
     case NET_STATE_DONETINIT:
-      if ((net_buf_pos >= 2)&&
-               (net_buf[0] == 'E')&&
-               (net_buf[1] == 'R'))
+      if ((net_buf_pos >= 2)&&(net_buf[0] == 'E')&&(net_buf[1] == 'R') ||
+              (memcmppgm2ram(net_buf, "+CME ERROR", 10) == 0))
         {
         if ((net_state_vchar == NETINIT_CSTT)||
                 (net_state_vchar == NETINIT_CIICR))// ERROR response to AT+CSTT OR AT+CIICR
           {
-          // try setting up GPRS again, after short pause
+          // try registering, then setting up GPRS again, after short pause
           net_state_enter(NET_STATE_NETINITP);
           }
         else if (net_state_vchar == NETINIT_CIFSR) // ERROR response to AT+CIFSR
@@ -1086,22 +1187,27 @@ void net_state_activity()
           }
         }
       else if ((net_buf_pos>=7)&&
-               (memcmppgm2ram(net_buf, (char const rom far*)"+CREG: 0", 8) == 0))
+               (memcmppgm2ram(net_buf, "+CREG: 0", 8) == 0))
         { // Lost network connectivity during NETINIT
         net_state_enter(NET_STATE_SOFTRESET);
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+PDP: DEACT", 11) == 0)
+      else if (memcmppgm2ram(net_buf, "+PDP: DEACT", 11) == 0)
         { // PDP couldn't be activated - try again...
         net_state_enter(NET_STATE_SOFTRESET);
         }
       break;
+      
+      
     case NET_STATE_READY:
-      if (memcmppgm2ram(net_buf, (char const rom far*)"+CREG", 5) == 0)
-        { // "+CREG" Network registration
+      if (memcmppgm2ram(net_buf, "+CREG", 5) == 0)
+        {
+        // "+CREG" Network registration: either from...
         if (net_buf[8]==',')
-          net_reg = net_buf[9]&0x07; // +CREG: 1,x
+          net_reg = net_buf[9]&0x07; // ...CMD: "+CREG: 1,x"
         else
-          net_reg = net_buf[7]&0x07; // +CREG: x
+          net_reg = net_buf[7]&0x07; // ...URC: "+CREG: x"
+        // 1 = Registered, home network
+        // 5 = Registered, roaming
         if ((net_reg == 0x01)||(net_reg == 0x05)) // Registered to network?
           {
           net_watchdog=0; // Disable watchdog, as we have connectivity
@@ -1109,11 +1215,11 @@ void net_state_activity()
           }
         else if (net_watchdog == 0)
           {
-          net_watchdog = 120; // We need connectivity within 120 seconds
+          net_watchdog = NET_REG_TIMEOUT; // We need connectivity within 120 seconds
           led_set(OVMS_LED_RED,NET_LED_ERRLOSTSIG);
           }
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CLIP", 5) == 0)
+      else if (memcmppgm2ram(net_buf, "+CLIP", 5) == 0)
         { // Incoming CALL
         if ((net_reg != 0x01)&&(net_reg != 0x05))
           { // Treat this as a network registration
@@ -1124,7 +1230,7 @@ void net_state_activity()
         delay100(1);
         net_puts_rom(NET_HANGUP);
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CCLK", 5) == 0)
+      else if (memcmppgm2ram(net_buf, "+CCLK", 5) == 0)
         {
         // local clock update
         // e.g.; +CCLK: "13/12/16,22:01:39+32"
@@ -1150,7 +1256,7 @@ void net_state_activity()
           }
         }
 #if defined(OVMS_INTERNALGPS) && defined(OVMS_SIMCOM_SIM908)
-      else if ((memcmppgm2ram(net_buf, (char const rom far*)"2,", 2) == 0)&&
+      else if ((memcmppgm2ram(net_buf, "2,", 2) == 0)&&
                ((net_fnbits & NET_FN_INTERNALGPS)>0))
         {
         // Incoming GPS coordinates
@@ -1206,7 +1312,7 @@ void net_state_activity()
          }
 
       }
-    else if ((memcmppgm2ram(net_buf, (char const rom far*)"64,", 3) == 0)&&
+    else if ((memcmppgm2ram(net_buf, "64,", 3) == 0)&&
              ((net_fnbits & NET_FN_INTERNALGPS)>0))
       {
       // Incoming GPS coordinates
@@ -1230,7 +1336,7 @@ void net_state_activity()
 
       }
 #elif defined(OVMS_INTERNALGPS) && defined(OVMS_SIMCOM_SIM808)
-      else if ((memcmppgm2ram(net_buf, (char const rom far*)"+CGNSINF:", 9) == 0)&&
+      else if ((memcmppgm2ram(net_buf, "+CGNSINF:", 9) == 0)&&
                ((net_fnbits & NET_FN_INTERNALGPS)>0))
         {
         // Incoming GPS coordinates
@@ -1283,7 +1389,7 @@ void net_state_activity()
           }
         }
 #endif
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT OK", 10) == 0)
+      else if (memcmppgm2ram(net_buf, "CONNECT OK", 10) == 0)
         {
         if (net_link == 0)
           {
@@ -1294,9 +1400,9 @@ void net_state_activity()
           }
         net_link = 1;
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"STATE: ", 7) == 0)
+      else if (memcmppgm2ram(net_buf, "STATE: ", 7) == 0)
         { // Incoming CIPSTATUS
-        if (memcmppgm2ram(net_buf, (char const rom far*)"STATE: CONNECT OK", 17) == 0)
+        if (memcmppgm2ram(net_buf, "STATE: CONNECT OK", 17) == 0)
           {
           if (net_link == 0)
             {
@@ -1307,11 +1413,11 @@ void net_state_activity()
             }
           net_link = 1;
           }
-        else if (memcmppgm2ram(net_buf, (char const rom far*)"STATE: TCP CONNECTING", 21) == 0)
+        else if (memcmppgm2ram(net_buf, "STATE: TCP CONNECTING", 21) == 0)
           {
           // Connection in progress, ignore it...
           }
-        else if (memcmppgm2ram(net_buf, (char const rom far*)"STATE: TCP CLOSED", 17) == 0)
+        else if (memcmppgm2ram(net_buf, "STATE: TCP CLOSED", 17) == 0)
           {
           // Re-initialize TCP socket, after short pause
           net_msg_disconnected();
@@ -1330,55 +1436,63 @@ void net_state_activity()
             }
           }
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CSQ:", 5) == 0)
+      else if (memcmppgm2ram(net_buf, "+CSQ:", 5) == 0)
         {
         // Signal Quality
           if (net_buf[8]==',')  // two digits
              net_sq = (net_buf[6]&0x07)*10 + (net_buf[7]&0x07);
           else net_sq = net_buf[6]&0x07;
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"SEND OK", 7) == 0)
+      else if ( (memcmppgm2ram(net_buf, "SEND OK", 7) == 0) ||
+                (memcmppgm2ram(net_buf, "DATA ACCEPT", 11) == 0) )
         {
-        // CIPSEND success response in QSEND=0 mode
-        //net_msg_sendpending = 0;
-        // as we operate in QSEND=1 mode this means we somehow missed
-        // a modem crash/reset: do full re-init
-        net_msg_disconnected();
-        net_state_enter(NET_STATE_START);
+        // CIPSEND success response
+        net_msg_sendpending = -1; // 1s modem VBAT recharge pause
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"DATA ACCEPT", 11) == 0)
+      else if ( (memcmppgm2ram(net_buf, "CLOSED", 6) == 0) ||
+                (memcmppgm2ram(net_buf, "CONNECT FAIL", 12) == 0) ||
+                (net_msg_sendpending && (
+                  (memcmppgm2ram(net_buf, "SEND FAIL", 9) == 0) ||
+                  (memcmppgm2ram(net_buf, "ERROR", 5) == 0) ||
+                  (memcmppgm2ram(net_buf, "+CME ERROR", 10) == 0)))
+              )
         {
-        // CIPSEND success response in QSEND=1 mode
-        net_msg_sendpending = 0;
-        }
-      else if ( (memcmppgm2ram(net_buf, (char const rom far*)"CLOSED", 6) == 0) ||
-              (memcmppgm2ram(net_buf, (char const rom far*)"CONNECT FAIL", 12) == 0) )
-        {
+        // TCP connection has been lost:
         // Re-initialize TCP socket, after short pause
         net_msg_disconnected();
         net_state_enter(NET_STATE_NETINITCP);
         }
-      else if ( (memcmppgm2ram(net_buf, (char const rom far*)"SEND FAIL", 9) == 0)||
-                (memcmppgm2ram(net_buf, (char const rom far*)"+CME ERROR", 10) == 0)||
-                (memcmppgm2ram(net_buf, (char const rom far*)"+PDP: DEACT", 11) == 0) )
-        { // Various GPRS error results
+      else if ( (memcmppgm2ram(net_buf, "+PDP: DEACT", 11) == 0) ||
+                (memcmppgm2ram(net_buf, "ERROR", 5) == 0) ||
+                (memcmppgm2ram(net_buf, "+CME ERROR", 10) == 0)
+              )
+        {
+        // GPRS context has been lost:
         // Re-initialize GPRS network and TCP socket, after short pause
         net_msg_disconnected();
         net_state_enter(NET_STATE_NETINITP);
         }
-      else if ( (memcmppgm2ram(net_buf, (char const rom far*)"RDY", 4) == 0)||
-                (memcmppgm2ram(net_buf, (char const rom far*)"+CFUN:", 6) == 0) )
+      else if ( (memcmppgm2ram(net_buf, "RDY", 4) == 0)||
+                (memcmppgm2ram(net_buf, "+CFUN:", 6) == 0) )
         {
         // Modem crash/reset: do full re-init
         net_msg_disconnected();
         net_state_enter(NET_STATE_START);
         }
-      else if (memcmppgm2ram(net_buf, (char const rom far*)"+CUSD:", 6) == 0)
-      {
+      else if ( (memcmppgm2ram(net_buf, "NORMAL POWER DOWN", 17) == 0) )
+        {
+        // Modem power down detected: power up, do full re-init
+        modem_pwrkey();
+        net_state_enter(NET_STATE_START);
+        }
+      else if (memcmppgm2ram(net_buf, "+CUSD:", 6) == 0)
+        {
         // reply MMI/USSD command result:
         net_msg_reply_ussd(net_buf, net_buf_pos);
-      }
+        }
       break;
+      
+      
 #ifdef OVMS_DIAGMODULE
     case NET_STATE_DIAGMODE:
       diag_activity(net_buf,net_buf_pos);
@@ -1386,6 +1500,208 @@ void net_state_activity()
 #endif // #ifdef OVMS_DIAGMODULE
     }
   }
+
+
+////////////////////////////////////////////////////////////////////////
+// net_idlepoll()
+// 
+// This function is called from the main loop after each net_poll().
+// As net_poll() frees the net_msg_sendpending semaphore, this is
+// the place to send queued notifications without interfering with
+// the per second tickers.
+//
+void net_idlepoll(void)
+  {
+  char stat;
+  char cmd[5];
+
+#ifdef OVMS_DIAGMODULE
+  if ((net_state == NET_STATE_DIAGMODE))
+    ; // disable connection check
+  else
+#endif // OVMS_DIAGMODULE
+    // Connection ready & available?
+    if ((net_state!=NET_STATE_READY) || ((net_reg!=0x01)&&(net_reg!=0x05)))
+      return;
+  
+  if (!MODEM_READY())
+    return;
+
+  
+  /*************************************************************
+   * PROCESS BUFFERED COMMAND
+   */
+
+  if ((net_msg_cmd_code!=0) && (net_msg_serverok==1))
+    {
+    net_msg_cmd_do();
+    return;
+    }
+
+  
+  /*************************************************************
+   * SEND IP NOTIFICATIONS
+   */
+
+#ifndef OVMS_NO_ERROR_NOTIFY
+  if ((net_notify_errorcode>0) && (net_msg_serverok==1))
+    {
+    if (net_notify_errorcode > 0)
+      {
+      net_msg_erroralert(net_notify_errorcode, net_notify_errordata);
+      }
+    net_notify_errorcode = 0;
+    net_notify_errordata = 0;
+    return;
+    }
+#endif //OVMS_NO_ERROR_NOTIFY
+
+  if (((net_notify & NET_NOTIFY_NETPART)>0)
+          && (net_msg_serverok==1))
+    {
+
+#ifndef OVMS_NO_VEHICLE_ALERTS
+    if ((net_notify & NET_NOTIFY_NET_ALARM)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_NET_ALARM); // Clear notification flag
+      net_msg_alert(ALERT_ALARM);
+      return;
+      }
+    else
+#endif //OVMS_NO_VEHICLE_ALERTS
+      
+    if ((net_notify & NET_NOTIFY_NET_CHARGE)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_NET_CHARGE); // Clear notification flag
+      if (net_notify_suppresscount==0)
+        {
+        // execute CHARGE ALERT command:
+        net_msg_cmd_code = 6;
+        net_msg_cmd_msg = cmd;
+        net_msg_cmd_msg[0] = 0;
+        net_msg_cmd_do();
+        }
+      return;
+      }
+    
+    else if ((net_notify & NET_NOTIFY_NET_12VLOW)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_NET_12VLOW); // Clear notification flag
+      if (net_fnbits & NET_FN_12VMONITOR) net_msg_alert(ALERT_12VLOW);
+      return;
+      }
+    
+#ifndef OVMS_NO_VEHICLE_ALERTS
+    else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_NET_TRUNK); // Clear notification flag
+      net_msg_alert(ALERT_TRUNK);
+      return;
+      }
+#endif //OVMS_NO_VEHICLE_ALERTS
+    
+    else if ((net_notify & NET_NOTIFY_NET_CARON)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_NET_CARON); // Clear notification flag
+      net_msg_alert(ALERT_CARON);
+      return;
+      }
+    
+    else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_NET_STAT); // Clear notification flag
+      if (net_msgp_stat(2) != 2);
+        net_msg_send();
+      return;
+      }
+    
+    else if ((net_notify & NET_NOTIFY_NET_ENV)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_NET_ENV); // Clear notification flag
+      stat = 2;
+      stat = net_msgp_environment(stat);
+      stat = net_msgp_stat(stat);
+      if (stat != 2)
+        net_msg_send();
+      return;
+      }
+    
+    else if ((net_notify & NET_NOTIFY_NET_STREAM)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_NET_STREAM); // Clear notification flag
+      if (net_msgp_gps(2) != 2)
+        net_msg_send();
+      return;
+      }
+    
+    } // if NET_NOTIFY_NETPART
+
+  
+  /*************************************************************
+   * SEND SMS NOTIFICATIONS
+   */
+  if ((net_notify & NET_NOTIFY_SMSPART)>0)
+    {
+    net_assert_caller(NULL); // set net_caller to PARAM_REGPHONE
+    
+#ifndef OVMS_NO_VEHICLE_ALERTS
+    if ((net_notify & NET_NOTIFY_SMS_ALARM)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_SMS_ALARM); // Clear notification flag
+      net_sms_alert(net_caller, ALERT_ALARM);
+      return;
+      }
+    else
+#endif //OVMS_NO_VEHICLE_ALERTS
+    
+    if ((net_notify & NET_NOTIFY_SMS_CHARGE)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_SMS_CHARGE); // Clear notification flag
+      if (net_notify_suppresscount==0)
+        {
+          stp_rom(cmd, "STAT");
+          net_sms_in(net_caller, cmd);
+        }
+      return;
+      }
+    
+    else if ((net_notify & NET_NOTIFY_SMS_12VLOW)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_SMS_12VLOW); // Clear notification flag
+      if (net_fnbits & NET_FN_12VMONITOR) net_sms_alert(net_caller, ALERT_12VLOW);
+      return;
+      }
+
+#ifndef OVMS_NO_VEHICLE_ALERTS
+    else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_SMS_TRUNK); // Clear notification flag
+      net_sms_alert(net_caller, ALERT_TRUNK);
+      return;
+      }
+#endif //OVMS_NO_VEHICLE_ALERTS
+
+    else if ((net_notify & NET_NOTIFY_SMS_CARON)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_SMS_CARON); // Clear notification flag
+      net_sms_alert(net_caller, ALERT_CARON);
+      return;
+      }
+
+    else if ((net_notify & NET_NOTIFY_SMS_STAT)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_SMS_STAT); // Clear notification flag
+      }
+
+    else if ((net_notify & NET_NOTIFY_SMS_ENV)>0)
+      {
+      net_notify &= ~(NET_NOTIFY_SMS_ENV); // Clear notification flag
+      }
+
+    } // if NET_NOTIFY_SMSPART
+
+  }
+
 
 ////////////////////////////////////////////////////////////////////////
 // net_state_ticker1()
@@ -1395,9 +1711,6 @@ void net_state_activity()
 //
 void net_state_ticker1(void)
   {
-  char stat;
-  char cmd[5];
-
   CHECKPOINT(0x38)
 
 #ifndef OVMS_NO_ERROR_NOTIFY
@@ -1415,7 +1728,13 @@ void net_state_ticker1(void)
   switch (net_state)
     {
     case NET_STATE_START:
-      if (net_timeout_ticks < 5)
+      if (net_timeout_ticks == 10)
+        {
+        // No answer yet, try toggling the modem power:
+        modem_pwrkey();
+        delay100(50);
+        }
+      else if (net_timeout_ticks < 5)
         {
         // We are about to timeout, so let's set the error code...
         led_set(OVMS_LED_RED,NET_LED_ERRMODEM);
@@ -1457,10 +1776,10 @@ void net_state_ticker1(void)
     case NET_STATE_COPSWAIT:
       if ((net_timeout_ticks % 10)==0)
         {
-        delay100(2);
+        net_wait4modem();
         net_puts_rom(NET_CREG_STATUS);
-        while(vUARTIntTxBufDataCnt>0) { delay100(1); } // Wait for TX flush
-        delay100(2); // Wait for stable result
+        while(vUARTIntTxBufDataCnt>0); // Wait for TX flush
+        delay5(2); // Wait for result
         }
       break;
     case NET_STATE_SOFTRESET:
@@ -1486,6 +1805,7 @@ void net_state_ticker1(void)
 
       if (net_watchdog > 0)
         {
+        // Timeout?
         if (--net_watchdog == 0)
           {
           net_state_enter(NET_STATE_COPS); // Reset network connection
@@ -1493,190 +1813,53 @@ void net_state_ticker1(void)
           }
         }
 
-      if (net_msg_sendpending>0)
+      if (net_msg_sendpending)
         {
-        net_msg_sendpending++;
-        if (net_msg_sendpending>60)
+        if (++net_msg_sendpending > NET_IPACK_TIMEOUT)
           {
-          // Pending for more than 60 seconds..
-          net_state_enter(NET_STATE_DONETINIT); // Reset GPRS link
+          // IPSEND ACK timeout:
+          if (net_watchdog == 0)
+            net_state_enter(NET_STATE_NETINITCP); // Reopen TCP connection
+          else
+            net_state_enter(NET_STATE_DONETINIT); // Reset GPRS link
           return;
           }
         }
-
-    // ...case NET_STATE_READY + registered...
-      if ((net_reg == 0x01)||(net_reg == 0x05))
-        {
-
-        if ((net_msg_cmd_code!=0)
-                && (net_msg_serverok==1) && (net_msg_sendpending==0))
-          {
-          net_msg_cmd_do();
-          return;
-          }
-
-#ifndef OVMS_NO_ERROR_NOTIFY
-        if ((net_notify_errorcode>0)
-                && (net_msg_serverok==1) && (net_msg_sendpending==0))
-          {
-          //delay100(10);
-          if (net_notify_errorcode > 0)
-            {
-            net_msg_erroralert(net_notify_errorcode, net_notify_errordata);
-            }
-          net_notify_errorcode = 0;
-          net_notify_errordata = 0;
-          return;
-          }
-#endif //OVMS_NO_ERROR_NOTIFY
-
-        if (((net_notify & NET_NOTIFY_NETPART)>0)
-                && (net_msg_serverok==1) && (net_msg_sendpending==0))
-          {
-          //delay100(10);
-#ifndef OVMS_NO_VEHICLE_ALERTS
-          if ((net_notify & NET_NOTIFY_NET_ALARM)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_NET_ALARM); // Clear notification flag
-            net_msg_alert(ALERT_ALARM);
-            return;
-            }
-          else
-#endif //OVMS_NO_VEHICLE_ALERTS
-          if ((net_notify & NET_NOTIFY_NET_CHARGE)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_NET_CHARGE); // Clear notification flag
-            if (net_notify_suppresscount==0)
-              {
-              // execute CHARGE ALERT command:
-              net_msg_cmd_code = 6;
-              net_msg_cmd_msg = cmd;
-              net_msg_cmd_msg[0] = 0;
-              net_msg_cmd_do();
-              }
-            return;
-            }
-          else if ((net_notify & NET_NOTIFY_NET_12VLOW)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_NET_12VLOW); // Clear notification flag
-            if (net_fnbits & NET_FN_12VMONITOR) net_msg_alert(ALERT_12VLOW);
-            return;
-            }
-#ifndef OVMS_NO_VEHICLE_ALERTS
-          else if ((net_notify & NET_NOTIFY_NET_TRUNK)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_NET_TRUNK); // Clear notification flag
-            net_msg_alert(ALERT_TRUNK);
-            return;
-            }
-#endif //OVMS_NO_VEHICLE_ALERTS
-          else if ((net_notify & NET_NOTIFY_NET_CARON)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_NET_CARON); // Clear notification flag
-            net_msg_alert(ALERT_CARON);
-            return;
-            }
-          else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_NET_STAT); // Clear notification flag
-            if (net_msgp_stat(2) != 2);
-              net_msg_send();
-            return;
-            }
-          else if ((net_notify & NET_NOTIFY_NET_ENV)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_NET_ENV); // Clear notification flag
-            stat = 2;
-            stat = net_msgp_environment(stat);
-            stat = net_msgp_stat(stat);
-            if (stat != 2)
-              net_msg_send();
-            return;
-            }
-          } // if NET_NOTIFY_NETPART
-
-        if ((net_notify & NET_NOTIFY_SMSPART)>0)
-          {
-          //delay100(10);
-          net_assert_caller(NULL); // set net_caller to PARAM_REGPHONE
-#ifndef OVMS_NO_VEHICLE_ALERTS
-          if ((net_notify & NET_NOTIFY_SMS_ALARM)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_SMS_ALARM); // Clear notification flag
-            net_sms_alert(net_caller, ALERT_ALARM);
-            return;
-            }
-          else
-#endif //OVMS_NO_VEHICLE_ALERTS
-          if ((net_notify & NET_NOTIFY_SMS_CHARGE)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_SMS_CHARGE); // Clear notification flag
-            if (net_notify_suppresscount==0)
-              {
-                stp_rom(cmd, "STAT");
-                net_sms_in(net_caller, cmd);
-              }
-            return;
-            }
-          else if ((net_notify & NET_NOTIFY_SMS_12VLOW)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_SMS_12VLOW); // Clear notification flag
-            if (net_fnbits & NET_FN_12VMONITOR) net_sms_alert(net_caller, ALERT_12VLOW);
-            return;
-            }
-#ifndef OVMS_NO_VEHICLE_ALERTS
-          else if ((net_notify & NET_NOTIFY_SMS_TRUNK)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_SMS_TRUNK); // Clear notification flag
-            net_sms_alert(net_caller, ALERT_TRUNK);
-            return;
-            }
-#endif //OVMS_NO_VEHICLE_ALERTS
-          else if ((net_notify & NET_NOTIFY_SMS_CARON)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_SMS_CARON); // Clear notification flag
-            net_sms_alert(net_caller, ALERT_CARON);
-            return;
-            }
-          else if ((net_notify & NET_NOTIFY_SMS_STAT)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_SMS_STAT); // Clear notification flag
-            }
-          else if ((net_notify & NET_NOTIFY_SMS_ENV)>0)
-            {
-            net_notify &= ~(NET_NOTIFY_SMS_ENV); // Clear notification flag
-            return;
-            }
-          } // if NET_NOTIFY_SMSPART
-
-        // GPS location streaming:
-        if ((car_speed>0) &&
-            (sys_features[FEATURE_STREAM]&1) &&
-            (net_msg_sendpending==0) &&
-            (net_apps_connected>0) &&
-            ( ((net_fnbits & NET_FN_INTERNALGPS) == 0)
-              || ((net_granular_tick % 2) == 0) ))
-          {
-          // Car moving, and streaming on, apps connected, and not sending
-          //delay100(2); // necessary? net_msg_start() delays too
-          if (net_msgp_gps(2) != 2)
-            net_msg_send();
-          }
-
-        } // if ((net_reg == 0x01)||(net_reg == 0x05))
 
 #ifdef OVMS_INTERNALGPS
-        // Request internal SIM908 GPS coordinates
-        // once per second while car is on,
+        // Request internal SIM908/808 GPS coordinates
+        // every three seconds while car is on,
         // else once every minute (to trace theft / transportation)
-        if ((car_doors1bits.CarON || ((net_granular_tick % 60) == 0))
-                && (net_msg_sendpending==0)
+        if ( (((car_doors1bits.CarON) && ((net_granular_tick % 3) == 1))
+                || ((net_granular_tick % 60) == 55))
+                && MODEM_READY()
                 && ((net_fnbits & NET_FN_INTERNALGPS) > 0))
-        {
+          {
           net_puts_rom(NET_REQGPS);
-          delay100(1); // to get modem reply on next net_poll()
-        }
+          while(vUARTIntTxBufDataCnt>0); // Wait for TX flush
+          delay5(15); // Wait for result to begin
+          }
 #endif
+
+      // ...case NET_STATE_READY + registered...
+      if ((net_reg == 0x01)||(net_reg == 0x05))
+        {
+        // GPS location streaming: every three seconds, immediately after
+        // retrieving internal GPS coordinates (if used).
+        // IMPORTANT: do not raise frequency! Modem will power off due to
+        // over current on cell switches in bad coverage areas!
+        // (possible HW design flaw -- modem can surge up to 2A on GPRS sends)
+        if ((car_speed>0) &&
+            (sys_features[FEATURE_STREAM]==1) &&
+            (net_apps_connected>0) &&
+            // every second if we get GPS from the car, else every odd second:
+            (((net_fnbits & NET_FN_INTERNALGPS) == 0)
+              || ((net_granular_tick % 3) == 1)) )
+          {
+          // Car moving, and streaming on, apps connected, and not sending
+          net_req_notification(NET_NOTIFY_STREAM);
+          }
+        } // if ((net_reg == 0x01)||(net_reg == 0x05))
 
       break;
 
@@ -1701,17 +1884,20 @@ void net_state_ticker30(void)
   switch (net_state)
     {
     case NET_STATE_READY:
-      if (net_msg_sendpending>0)
-        {
-        net_granular_tick -= 5; // Try again in 5 seconds...
-        return;
-        }
+      // Request network status + clock + signal quality
+      // once per minute, offset 30 seconds to ticker60 (even second)
       if ((net_granular_tick % 60) != 0)
         {
-        delay100(2);
-        net_puts_rom(NET_CREG_CIPSTATUS);
-        while(vUARTIntTxBufDataCnt>0) { delay100(1); } // Wait for TX flush
-        delay100(2); // Wait for stable result
+        if (!MODEM_READY())
+          {
+          net_granular_tick -= 2; // Try again in 2 seconds...
+          }
+        else
+          {
+          net_puts_rom(NET_CREG_CIPSTATUS);
+          while(vUARTIntTxBufDataCnt>0); // Wait for TX flush
+          delay5(2); // Wait for result start
+          }
         }
       break;
     }
@@ -1725,9 +1911,6 @@ void net_state_ticker30(void)
 //
 void net_state_ticker60(void)
   {
-  char stat;
-  char *p;
-
   CHECKPOINT(0x3A)
 
 #ifdef OVMS_HW_V2
@@ -1818,38 +2001,36 @@ void net_state_ticker60(void)
   switch (net_state)
     {
     case NET_STATE_READY:
-      if (net_msg_sendpending>0)
-        {
-        net_granular_tick -= 5; // Try again in 5 seconds...
-        return;
-        }
 #ifdef OVMS_LOGGINGMODULE
-      if ((net_link==1)&&(logging_haspending() > 0))
+      if ((net_msg_serverok)&&(logging_haspending() > 0))
         {
-        delay100(10);
-        net_msg_start();
-        logging_sendpending();
-        net_msg_send();
-        return;
+        if (!MODEM_READY())
+          {
+          net_granular_tick -= 4; // Try again in 4 seconds...
+          }
+        else
+          {
+          net_msg_start();
+          logging_sendpending();
+          net_msg_send();
+          return;
+          }
         }
 #endif // #ifdef OVMS_LOGGINGMODULE
-      if ((net_link==1)&&(net_apps_connected>0))
+      
+      // Send standard update
+      // once per minute while Apps are connected
+      if ((net_msg_serverok)&&(net_apps_connected>0))
         {
-        delay100(10);
-        stat = 2;
-        p = par_get(PARAM_S_GROUP1);
-        if (*p != 0) stat = net_msgp_group(stat,1,p);
-        p = par_get(PARAM_S_GROUP2);
-        if (*p != 0) stat = net_msgp_group(stat,2,p);
-        stat = net_msgp_stat(stat);
-        stat = net_msgp_gps(stat);
-        stat = net_msgp_tpms(stat);
-        stat = net_msgp_environment(stat);
-        stat = net_msgp_capabilities(stat);
-        if (stat != 2)
-          net_msg_send();
+        if (!MODEM_READY())
+          net_granular_tick -= 4; // Try again in 4 seconds...
+        else
+          net_send_stdupdate();
         }
+      
+      // Toggle modem state initialisation flag (?):
       net_state_vchar = net_state_vchar ^ 1;
+      
       break;
     }
   }
@@ -1877,7 +2058,6 @@ void net_state_ticker300(void)
 //
 void net_state_ticker600(void)
   {
-  char stat;
   char *p;
   BOOL carbusy = ((car_chargestate==1)||    // Charging
                   (car_chargestate==2)||    // Topping off
@@ -1894,7 +2074,7 @@ void net_state_ticker600(void)
         {
         if (net_socalert_msg==0)
           {
-          if ((net_link==1)&&(net_msg_sendpending==0))
+          if ((net_msg_serverok) && MODEM_READY())
             {
             if (net_fnbits & NET_FN_SOCMONITOR) net_msg_alert(ALERT_SOCLOW);
             net_socalert_msg = 72; // 72x10mins = 12hours
@@ -1917,28 +2097,17 @@ void net_state_ticker600(void)
         net_socalert_msg = 6;         // Check in 1 hour
         }
 #endif //#ifdef OVMS_SOCALERT
-      if ((net_link==1)&&(net_apps_connected==0)&&carbusy)
+      
+      // Send standard update
+      // every 10 minutes if no Apps are connected and car is busy
+      if ((net_msg_serverok)&&(net_apps_connected==0)&&carbusy)
         {
-        if (net_msg_sendpending>0)
-          {
-          net_granular_tick -= 5; // Try again in 5 seconds...
-          }
+        if (!MODEM_READY())
+          net_granular_tick -= 4; // Try again in 4 seconds...
         else
-          {
-          stat = 2;
-          p = par_get(PARAM_S_GROUP1);
-          if (*p != 0) stat = net_msgp_group(stat,1,p);
-          p = par_get(PARAM_S_GROUP2);
-          if (*p != 0) stat = net_msgp_group(stat,2,p);
-          stat = net_msgp_stat(stat);
-          stat = net_msgp_gps(stat);
-          stat = net_msgp_tpms(stat);
-          stat = net_msgp_environment(stat);
-          stat = net_msgp_capabilities(stat);
-          if (stat != 2)
-            net_msg_send();
-          }
+          net_send_stdupdate();
         }
+      
       break;
     }
   }
@@ -1951,8 +2120,6 @@ void net_state_ticker600(void)
 //
 void net_state_ticker3600(void)
   {
-  char stat;
-  char *p;
   BOOL carbusy = ((car_chargestate==1)||    // Charging
                   (car_chargestate==2)||    // Topping off
                   (car_chargestate==15)||   // Heating
@@ -1963,28 +2130,16 @@ void net_state_ticker3600(void)
   switch (net_state)
     {
     case NET_STATE_READY:
-      if ((net_link==1)&&(net_apps_connected==0)&&(!carbusy))
+      // Send standard update
+      // once per hour if no Apps are connected and car is not busy
+      if ((net_msg_serverok)&&(net_apps_connected==0)&&(!carbusy))
         {
-        if (net_msg_sendpending>0)
-          {
-          net_granular_tick -= 5; // Try again in 5 seconds...
-          }
+        if (!MODEM_READY())
+          net_granular_tick -= 4; // Try again in 4 seconds...
         else
-          {
-          stat = 2;
-          p = par_get(PARAM_S_GROUP1);
-          if (*p != 0) stat = net_msgp_group(stat,1,p);
-          p = par_get(PARAM_S_GROUP2);
-          if (*p != 0) stat = net_msgp_group(stat,2,p);
-          stat = net_msgp_stat(stat);
-          stat = net_msgp_gps(stat);
-          stat = net_msgp_tpms(stat);
-          stat = net_msgp_environment(stat);
-          stat = net_msgp_capabilities(stat);
-          if (stat != 2)
-            net_msg_send();
-          }
+          net_send_stdupdate();
         }
+      
       break;
     }
   }
@@ -2021,19 +2176,18 @@ void net_ticker(void)
     net_granular_tick -= 3600;
     }
 
-  if ((net_state!=NET_STATE_DIAGMODE)&&(--net_timeout_rxdata == 0))
+  if (net_state != NET_STATE_DIAGMODE)
     {
-    // A major problem - we've lost connectivity to the modem
-    // Best solution is to reset everything
-    led_set(OVMS_LED_GRN,OVMS_LED_OFF);
-    led_set(OVMS_LED_RED,OVMS_LED_OFF);
-    net_timeout_rxdata = NET_RXDATA_TIMEOUT;
-    // Temporary kludge to record in feature #10 the number of times this happened
-    sys_features[10] += 1;
-    stp_i(net_scratchpad, NULL, sys_features[10]);
-    par_set(PARAM_FEATURE10,net_scratchpad);
-    CHECKPOINT(0xF1)
-    reset_cpu();
+    if (--net_timeout_rxdata == 0)
+      {
+      // A major problem - we've lost connectivity to the modem
+      // Possible cause: modem shutdown due to overheating / over current / ...
+      // Best solution is to try switching on the modem and start over
+      net_timeout_rxdata = NET_RXDATA_TIMEOUT;
+      CHECKPOINT(0xF1)
+      net_state_enter(NET_STATE_START);
+      net_timeout_ticks = 11; // next stop: modem pwrkey
+      }
     }
   }
 

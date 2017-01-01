@@ -65,6 +65,7 @@ unsigned char inputs_gsmgprs(void)
 
 #ifdef OVMS_HW_V2
 
+#ifndef OVMS_NO_GPIOFN
 unsigned char input_gpi2(void)
   {
   return (PORTAbits.RA2==0);
@@ -104,6 +105,7 @@ unsigned char output_gpo3(unsigned char onoff)
   {
   PORTCbits.RC3 = onoff;
   }
+#endif
 
 float inputs_voltage(void)
   {

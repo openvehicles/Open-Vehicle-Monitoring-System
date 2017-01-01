@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 2,9,2
+#define OVMS_FIRMWARE_VERSION 3,1,1
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -69,6 +69,7 @@
 #define FEATURE_CB_SVINFOS   0x10 // Set to 1 to suppress vehicle info notifies
 #define FEATURE_CB_SSMSTIME  0x20 // Set to 1 to suppress times in SMS responses
 #define FEATURE_CB_SCHGSTART 0x40 // Set to 1 to send charge start notifications
+#define FEATURE_CB_SFORWARD  0x80 // Set to 1 to suppress SMS forwards
 
 // The FEATURE_CANWRITE feature controls the CAN mode of the OVMS system
 // Leaving it 0 (the default) will put the CAN bus in LISTEN mode. It
@@ -188,6 +189,11 @@ extern unsigned char car_speed; // speed in defined units (mph or kph)
 extern unsigned char car_SOC; // State of Charge in %
 extern unsigned int car_idealrange; // Ideal Range in miles
 extern unsigned int car_estrange; // Estimated Range
+extern unsigned char car_drivemode; // Car specific encoding of current drive mode
+extern signed int car_power; // Current battery power level (1/10 kW)
+extern unsigned long car_energy_used; // Energy used on trip (Wh)
+extern unsigned long car_energy_recd; // Energy recovered on trip (Wh)
+
 extern unsigned long car_time; // UTC Time
 extern unsigned long car_parktime; // UTC time car was parked (or 0 if not)
 extern unsigned char car_stopped_mincnt; // Minute countdown while stopped

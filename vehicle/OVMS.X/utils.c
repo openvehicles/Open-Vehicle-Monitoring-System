@@ -109,8 +109,10 @@ void led_act(unsigned char led)
 //  PORTCbits.RC4 = led;
   }
 
-// Cold restart the SIM900 modem
-void modem_reboot(void)
+// Power on/down the SIM908/808 modem
+// Note: the hardware does not connect the RESET and STATUS pins,
+// so we need to use the PWRKEY for hard modem resets as well.
+void modem_pwrkey(void)
   {
   // pull PWRKEY up if it's not already pulled up
   if (PORTBbits.RB0 == 0)
@@ -121,8 +123,9 @@ void modem_reboot(void)
 
   // send the reset signal by pulling down PWRKEY >1s
   PORTBbits.RB0 = 0;
-  delay100(20);
+  delay100(15);
   PORTBbits.RB0 = 1;
+  delay100(25);
 }
 
 unsigned char string_to_mode(char *mode)
@@ -542,13 +545,17 @@ char *stp_ulp(char *dst, const rom char *prefix, unsigned long val, int len, cha
 
 char *stp_l2f(char *dst, const rom char *prefix, long val, int prec)
 {
-  long factor;
+  long factor, lval;
   char p;
 
   for (factor = 1, p = prec; p > 0; p--)
     factor *= 10;
-
-  dst = stp_l(dst, prefix, val / factor);
+  lval = val / factor;
+  
+  dst = stp_rom(dst, prefix);
+  if (lval == 0 && val < 0) // handle "negative zero"
+    *dst++ = '-';
+  dst = stp_l(dst, NULL, lval);
   *dst++ = '.';
   dst = stp_ulp(dst, NULL, ABS(val) % factor, prec, '0');
 

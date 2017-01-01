@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.4-20161224";
+my $VERSION = "2.3.5-20170101";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -1884,7 +1884,8 @@ sub http_request_api_location
       $httpd->stop_request;
       return;
       }
-    my ($latitude,$longitude,$direction,$altitude,$gpslock,$stalegps,$speed,$tripmeter) = split /,/,$rec->{'m_msg'};
+    my ($latitude,$longitude,$direction,$altitude,$gpslock,$stalegps,$speed,$tripmeter,
+      $drivemode,$power,$energyused,$energyrecd) = split /,/,$rec->{'m_msg'};
     $result{'latitude'} = $latitude;
     $result{'longitude'} = $longitude;
     $result{'direction'} = $direction;
@@ -1893,6 +1894,10 @@ sub http_request_api_location
     $result{'stalegps'} = $stalegps;
     $result{'speed'} = $speed;
     $result{'tripmeter'} = $tripmeter;
+    $result{'drivemode'} = $drivemode;
+    $result{'power'} = $power;
+    $result{'energyused'} = $energyused;
+    $result{'energyrecd'} = $energyrecd;
     }
 
   my $json = JSON::XS->new->utf8->canonical->encode (\%result) . "\n";

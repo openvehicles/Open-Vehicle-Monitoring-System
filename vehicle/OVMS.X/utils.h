@@ -51,7 +51,7 @@ void delay100b(void);              // Delay 100ms
 void delay100(unsigned char n);    // Delay in 100ms increments
 void led_net(unsigned char led);   // Change NET led
 void led_act(unsigned char led);   // Change ACT led
-void modem_reboot(void);           // Reboot modem
+void modem_pwrkey(void);           // Power on/off modem
 unsigned char string_to_mode(char *mode); // Convert a string to a mode number
 int timestring_to_mins(char* arg); // Convert a time string to minutes
 

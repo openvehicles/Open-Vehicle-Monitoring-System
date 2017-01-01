@@ -51,7 +51,7 @@ extern rom char NET_MSG_CMDUNIMPLEMENTED[];
 #define STP_UNIMPLEMENTED(buf,cmd)    stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDUNIMPLEMENTED)
 
 extern char net_msg_serverok;               // flag
-extern char net_msg_sendpending;            // flag & counter
+extern INT8 net_msg_sendpending;            // flag & counter
 
 extern int  net_msg_cmd_code;               // currently processed msg command code
 extern char* net_msg_cmd_msg;               // ...and parameters, see  net_msg_cmd_in()
@@ -78,6 +78,7 @@ char net_msgp_firmware(char stat);
 char net_msgp_environment(char stat);
 char net_msgp_group(char stat, char groupnumber, char *groupname);
 char net_msgp_capabilities(char stat);
+void net_send_stdupdate(void);
 
 void net_msg_in(char* msg);
 void net_msg_cmd_in(char* msg);

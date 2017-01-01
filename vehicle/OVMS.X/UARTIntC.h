@@ -102,25 +102,25 @@ struct status
 	unsigned UARTIntRxError:1;				
 };
 
-extern struct status vUARTIntStatus;
+extern volatile struct status vUARTIntStatus;
 
 //  variables representing status of transmission buffer and 
 //  transmission buffer it self are declared below
 
 #if TXON
-extern unsigned char vUARTIntTxBuffer[TX_BUFFER_SIZE];
-extern unsigned char vUARTIntTxBufDataCnt;
-extern unsigned char vUARTIntTxBufWrPtr;
-extern unsigned char vUARTIntTxBufRdPtr;
+extern volatile unsigned char vUARTIntTxBuffer[TX_BUFFER_SIZE];
+extern volatile unsigned char vUARTIntTxBufDataCnt;
+extern volatile unsigned char vUARTIntTxBufWrPtr;
+extern volatile unsigned char vUARTIntTxBufRdPtr;
 #endif
 
 // variables referring the status of receive buffer.
 
 #if	RXON
-extern unsigned char vUARTIntRxBuffer[RX_BUFFER_SIZE];
-extern unsigned char vUARTIntRxBufDataCnt;
-extern unsigned char vUARTIntRxBufWrPtr;
-extern unsigned char vUARTIntRxBufRdPtr;
+extern volatile unsigned char vUARTIntRxBuffer[RX_BUFFER_SIZE];
+extern volatile unsigned char vUARTIntRxBufDataCnt;
+extern volatile unsigned char vUARTIntRxBufWrPtr;
+extern volatile unsigned char vUARTIntRxBufRdPtr;
 #endif
 
 //  functions offered by this module

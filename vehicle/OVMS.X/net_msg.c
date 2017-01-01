@@ -53,7 +53,7 @@
 #define TOKEN_SIZE 22
 #pragma udata
 char net_msg_serverok = 0;
-char net_msg_sendpending = 0;
+INT8 net_msg_sendpending = 0;
 char token[23] = {0};
 char ptoken[23] = {0};
 char ptokenmade = 0;
@@ -102,11 +102,13 @@ rom char NET_MSG_CMDUNIMPLEMENTED[] = ",3";
 void net_msg_init(void)
   {
   net_msg_cmd_code = 0;
+  net_msg_bufpos = NULL;
   }
 
 void net_msg_disconnected(void)
   {
   net_msg_serverok = 0;
+  net_msg_sendpending = 0;
   }
 
 // Start to send a net msg
@@ -119,10 +121,9 @@ void net_msg_start(void)
     }
   else
     {
-    net_msg_sendpending = 1;
-    delay100(5);
+    net_wait4modem();
     net_puts_rom("AT+CIPSEND\r");
-    delay100(10);
+    net_msg_sendpending = net_wait4prompt();
     }
   }
 
@@ -136,7 +137,8 @@ void net_msg_send(void)
     }
   else
     {
-    net_puts_rom("\x1a");
+    // Submit / Abort:
+    net_puts_rom(net_msg_sendpending ? "\x1a" : "\x1b");
     }
   }
 
@@ -146,6 +148,9 @@ void net_msg_encode_puts(void)
   int k;
   char code;
 
+  if (!net_msg_sendpending)
+    return;
+  
   if (net_state == NET_STATE_DIAGMODE)
     {
     net_puts_ram(net_scratchpad);
@@ -374,6 +379,9 @@ char net_msgp_stat(char stat)
   s = stp_l2f(s, ",", car_chargepower, 1);
   s = stp_l2f(s, ",", car_battvoltage, 1);
 
+#ifdef OVMS_STRESSTEST
+  crc_stat = 0;
+#endif
   return net_msg_encode_statputs(stat, &crc_stat);
 }
 
@@ -389,10 +397,18 @@ char net_msgp_gps(char stat)
   s = stp_i(s, ",", car_stale_gps);
   s = stp_i(s, ",", car_speed); // no conversion, stored in user unit
   s = stp_i(s, ",", (can_mileskm=='M') ? car_trip : KmFromMi(car_trip));
+  s = stp_sx(s, ",", car_drivemode);
+  s = stp_l2f(s, ",", car_power, 1); // kW
+  s = stp_ul(s, ",", car_energy_used); // Wh
+  s = stp_ul(s, ",", car_energy_recd); // Wh
 
+#ifdef OVMS_STRESSTEST
+  crc_gps = 0;
+#endif
   return net_msg_encode_statputs(stat, &crc_gps);
 }
 
+#ifndef OVMS_NO_TPMS
 char net_msgp_tpms(char stat)
 {
   char k, *s;
@@ -424,6 +440,7 @@ char net_msgp_tpms(char stat)
 
   return net_msg_encode_statputs(stat, &crc_tpms);
 }
+#endif //OVMS_NO_TPMS
 
 char net_msgp_firmware(char stat)
 {
@@ -481,6 +498,9 @@ char net_msgp_environment(char stat)
   s = stp_i(s, ",", car_doors5);
   s = stp_i(s, ",", car_tcharger);
 
+#ifdef OVMS_STRESSTEST
+  crc_environment = 0;
+#endif
   return net_msg_encode_statputs(stat, &crc_environment);
 }
 
@@ -519,6 +539,32 @@ char net_msgp_group(char stat, char groupnumber, char *groupname)
     return net_msg_encode_statputs(stat, &crc_group2);
 }
 
+
+// Send standard update (used by net_state_tickers)
+void net_send_stdupdate(void)
+  {
+  char stat;
+  char *p;
+  
+  stat = 2;
+  p = par_get(PARAM_S_GROUP1);
+  if (*p != 0)
+    stat = net_msgp_group(stat,1,p);
+  p = par_get(PARAM_S_GROUP2);
+  if (*p != 0)
+    stat = net_msgp_group(stat,2,p);
+  stat = net_msgp_stat(stat);
+  stat = net_msgp_gps(stat);
+#ifndef OVMS_NO_TPMS
+  stat = net_msgp_tpms(stat);
+#endif
+  stat = net_msgp_environment(stat);
+  stat = net_msgp_capabilities(stat);
+  if (stat != 2)
+    net_msg_send();
+  }
+
+  
 void net_msg_server_welcome(char *msg)
   {
   // The server has sent a welcome (token <space> base64digest)
@@ -702,7 +748,9 @@ void net_msg_in(char* msg)
         net_msg_start();
         net_msgp_stat(0);
         net_msgp_gps(0);
+#ifndef OVMS_NO_TPMS
         net_msgp_tpms(0);
+#endif
         net_msgp_firmware(0);
         net_msgp_environment(0);
         net_msg_send();
@@ -739,8 +787,6 @@ BOOL net_msg_cmd_exec(void)
   {
   UINT8 k;
   char *p, *s;
-
-  delay100(2);
 
   CHECKPOINT(0x43)
 
@@ -900,7 +946,6 @@ BOOL net_msg_cmd_exec(void)
         STP_INVALIDSYNTAX(net_scratchpad, net_msg_cmd_code);
         }
       net_msg_encode_puts();
-      delay100(2);
       break;
 
     case 41: // Send MMI/USSD Codes (param: USSD_CODE)
@@ -912,7 +957,6 @@ BOOL net_msg_cmd_exec(void)
       net_msg_start();
       STP_OK(net_scratchpad, net_msg_cmd_code);
       net_msg_encode_puts();
-      delay100(2);
       // cmd reply #2 sent on USSD response, see net_msg_reply_ussd()
       break;
       
@@ -923,7 +967,6 @@ BOOL net_msg_cmd_exec(void)
       net_msg_start();
       STP_OK(net_scratchpad, net_msg_cmd_code);
       net_msg_encode_puts();
-      delay100(2);
       break;
 
   default:
@@ -936,7 +979,6 @@ BOOL net_msg_cmd_exec(void)
 void net_msg_cmd_do(void)
   {
   CHECKPOINT(0x44)
-  delay100(2);
 
   // commands 40-49 are special AT commands, thus, disable net_msg here
   if ((net_msg_cmd_code < 40) || (net_msg_cmd_code > 49))
@@ -965,7 +1007,7 @@ void net_msg_cmd_do(void)
    }
 #endif
 
-   // terminate IPSEND by Ctrl-Z (should this be disabled for commands 40-49 as well?)
+   // terminate IPSEND by Ctrl-Z
    net_msg_send();
 
    // clear command
@@ -977,12 +1019,12 @@ void net_msg_forward_sms(char *caller, char *SMS)
   {
   //Server not ready, stop sending
   //TODO: store this message inside buffer, resend it when server is connected
-  if ((net_msg_serverok == 0)||(net_msg_sendpending)>0)
+  if ((net_msg_serverok == 0) || (net_msg_sendpending) ||
+          (sys_features[FEATURE_CARBITS] & FEATURE_CB_SFORWARD))
     return;
 
   CHECKPOINT(0x45)
 
-  delay100(2);
   net_msg_start();
   stp_rom(net_scratchpad,(char const rom far*)"MP-0 PA");
   strcatpgm2ram(net_scratchpad,(char const rom far*)"SMS FROM: ");
@@ -1032,7 +1074,7 @@ void net_msg_reply_ussd(char *buf, unsigned char buflen)
 
   // send reply:
 
-  if (net_msg_sendpending > 0)
+  if (net_msg_sendpending)
   {
     delay100(20); // HACK... should buffer & retry later... but RAM is precious
     s = NULL; // flag
@@ -1048,6 +1090,9 @@ void net_msg_reply_ussd(char *buf, unsigned char buflen)
 
 char *net_prep_stat(char *s)
 {
+#ifdef OVMS_NO_STD_STAT
+  *s = 0;
+#else
   // convert distance values as needed
   unsigned int estrange = car_estrange;
   unsigned int idealrange = car_idealrange;
@@ -1096,10 +1141,10 @@ char *net_prep_stat(char *s)
       s = stp_rom(s, "Charging"); // Charge State Charging
       break;
     case 0x02:
-      s = stp_rom(s, "Charging, Topping off"); // Topping off
+      s = stp_rom(s, "Topping off"); // Topping off
       break;
     case 0x04:
-      s = stp_rom(s, "Charging Done"); // Done
+      s = stp_rom(s, "Charge Done"); // Done
       fShowVA = FALSE;
       break;
     case 0x0d:
@@ -1109,7 +1154,7 @@ char *net_prep_stat(char *s)
       s = stp_rom(s, "Charging, Heating"); // Heating
       break;
     default:
-      s = stp_rom(s, "Charging Stopped"); // Stopped
+      s = stp_rom(s, "Charge Stopped"); // Stopped
       fShowVA = FALSE;
       break;
     }
@@ -1166,7 +1211,8 @@ char *net_prep_stat(char *s)
     {
     s = stp_l2f_h(s, "\r CAC: ", (unsigned long)car_cac100, 2);
     }
-
+#endif
+  
   return s;
 }
 

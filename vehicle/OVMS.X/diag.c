@@ -156,12 +156,12 @@ void diag_handle_sms(char *command, char *arguments)
   }
 
 void diag_handle_msg(char *command, char *arguments)
-{
-    net_puts_rom("\n");
-    net_msg_cmd_in(arguments);
-    if( net_msg_cmd_code && (net_msg_sendpending==0) )
-        net_msg_cmd_do();
-}
+  {
+  net_puts_rom("\n");
+  net_msg_cmd_in(arguments);
+  if (net_msg_cmd_code)
+    net_msg_cmd_do();
+  }
 
 void diag_handle_help(char *command, char *arguments)
   {
@@ -181,7 +181,7 @@ void diag_handle_reset(char *command, char *arguments)
   led_start();
   net_puts_rom("\n# Leaving Diagnostics Mode\n");
   delay100(10);
-  reset_cpu();
+  net_state_enter(NET_STATE_HARDSTOP2);
 }
 
 void diag_handle_diag(char *command, char *arguments)
