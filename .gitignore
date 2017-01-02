@@ -1,7 +1,13 @@
+*~
 build/
 debug/
 .DS_Store
+vehicle/OVMS.X/report.txt
+vehicle/OVMS.X/disassembly/*
 vehicle/OVMS.X/dist/*
 vehicle/OVMS.X/nbproject/Makefile-genesis.properties
+vehicle/OVMS.X/nbproject/*.mk
+vehicle/OVMS.X/nbproject/*.bash
+vehicle/OVMS.X/nbproject/private/*
 apps/iOS/Open Vehicle.xcodeproj/project.xcworkspace/xcuserdata/
 apps/iOS/Open Vehicle.xcodeproj/xcuserdata/
