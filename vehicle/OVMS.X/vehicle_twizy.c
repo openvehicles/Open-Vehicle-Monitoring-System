@@ -8591,7 +8591,6 @@ BOOL vehicle_twizy_initialise(void)
   vehicle_fn_idlepoll = &vehicle_twizy_idlepoll;
   vehicle_fn_ticker1 = &vehicle_twizy_state_ticker1;
   vehicle_fn_ticker10 = &vehicle_twizy_state_ticker10;
-  vehicle_fn_ticker60 = &vehicle_twizy_state_ticker60;
   vehicle_fn_ticker10th = &vehicle_twizy_state_ticker10th;
   vehicle_fn_smshandler = &vehicle_twizy_fn_smshandler;
   vehicle_fn_smsextensions = &vehicle_twizy_fn_smsextensions;
