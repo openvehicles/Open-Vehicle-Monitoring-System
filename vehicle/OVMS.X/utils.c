@@ -551,8 +551,9 @@ char *stp_l2f(char *dst, const rom char *prefix, long val, int prec)
   for (factor = 1, p = prec; p > 0; p--)
     factor *= 10;
   lval = val / factor;
-  
-  dst = stp_rom(dst, prefix);
+
+  if (prefix)
+    dst = stp_rom(dst, prefix);
   if (lval == 0 && val < 0) // handle "negative zero"
     *dst++ = '-';
   dst = stp_l(dst, NULL, lval);
