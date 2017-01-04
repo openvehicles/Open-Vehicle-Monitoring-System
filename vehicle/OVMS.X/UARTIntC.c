@@ -53,21 +53,21 @@
 #include <p18f2680.h>
 
 // status flags of receive and transmit buffers
-struct status vUARTIntStatus;
+volatile struct status vUARTIntStatus;
 		
 // variable definitions
 #if TXON
-unsigned char vUARTIntTxBuffer[TX_BUFFER_SIZE];
-unsigned char vUARTIntTxBufDataCnt;
-unsigned char vUARTIntTxBufWrPtr;
-unsigned char vUARTIntTxBufRdPtr;
+volatile unsigned char vUARTIntTxBuffer[TX_BUFFER_SIZE];
+volatile unsigned char vUARTIntTxBufDataCnt;
+volatile unsigned char vUARTIntTxBufWrPtr;
+volatile unsigned char vUARTIntTxBufRdPtr;
 #endif
 
 #if	RXON
-unsigned char vUARTIntRxBuffer[RX_BUFFER_SIZE];
-unsigned char vUARTIntRxBufDataCnt;
-unsigned char vUARTIntRxBufWrPtr;
-unsigned char vUARTIntRxBufRdPtr;
+volatile unsigned char vUARTIntRxBuffer[RX_BUFFER_SIZE];
+volatile unsigned char vUARTIntRxBufDataCnt;
+volatile unsigned char vUARTIntRxBufWrPtr;
+volatile unsigned char vUARTIntRxBufRdPtr;
 #endif
 
 /*********************************************************************

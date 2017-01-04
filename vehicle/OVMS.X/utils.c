@@ -109,8 +109,10 @@ void led_act(unsigned char led)
 //  PORTCbits.RC4 = led;
   }
 
-// Cold restart the SIM900 modem
-void modem_reboot(void)
+// Power on/down the SIM908/808 modem
+// Note: the hardware does not connect the RESET and STATUS pins,
+// so we need to use the PWRKEY for hard modem resets as well.
+void modem_pwrkey(void)
   {
   // pull PWRKEY up if it's not already pulled up
   if (PORTBbits.RB0 == 0)
@@ -121,8 +123,9 @@ void modem_reboot(void)
 
   // send the reset signal by pulling down PWRKEY >1s
   PORTBbits.RB0 = 0;
-  delay100(20);
+  delay100(15);
   PORTBbits.RB0 = 1;
+  delay100(25);
 }
 
 unsigned char string_to_mode(char *mode)
@@ -191,7 +194,7 @@ unsigned long MiFromKm(unsigned long km)
 
 // decodes Julian Date to year, month, day valid from 
 // http://aa.usno.navy.mil/faq/docs/JD_Formula.php
-// only valid for the years 1801–2099 (because 1800 and 2100 are not leap years)
+// only valid for the years 1801-2099 (because 1800 and 2100 are not leap years)
 void JdToYMD(unsigned long jd, int *pyear, int *pmonth, int *pday)
   {
   long L,N,I,J,K;
@@ -214,7 +217,7 @@ void JdToYMD(unsigned long jd, int *pyear, int *pmonth, int *pday)
 
 // computes the Julian date from year, month, day
 // http://aa.usno.navy.mil/faq/docs/JD_Formula.php
-// only valid for the years 1801–2099 (because 1800 and 2100 are not leap years)
+// only valid for the years 1801-2099 (because 1800 and 2100 are not leap years)
 unsigned long JdFromYMD(int year, int month, int day)
 {
   return day-32075+1461L*(year+4800+(month-14)/12)/4+367*(month-2-(month-14)/12*12)/12-3*((year+4900+(month-14)/12)/100)/4;
@@ -284,7 +287,7 @@ unsigned long axtoul(char *s)
 
 // Convert GPS coordinate form to internal latlon value
 // SIM908: DDDMM.MMMMMM (separate South/West handling, see net.c)
-// SIM808: �ddd.dddddd
+// SIM808: +-ddd.dddddd
 
 long gps2latlon(char *gpscoord)
 {
@@ -542,13 +545,18 @@ char *stp_ulp(char *dst, const rom char *prefix, unsigned long val, int len, cha
 
 char *stp_l2f(char *dst, const rom char *prefix, long val, int prec)
 {
-  long factor;
+  long factor, lval;
   char p;
 
   for (factor = 1, p = prec; p > 0; p--)
     factor *= 10;
+  lval = val / factor;
 
-  dst = stp_l(dst, prefix, val / factor);
+  if (prefix)
+    dst = stp_rom(dst, prefix);
+  if (lval == 0 && val < 0) // handle "negative zero"
+    *dst++ = '-';
+  dst = stp_l(dst, NULL, lval);
   *dst++ = '.';
   dst = stp_ulp(dst, NULL, ABS(val) % factor, prec, '0');
 

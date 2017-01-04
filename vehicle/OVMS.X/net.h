@@ -34,13 +34,17 @@
 #define NET_BUF_MAX 200
 #define NET_TEL_MAX 20
 #define NET_GPRS_RETRIES 10
-#define NET_RXDATA_TIMEOUT 1800
+
+// Timeouts (in seconds)
+#define NET_REG_TIMEOUT    120 // GSM network registration timeout (-> reset modem)
+#define NET_RXDATA_TIMEOUT 60  // Modem silence timeout (modem lost)
+#define NET_BUF_TIMEOUT    10  // IP/SMS data RX timeout (modem lost)
+#define NET_IPACK_TIMEOUT  60  // async IP send ACK timeout (modem buffer / link problem)
 
 // NET_BUF_MODES
 #define NET_BUF_IPD          0xfd  // net_buf is waiting on IPD data
 #define NET_BUF_SMS          0xfe  // net_buf is waiting for 2nd line of SMS
 #define NET_BUF_CRLF         0xff  // net_buf is waiting for CRLF line
-// otherwise the number of bytes outstanding for IP data
 
 // STATES
 #define NET_STATE_FIRSTRUN   0x00  // First time run
@@ -116,6 +120,11 @@ extern unsigned char net_buf_mode;             // Mode of the buffer (CRLF, SMS 
 extern unsigned char net_buf_todo;             // Bytes outstanding on a reception
 extern unsigned char net_buf_todotimeout;      // Timeout for bytes outstanding
 
+// Test if modem is ready for a new command:
+#define MODEM_READY() ((net_msg_sendpending==0) && \
+ (net_buf_mode==NET_BUF_CRLF) && (net_buf_pos==0) && \
+ (vUARTIntTxBufDataCnt==0) && (vUARTIntRxBufDataCnt==0))
+
 // Generic functionality bits
 extern unsigned char net_fnbits;               // Net functionality bits
 
@@ -149,6 +158,7 @@ extern unsigned char net_notify_suppresscount; // To suppress STAT notifications
 #define NET_NOTIFY_NET_TRUNK  0x0010   // Set to 1 to NET notify trunk open
 #define NET_NOTIFY_NET_ALARM  0x0020   // Set to 1 to NET notify alarm sounding
 #define NET_NOTIFY_NET_CARON  0x0040   // Set to 1 to NET notify car is turned on
+#define NET_NOTIFY_NET_STREAM 0x0080   // Set to 1 to send stream update for Apps
 
 #define NET_NOTIFY_SMS_ENV    0x0100   // NOT IMPLEMENTED / REQUIRED
 #define NET_NOTIFY_SMS_STAT   0x0200   // NOT IMPLEMENTED / REQUIRED
@@ -166,6 +176,7 @@ extern unsigned char net_notify_suppresscount; // To suppress STAT notifications
 #define NET_NOTIFY_TRUNK      NET_NOTIFY_NET_TRUNK
 #define NET_NOTIFY_ALARM      NET_NOTIFY_NET_ALARM
 #define NET_NOTIFY_CARON      NET_NOTIFY_NET_CARON
+#define NET_NOTIFY_STREAM     NET_NOTIFY_NET_STREAM
 
 // Alert types:
 enum _alert_type {
@@ -187,7 +198,10 @@ void net_putc_ram(const char data);
 
 void net_initialise(void);
 void net_poll(void);
+void net_wait4modem(void);
+BOOL net_wait4prompt(void);
 void net_reset_async(void);
+void net_idlepoll(void);
 void net_ticker(void);
 void net_ticker10th(void);
 

@@ -95,6 +95,11 @@ unsigned char car_speed = 0; // speed in defined units (mph or kph)
 unsigned char car_SOC = 0; // State of Charge in %
 unsigned int car_idealrange = 0; // Ideal Range in miles
 unsigned int car_estrange = 0; // Estimated Range
+unsigned char car_drivemode = 0; // Car specific encoding of current drive mode
+signed int car_power = 0; // Current battery power level (1/10 kW)
+unsigned long car_energy_used = 0; // Energy used on trip (Wh)
+unsigned long car_energy_recd = 0; // Energy recovered on trip (Wh)
+
 unsigned long car_time = 1; // UTC Time
 unsigned long car_parktime = 0; // UTC time car was parked (or 0 if not)
 unsigned char car_stopped_mincnt = 15; // Minute countdown while stopped
@@ -105,14 +110,16 @@ signed int car_tpem = 0; // Tpem (inverter/controller)
 signed int car_tmotor = 0; // Tmotor
 signed int car_tbattery = 0; // Tbattery
 signed int car_tcharger = 0; // Tcharger
+#ifndef OVMS_NO_TPMS
 signed int car_tpms_t[4] = {0,0,0,0}; // TPMS temperature
 unsigned char car_tpms_p[4] = {0,0,0,0}; // TPMS pressure
+#endif
 unsigned int car_trip = 0; // ODO trip in miles /10
 unsigned long car_odometer = 0; //Odometer in miles /10
-signed long car_latitude = 0x16DEC6D9; // Raw GPS Latitude  (52.04246 zero in converted result)
-signed long car_longitude = 0xFE444A36; // Raw GPS Longitude ( -3.94409, not verified if this is correct)
-unsigned int car_direction = 0; // GPS direction of the car
-signed int car_altitude = 0; // GPS altitude of the car
+signed long car_latitude; // Raw GPS Latitude
+signed long car_longitude; // Raw GPS Longitude
+unsigned int car_direction; // GPS direction of the car
+signed int car_altitude; // GPS altitude of the car
 signed char car_timermode = 0; // Timer mode (0=onplugin, 1=timer)
 unsigned int car_timerstart = 0; // Timer start
 unsigned char car_gpslock = 0; // GPS lock status
@@ -181,8 +188,14 @@ void main(void)
   STKPTRbits.STKFUL = 0;
   STKPTRbits.STKUNF = 0;
   
+  // Set port RB0 as modem pwrkey output:
+  TRISB = 0xFE;
+  
   if (x == 3) // 3 = normal Power On
   {
+    // Power up modem:
+    modem_pwrkey();
+    
 #ifndef OVMS_NO_CRASHDEBUG
     debug_crashreason = 0;
     debug_crashcnt = 0;
@@ -194,6 +207,12 @@ void main(void)
     // init volatile features:
     for (y = 0; y < FEATURES_MAP_PARAM; y++)
       sys_features[y] = 0;
+    
+    // init car model:
+    car_latitude = 0x16DEC6D9; // Raw GPS Latitude (52.04246)
+    car_longitude = 0xFE444A36; // Raw GPS Longitude (-3.94409)
+    car_direction = 0;
+    car_altitude = 0;
   }
   else
   {
@@ -219,10 +238,6 @@ void main(void)
   // Port configuration
   inputs_initialise();
   
-  // Power up modem:
-  TRISB = 0xFE;
-  modem_reboot();
-
   // Timer 0 enabled, Fosc/4, 16 bit mode, prescaler 1:256
   // This gives us one tick every 51.2uS before prescale (13.1ms after)
   T0CON = 0b10000111; // @ 5Mhz => 51.2uS
@@ -289,6 +304,7 @@ void main(void)
     }
 
     CHECKPOINT(0x24)
+    net_idlepoll();
     vehicle_idlepoll();
 
     ClrWdt(); // Clear Watchdog Timer

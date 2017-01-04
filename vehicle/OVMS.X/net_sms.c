@@ -90,10 +90,11 @@ void net_send_sms_start(char* number)
   else
     {
     // MODEM mode:
+    net_wait4modem();
     net_puts_rom("AT+CMGS=\"");
     net_puts_ram(number);
     net_puts_rom("\"\r\n");
-    delay100(2);
+    net_wait4prompt();
     }
 
   // ATT: the following code tries to prepend the current time to ALL
@@ -405,7 +406,6 @@ BOOL net_sms_handle_params(char *caller, char *command, char *arguments)
 BOOL net_sms_handle_ap(char *caller, char *command, char *arguments)
   {
   unsigned char d = 0;
-  char *p = par_get(PARAM_MODULEPASS);
 
   while ((d < PARAM_MAX)&&(arguments != NULL))
     {
