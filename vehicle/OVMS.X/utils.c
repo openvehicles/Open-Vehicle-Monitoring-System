@@ -194,7 +194,7 @@ unsigned long MiFromKm(unsigned long km)
 
 // decodes Julian Date to year, month, day valid from 
 // http://aa.usno.navy.mil/faq/docs/JD_Formula.php
-// only valid for the years 1801–2099 (because 1800 and 2100 are not leap years)
+// only valid for the years 1801-2099 (because 1800 and 2100 are not leap years)
 void JdToYMD(unsigned long jd, int *pyear, int *pmonth, int *pday)
   {
   long L,N,I,J,K;
@@ -217,7 +217,7 @@ void JdToYMD(unsigned long jd, int *pyear, int *pmonth, int *pday)
 
 // computes the Julian date from year, month, day
 // http://aa.usno.navy.mil/faq/docs/JD_Formula.php
-// only valid for the years 1801–2099 (because 1800 and 2100 are not leap years)
+// only valid for the years 1801-2099 (because 1800 and 2100 are not leap years)
 unsigned long JdFromYMD(int year, int month, int day)
 {
   return day-32075+1461L*(year+4800+(month-14)/12)/4+367*(month-2-(month-14)/12*12)/12-3*((year+4900+(month-14)/12)/100)/4;
@@ -287,7 +287,7 @@ unsigned long axtoul(char *s)
 
 // Convert GPS coordinate form to internal latlon value
 // SIM908: DDDMM.MMMMMM (separate South/West handling, see net.c)
-// SIM808: �ddd.dddddd
+// SIM808: +-ddd.dddddd
 
 long gps2latlon(char *gpscoord)
 {
@@ -551,8 +551,9 @@ char *stp_l2f(char *dst, const rom char *prefix, long val, int prec)
   for (factor = 1, p = prec; p > 0; p--)
     factor *= 10;
   lval = val / factor;
-  
-  dst = stp_rom(dst, prefix);
+
+  if (prefix)
+    dst = stp_rom(dst, prefix);
   if (lval == 0 && val < 0) // handle "negative zero"
     *dst++ = '-';
   dst = stp_l(dst, NULL, lval);
