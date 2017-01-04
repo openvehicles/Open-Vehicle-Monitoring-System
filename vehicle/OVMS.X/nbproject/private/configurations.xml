@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurationDescriptor version="62">
   <projectmakefile>Makefile</projectmakefile>
-  <defaultConf>4</defaultConf>
+  <defaultConf>2</defaultConf>
   <confs>
     <conf name="V1_Production_SIM908" type="2">
       <platformToolSN></platformToolSN>
@@ -22,7 +22,7 @@
       </runprofile>
     </conf>
     <conf name="V2_Experimental_SIM908" type="2">
-      <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=end</platformToolSN>
+      <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
@@ -40,7 +40,7 @@
       </runprofile>
     </conf>
     <conf name="V2_Experimental_SIM808" type="2">
-      <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=end</platformToolSN>
+      <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
@@ -58,7 +58,7 @@
       </runprofile>
     </conf>
     <conf name="V2_Production_SIM908" type="2">
-      <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=&lt;xpt>h:=end</platformToolSN>
+      <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
@@ -76,7 +76,7 @@
       </runprofile>
     </conf>
     <conf name="V2_Production_SIM808" type="2">
-      <platformToolSN>:=MPLABComm-USB-Microchip:=&lt;vid>04D8:=&lt;pid>900A:=&lt;rev>0002:=&lt;man>Microchip Technology Inc.:=&lt;prod>PICkit 3:=&lt;sn>BUR110372223:=&lt;drv>x:=&lt;xpt>h:=end</platformToolSN>
+      <platformToolSN></platformToolSN>
       <languageToolchainDir>/Applications/microchip/mplabc18/v3.40/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
