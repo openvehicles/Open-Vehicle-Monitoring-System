@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.5-20170101";
+my $VERSION = "2.3.6-20170107";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -156,8 +156,7 @@ sub io_error
   my $fn = $hdl->fh->fileno();
   my $vid = $conns{$fn}{'vehicleid'}; $vid='-' if (!defined $vid);
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
-  &log($fn, $clienttype, $vid, "got error $msg");
-  &io_terminate($fn,$hdl,$conns{$fn}{'vehicleid'},undef);
+  &io_terminate($fn,$hdl,$conns{$fn}{'vehicleid'}, "got error: $msg");
   }
 
 sub io_timeout
@@ -175,8 +174,7 @@ sub io_timeout
     {
     # OK, it has been 60 seconds since the client connected, but still no identification
     # Time to shut it down...
-    &log($fn, $clienttype, $vid, "timeout due to no initial welcome exchange");
-    &io_terminate($fn,$hdl,$vid,undef);
+    &io_terminate($fn,$hdl,$vid, "timeout due to no initial welcome exchange");
     return;
     }
 
@@ -189,8 +187,7 @@ sub io_timeout
     if (($lastrx+$timeout_app)<$now)
       {
       # The APP has been unresponsive for timeout_app seconds - time to disconnect it
-      &log($fn, $clienttype, $vid, "timeout due app due to inactivity");
-      &io_terminate($fn,$hdl,$vid,undef);
+      &io_terminate($fn,$hdl,$vid, "timeout due app due to inactivity");
       return;
       }
     }
@@ -199,8 +196,7 @@ sub io_timeout
     if (($lastrx+$timeout_svr)<$now)
       {
       # The SVR has been unresponsive for timeout_svr seconds - time to disconnect it
-      AE::log error => "#$fn $clienttype $vid timeout svr due to inactivity";
-      &io_terminate($fn,$hdl,$vid,undef);
+      &io_terminate($fn,$hdl,$vid, "timeout svr due to inactivity");
       return;
       }
     }
@@ -209,8 +205,7 @@ sub io_timeout
     if (($lastrx+$timeout_car)<$now)
       {
       # The CAR has been unresponsive for timeout_car seconds - time to disconnect it
-      &log($fn, $clienttype, $vid, "timeout car due to inactivity");
-      &io_terminate($fn,$hdl,$vid,undef);
+      &io_terminate($fn,$hdl,$vid, "timeout car due to inactivity");
       return;
       }
     if ( (($lastrx+$timeout_car-60)<$now) && (($lastping+300)<$now) )
@@ -245,13 +240,13 @@ sub io_line
     my ($clienttype,$protscheme,$clienttoken,$clientdigest,$vehicleid,$rest) = ($1,$2,$3,$4,uc($5),$7);
     if ($protscheme ne '0')
       {
-      &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Unsupported protection scheme - aborting connection");
+      &io_terminate($fn,$hdl,$vehicleid, "error - Unsupported protection scheme - aborting connection");
       return;
       }
     my $vrec = &db_get_vehicle($vehicleid);
     if (!defined $vrec)
       {
-      &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Unknown vehicle - aborting connection");
+      &io_terminate($fn,$hdl,$vehicleid, "error - Unknown vehicle - aborting connection");
       return;
       }
 
@@ -267,7 +262,7 @@ sub io_line
         my $host = $conns{$fn}{'host'};
         &push_queuenotify($vehicleid, 'A', "Vehicle authentication failed ($host)");
         }
-      &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Incorrect client authentication - aborting connection");
+      &io_terminate($fn,$hdl,$vehicleid, "error - Incorrect client authentication - aborting connection");
       return;
       }
     else
@@ -283,7 +278,7 @@ sub io_line
     # Check server permissions
     if (($clienttype eq 'S')&&($vrec->{'v_type'} ne 'SERVER'))
       {
-      &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Can't authenticate a car as a server - aborting connection");
+      &io_terminate($fn,$hdl,$vehicleid, "error - Can't authenticate a car as a server - aborting connection");
       return;
       }
 
@@ -350,7 +345,7 @@ sub io_line
     my $vehicleid = $conns{$fn}{'vehicleid'}; $vehicleid='-' if (!defined $vehicleid);
     if ($protscheme ne '0')
       {
-      &io_terminate($fn,$hdl,undef,"#$fn $vehicleid error - Unsupported protection scheme - aborting connection");
+      &io_terminate($fn,$hdl,$vehicleid, "error - Unsupported protection scheme - aborting connection");
       return;
       }
     if (defined $conns{$fn}{'ap_already'})
@@ -396,14 +391,14 @@ sub io_line
       }
     else
       {
-      &io_terminate($fn,$hdl,$conns{$fn}{'vehicleid'},"#$fn $vid error - Unable to decode message - aborting connection");
+      &io_terminate($fn,$hdl,$vid, "error - Unable to decode message - aborting connection");
       return;
       }
     }
   
   else
     {
-    AE::log info => "#$fn $clienttype $vid error - unrecognised message from vehicle";
+    &log($fn, $clienttype, $vid, "error - unrecognised message from vehicle");
     }
 
   }
@@ -412,6 +407,8 @@ sub io_login
   {
   my ($fn,$hdl,$vehicleid,$clienttype,$rest) = @_;
 
+  &log($fn, $clienttype, $vehicleid, "got login");
+  
   if ($clienttype eq 'A')
     {
     #
@@ -490,7 +487,7 @@ sub io_login
     if (defined $svr_conns{$vehicleid})
       {
       # Server is already logged in - terminate it
-      &io_terminate($svr_conns{$vehicleid},$conns{$svr_conns{$vehicleid}}{'handle'},$vehicleid, "#$svr_conns{$vehicleid} $vehicleid error - duplicate server login - clearing first connection");
+      &io_terminate($svr_conns{$vehicleid},$conns{$svr_conns{$vehicleid}}{'handle'},$vehicleid, "error - duplicate server login - clearing first connection");
       }
     $svr_conns{$vehicleid} = $fn;
     my ($svrupdate_v,$svrupdate_o) = ($1,$2) if ($rest =~ /^(\S+ \S+) (\S+ \S+)/);
@@ -507,7 +504,7 @@ sub io_login
     if (defined $car_conns{$vehicleid})
       {
       # Car is already logged in - terminate it
-      &io_terminate($car_conns{$vehicleid},$conns{$car_conns{$vehicleid}}{'handle'},$vehicleid, "#$car_conns{$vehicleid} $vehicleid error - duplicate car login - clearing first connection");
+      &io_terminate($car_conns{$vehicleid},$conns{$car_conns{$vehicleid}}{'handle'},$vehicleid, "error - duplicate car login - clearing first connection");
       }
     $car_conns{$vehicleid} = $fn;
     # Notify any listening apps & batch clients
@@ -523,7 +520,8 @@ sub io_terminate
   {
   my ($fn, $handle, $vehicleid, $msg) = @_;
 
-  AE::log error => $msg if (defined $msg);
+  #AE::log error => $msg if (defined $msg);
+  &log($fn, $conns{$fn}{'clienttype'}, $vehicleid, $msg, "error") if (defined $msg);
 
   if (defined $vehicleid)
     {
@@ -1335,7 +1333,6 @@ sub push_queuenotify
       push @gcm_queue,\%rec;
       AE::log info => "- - $vehicleid msg queued gcm notification for $rec{'pushkeytype'}:$rec{'appid'}";
       }
-    }
     
     # check active connections:
     foreach (%{$app_conns{$vehicleid}})
@@ -1353,6 +1350,8 @@ sub push_queuenotify
         { push @apns_queue_production,\%rec; }
       AE::log info => "- - $vehicleid msg queued apns notification for $rec{'pushkeytype'}:$rec{'appid'}";
       }
+      
+    }
   }
 
 sub vece_expansion
@@ -2480,9 +2479,13 @@ sub drupal_password_base64_encode
 my $loghistory_rec = 0;
 sub log
   {
-  my ($fh, $clienttype, $vid, $msg) = @_;
-
-  AE::log info => "#$fh $clienttype $vid $msg";
+  my ($fh, $clienttype, $vid, $msg, $level) = @_;
+  
+  $clienttype = "-" if !defined($clienttype);
+  $vid = "-" if !defined($vid);
+  $level = "info" if !defined($level);
+  
+  AE::log $level, "#$fh $clienttype $vid $msg";
 
   return if ($loghistory_tim<=0);
 
