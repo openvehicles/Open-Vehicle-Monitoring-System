@@ -301,12 +301,16 @@
     - Tightened SDO bus timing
     - Minor code size optimizations
  
- * 3.8.3  31 Dec 2016 (Michael Balzer)
+ * 3.8.3  6 Jan 2017 (Michael Balzer)
     - Charge start/stop notifications changed to ENV to update flags immediately
     - Network streaming/update rework & timing optimization
     - PORTA inputs now disabled by default, enabled by feature #15 + 0x10
     - Support for new car model variables (drivemode, power, energy)
     - Removed power/energy/trip value rounding on log entries
+    - New charge phase detection (CC-CV) better suitable for cold climate charging
+    - Topping off charge state now coupled to CV phase only
+    - General topping off alert added, bound to car bits (feature #14) flag 0x40
+    - New 12V DC converter state detection (fixes 12V ref misreadings)
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -693,9 +697,11 @@ volatile UINT32 twizy_charge_rec;   // coulomb count: batt current recovered (ch
 #define CAH_DIV (14400L)
 #define CAH_RND (7200L)
 
+UINT8 twizy_chg_power_request;      // BMS to CHG power level request (0..7)
+
 // battery capacity helpers:
 UINT32 twizy_cc_charge;             // coulomb count: charge sum in CC phase 1/400 As
-UINT twizy_cc_volt;                 // end of CC phase detection
+UINT8 twizy_cc_power_level;         // end of CC phase detection
 UINT twizy_cc_soc;                  // SOC at end of CC phase
 UINT twizy_bat_cap_prc;             // actual capacity in 1/100 percent of...
 #define BATT_NET_CAPACITY_CAH 10800L // usable capacity of fresh battery in cAh
@@ -4467,6 +4473,9 @@ BOOL vehicle_twizy_poll0(void)
       //          0x54 = Twizy online (CAN data valid)
       if (can_databuffer[3] == 0x54)
       {
+        // BMS to CHG power level request:
+        twizy_chg_power_request = CAN_BYTE(0);
+        
         // SOC:
         t = ((unsigned int) can_databuffer[4] << 8) + can_databuffer[5];
         if (t > 0 && t <= 40000)
@@ -4881,7 +4890,14 @@ BOOL vehicle_twizy_poll1(void)
         twizy_status = (twizy_status & 0x0F) | (CAN_BYTE(1) & 0xF0);
 
       // Translation to car_doors1 done in ticker1()
-
+      
+      // Check 12V DC converter status:
+      // 0xD1 = DC converter off, main charger off/ready, Twizy off
+      if (CAN_BYTE(3) == 0xD1)
+        car_doors5bits.Charging12V = 0; // all off
+      else if (car_12vline_ref <= BATT_12V_CALMDOWN_TIME)
+        car_doors5bits.Charging12V = 1; // calmdown phase interruption detected
+      
       // CHARGER temperature:
       if (CAN_BYTE(7) > 0 && CAN_BYTE(7) < 0xf0)
         car_tcharger = (signed int) CAN_BYTE(7) - 40;
@@ -5577,25 +5593,21 @@ BOOL vehicle_twizy_state_ticker1(void)
   //  bit 6 = 0x40 CAN_STATUS_OFFLINE: 1 = Switch-ON/-OFF phase
   
   if (car_linevoltage > 0)
-  {
     car_doors1bits.PilotSignal = 1;
-    car_doors5bits.Charging12V = 1;
-  }
   else
-  {
     car_doors1bits.PilotSignal = 0;
-    car_doors5bits.Charging12V = 0;
-  }
 
   if ((twizy_status & 0x60) == 0x20)
   {
     car_doors1bits.ChargePort = 1;
     car_doors1bits.Charging = 1;
+    car_doors5bits.Charging12V = 1;
   }
   else
   {
     car_doors1bits.Charging = 0;
     // Port will be closed on next use start
+    // 12V charging will be stopped by DC converter status check
   }
 
 
@@ -5766,14 +5778,15 @@ BOOL vehicle_twizy_state_ticker1(void)
         vehicle_twizy_battstatus_reset();
       #endif // OVMS_TWIZY_BATTMON
 
-      // ...enter state 1=charging:
-      car_chargestate = 1;
+      // ...enter state 1=charging or 2=topping-off depending on the
+      // charge power request level we're starting with (7=full power):
+      car_chargestate = (twizy_chg_power_request == 7) ? 1 : 2;
 
       // Send charge stat:
       net_req_notification(NET_NOTIFY_ENV);
       
       // Send charge start notification?
-      if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SCHGSTART)
+      if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SCHGPHASE)
         net_req_notification(NET_NOTIFY_CHARGE);
     }
 
@@ -5798,32 +5811,33 @@ BOOL vehicle_twizy_state_ticker1(void)
               && (car_idealrange >= suffRange) && (twizy_last_idealrange < suffRange))
               )
       {
-        // ...enter state 2=topping off:
-        car_chargestate = 2;
-
-        // ...send charge alert:
+        // ...send sufficient charge alert:
         net_req_notification(NET_NOTIFY_CHARGE);
         net_req_notification(NET_NOTIFY_STAT);
       }
       
-      // ...else set "topping off" from 94% SOC:
-      else if ((car_chargestate != 2) && (twizy_soc >= 9400))
+      // Battery capacity estimation: detect end of CC phase
+      // by monitoring the charge power level requested by the BMS;
+      // if it drops, we're entering the CV phase
+      // (Note: depending on battery temperature, this may happen at rather
+      // low SOC and without having reached the nominal top voltage)
+      if (twizy_chg_power_request >= twizy_cc_power_level)
       {
-        // ...enter state 2=topping off:
-        car_chargestate = 2;
-        net_req_notification(NET_NOTIFY_STAT);
-      }
-
-#ifdef OVMS_TWIZY_BATTMON
-      // battery capacity estimation: detect end of CC phase
-      // (maximum battery voltage level reached)
-      if (twizy_batt[0].volt_max > twizy_cc_volt)
-      {
-        twizy_cc_volt = twizy_batt[0].volt_max;
+        // still in CC phase:
+        twizy_cc_power_level = twizy_chg_power_request;
         twizy_cc_soc = twizy_soc;
         twizy_cc_charge = twizy_charge_rec;
       }
-#endif //OVMS_TWIZY_BATTMON
+      else if (car_chargestate != 2)
+      {
+        // entering CV phase, set state 2=topping off:
+        car_chargestate = 2;
+        net_req_notification(NET_NOTIFY_STAT);
+        
+        // Send charge phase notification?
+        if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SCHGPHASE)
+          net_req_notification(NET_NOTIFY_CHARGE);
+      }
 
     }
 
@@ -6169,7 +6183,7 @@ void vehicle_twizy_power_reset(void)
 
   twizy_cc_charge = 0;
   twizy_cc_soc = 0;
-  twizy_cc_volt = 0;
+  twizy_cc_power_level = 0;
 }
 
 

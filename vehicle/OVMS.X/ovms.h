@@ -68,7 +68,7 @@
 #define FEATURE_CB_SVALERTS  0x08 // Set to 1 to suppress vehicle alerts
 #define FEATURE_CB_SVINFOS   0x10 // Set to 1 to suppress vehicle info notifies
 #define FEATURE_CB_SSMSTIME  0x20 // Set to 1 to suppress times in SMS responses
-#define FEATURE_CB_SCHGSTART 0x40 // Set to 1 to send charge start notifications
+#define FEATURE_CB_SCHGPHASE 0x40 // Set to 1 to send charge phase notifications
 #define FEATURE_CB_SFORWARD  0x80 // Set to 1 to suppress SMS forwards
 
 // The FEATURE_CANWRITE feature controls the CAN mode of the OVMS system

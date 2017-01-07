@@ -133,6 +133,8 @@ extern unsigned char net_fnbits;               // Net functionality bits
 #define NET_FN_SOCMONITOR     0x04             // Monitoring of SOC Required
 #define NET_FN_CARTIME        0x08             // Control of car_time required
 
+#define BATT_12V_CALMDOWN_TIME 15              // calm down time in minutes after charge end
+
 // The NET/SMS notification system
 // We have a bitmap net_notify with bits set to request a particular notification
 // type, and cleared when the notification is issued.

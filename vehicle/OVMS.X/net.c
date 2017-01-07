@@ -1861,6 +1861,12 @@ void net_state_ticker1(void)
           }
         } // if ((net_reg == 0x01)||(net_reg == 0x05))
 
+      // Reset 12V calibration?
+      if (car_doors5bits.Charging12V)
+        {
+        car_12vline_ref = 0;
+        }
+
       break;
 
 #ifdef OVMS_DIAGMODULE
@@ -1915,8 +1921,6 @@ void net_state_ticker60(void)
 
 #ifdef OVMS_HW_V2
 
-#define BATT_12V_CALMDOWN_TIME 15  // calm down time in minutes after charge end
-
   // Take 12v reading:
   if (car_12vline == 0)
   {
@@ -1938,8 +1942,7 @@ void net_state_ticker60(void)
   //          ref value 1..CALMDOWN_TIME is calmdown counter
   if (car_doors5bits.Charging12V)
   {
-    // charging now, reset ref:
-    car_12vline_ref = 0;
+    // charging now
   }
   else if (car_12vline_ref < BATT_12V_CALMDOWN_TIME)
   {
