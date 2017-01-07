@@ -5559,7 +5559,9 @@ BOOL vehicle_twizy_state_ticker1(void)
   else
     car_speed = (twizy_speed + 50) / 100; // km/hour
 
+#ifdef OVMS_TWIZY_CFG
   car_drivemode = twizy_cfg.drivemode;
+#endif // #ifdef OVMS_TWIZY_CFG
   
   car_power = ((long) twizy_power * 64L) / 1000L;
   
