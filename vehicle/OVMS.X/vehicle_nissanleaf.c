@@ -293,7 +293,13 @@ BOOL vehicle_nissanleaf_poll1(void)
       // that then we assume car is on.
       nl_abs_active = 10;
       vehicle_nissanleaf_car_on(TRUE);
-      // vehicle_poll_setstate(1);
+    {
+      UINT16 car_speed16 = can_databuffer[4];
+      car_speed16 = car_speed16 << 8;
+      car_speed16 = car_speed16 | can_databuffer[5];
+      car_speed = car_speed16 / 100;
+    }
+      break;
     case 0x54b:
     {
       BOOL hvac_candidate;
