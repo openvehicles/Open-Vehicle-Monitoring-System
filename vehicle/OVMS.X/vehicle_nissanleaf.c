@@ -294,6 +294,20 @@ BOOL vehicle_nissanleaf_poll1(void)
       nl_abs_active = 10;
       vehicle_nissanleaf_car_on(TRUE);
       // vehicle_poll_setstate(1);
+    case 0x54b:
+    {
+      BOOL hvac_candidate;
+      // this might be a bit field? So far these 4 values indicate HVAC on
+      hvac_candidate = can_databuffer[1] == 0x0a || // Remote
+        can_databuffer[1] == 0x48 || // Manual Heating or Fan Only
+        can_databuffer[1] == 0x76 || // auto
+        can_databuffer[1] == 0x78; // Manual A/C on
+      if (car_doors5bits.HVAC != hvac_candidate)
+        {
+        car_doors5bits.HVAC = hvac_candidate;
+        net_req_notification(NET_NOTIFY_ENV);
+        }
+    }
       break;
     case 0x5bc:
       nl_gids = ((unsigned int) can_databuffer[0] << 2) +
@@ -399,6 +413,7 @@ BOOL vehicle_nissanleaf_ticker1(void)
     {
     vehicle_nissanleaf_car_on(FALSE);
     car_speed = 0;
+    car_doors5bits.HVAC = FALSE;
     }
   }
 
