@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.6-20170107";
+my $VERSION = "2.3.7-20170114";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -1761,7 +1761,7 @@ sub http_request_api_status
 		$charge_etr_full,$charge_etr_limit,$charge_limit_range,$charge_limit_soc,
 		$cooldown_active,$cooldown_tbattery,$cooldown_timelimit,
 		$charge_estimate,$charge_etr_range,$charge_etr_soc,$idealrange_max,
-		$chargetype,$chargepower,$battvoltage) = split /,/,$rec->{'m_msg'};
+		$chargetype,$chargepower,$battvoltage,$soh) = split /,/,$rec->{'m_msg'};
     $result{'soc'} = $soc;
     $result{'units'} = $units;
     $result{'idealrange'} = $idealrange;
@@ -1770,6 +1770,7 @@ sub http_request_api_status
     $result{'mode'} = $chargemode;
     $result{'chargestate'} = $chargestate;
     $result{'cac100'} = $cac100;
+    $result{'soh'} = $soh;
     $result{'cooldown_active'} = $cooldown_active;
     }
   $rec= &api_vehiclerecord($vehicleid,'D');
@@ -1936,7 +1937,7 @@ sub http_request_api_charge_get
 		$charge_etr_full,$charge_etr_limit,$charge_limit_range,$charge_limit_soc,
 		$cooldown_active,$cooldown_tbattery,$cooldown_timelimit,
 		$charge_estimate,$charge_etr_range,$charge_etr_soc,$idealrange_max,
-		$chargetype,$chargepower,$battvoltage) = split /,/,$rec->{'m_msg'};
+		$chargetype,$chargepower,$battvoltage,$soh) = split /,/,$rec->{'m_msg'};
     $result{'linevoltage'} = $linevoltage;
     $result{'battvoltage'} = $battvoltage;
     $result{'chargecurrent'} = $chargecurrent;
@@ -1957,6 +1958,7 @@ sub http_request_api_charge_get
     $result{'chargestarttime'} = $chargestarttime;
     $result{'chargetimerstale'} = $chargetimerstale;
     $result{'cac100'} = $cac100;
+    $result{'soh'} = $soh;
     $result{'charge_etr_full'} = $charge_etr_full;
     $result{'charge_etr_limit'} = $charge_etr_limit;
     $result{'charge_limit_range'} = $charge_limit_range;
