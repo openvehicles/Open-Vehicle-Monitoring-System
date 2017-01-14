@@ -378,6 +378,7 @@ char net_msgp_stat(char stat)
   s = stp_i(s, ",", car_chargetype);
   s = stp_l2f(s, ",", car_chargepower, 1);
   s = stp_l2f(s, ",", car_battvoltage, 1);
+  s = stp_i(s, ",", car_soh);
 
 #ifdef OVMS_STRESSTEST
   crc_stat = 0;
@@ -1210,6 +1211,11 @@ char *net_prep_stat(char *s)
   if (car_cac100 != 0)
     {
     s = stp_l2f_h(s, "\r CAC: ", (unsigned long)car_cac100, 2);
+    }
+  if (car_soh != 0)
+    {
+    s = stp_i(s, "\r SOH: ", car_soh);
+    s = stp_rom(s, "%");
     }
 #endif
   

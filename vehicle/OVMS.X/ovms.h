@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 3,1,1
+#define OVMS_FIRMWARE_VERSION 3,1,2
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -230,7 +230,8 @@ extern unsigned char car_12vline; // 12V line level
 extern unsigned char car_12vline_ref; // 12V line level reference
 extern unsigned char car_gsmcops[9]; // GSM provider
 
-extern unsigned int car_cac100; // CAC (x100)
+extern unsigned int car_cac100; // CAC (Ah x 100)
+extern unsigned char car_soh; // State Of Health (%)
 
 extern signed int car_chargefull_minsremaining;  // ETR for 100%
 extern signed int car_chargelimit_minsremaining_range; // ETR for range limit

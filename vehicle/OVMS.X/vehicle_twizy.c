@@ -4737,6 +4737,10 @@ BOOL vehicle_twizy_poll0(void)
       if (CAN_BYTE(3) != 0xff)
         twizy_batt[0].max_drive_pwr = CAN_BYTE(3);
 #endif //#ifdef OVMS_TWIZY_BATTMON
+      
+      // assumed BMS battery health indicator (?)
+      car_soh = CAN_BYTE(5);
+      
       break;
     }
     
@@ -6888,6 +6892,12 @@ void vehicle_twizy_stat_prepmsg(void)
     s = stp_l2f(s, "\rCAP: ", (twizy_bat_cap_prc + 5) / 10, 1);
     s = stp_l2f(s, "% ", (car_cac100 + 5) / 10, 1);
     s = stp_rom(s, " Ah");
+  }
+  
+  if (car_soh > 0)
+  {
+    s = stp_i(s, "\rSOH: ", car_soh);
+    s = stp_rom(s, "%");
   }
 
 }

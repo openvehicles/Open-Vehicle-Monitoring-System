@@ -139,6 +139,7 @@ unsigned char car_12vline_ref = 0; // 12V line level reference
 unsigned char car_gsmcops[9] = ""; // GSM provider
 
 unsigned int car_cac100 = 0; // CAC = Calculated Amphour Capacity (Ah x 100)
+unsigned char car_soh = 0; // State Of Health (%)
 
 signed int car_chargefull_minsremaining = -1;  // ETR for 100%
 signed int car_chargelimit_minsremaining_range = -1; // ETR for range limit
