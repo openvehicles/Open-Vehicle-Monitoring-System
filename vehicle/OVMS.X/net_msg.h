@@ -76,7 +76,7 @@ char net_msgp_gps(char stat);
 char net_msgp_tpms(char stat);
 char net_msgp_firmware(char stat);
 char net_msgp_environment(char stat);
-char net_msgp_group(char stat, char groupnumber, char *groupname);
+char net_msgp_group(char stat, char groupnumber);
 char net_msgp_capabilities(char stat);
 void net_send_stdupdate(void);
 

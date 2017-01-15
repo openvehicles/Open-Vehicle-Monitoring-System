@@ -301,7 +301,7 @@
     - Tightened SDO bus timing
     - Minor code size optimizations
  
- * 3.8.3  6 Jan 2017 (Michael Balzer)
+ * 3.8.3  15 Jan 2017 (Michael Balzer)
     - Charge start/stop notifications changed to ENV to update flags immediately
     - Network streaming/update rework & timing optimization
     - PORTA inputs now disabled by default, enabled by feature #15 + 0x10
@@ -311,6 +311,8 @@
     - Topping off charge state now coupled to CV phase only
     - General topping off alert added, bound to car bits (feature #14) flag 0x40
     - New 12V DC converter state detection (fixes 12V ref misreadings)
+    - Added assumed BMS based SOH (CAN ID 0x424 byte 6)
+    - Separated notification flags for MSG & SMS for decoupled delivery
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -711,7 +713,9 @@ UINT twizy_bat_cap_prc;             // actual capacity in 1/100 percent of...
 
 
 // MSG notification queue (like net_notify for vehicle specific notifies)
-volatile UINT8 twizy_notify; // bit set of...
+UINT8 twizy_notify_msg; // bit set of...
+UINT8 twizy_notify_sms; // bit set of...
+
 #define SEND_BatteryAlert           0x01  // text alert: battery problem
 #define SEND_PowerNotify            0x02  // text alert: power usage summary
 #define SEND_DataUpdate             0x04  // regular data update (per minute)
@@ -720,6 +724,8 @@ volatile UINT8 twizy_notify; // bit set of...
 #define SEND_CodeAlert              0x20  // text alert: fault code (SEVCON/inputs/...)
 #define SEND_PowerLog               0x40  // RT-PWR-Log history entry
 #define SEND_ResetResult            0x80  // text alert: RESET OK/FAIL
+
+#define twizy_notify(n) vehicle_twizy_req_notification(n)
 
 
 // -----------------------------------------------
@@ -951,6 +957,8 @@ volatile union {
 
 BOOL vehicle_twizy_poll0(void);
 BOOL vehicle_twizy_poll1(void);
+
+void vehicle_twizy_req_notification(UINT8 notify);
 
 void vehicle_twizy_power_reset(void);
 void vehicle_twizy_power_collect(void);
@@ -5086,6 +5094,24 @@ BOOL vehicle_twizy_poll1(void)
 
 
 /***************************************************************
+ * vehicle_twizy_req_notification: request twizy notifies
+ *
+ */
+
+void vehicle_twizy_req_notification(UINT8 notify)
+{
+  par_read(PARAM_NOTIFIES);
+  
+  if (strchr(par_value, 'S') &&
+          ((sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)==0))
+    twizy_notify_sms |= notify;
+  
+  if (strchr(par_value, 'I'))
+    twizy_notify_msg |= notify;
+}
+
+
+/***************************************************************
  * vehicle_twizy_notify: process twizy_notifies
  *  and send regular data updates
  *
@@ -5096,7 +5122,6 @@ BOOL vehicle_twizy_poll1(void)
 
 void vehicle_twizy_notify(void)
 {
-  UINT8 notify_sms = 0, notify_msg = 0;
   char stat;
 
 #ifdef OVMS_DIAGMODULE
@@ -5112,14 +5137,6 @@ void vehicle_twizy_notify(void)
   if (!MODEM_READY())
     return;
 
-  // Read user config: notification channels
-  par_read(PARAM_NOTIFIES);
-  if (strchr(par_value, 'S')
-           && ((sys_features[FEATURE_CARBITS] & FEATURE_CB_SOUT_SMS)==0))
-    notify_sms = 1;
-  if (strchr(par_value, 'I'))
-    notify_msg = 1;
-
 
   if ((sys_features[FEATURE_CARBITS] & FEATURE_CB_SVALERTS)==0)
   {
@@ -5127,9 +5144,9 @@ void vehicle_twizy_notify(void)
 #ifdef OVMS_TWIZY_CFG
   
     // Send fault code alert:
-    if ((twizy_notify & SEND_CodeAlert) && (twizy_alert_code != 0))
+    if (twizy_alert_code != 0)
     {
-      if ((notify_msg) && (net_msg_serverok))
+      if ((twizy_notify_msg & SEND_CodeAlert) && (net_msg_serverok))
       {
         net_msg_start();
         // push alert:
@@ -5139,46 +5156,46 @@ void vehicle_twizy_notify(void)
         // add active SEVCON faults history data (if available):
         vehicle_twizy_querylogs_msgp(1, 0, NULL);
         net_msg_send();
-        twizy_notify &= ~SEND_CodeAlert;
+        twizy_notify_msg &= ~SEND_CodeAlert;
         return;
       }
 
-      if (notify_sms)
+      if (twizy_notify_sms & SEND_CodeAlert)
       {
         net_scratchpad[0] = 0;
         vehicle_twizy_codealert_prepmsg();
         net_send_sms_start(par_get(PARAM_REGPHONE));
         net_puts_ram(net_scratchpad);
         net_send_sms_finish();
-        twizy_notify &= ~SEND_CodeAlert;
+        twizy_notify_sms &= ~SEND_CodeAlert;
         return;
       }
     }
 
   
     // Send CFG RESET result OK/FAIL alert:
-    if ((twizy_notify & SEND_ResetResult))
+    if ((twizy_notify_msg & SEND_ResetResult) || (twizy_notify_sms & SEND_ResetResult))
     {
       // prepare msg:
       stp_rom(net_scratchpad, "MP-0 PA");
       stp_rom(net_scratchpad+7, (twizy_cfg.applied)
               ? "RESET OK" : "RESET FAILED, PLEASE RETRY!");
       
-      if ((notify_msg) && (net_msg_serverok))
+      if ((twizy_notify_msg & SEND_ResetResult) && (net_msg_serverok))
       {
         net_msg_start();
         net_msg_encode_puts();
         net_msg_send();
-        twizy_notify &= ~SEND_ResetResult;
+        twizy_notify_msg &= ~SEND_ResetResult;
         return;
       }
 
-      if (notify_sms)
+      if (twizy_notify_sms & SEND_ResetResult)
       {
         net_send_sms_start(par_get(PARAM_REGPHONE));
         net_puts_ram(net_scratchpad+7);
         net_send_sms_finish();
-        twizy_notify &= ~SEND_ResetResult;
+        twizy_notify_sms &= ~SEND_ResetResult;
         return;
       }
     }
@@ -5190,48 +5207,42 @@ void vehicle_twizy_notify(void)
 
 #ifdef OVMS_TWIZY_BATTMON
   // Send battery alert:
-  if ((twizy_notify & SEND_BatteryAlert))
+  if ((twizy_notify_msg & SEND_BatteryAlert) && (net_msg_serverok))
   {
-    if ((notify_msg) && (net_msg_serverok))
-    {
-      vehicle_twizy_battstatus_cmd(FALSE, CMD_BatteryAlert, NULL);
-      twizy_notify &= ~SEND_BatteryAlert;
-      return;
-    }
+    vehicle_twizy_battstatus_cmd(FALSE, CMD_BatteryAlert, NULL);
+    twizy_notify_msg &= ~SEND_BatteryAlert;
+    return;
+  }
 
-    if (notify_sms)
-    {
-      if (vehicle_twizy_battstatus_sms(TRUE, NULL, NULL, NULL))
-        net_send_sms_finish();
-      twizy_notify &= ~SEND_BatteryAlert;
-      return;
-    }
+  if (twizy_notify_sms & SEND_BatteryAlert)
+  {
+    if (vehicle_twizy_battstatus_sms(TRUE, NULL, NULL, NULL))
+      net_send_sms_finish();
+    twizy_notify_sms &= ~SEND_BatteryAlert;
+    return;
   }
 #endif // OVMS_TWIZY_BATTMON
 
 
   // Send power usage statistics?
-  if ((twizy_notify & SEND_PowerNotify))
+  if ((twizy_notify_msg & SEND_PowerNotify) && (net_msg_serverok))
   {
-    if ((notify_msg) && (net_msg_serverok))
-    {
-      vehicle_twizy_power_cmd(FALSE, CMD_PowerUsageNotify, NULL);
-      twizy_notify &= ~SEND_PowerNotify;
-      return;
-    }
+    vehicle_twizy_power_cmd(FALSE, CMD_PowerUsageNotify, NULL);
+    twizy_notify_msg &= ~SEND_PowerNotify;
+    return;
+  }
 
-    if (notify_sms)
-    {
-      if (vehicle_twizy_power_sms(TRUE, NULL, NULL, NULL))
-        net_send_sms_finish();
-      twizy_notify &= ~SEND_PowerNotify;
-      return;
-    }
+  if (twizy_notify_sms & SEND_PowerNotify)
+  {
+    if (vehicle_twizy_power_sms(TRUE, NULL, NULL, NULL))
+      net_send_sms_finish();
+    twizy_notify_sms &= ~SEND_PowerNotify;
+    return;
   }
 
 
   // Send power usage log?
-  if ((twizy_notify & SEND_PowerLog))
+  if ((twizy_notify_msg & SEND_PowerLog))
   {
     if ((net_msg_serverok))
     {
@@ -5239,7 +5250,7 @@ void vehicle_twizy_notify(void)
       if (stat != 2)
         net_msg_send();
       
-      twizy_notify &= ~SEND_PowerLog;
+      twizy_notify_msg &= ~SEND_PowerLog;
       return;
     }
   }
@@ -5247,12 +5258,12 @@ void vehicle_twizy_notify(void)
 
 #ifdef OVMS_TWIZY_BATTMON
   // Send battery status update:
-  if ((twizy_notify & SEND_BatteryStats))
+  if ((twizy_notify_msg & SEND_BatteryStats))
   {
     if ((net_msg_serverok))
     {
       vehicle_twizy_battstatus_cmd(FALSE, CMD_BatteryStatus, NULL);
-      twizy_notify &= ~SEND_BatteryStats;
+      twizy_notify_msg &= ~SEND_BatteryStats;
       return;
     }
   }
@@ -5260,7 +5271,7 @@ void vehicle_twizy_notify(void)
 
 
   // Send regular data update:
-  if ((twizy_notify & SEND_DataUpdate))
+  if ((twizy_notify_msg & SEND_DataUpdate))
   {
     if ((net_msg_serverok))
     {
@@ -5272,7 +5283,7 @@ void vehicle_twizy_notify(void)
       if (stat != 2)
         net_msg_send();
 
-      twizy_notify &= ~SEND_DataUpdate;
+      twizy_notify_msg &= ~SEND_DataUpdate;
 
       return;
     }
@@ -5280,7 +5291,7 @@ void vehicle_twizy_notify(void)
 
 
   // Send streaming updates:
-  if ((twizy_notify & SEND_StreamUpdate))
+  if ((twizy_notify_msg & SEND_StreamUpdate))
   {
     if ((net_msg_serverok))
     {
@@ -5291,7 +5302,7 @@ void vehicle_twizy_notify(void)
         stat = vehicle_twizy_gpslog_msgp(stat);
       if (stat != 2)
         net_msg_send();
-      twizy_notify &= ~SEND_StreamUpdate;
+      twizy_notify_msg &= ~SEND_StreamUpdate;
       return;
     }
   }
@@ -5402,9 +5413,11 @@ BOOL vehicle_twizy_state_ticker10th(void)
     PORTC = (PORTC & 0b11110000);
     
     // send alert on input activation:
-    if ((bits != twizy_alert_code) && !(twizy_notify & SEND_CodeAlert)) {
+    if ((bits != twizy_alert_code) &&
+            !((twizy_notify_msg|twizy_notify_sms) & SEND_CodeAlert))
+    {
       if (twizy_alert_code = bits)
-        twizy_notify |= SEND_CodeAlert;
+        twizy_notify(SEND_CodeAlert);
     }
   }
   else {
@@ -5683,7 +5696,7 @@ BOOL vehicle_twizy_state_ticker1(void)
         +twizy_speedpwr[CAN_SPEED_ACCEL].use
         +twizy_speedpwr[CAN_SPEED_DECEL].use)
             > (WH_DIV * 25))
-      twizy_notify |= (SEND_PowerNotify | SEND_PowerLog);
+      twizy_notify(SEND_PowerNotify | SEND_PowerLog);
 
     #ifdef OVMS_TWIZY_CFG
       // reset button cnt:
@@ -5966,30 +5979,36 @@ BOOL vehicle_twizy_state_ticker1(void)
    * current load on the modem and match GPS requests
    */
 
-  // Send standard data update (incl. stream update) once per minute
-  // after modem GPS request:
-  if ((net_granular_tick % 60) == 21)
-  {
-    // calculate current ETR values:
-    vehicle_twizy_calculate_chargetimes();
-    twizy_notify |= SEND_DataUpdate;
-  }
+  i = net_granular_tick % 60;
   
+  // Send charge ETR update with per minute update:
+  if (i == 0)
+  {
+    vehicle_twizy_calculate_chargetimes();
+  }
+
 #ifdef OVMS_TWIZY_BATTMON
   // Send battery update once per minute on even second
   // between our and framework per minute update:
-  else if ((net_granular_tick % 60) == 42)
+  else if (i == 42)
   {
-    twizy_notify |= SEND_BatteryStats;
+    twizy_notify(SEND_BatteryStats);
   }
 #endif // OVMS_TWIZY_BATTMON
 
+  
+  // Send standard data update (incl. stream update) once per minute
+  // after modem GPS request:
+  if (i == 21)
+  {
+    twizy_notify(SEND_DataUpdate);
+  }
   // Send stream updates (GPS log) while car is moving
   // every odd second, after modem GPS request:
   else if ((twizy_speed > 0) && (sys_features[FEATURE_STREAM] > 1)
           && ((net_granular_tick % 3) == 1))
   {
-    twizy_notify |= SEND_StreamUpdate;
+    twizy_notify(SEND_StreamUpdate);
   }
   
 
@@ -6008,7 +6027,7 @@ BOOL vehicle_twizy_state_ticker1(void)
       memset(&twizy_cfg_profile, 0, sizeof(twizy_cfg_profile));
       twizy_cfg.unsaved = (twizy_cfg.profile_user > 0);
       vehicle_twizy_cfg_applyprofile(twizy_cfg.profile_user);
-      twizy_notify |= SEND_ResetResult;
+      twizy_notify(SEND_ResetResult);
       
       // reset button cnt:
       twizy_button_cnt = 0;
@@ -6104,7 +6123,7 @@ BOOL vehicle_twizy_state_ticker10(void)
     if (readsdo(0x5320,0x00) == 0) {
       if (twizy_sdo.data && (twizy_sdo.data != twizy_alert_code)) {
         twizy_alert_code = twizy_sdo.data;
-        twizy_notify |= SEND_CodeAlert;
+        twizy_notify(SEND_CodeAlert);
       }
     }
 #endif // #ifdef #ifdef OVMS_TWIZY_CFG
@@ -7666,7 +7685,7 @@ void vehicle_twizy_battstatus_collect(void)
   if ((twizy_batt[0].volt_alerts != twizy_batt[0].last_volt_alerts)
           || (twizy_batt[0].temp_alerts != twizy_batt[0].last_temp_alerts))
   {
-    twizy_notify |= (SEND_BatteryAlert | SEND_BatteryStats);
+    twizy_notify(SEND_BatteryAlert | SEND_BatteryStats);
   }
 
 
@@ -8469,7 +8488,8 @@ BOOL vehicle_twizy_initialise(void)
     // init power statistics:
     vehicle_twizy_power_reset();
     
-    twizy_notify = 0;
+    twizy_notify_msg = 0;
+    twizy_notify_sms = 0;
 
 
 #ifdef OVMS_TWIZY_CFG

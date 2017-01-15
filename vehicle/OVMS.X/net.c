@@ -728,7 +728,6 @@ void net_state_enter(unsigned char newstate)
       led_set(OVMS_LED_RED,OVMS_LED_OFF);
       net_timeout_goto = NET_STATE_HARDRESET;
       net_timeout_ticks = 20; // modem cold start takes 5 secs, warm restart takes 2 secs, 3 secs required for autobuad sync, 20 secs should be sufficient for everything
-      net_apps_connected = 0;
       net_msg_init();
       break;
     case NET_STATE_SOFTRESET:
@@ -745,7 +744,6 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 2;
       net_state_vchar = 0;
-      net_apps_connected = 0;
       net_msg_disconnected();
       net_cops_tries = 0; // Reset the COPS counter
       break;
@@ -754,7 +752,6 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_HARDSTOP2;
       net_timeout_ticks = 3;
       net_state_vchar = NETINIT_START;
-      net_apps_connected = 0;
       net_msg_disconnected();
       delay100(10);
       net_puts_rom("AT+CIPSHUT\r");
@@ -851,7 +848,6 @@ void net_state_enter(unsigned char newstate)
       net_timeout_goto = NET_STATE_SOFTRESET;
       net_timeout_ticks = 60;
       net_state_vchar = NETINIT_CLPORT;
-      net_apps_connected = 0;
       net_msg_disconnected();
       delay100(2);
       net_puts_rom("AT+CLPORT=\"TCP\",\"6867\"\r");
@@ -869,7 +865,6 @@ void net_state_enter(unsigned char newstate)
         net_timeout_goto = NET_STATE_SOFTRESET;
         net_timeout_ticks = 60;
         net_state_vchar = NETINIT_START;
-        net_apps_connected = 0;
         net_msg_disconnected();
         delay100(2);
         net_puts_rom("AT+CIPSHUT\r");
@@ -1607,17 +1602,29 @@ void net_idlepoll(void)
       return;
       }
     
-    else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
+    else if ((net_notify & NET_NOTIFY_NET_UPDATE)>0)
       {
-      net_notify &= ~(NET_NOTIFY_NET_STAT); // Clear notification flag
-      if (net_msgp_stat(2) != 2);
+      net_notify &= ~(NET_NOTIFY_NET_UPDATE | NET_NOTIFY_NET_STAT |
+              NET_NOTIFY_NET_STREAM); // Clear all covered notifications
+      stat = 2;
+      stat = net_msgp_stat(stat);
+      stat = net_msgp_environment(stat);
+      stat = net_msgp_gps(stat);
+      stat = net_msgp_group(stat,1);
+      stat = net_msgp_group(stat,2);
+#ifndef OVMS_NO_TPMS
+      stat = net_msgp_tpms(stat);
+#endif
+      stat = net_msgp_firmware(stat);
+      stat = net_msgp_capabilities(stat);
+      if (stat != 2)
         net_msg_send();
       return;
       }
     
-    else if ((net_notify & NET_NOTIFY_NET_ENV)>0)
+    else if ((net_notify & NET_NOTIFY_NET_STAT)>0)
       {
-      net_notify &= ~(NET_NOTIFY_NET_ENV); // Clear notification flag
+      net_notify &= ~(NET_NOTIFY_NET_STAT); // Clear notification flag
       stat = 2;
       stat = net_msgp_environment(stat);
       stat = net_msgp_stat(stat);
@@ -1686,16 +1693,6 @@ void net_idlepoll(void)
       net_notify &= ~(NET_NOTIFY_SMS_CARON); // Clear notification flag
       net_sms_alert(net_caller, ALERT_CARON);
       return;
-      }
-
-    else if ((net_notify & NET_NOTIFY_SMS_STAT)>0)
-      {
-      net_notify &= ~(NET_NOTIFY_SMS_STAT); // Clear notification flag
-      }
-
-    else if ((net_notify & NET_NOTIFY_SMS_ENV)>0)
-      {
-      net_notify &= ~(NET_NOTIFY_SMS_ENV); // Clear notification flag
       }
 
     } // if NET_NOTIFY_SMSPART
@@ -2023,13 +2020,8 @@ void net_state_ticker60(void)
       
       // Send standard update
       // once per minute while Apps are connected
-      if ((net_msg_serverok)&&(net_apps_connected>0))
-        {
-        if (!MODEM_READY())
-          net_granular_tick -= 4; // Try again in 4 seconds...
-        else
-          net_send_stdupdate();
-        }
+      if (net_apps_connected>0)
+        net_req_notification(NET_NOTIFY_UPDATE);
       
       // Toggle modem state initialisation flag (?):
       net_state_vchar = net_state_vchar ^ 1;
@@ -2104,12 +2096,7 @@ void net_state_ticker600(void)
       // Send standard update
       // every 10 minutes if no Apps are connected and car is busy
       if ((net_msg_serverok)&&(net_apps_connected==0)&&carbusy)
-        {
-        if (!MODEM_READY())
-          net_granular_tick -= 4; // Try again in 4 seconds...
-        else
-          net_send_stdupdate();
-        }
+        net_req_notification(NET_NOTIFY_UPDATE);
       
       break;
     }
@@ -2136,12 +2123,7 @@ void net_state_ticker3600(void)
       // Send standard update
       // once per hour if no Apps are connected and car is not busy
       if ((net_msg_serverok)&&(net_apps_connected==0)&&(!carbusy))
-        {
-        if (!MODEM_READY())
-          net_granular_tick -= 4; // Try again in 4 seconds...
-        else
-          net_send_stdupdate();
-        }
+        net_req_notification(NET_NOTIFY_UPDATE);
       
       break;
     }

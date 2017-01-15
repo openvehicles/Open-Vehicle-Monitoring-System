@@ -151,10 +151,10 @@ extern unsigned int  net_notify;               // Bitmap of notifications outsta
 extern unsigned char net_notify_suppresscount; // To suppress STAT notifications (seconds)
 
 #define NET_NOTIFY_NETPART    0x00ff   // Mask for the NET part
-#define NET_NOTIFY_SMSPART    0xff00   // Mask for the SMS part
+#define NET_NOTIFY_SMSPART    0x7c00   // Mask for the SMS part
 
-#define NET_NOTIFY_NET_ENV    0x0001   // Set to 1 to NET notify environment
-#define NET_NOTIFY_NET_STAT   0x0002   // Set to 1 to NET notify status
+#define NET_NOTIFY_NET_UPDATE 0x0001   // Set to 1 to send full standard update
+#define NET_NOTIFY_NET_STAT   0x0002   // Set to 1 to send status update (S+D)
 #define NET_NOTIFY_NET_CHARGE 0x0004   // Set to 1 to NET notify charge event
 #define NET_NOTIFY_NET_12VLOW 0x0008   // Set to 1 to NET notify 12V alert event
 #define NET_NOTIFY_NET_TRUNK  0x0010   // Set to 1 to NET notify trunk open
@@ -162,17 +162,19 @@ extern unsigned char net_notify_suppresscount; // To suppress STAT notifications
 #define NET_NOTIFY_NET_CARON  0x0040   // Set to 1 to NET notify car is turned on
 #define NET_NOTIFY_NET_STREAM 0x0080   // Set to 1 to send stream update for Apps
 
-#define NET_NOTIFY_SMS_ENV    0x0100   // NOT IMPLEMENTED / REQUIRED
+#define NET_NOTIFY_SMS_UPDATE 0x0100   // NOT IMPLEMENTED / REQUIRED
 #define NET_NOTIFY_SMS_STAT   0x0200   // NOT IMPLEMENTED / REQUIRED
 #define NET_NOTIFY_SMS_CHARGE 0x0400   // Set to 1 to SMS notify charge event
 #define NET_NOTIFY_SMS_12VLOW 0x0800   // Set to 1 to SMS notify 12V alert event
 #define NET_NOTIFY_SMS_TRUNK  0x1000   // Set to 1 to SMS notify trunk open
 #define NET_NOTIFY_SMS_ALARM  0x2000   // Set to 1 to SMS notify alarm sounding
 #define NET_NOTIFY_SMS_CARON  0x4000   // Set to 1 to SMS notify car is turned on
+#define NET_NOTIFY_SMS_STREAM 0x8000   // NOT IMPLEMENTED / REQUIRED
 
 // Convenience constants for net_notify() call
-#define NET_NOTIFY_ENV        NET_NOTIFY_NET_ENV
+#define NET_NOTIFY_UPDATE     NET_NOTIFY_NET_UPDATE
 #define NET_NOTIFY_STAT       NET_NOTIFY_NET_STAT
+#define NET_NOTIFY_ENV        NET_NOTIFY_NET_STAT
 #define NET_NOTIFY_CHARGE     NET_NOTIFY_NET_CHARGE
 #define NET_NOTIFY_12VLOW     NET_NOTIFY_NET_12VLOW
 #define NET_NOTIFY_TRUNK      NET_NOTIFY_NET_TRUNK

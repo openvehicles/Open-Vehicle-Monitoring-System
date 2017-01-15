@@ -61,7 +61,9 @@ char digest[MD5_SIZE];
 char pdigest[MD5_SIZE];
 WORD crc_stat = 0;
 WORD crc_gps = 0;
+#ifndef OVMS_NO_TPMS
 WORD crc_tpms = 0;
+#endif
 WORD crc_firmware = 0;
 WORD crc_environment = 0;
 WORD crc_group1 = 0;
@@ -103,12 +105,14 @@ void net_msg_init(void)
   {
   net_msg_cmd_code = 0;
   net_msg_bufpos = NULL;
+  net_apps_connected = 0;
   }
 
 void net_msg_disconnected(void)
   {
   net_msg_serverok = 0;
   net_msg_sendpending = 0;
+  net_apps_connected = 0;
   }
 
 // Start to send a net msg
@@ -520,52 +524,30 @@ char net_msgp_capabilities(char stat)
   return net_msg_encode_statputs(stat, &crc_capabilities);
 }
 
-char net_msgp_group(char stat, char groupnumber, char *groupname)
+char net_msgp_group(char stat, char groupnumber)
 {
   char *s;
-
-  s = stp_s(net_scratchpad, "MP-0 g", groupname);
-  s = stp_i(s, ",", car_SOC);
-  s = stp_i(s, ",", car_speed);
-  s = stp_i(s, ",", car_direction);
-  s = stp_i(s, ",", car_altitude);
-  s = stp_i(s, ",", car_gpslock);
-  s = stp_i(s, ",", car_stale_gps);
-  s = stp_latlon(s, ",", car_latitude);
-  s = stp_latlon(s, ",", car_longitude);
-
-  if (groupnumber == 1)
-    return net_msg_encode_statputs(stat, &crc_group1);
-  else
-    return net_msg_encode_statputs(stat, &crc_group2);
+  
+  par_read(0x0A + groupnumber); // => PARAM_S_GROUP1 / PARAM_S_GROUP2
+  if (par_value[0])
+    {
+    s = stp_s(net_scratchpad, "MP-0 g", par_value);
+    s = stp_i(s, ",", car_SOC);
+    s = stp_i(s, ",", car_speed);
+    s = stp_i(s, ",", car_direction);
+    s = stp_i(s, ",", car_altitude);
+    s = stp_i(s, ",", car_gpslock);
+    s = stp_i(s, ",", car_stale_gps);
+    s = stp_latlon(s, ",", car_latitude);
+    s = stp_latlon(s, ",", car_longitude);
+    stat = net_msg_encode_statputs(stat,
+          (groupnumber == 1) ? &crc_group1 : &crc_group2);
+    }
+  
+  return stat;
 }
 
 
-// Send standard update (used by net_state_tickers)
-void net_send_stdupdate(void)
-  {
-  char stat;
-  char *p;
-  
-  stat = 2;
-  p = par_get(PARAM_S_GROUP1);
-  if (*p != 0)
-    stat = net_msgp_group(stat,1,p);
-  p = par_get(PARAM_S_GROUP2);
-  if (*p != 0)
-    stat = net_msgp_group(stat,2,p);
-  stat = net_msgp_stat(stat);
-  stat = net_msgp_gps(stat);
-#ifndef OVMS_NO_TPMS
-  stat = net_msgp_tpms(stat);
-#endif
-  stat = net_msgp_environment(stat);
-  stat = net_msgp_capabilities(stat);
-  if (stat != 2)
-    net_msg_send();
-  }
-
-  
 void net_msg_server_welcome(char *msg)
   {
   // The server has sent a welcome (token <space> base64digest)
@@ -744,17 +726,18 @@ void net_msg_in(char* msg)
     case 'Z': // PEER connections
       k = atoi(msg+1); // get new peer count
       // Send data update for new listener(s)?
-      if ((k > net_apps_connected) && (net_msg_sendpending==0))
+      if (k > net_apps_connected)
         {
-        net_msg_start();
-        net_msgp_stat(0);
-        net_msgp_gps(0);
+        // Force update for...
+        crc_stat = 0;
+        crc_environment = 0;
+        crc_gps = 0;
 #ifndef OVMS_NO_TPMS
-        net_msgp_tpms(0);
+        crc_tpms = 0;
 #endif
-        net_msgp_firmware(0);
-        net_msgp_environment(0);
-        net_msg_send();
+        crc_firmware = 0;
+        crc_capabilities = 0;
+        net_req_notification(NET_NOTIFY_UPDATE);
         }
       net_apps_connected = k;
       break;
@@ -765,7 +748,8 @@ void net_msg_in(char* msg)
       break;
     case 'C': // COMMAND
       net_msg_cmd_in(msg+1);
-      if (net_msg_sendpending==0) net_msg_cmd_do();
+      if (net_msg_sendpending==0)
+        net_msg_cmd_do();
       // else retry in next net_state_ticker1() run
       break;
     }
