@@ -297,7 +297,9 @@ BOOL vehicle_nissanleaf_poll1(void)
       UINT16 car_speed16 = can_databuffer[4];
       car_speed16 = car_speed16 << 8;
       car_speed16 = car_speed16 | can_databuffer[5];
-      car_speed = car_speed16 / 100;
+      // this ratio determined by comparing with the dashboard speedometer
+      // it is approximately correct and converts to km/h on my car with km/h speedo
+      car_speed = car_speed16 / 92;
     }
       break;
     case 0x54b:
