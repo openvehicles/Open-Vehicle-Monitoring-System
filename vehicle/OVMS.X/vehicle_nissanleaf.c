@@ -48,6 +48,13 @@ rom char nissanleaf_capabilities[] = "C11,C24,C26";
 #define REMOTE_COMMAND_REPEAT_COUNT 24 // number of times to send the remote command after the first time
 #define ACTIVATION_REQUEST_TIME 10 // tenths of a second to hold activation request signal
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+#define GEN_1_NEW_CAR_GIDS 281
+#define GEN_1_NEW_CAR_RANGE_MILES 84
+
+#define PARAM_SOC_CONFIGURATION 21
+
 // Nissan Leaf state variables
 
 #pragma udata overlay vehicle_overlay_data
@@ -82,6 +89,8 @@ RemoteCommand nl_remote_command; // command to send, see ticker10th()
 UINT8 nl_remote_command_ticker; // number of tenths remaining to send remote command frames
 
 UINT16 nl_gids; // current gids in the battery
+UINT16 nl_max_gids; // maximum gids, used for SOC calculation
+
 ChargerStatus nl_charger_status; // the current charger status
 
 INT16 nl_battery_current; // battery current from LBC, 0.5A per bit
@@ -325,10 +334,17 @@ BOOL vehicle_nissanleaf_poll1(void)
     }
       break;
     case 0x5bc:
-      nl_gids = ((unsigned int) can_databuffer[0] << 2) +
-        ((can_databuffer[1] & 0xc0) >> 6);
-      car_SOC = (nl_gids * 100 + 140) / 281;
-      car_idealrange = (nl_gids * 84 + 140) / 281;
+    {
+      UINT16 nl_gids_candidate = ((UINT16) can_databuffer[0] << 2) | ((can_databuffer[1] & 0xc0) >> 6);
+      if (nl_gids_candidate == 1023)
+        {
+        // ignore invalid data seen during startup
+        break;
+        }
+      nl_gids = nl_gids_candidate;
+      car_SOC = (nl_gids * 100 + (nl_max_gids / 2)) / nl_max_gids;
+      car_idealrange = (nl_gids * GEN_1_NEW_CAR_RANGE_MILES + (GEN_1_NEW_CAR_GIDS / 2)) / GEN_1_NEW_CAR_GIDS;
+    }
       break;
     case 0x5bf:
       if (can_databuffer[4] == 0xb0)
@@ -424,6 +440,51 @@ BOOL vehicle_nissanleaf_ticker10th(void)
       }
     }
   return TRUE;
+  }
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_init_default_soc_configuration()
+// Store the default soc calculation configuration (fixed 281 gids) in
+// the PARAM_SOC_CONFIGURATION parameter.
+//
+//
+
+void vehicle_nissanleaf_init_default_soc_configuration(void)
+  {
+  char s[4];
+  stp_rom(s, STR(GEN_1_NEW_CAR_GIDS));
+  par_set(PARAM_SOC_CONFIGURATION, s);
+  }
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_load_soc_configuration()
+// Loads the soc calculation configuration out of the
+// PARAM_SOC_CONFIGURATIONparameter. Sets a default if the data is
+// invalid.
+//
+
+void vehicle_nissanleaf_load_soc_configuration(void)
+  {
+  char *s;
+  UINT16 max_gids_candidate;
+
+  // set default to override if the data is valid
+  nl_max_gids = GEN_1_NEW_CAR_GIDS;
+
+  s = par_get(PARAM_SOC_CONFIGURATION);
+  if (!s)
+    {
+    vehicle_nissanleaf_init_default_soc_configuration();
+    return;
+    }
+
+  max_gids_candidate = atoi(s);
+  if (max_gids_candidate == 0)
+    {
+    vehicle_nissanleaf_init_default_soc_configuration();
+    return;
+    }
+  nl_max_gids = max_gids_candidate;
   }
 
 BOOL vehicle_nissanleaf_ticker1(void)
@@ -591,6 +652,8 @@ BOOL vehicle_nissanleaf_initialise(void)
   car_stale_timer = -1; // Timed charging is not supported for OVMS NL
   car_time = 0;
   nl_remote_command_ticker = 0;
+
+  vehicle_nissanleaf_load_soc_configuration();
 
   // initialize SOC and SOC alert limit to avoid SMS on startup
   car_SOC = car_SOCalertlimit = 2;
