@@ -33,7 +33,7 @@
 #include "inputs.h"
 
 // Nissan Leaf module version:
-rom char nissanleaf_version[] = "1.0";
+rom char nissanleaf_version[] = "1.1";
 
 // Nissan Leaf capabilities:
 // - CMD_StartCharge (11)
@@ -293,7 +293,15 @@ BOOL vehicle_nissanleaf_poll1(void)
       // that then we assume car is on.
       nl_abs_active = 10;
       vehicle_nissanleaf_car_on(TRUE);
-      // vehicle_poll_setstate(1);
+    {
+      UINT16 car_speed16 = can_databuffer[4];
+      car_speed16 = car_speed16 << 8;
+      car_speed16 = car_speed16 | can_databuffer[5];
+      // this ratio determined by comparing with the dashboard speedometer
+      // it is approximately correct and converts to km/h on my car with km/h speedo
+      car_speed = car_speed16 / 92;
+    }
+      break;
     case 0x54b:
     {
       BOOL hvac_candidate;
