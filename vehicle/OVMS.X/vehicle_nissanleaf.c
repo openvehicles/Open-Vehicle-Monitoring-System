@@ -57,6 +57,7 @@ typedef enum
   CHARGER_STATUS_IDLE,
   CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT,
   CHARGER_STATUS_CHARGING,
+  CHARGER_STATUS_QUICK_CHARGING,
   CHARGER_STATUS_FINISHED
   } ChargerStatus;
 
@@ -221,17 +222,21 @@ void vehicle_nissanleaf_charger_status(ChargerStatus status)
       car_chargestate = 0;
       car_chargesubstate = 0;
       break;
+    case CHARGER_STATUS_QUICK_CHARGING:
     case CHARGER_STATUS_CHARGING:
       car_doors1bits.Charging = 1;
       car_chargestate = 1;
       car_chargesubstate = 3; // Charging by request
-
-      // TODO we should return AC line current and voltage, not battery
+      // TODO only use battery current for Quick Charging, for regular charging
+      // we should return AC line current and voltage, not battery
+      // TODO does the leaf know the AC line current and voltage?
       if (nl_battery_current < 0)
         {
         // battery current can go negative when climate control draws more than
         // is available from the charger. We're abusing the line current which
         // is unsigned, so don't underflow it
+        //
+        // TODO quick charging can draw current from the vehicle
         car_chargecurrent = 0;
         }
       else
@@ -254,7 +259,7 @@ void vehicle_nissanleaf_charger_status(ChargerStatus status)
       car_chargesubstate = 3; // Charging by request
       break;
     }
-  if (status != CHARGER_STATUS_CHARGING)
+  if (status != CHARGER_STATUS_CHARGING && status != CHARGER_STATUS_QUICK_CHARGING)
     {
     car_chargecurrent = 0;
     // TODO the charger probably knows the line voltage, when we find where it's
@@ -325,10 +330,23 @@ BOOL vehicle_nissanleaf_poll1(void)
       car_idealrange = (nl_gids * 84 + 140) / 281;
       break;
     case 0x5bf:
-      // this is the J1772 maximum available current, 0 if we're not plugged in
-      car_chargelimit = can_databuffer[2] / 5;
-      car_doors1bits.ChargePort = car_chargelimit == 0 ? 0 : 1;
-      car_doors1bits.PilotSignal = car_chargelimit == 0 ? 0 : 1;
+      if (can_databuffer[4] == 0xb0)
+        {
+        // Quick Charging
+        car_chargetype = CHADEMO;
+        car_chargelimit = 120;
+        car_doors1bits.ChargePort = 1;
+        car_doors1bits.PilotSignal = 1;
+        }
+      else
+        {
+        // Maybe J1772 is connected
+        // can_databuffer[2] is the J1772 maximum available current, 0 if we're not plugged in
+        car_chargetype = J1772_TYPE1;
+        car_chargelimit = can_databuffer[2] / 5;
+        car_doors1bits.ChargePort = car_chargelimit == 0 ? 0 : 1;
+        car_doors1bits.PilotSignal = car_chargelimit == 0 ? 0 : 1;
+        }
 
       switch (can_databuffer[4])
         {
@@ -338,7 +356,10 @@ BOOL vehicle_nissanleaf_poll1(void)
         case 0x30:
           vehicle_nissanleaf_charger_status(CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT);
           break;
-        case 0x60:
+        case 0xb0: // Quick Charging
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_QUICK_CHARGING);
+          break;
+        case 0x60: // L2 Charging
           vehicle_nissanleaf_charger_status(CHARGER_STATUS_CHARGING);
           break;
         case 0x40:
