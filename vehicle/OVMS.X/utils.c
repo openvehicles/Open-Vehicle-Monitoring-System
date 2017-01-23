@@ -230,6 +230,8 @@ float myatof(char *src)
   long whole, frac, pot;
   char *s;
 
+  while (*src==' ') src++; // skip leading spaces
+  
   whole = atol(src);
 
   if (s = strchr(src, '.'))
@@ -242,6 +244,9 @@ float myatof(char *src)
       frac = frac * 10 + (*s - 48);
       pot = pot * 10;
     }
+    
+    if (*src=='-')
+      frac = -frac;
 
     return (float) whole + (float) frac / pot;
   }
