@@ -291,20 +291,36 @@ unsigned long axtoul(char *s)
 
 long gps2latlon(char *gpscoord)
 {
-  float f;
-#ifdef OVMS_SIMCOM_SIM908
-  long d;
-#endif //OVMS_SIMCOM_SIM908
+  long degrees, frac, place;
+  char *s;
 
-  f = myatof(gpscoord);
+  degrees = atol(gpscoord);
 
 #ifdef OVMS_SIMCOM_SIM908
   // SIM908: DDDMM.MMMMMM
-  d = (long) (f / 100); // extract degrees
-  f = (float) d + (f - (d * 100)) / 60; // convert to decimal format
+  frac = degrees % 100; // extract minutes
+  place = 60;          // achieves minutes to decimal degrees conversion.
+  degrees /= 100;       // fix degrees
+#else
+  frac = 0;
+  place = 1;
 #endif //OVMS_SIMCOM_SIM908
 
-  return (long) (f * 3600 * 2048); // convert to raw format
+  if ( (s = strchr(gpscoord, '.')) )
+  {
+    while (*++s)
+    {
+      if( (unsigned char)(*s - '0') > (unsigned char) 9 )
+        break;                       //check for non-number ascii
+      frac = frac * 10 + (*s - '0');
+      place = place * 10;
+    }
+  }
+  frac = ((long long) frac * 2048 * 3600 + (place >> 1) ) /
+            (long long) place;  // scale to native units
+  if(degrees <0)
+    frac = -frac;
+  return degrees * 2048 * 3600 + frac;
 }
 
 
