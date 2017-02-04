@@ -289,40 +289,71 @@ unsigned long axtoul(char *s)
   return val;
 }
 
-
+#ifndef uint8_t //C18 compiler defines
+#define int8_t    char
+#define int16_t   short
+#define int32_t   long
+#define uint8_t   unsigned char
+#define uint16_t  unsigned short
+#define uint32_t  unsigned long
+#endif
 // Convert GPS coordinate form to internal latlon value
 // SIM908: DDDMM.MMMMMM (separate South/West handling, see net.c)
 // SIM808: +-ddd.dddddd
 
 long gps2latlon(char *gpscoord)
 {
-  long degrees, frac, place;
+  int16_t degrees;
+  uint16_t rem;
+  int32_t frac;
   char *s;
 
-  degrees = atol(gpscoord);
-
-#ifdef OVMS_SIMCOM_SIM908
-  // SIM908: DDDMM.MMMMMM
-  frac = degrees % 100; // extract minutes
-  place = 60;          // achieves minutes to decimal degrees conversion.
+  degrees = atoi(gpscoord); //use built-in to read integer value
+  rem = 6;
+  
+#ifdef OVMS_SIMCOM_SIM908 // SIM908: DDDMM.MMMMMM
+  frac = degrees % 100; // extract minutes: Fails with negatives
   degrees /= 100;       // fix degrees
-#else
+#else //SIM808: (-)DDD.DDDDDD
   frac = 0;
-  place = 1;
 #endif //OVMS_SIMCOM_SIM908
 
   if ( (s = strchr(gpscoord, '.')) )
   {
-    while (*++s)
+    while (*++s)     //read and scale fractional part
     {
       if( (unsigned char)(*s - '0') > (unsigned char) 9 )
-        break;                       //check for non-number ascii
+        break;       //check for non-decimal
       frac = frac * 10 + (*s - '0');
-      place = place * 10;
+      if(--rem==0)   //check for too many decimal places
+        break;
     }
+    while (rem--!=0) //make up missing digits with zeros
+    {
+      frac = frac * 10;
+    }
+    //reuse rem here to minimize stack
+#ifdef OVMS_SIMCOM_SIM908 // SIM908: DDDMM.MMMMMM
+    //fractional part is at most 26bits (59999999 < 2^26)
+    // Drop precision to 2^24 (not including >7bits of whole degrees)
+    //multiply 12bits at a time with 19bit constant to keep within 32bits
+    //then bit shift into place and accumulate
+#define GPS_DIVIDER ((uint32_t) 515396) //(3600 * 2048 / 60000000) * 2^22
+    frac = ( frac + (1<<1) ) >> 2; //drop two bits we can't use
+    rem = (uint32_t)(((frac & 0x0FFF) * GPS_DIVIDER) + (1<<19) ) >> 20;
+    frac = ((((uint32_t)(frac & 0x00FFF000)>>12) * GPS_DIVIDER) + (1<<7)) >> 8;    
+#else //SIM808: (-)DDD.DDDDDD
+    //fractional part is at most 20bits (999999 < 2^20)
+    //multiply 10bits at a time with 22bit constant to keep within 32bits
+    //then bit shift into place and accumulate
+#define GPS_DIVIDER ((uint32_t) 1932735) //(3600 * 2048 / 1000000) * 2^18
+    rem = (uint32_t)(((frac & 0x03FF) * GPS_DIVIDER) + (1<<17) ) >> 18;
+    frac = ((((uint32_t)(frac & 0x000FFC00)>>10) * GPS_DIVIDER) + (1<<7)) >> 8;
+#endif //OVMS_SIMCOM_SIM908
+
+    frac += rem;
   }
-  frac = ((long long) frac * 2048 * 3600 + (place >> 1) ) /
-            (long long) place;  // scale to native units
+
   if(degrees <0)
     frac = -frac;
   return degrees * 2048 * 3600 + frac;
