@@ -228,6 +228,7 @@ extern char sys_features[FEATURES_MAX]; // System features
 extern unsigned char net_sq; // GSM Network Signal Quality
 extern unsigned char car_12vline; // 12V line level
 extern unsigned char car_12vline_ref; // 12V line level reference
+extern unsigned int car_12v_current; // 12V (DC converter) current in 1/10 A
 extern unsigned char car_gsmcops[9]; // GSM provider
 
 extern unsigned int car_cac100; // CAC (Ah x 100)

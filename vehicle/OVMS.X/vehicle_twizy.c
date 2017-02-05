@@ -313,6 +313,8 @@
     - New 12V DC converter state detection (fixes 12V ref misreadings)
     - Added assumed BMS based SOH (CAN ID 0x424 byte 6)
     - Separated notification flags for MSG & SMS for decoupled delivery
+    - CFG POWER now also sets rated torque (for consistency)
+    - Added 12V DC converter current level reading
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -1383,6 +1385,7 @@ struct twizy_cfg_params {
   UINT    DeltaWarnOff;
 
   UINT    DefaultTrq;
+  UINT    DefaultTrqRated;
   UINT32  DefaultTrqLim;
   UINT    DeltaMapTrq;
   
@@ -1439,6 +1442,7 @@ rom struct twizy_cfg_params twizy_cfg_params[2] =
     550,    // DeltaWarnOff
 
     55000,  // DefaultTrq
+    57000,  // DefaultTrqRated
     70125,  // DefaultTrqLim
     0,      // DeltaMapTrq
     
@@ -1495,6 +1499,7 @@ rom struct twizy_cfg_params twizy_cfg_params[2] =
     900,    // DeltaWarnOff
 
     32500,  // DefaultTrq
+    33000,  // DefaultTrqRated
     36000,  // DefaultTrqLim
     500,    // DeltaMapTrq
 
@@ -1842,9 +1847,11 @@ UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc, int cu
   if (err = writesdo(0x6076,0x00,twizy_max_trq + CFG.DeltaMapTrq))
     return err;
 
-  // set rated torque too?
-  //if (err = writesdo(0x2916,0x01,scale(57000,100,max_prc,10000,70125)))
-  //  return err;
+  // set rated torque:
+  if (err = writesdo(0x2916,0x01,(trq_prc==100)
+          ? CFG.DefaultTrqRated
+          : (twizy_max_trq + CFG.DeltaMapTrq)))
+    return err;
 
   // calc peak use power:
   twizy_max_pwr_lo = scale(CFG.DefaultPwrLo,100,pwr_lo_prc,500,
@@ -4902,6 +4909,9 @@ BOOL vehicle_twizy_poll1(void)
         twizy_status = (twizy_status & 0x0F) | (CAN_BYTE(1) & 0xF0);
 
       // Translation to car_doors1 done in ticker1()
+      
+      // Read 12V DC converter current level:
+      car_12v_current = ((UINT) CAN_BYTE(2) * 10) >> 2;
       
       // Check 12V DC converter status:
       // 0xD1 = DC converter off, main charger off/ready, Twizy off

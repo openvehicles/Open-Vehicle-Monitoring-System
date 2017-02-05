@@ -701,12 +701,13 @@ BOOL net_sms_handle_diag(char *caller, char *command, char *arguments)
   s = stp_rom(net_scratchpad, "DIAG:");
   s = stp_i(s, "\n RED Led:", led_code[OVMS_LED_RED]);
   s = stp_i(s, "\n GRN Led:", led_code[OVMS_LED_GRN]);
-  s = stp_x(s, "\n NET State:0x", net_state);
+  s = stp_sx(s, "\n NET State:0x", net_state);
 
   if (car_12vline > 0)
   {
     s = stp_l2f(s, "\n 12V Line:", car_12vline, 1);
     s = stp_l2f(s, " ref=", car_12vline_ref, 1);
+    s = stp_l2f(s, " cur=", car_12v_current, 1);
   }
 
 #ifndef OVMS_NO_CRASHDEBUG

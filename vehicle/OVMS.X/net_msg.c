@@ -502,6 +502,7 @@ char net_msgp_environment(char stat)
   s = stp_l2f(s, ",", car_12vline_ref, 1);
   s = stp_i(s, ",", car_doors5);
   s = stp_i(s, ",", car_tcharger);
+  s = stp_l2f(s, ",", car_12v_current, 1);
 
 #ifdef OVMS_STRESSTEST
   crc_environment = 0;
