@@ -310,10 +310,11 @@ BOOL vehicle_nissanleaf_poll1(void)
     case 0x54b:
     {
       BOOL hvac_candidate;
-      // this might be a bit field? So far these 5 values indicate HVAC on
+      // this might be a bit field? So far these 6 values indicate HVAC on
       hvac_candidate = can_databuffer[1] == 0x0a || // Gen 1 Remote
         can_databuffer[1] == 0x48 || // Manual Heating or Fan Only
-        can_databuffer[1] == 0x71 || // Gen 2 Remote
+        can_databuffer[1] == 0x4b || // Gen 2 Remote Heating
+        can_databuffer[1] == 0x71 || // Gen 2 Remote Cooling
         can_databuffer[1] == 0x76 || // Auto
         can_databuffer[1] == 0x78; // Manual A/C on
       if (car_doors5bits.HVAC != hvac_candidate)
