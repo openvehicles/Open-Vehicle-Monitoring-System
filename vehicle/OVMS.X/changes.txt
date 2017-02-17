@@ -28,6 +28,113 @@
 ; THE SOFTWARE.
 */
 
+* a921564 - Framework version tag updated to 2.9.2
+* ce70c8c Twizy 3.8.2: - New: charge auto stop control (feature #6 / car_chargemode) - Added charge control to commands CA & #203,204 - Tightened SDO bus timing - Minor code size optimizations
+* fc1ca1e - Added speed & trip length to location update (msg L) - Added b4 + substate to JSON API - Fixed spelling of 'charge_etr_range' in JSON API
+*   005f48b Merge branch 'master' of https://github.com/openvehicles/Open-Vehicle-Monitoring-System
+|\
+| * 60488ab Add tpms notes for tesla roadster
+* | 9e2bc1a Framework: - Keep volatile features over reset - Added compiler switch OVMS_NO_ERROR_NOTIFY to exclude unused code
+|/
+* 4309c95 - Twizy 3.8.1 documentation updates
+* 7e6f7c9 - Framework fix: CAN ISR rework to avoid dropped packets - New flag: OVMS_CUSTOM_CAN_ISR = CAN ISR implemented by vehicle module
+
+2017-01-14 3.1.2       Firmware 3.1.2
+                       # Added car_soh for BMS based state of health indication
+                       # Twizy:
+                         New charge phase detection (CC-CV) better suitable for cold climate charging
+                         Topping off charge state now coupled to CV phase only
+                         General topping off alert added, bound to car bits (feature #14) flag 0x40
+                         New 12V DC converter state detection (fixes 12V ref misreadings)
+                       # Framework:
+                         Relabeled FEATURE_CB_SCHGSTART to FEATURE_CB_SCHGPHASE
+                         Moved 12V calibration reset to per second ticker
+                       # Move NissanLeaf and Mitsubishi from Experimental to Production builds
+
+2017-01-01 3.1.1       Firmware 3.1.1
+                       # Added new car model variables (drivemode, power, energyused, energyrecd)
+                         (transmitted via L message)
+                       # Network/modem rework to minimize hard coded delays
+                       # GPRS reconnect speedup
+                       # Fixed modem reboot/reset handling
+                       # Added car bits option 0x80 to suppress SMS forwarding
+                       # Fixed stp_l2f() minus sign prefix for values between -1 and 0
+                       # New compiler flags for code exclusion: OVMS_NO_PHONEBOOKAP, OVMS_NO_TPMS, OVMS_NO_GPIOFN, OVMS_NO_STD_STAT
+                       # Code cleanup & documentation
+                       # Server V2.3.5:
+                         Added new car model variables (drivemode, power, energyused, energyrecd)
+                       # Twizy V3.8.3 beta1:
+                         Charge start/stop notifications changed to ENV to update flags immediately
+                         Network streaming/update rework & timing optimization
+                         PORTA inputs now disabled by default, enabled by feature #15 + 0x10
+                         Support for new car model variables (drivemode, power, energy)
+                         Removed power/energy/trip value rounding on log entries
+
+2016-12-09 2.9.2       Firmware 2.9.2
+                       # Twizy 3.8.2: - New: charge auto stop control (feature #6 / car_chargemode)
+                       # Added charge control to commands CA & #203,204
+                       # Tightened SDO bus timing
+                       # Minor code size optimizations
+                       # Added speed & trip length to location update (msg L)
+                       # Added b4 + substate to JSON API
+                       # Fixed spelling of 'charge_etr_range' in JSON API
+                       # Add tpms notes for tesla roadster
+                       # Framework: - Keep volatile features over reset
+                       # Added compiler switch OVMS_NO_ERROR_NOTIFY to exclude unused code
+                       # Twizy 3.8.1 documentation updates
+                       # Framework fix: CAN ISR rework to avoid dropped packets
+                       # New flag: OVMS_CUSTOM_CAN_ISR = CAN ISR implemented by vehicle module
+
+2016-11-18 2.9.1       Firmware 2.9.1 
+                       # Added "CARON" alert for vehicle stopped turned on   (first after 15 minutes, followups every 60 minutes)
+                       # Refactoring of separate alerts into general function
+                       # Fixed doors3: CarAwake=bit #0, CoolingPump=#1
+                       # Added annotated PCB image to SimpleConsole howto
+                       # Twizy firmware images update
+                       # Correct implementation for net RX timeout disabling in DIAG mode
+                       #  Twizy firmware builds V2.8.8/RT3.7.3
+                       # Merge branch 'input-alert'
+                         Twizy: text alert on key input while car is off (for custom alert sensors)
+                         new cc flag OVMS_NO_HOMELINK = exclude HOMELINK SMS command
+                       # Merge pull request #151 from carrott/nissan-leaf-battery-voltage
+                         Leaf: populate new car_battvoltage variable
+                         Leaf: accept all frames into poll1, decode battery voltage and current and abuse charger line voltage and current to expose
+                       # Merge pull request #150 from carrott/nissan-leaf-cc-args
+                       # change climate control command syntax to 0 for off and 1 for on
+
+2016-10-22 2.8.8       Firmware 2.8.8 DIAG mode enhancements
+                       # DIAG mode automatically established when powering up without SIM card
+                       # DIAG mode LED setup changed to constant green (no error)
+                       # Net RX timeout disabled in DIAG mode to avoid reboots
+                       # DIAG mode SMS and MSG command output now prefixes all message lines
+                         with "# " and terminates with "#." on a single line
+                       # DIAG mode perl clients use new tagging instead of line counting
+                       # "Howto-Using-without-SIM" updated accordingly
+                       # Framework: Message "S": chargekwh in 1/10 kWh, added chargepower & battvoltage
+                       # Commands MODULE & VEHICLE: added effective car type to output - Command VERSION: added car type & VIN
+                       # Twizy: - Power efficiency report: energy usage correction - Power totals report: trip length from odo (for consistency)
+                       # New framework compiler flags:
+                         a) OVMS_FIXED_DIAGMODE = always enter DIAG mode on startup
+                         b) OVMS_DIAGDATA = enable data output to DIAG port
+                       # Added missing standard MSG protocol commands
+                       # Fixed CMD_SendRawAT code
+                       # Reassigned CMD_ClimateControl to code 26 (consistency)
+                       # Added Nissan Leaf version & capabilities
+                       # Merge pull request #149 from carrott/nissan-leaf-climate-control
+                         Leaf: use loop to copy data to can tx hardware -- smaller code
+                         Leaf: send remote command 25 times like the Gen 2 does
+                         Leaf: send appropriate response message in command handler
+                         Leaf: define new CMD_ClimateControl with ON and OFF args
+                         Leaf: use two buttons on the homelink to enable and disable climate control
+                         Leaf: support for remote charging
+                         Leaf: remove debug
+                         Leaf: Toggle a GPIO to wake up GEN 1 Leaf
+                         Leaf: send gen 2 wakeup command during remote climate control
+                         Leaf: extract CAN transmit to vehicle_nissanleaf_sendCanMessage
+                         Leaf: Refactor to return early if we're not transmitting
+                         Leaf: refactor climate control to combine on & off
+                         Leaf: initial remote climate control, only works during charging
+
 2016-05-29 2.8.6       Firmware 2.8.6 SIM808 GSM/GPS production support
                        # Framework: - Support for separate charger temperature (car_tcharger)
                        # Twizy user guide v1.8 (BMS power limit bypass)
