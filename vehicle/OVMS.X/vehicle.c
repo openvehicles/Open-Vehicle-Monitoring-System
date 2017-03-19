@@ -586,6 +586,7 @@ void vehicle_ticker(void)
     vehicle_fn_ticker10();
     }
 
+#if (OVMS_ACCMODULE || !OVMS_NO_CHARGECONTROL)
   // Check chargelimits
   if (CAR_IS_CHARGING)
     {
@@ -596,25 +597,31 @@ void vehicle_ticker(void)
 #ifdef OVMS_ACCMODULE
       acc_handle_msg(FALSE, 12, NULL);
 #endif
+#ifndef OVMS_NO_CHARGECONTROL
       vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
+#endif
       }
     }
+#endif
 
   if ((can_granular_tick % 60)==0)
     {
     int minSOC;
 
     // check minSOC
-    minSOC = sys_features[FEATURE_MINSOC];
-    if ((!(can_minSOCnotified & CAN_MINSOC_ALERT_MAIN)) && (car_SOC < minSOC))
+    if (!car_doors1bits.Charging)
       {
-      net_req_notification(NET_NOTIFY_CHARGE);
-      can_minSOCnotified |= CAN_MINSOC_ALERT_MAIN;
-      }
-    else if ((can_minSOCnotified & CAN_MINSOC_ALERT_MAIN) && (car_SOC > minSOC + 2))
-      {
-      // reset the alert sent flag when SOC is 2% point higher than threshold
-      can_minSOCnotified &= ~CAN_MINSOC_ALERT_MAIN;
+      minSOC = sys_features[FEATURE_MINSOC];
+      if ((!(can_minSOCnotified & CAN_MINSOC_ALERT_MAIN)) && (car_SOC < minSOC))
+        {
+        net_req_notification(NET_NOTIFY_CHARGE);
+        can_minSOCnotified |= CAN_MINSOC_ALERT_MAIN;
+        }
+      else if ((can_minSOCnotified & CAN_MINSOC_ALERT_MAIN) && (car_SOC > minSOC + 2))
+        {
+        // reset the alert sent flag when SOC is 2% point higher than threshold
+        can_minSOCnotified &= ~CAN_MINSOC_ALERT_MAIN;
+        }
       }
     
     // Check if car is stopped turned on:

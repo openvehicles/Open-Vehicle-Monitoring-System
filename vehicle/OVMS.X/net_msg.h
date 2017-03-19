@@ -42,6 +42,8 @@ extern rom char NET_MSG_CMDNOCANCHARGE[];
 extern rom char NET_MSG_CMDNOCANSTOPCHARGE[];
 extern rom char NET_MSG_CMDUNIMPLEMENTED[];
 
+#define STP_CMDRESULT(buf,cmd,rc)     stp_i(stp_i(buf, NET_MSG_CMDRESP, cmd), ",", rc)
+
 #define STP_OK(buf,cmd)               stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDOK)
 #define STP_INVALIDSYNTAX(buf,cmd)    stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDINVALIDSYNTAX)
 #define STP_NOCANWRITE(buf,cmd)       stp_rom(stp_i(buf, NET_MSG_CMDRESP, cmd), NET_MSG_CMDNOCANWRITE)

@@ -301,7 +301,7 @@
     - Tightened SDO bus timing
     - Minor code size optimizations
  
- * 3.8.3  15 Jan 2017 (Michael Balzer)
+ * 3.8.3  17 Mar 2017 (Michael Balzer)
     - Charge start/stop notifications changed to ENV to update flags immediately
     - Network streaming/update rework & timing optimization
     - PORTA inputs now disabled by default, enabled by feature #15 + 0x10
@@ -315,6 +315,8 @@
     - Separated notification flags for MSG & SMS for decoupled delivery
     - CFG POWER now also sets rated torque (for consistency)
     - Added 12V DC converter current level reading
+    - Added SMS cmd "CA H" (halt charging) and supporting MSG CMD_StopCharge
+    - Changed charge done detection from SOC 100% to power level 0
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -4489,7 +4491,9 @@ BOOL vehicle_twizy_poll0(void)
       if (can_databuffer[3] == 0x54)
       {
         // BMS to CHG power level request:
-        twizy_chg_power_request = CAN_BYTE(0);
+        // (take only while charging to keep finishing level for "done" detection)
+        if ((twizy_status & 0x60) == 0x20)
+          twizy_chg_power_request = CAN_BYTE(0);
         
         // SOC:
         t = ((unsigned int) can_databuffer[4] << 8) + can_databuffer[5];
@@ -4911,7 +4915,7 @@ BOOL vehicle_twizy_poll1(void)
       // Translation to car_doors1 done in ticker1()
       
       // Read 12V DC converter current level:
-      car_12v_current = ((UINT) CAN_BYTE(2) * 10) >> 2;
+      car_12v_current = (UINT) CAN_BYTE(2) << 1;
       
       // Check 12V DC converter status:
       // 0xD1 = DC converter off, main charger off/ready, Twizy off
@@ -5902,8 +5906,11 @@ BOOL vehicle_twizy_state_ticker1(void)
     // Check if we've been charging before:
     if (car_chargestate <= 2)
     {
-      // yes, check if we've reached 100.00% SOC:
-      if (twizy_soc_max >= 10000)
+      // yes, check if charging has been finished by the BMS
+      // by checking if we've reached charge power level 0
+      // (this is more reliable than checking for SOC 100% as some Twizy will
+      // not reach 100% while others will still top off in 100% for some time)
+      if (twizy_chg_power_request == 0)
       {
         UINT32 charge;
         UINT cap_prc;
@@ -7268,6 +7275,7 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
         unit = 0;
         par_set(PARAM_FEATURE_BASE + FEATURE_SUFFSOC, &unit);
         par_set(PARAM_FEATURE_BASE + FEATURE_SUFFRANGE, &unit);
+        car_chargesubstate = 0; // this should not be necessary, but just in case...
       }
       else if (f == 's')
       {
@@ -7283,6 +7291,11 @@ BOOL vehicle_twizy_ca_sms(BOOL premsg, char *caller, char *command, char *argume
       {
         // level:
         sys_features[FEATURE_CHARGEPOWER] = atoi(arguments+1);
+      }
+      else if (f == 'h')
+      {
+        // Halt: stop a running charge immediately
+        car_chargesubstate = car_doors1bits.Charging;
       }
       else if (unit == '%')
       {
@@ -8215,12 +8228,23 @@ BOOL vehicle_twizy_battstatus_sms(BOOL premsg, char *caller, char *command, char
 
 BOOL vehicle_twizy_fn_commandhandler(BOOL msgmode, int cmd, char *msg)
 {
+  char *s;
+  
   switch (cmd)
   {
     /************************************************************
      * STANDARD COMMAND OVERRIDES:
      */
 
+  case CMD_StopCharge:
+    car_chargesubstate = car_doors1bits.Charging;
+    if (msgmode)
+    {
+      STP_CMDRESULT(net_scratchpad, cmd, !car_chargesubstate);
+      net_msg_encode_puts();
+    }
+    return TRUE;
+  
   case CMD_Alert:
     return vehicle_twizy_statalert_cmd(msgmode, cmd, msg);
 
