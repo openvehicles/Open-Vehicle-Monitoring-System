@@ -152,8 +152,8 @@ typedef struct {
   unsigned :1;                  // 0x08
   unsigned :1;                  // 0x10
   unsigned :1;                  // 0x20
-  unsigned :1;                  // 0x40
-  unsigned :1;                  // 0x80
+  unsigned CtrlLoggedIn:1;      // 0x40 - logged into controller
+  unsigned CtrlCfgMode:1;       // 0x80 - controller in configuration mode
 } car_doors3bits_t;
 #define car_doors3bits (*((car_doors3bits_t*)&car_doors3))
 

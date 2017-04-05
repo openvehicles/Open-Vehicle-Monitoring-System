@@ -598,7 +598,8 @@ void vehicle_ticker(void)
       acc_handle_msg(FALSE, 12, NULL);
 #endif
 #ifndef OVMS_NO_CHARGECONTROL
-      vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
+      if (vehicle_fn_commandhandler != NULL)
+        vehicle_fn_commandhandler(FALSE, 12, NULL); // Stop charge
 #endif
       }
     }

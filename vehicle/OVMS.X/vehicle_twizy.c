@@ -301,7 +301,7 @@
     - Tightened SDO bus timing
     - Minor code size optimizations
  
- * 3.8.3  17 Mar 2017 (Michael Balzer)
+ * 3.8.3  1 Apr 2017 (Michael Balzer)
     - Charge start/stop notifications changed to ENV to update flags immediately
     - Network streaming/update rework & timing optimization
     - PORTA inputs now disabled by default, enabled by feature #15 + 0x10
@@ -317,6 +317,12 @@
     - Added 12V DC converter current level reading
     - Added SMS cmd "CA H" (halt charging) and supporting MSG CMD_StopCharge
     - Changed charge done detection from SOC 100% to power level 0
+    - Removed upper speed limits by user request
+    - Fixed LOCK/VALET text commands
+    - SEVCON auto-login more robust (retries per second)
+    - New doors3 SEVCON status flags: CtrlLoggedIn & CtrlCfgMode
+    - Profile switch applies new speed limit when in GO mode
+    - CFG POWER now also adjusts max motor power (0x3813.23)
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -358,6 +364,7 @@
  *  OVMS_CAR_RENAULTTWIZY -- enable this module
  *  OVMS_INTERNALGPS -- enable SIM908 GPS
  *  OVMS_NO_SMSTIME -- disable automatic SMS time stamps
+ *  OVMS_NO_LOCK -- disable framework SMS lock/valet mode
  * 
  * Twizy optional compile switches:
  * 
@@ -1362,6 +1369,7 @@ UINT vehicle_twizy_configmode(BOOL on)
     }
   }
   
+  car_doors3bits.CtrlCfgMode = on;
   return 0;
 }
 
@@ -1401,6 +1409,7 @@ struct twizy_cfg_params {
   UINT    DefaultPwrLoLim;
   UINT    DefaultPwrHi;
   UINT    DefaultPwrHiLim;
+  UINT    DefaultMaxMotorPwr;
 
   UINT8   DefaultRecup;
   UINT8   DefaultRecupPrc;
@@ -1458,6 +1467,7 @@ rom struct twizy_cfg_params twizy_cfg_params[2] =
     17000,  // DefaultPwrLoLim
     13000,  // DefaultPwrHi
     17000,  // DefaultPwrHiLim
+    4608,   // DefaultMaxMotorPwr [1/256 kW]
 
     182,    // DefaultRecup
     18,     // DefaultRecupPrc
@@ -1515,6 +1525,7 @@ rom struct twizy_cfg_params twizy_cfg_params[2] =
     10000,  // DefaultPwrLoLim
     7650,   // DefaultPwrHi
     10000,  // DefaultPwrHiLim
+    2688,   // DefaultMaxMotorPwr [1/256 kW]
 
     209,    // DefaultRecup
     21,     // DefaultRecupPrc
@@ -1705,8 +1716,8 @@ UINT vehicle_twizy_cfg_readmaxpwr(void)
 
 
 UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
-// max_kph: 6..111, -1=reset to default (80)
-// warn_kph: 6..111, -1=reset to default (89)
+// max_kph: 6..?, -1=reset to default (80)
+// warn_kph: 6..?, -1=reset to default (89)
 {
   UINT err;
   UINT rpm;
@@ -1717,12 +1728,12 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
 
   if (max_kph == -1)
     max_kph = CFG.DefaultKphMax;
-  else if (max_kph < 6 || max_kph > 111)
+  else if (max_kph < 6)
     return ERR_Range + 1;
 
   if (warn_kph == -1)
     warn_kph = CFG.DefaultKphWarn;
-  else if (warn_kph < 6 || warn_kph > 111)
+  else if (warn_kph < 6)
     return ERR_Range + 2;
 
 
@@ -1740,18 +1751,18 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
     return err;
   
   // set overspeed warning range (STOP lamp):
-  rpm = scale(CFG.DefaultRpmWarn,CFG.DefaultKphWarn,warn_kph,400,10900);
+  rpm = scale(CFG.DefaultRpmWarn,CFG.DefaultKphWarn,warn_kph,400,65535);
   if (err = writesdo(0x3813,0x34,rpm)) // lamp ON
     return err;
   if (err = writesdo(0x3813,0x3c,rpm-CFG.DeltaWarnOff)) // lamp OFF
     return err;
 
   // calc fwd rpm:
-  rpm = scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,max_kph,400,10000);
+  rpm = scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,max_kph,400,65535);
 
   // set fwd rpm:
   if (car_doors2bits.CarLocked)
-    err = writesdo(0x2920,0x05,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,twizy_lock_speed,0,10000));
+    err = writesdo(0x2920,0x05,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,twizy_lock_speed,0,65535));
   else
     err = writesdo(0x2920,0x05,rpm);
   if (err)
@@ -1770,9 +1781,15 @@ UINT vehicle_twizy_cfg_speed(int max_kph, int warn_kph)
     return err;
   if (err = writesdo(0x3813,0x35,rpm+CFG.DeltaBrkEnd)) // neutral braking end
     return err;
-  if (err = writesdo(0x3813,0x3b,LIMIT_MAX(rpm+CFG.DeltaBrkDown,10900))) // drive brakedown trigger
+  if (err = writesdo(0x3813,0x3b,rpm+CFG.DeltaBrkDown)) // drive brakedown trigger
     return err;
 
+  // adjust overspeed limits:
+  if (err = writesdo(0x3813,0x2d,rpm+CFG.DeltaBrkDown+1500)) // neutral max speed
+    return err;
+  if (err = writesdo(0x4624,0x00,rpm+CFG.DeltaBrkDown+2500)) // severe overspeed fault
+    return err;
+  
   twizy_max_rpm = rpm;
 
   return 0;
@@ -1860,6 +1877,12 @@ UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc, int cu
     (limited) ? CFG.DefaultPwrLoLim : 200000);
   twizy_max_pwr_hi = scale(CFG.DefaultPwrHi,100,pwr_hi_prc,500,
     (limited) ? CFG.DefaultPwrHiLim : 200000);
+  
+  // set motor max power:
+  if (err = writesdo(0x3813,0x23,(pwr_lo_prc==100 && pwr_hi_prc==100)
+          ? CFG.DefaultMaxMotorPwr
+          : MAX(twizy_max_pwr_lo,twizy_max_pwr_hi)*0.353))
+    return err;
 
   return 0;
 }
@@ -1868,7 +1891,7 @@ UINT vehicle_twizy_cfg_power(int trq_prc, int pwr_lo_prc, int pwr_hi_prc, int cu
 UINT vehicle_twizy_cfg_tsmap(
   char map,
   INT8 t1_prc, INT8 t2_prc, INT8 t3_prc, INT8 t4_prc,
-  INT8 t1_spd, INT8 t2_spd, INT8 t3_spd, INT8 t4_spd)
+  int t1_spd, int t2_spd, int t3_spd, int t4_spd)
 // map: 'D'=Drive 'N'=Neutral 'B'=Footbrake
 //
 // t1_prc: 0..100, -1=reset to default (D=100, N/B=100)
@@ -1876,10 +1899,10 @@ UINT vehicle_twizy_cfg_tsmap(
 // t3_prc: 0..100, -1=reset to default (D=100, N/B=50)
 // t4_prc: 0..100, -1=reset to default (D=100, N/B=20)
 //
-// t1_spd: 0..120, -1=reset to default (D/N/B=33)
-// t2_spd: 0..120, -1=reset to default (D/N/B=39)
-// t3_spd: 0..120, -1=reset to default (D/N/B=50)
-// t4_spd: 0..120, -1=reset to default (D/N/B=66)
+// t1_spd: 0..?, -1=reset to default (D/N/B=33)
+// t2_spd: 0..?, -1=reset to default (D/N/B=39)
+// t3_spd: 0..?, -1=reset to default (D/N/B=50)
+// t4_spd: 0..?, -1=reset to default (D/N/B=66)
 {
   UINT err;
   UINT8 base;
@@ -1904,13 +1927,13 @@ UINT vehicle_twizy_cfg_tsmap(
 
   // speed points:
 
-  if ((t1_spd != -1) && (t1_spd < 0 || t1_spd > 120))
+  if ((t1_spd != -1) && (t1_spd < 0))
     return ERR_Range + 6;
-  if ((t2_spd != -1) && (t2_spd < 0 || t2_spd > 120))
+  if ((t2_spd != -1) && (t2_spd < 0))
     return ERR_Range + 7;
-  if ((t3_spd != -1) && (t3_spd < 0 || t3_spd > 120))
+  if ((t3_spd != -1) && (t3_spd < 0))
     return ERR_Range + 8;
-  if ((t4_spd != -1) && (t4_spd < 0 || t4_spd > 120))
+  if ((t4_spd != -1) && (t4_spd < 0))
     return ERR_Range + 9;
 
   // get map base subindex in SDO 0x3813:
@@ -2457,6 +2480,7 @@ BOOL vehicle_twizy_cfg_writeprofile(UINT8 key)
 UINT vehicle_twizy_cfg_applyprofile(UINT8 key)
 {
   UINT err;
+  int pval;
 
   // clear success flag:
   twizy_cfg.applied = 0;
@@ -2486,7 +2510,7 @@ UINT vehicle_twizy_cfg_applyprofile(UINT8 key)
   // update user profile status:
   twizy_cfg.profile_user = key;
 
-
+  
   // update pre-op (admin) mode params if configmode possible at the moment:
 
   err = configmode(1);
@@ -2529,8 +2553,22 @@ UINT vehicle_twizy_cfg_applyprofile(UINT8 key)
       delay5(20); // 100 ms
     }
 
-  }
+  } else {
+    
+    // pre-op mode currently not possible;
+    // just set speed limit:
+    if (!car_doors2bits.CarLocked) {
+      pval = cfgparam(speed);
+      if (pval == -1)
+        pval = CFG.DefaultKphMax;
 
+      err = writesdo(0x2920,0x05,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,pval,0,65535));
+      if (!err)
+        err = writesdo(0x2920,0x06,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,pval,0,CFG.DefaultRpmRev));
+    }
+    
+  }
+  
   // set success flag:
   twizy_cfg.applied = 1;
   
@@ -3424,6 +3462,25 @@ BOOL vehicle_twizy_cfg_switchprofile_cmd(BOOL msgmode, int cmd, char *arguments)
  *    disable km limit, set speed back to profile
  *
  */
+
+void vehicle_twizy_cfg_restrict_prepmsg(char *s, UINT err)
+{
+  if (err) {
+    s = vehicle_twizy_fmt_err(s, err);
+    s = stp_rom(s, " - Status: ");
+  }
+
+  if (car_doors2bits.CarLocked)
+    s = stp_i(s, "LOCKED to max kph=", twizy_lock_speed);
+  else
+    s = stp_rom(s, "UNLOCKED");
+
+  if (car_doors2bits.ValetMode)
+    s = stp_l2f(s, ", VALET ON at odo=", twizy_valet_odo, 2);
+  else
+    s = stp_rom(s, ", VALET OFF");
+}
+
 BOOL vehicle_twizy_cfg_restrict_cmd(BOOL msgmode, int cmd, char *arguments)
 {
   char *s;
@@ -3440,10 +3497,10 @@ BOOL vehicle_twizy_cfg_restrict_cmd(BOOL msgmode, int cmd, char *arguments)
     if (pval == -1)
       pval = CFG.DefaultKphMax;
     
-    if (twizy_lock_speed >= pval)
+    if (twizy_lock_speed > pval)
       err = ERR_Range + 1;
     else {
-      err = writesdo(0x2920,0x05,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,twizy_lock_speed,0,10000));
+      err = writesdo(0x2920,0x05,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,twizy_lock_speed,0,65535));
       if (err == 0)
         err = writesdo(0x2920,0x06,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,twizy_lock_speed,0,CFG.DefaultRpmRev));
     }
@@ -3473,7 +3530,7 @@ BOOL vehicle_twizy_cfg_restrict_cmd(BOOL msgmode, int cmd, char *arguments)
     if (pval == -1)
       pval = CFG.DefaultKphMax;
 
-    err = writesdo(0x2920,0x05,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,pval,0,10000));
+    err = writesdo(0x2920,0x05,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,pval,0,65535));
     if (err == 0)
       err = writesdo(0x2920,0x06,scale(CFG.DefaultRpmMax,CFG.DefaultKphMax,pval,0,CFG.DefaultRpmRev));
 
@@ -3488,51 +3545,71 @@ BOOL vehicle_twizy_cfg_restrict_cmd(BOOL msgmode, int cmd, char *arguments)
     break;
   }
 
-  // send status text notification:
-
-  if (!msgmode)
-    net_msg_start();
-
-  s = stp_rom(net_scratchpad, "MP-0 PA");
-
-  if (err) {
-    s = vehicle_twizy_fmt_err(s, err);
-    s = stp_rom(s, " - Status: ");
-  }
-
-  if (car_doors2bits.CarLocked)
-    s = stp_i(s, "LOCKED to max kph=", twizy_lock_speed);
-  else
-    s = stp_rom(s, "UNLOCKED");
-
-  if (car_doors2bits.ValetMode)
-    s = stp_l2f(s, ", VALET ON at odo=", twizy_valet_odo, 2);
-  else
-    s = stp_rom(s, ", VALET OFF");
-
-  net_msg_encode_puts();
-
   // send status data update:
   net_req_notification(NET_NOTIFY_ENV);
 
-  if (msgmode) {
+  if (msgmode)
+  {
+    // send status text notification:
+    
+    s = stp_rom(net_scratchpad, "MP-0 PA");
+    vehicle_twizy_cfg_restrict_prepmsg(s, err);
+    net_msg_encode_puts();
+
     // send cmd reply:
+    
     if (err == 0) {
       STP_OK(net_scratchpad, cmd);
     }
     else {
       s = stp_i(net_scratchpad, NET_MSG_CMDRESP, cmd);
+      s = stp_rom(s, ",1,");
       s = vehicle_twizy_fmt_err(s, err);
     }
+    
     net_msg_encode_puts();
   }
-
-  if (!msgmode)
-    net_msg_send();
+  else
+  {
+    // Text/SMS mode: prepare status output in net_scratchpad
+    vehicle_twizy_cfg_restrict_prepmsg(net_scratchpad, err);
+  }
 
   return TRUE;
 }
 
+
+BOOL vehicle_twizy_sms_lock(BOOL premsg, char *caller, char *command, char *arguments)
+  {
+  vehicle_twizy_cfg_restrict_cmd(FALSE, 20, arguments);
+  net_send_sms_start(caller);
+  net_puts_ram(net_scratchpad);
+  return TRUE;
+  }
+
+BOOL vehicle_twizy_sms_unlock(BOOL premsg, char *caller, char *command, char *arguments)
+  {
+  vehicle_twizy_cfg_restrict_cmd(FALSE, 22, arguments);
+  net_send_sms_start(caller);
+  net_puts_ram(net_scratchpad);
+  return TRUE;
+  }
+
+BOOL vehicle_twizy_sms_valet(BOOL premsg, char *caller, char *command, char *arguments)
+  {
+  vehicle_twizy_cfg_restrict_cmd(FALSE, 21, arguments);
+  net_send_sms_start(caller);
+  net_puts_ram(net_scratchpad);
+  return TRUE;
+  }
+
+BOOL vehicle_twizy_sms_unvalet(BOOL premsg, char *caller, char *command, char *arguments)
+  {
+  vehicle_twizy_cfg_restrict_cmd(FALSE, 23, arguments);
+  net_send_sms_start(caller);
+  net_puts_ram(net_scratchpad);
+  return TRUE;
+  }
 
 
 
@@ -3607,12 +3684,6 @@ UINT vehicle_twizy_resetlogs_msgp(UINT8 which, UINT8 *retcnt)
   UINT err;
   UINT8 n, cnt=0;
 
-  // login necessary:
-  if (which > 1) {
-    if (err = login(1))
-      return err;
-  }
-
   /* Alerts (active faults):
    * cannot be reset (just by power cycle)
    */
@@ -3661,13 +3732,6 @@ UINT vehicle_twizy_querylogs_msgp(UINT8 which, UINT8 start, UINT8 *retcnt)
   char *s;
   UINT err;
   UINT8 n, len, cnt;
-
-  // login necessary for FIFOs and counters:
-  if (which > 1 && which < 5) {
-    if (err = login(1))
-      return err;
-  }
-
 
   /* Key time:
       MP-0 HRT-ENG-LogKeyTime
@@ -5678,25 +5742,13 @@ BOOL vehicle_twizy_state_ticker1(void)
     #ifdef OVMS_TWIZY_CFG
       // reset button cnt:
       twizy_button_cnt = 0;
-
-      // login to SEVCON:
-      if (sys_can.EnableWrite)
-      {
-        for (i=0; i<3; i++)
-        {
-          if (login(1) == 0)
-            break;
-          ClrWdt();
-          delay100(5);
-        }
-      }
     #endif // OVMS_TWIZY_CFG
-
   }
   else if (!(twizy_status & CAN_STATUS_KEYON) && car_doors3bits.CarAwake)
   {
     // CAR has just been turned OFF
     car_doors3bits.CarAwake = 0;
+    car_doors3bits.CtrlLoggedIn = 0;
     
     car_parktime = car_time-1; // Record it as 1 second ago, so non zero report
 
@@ -5718,8 +5770,8 @@ BOOL vehicle_twizy_state_ticker1(void)
     #endif // OVMS_TWIZY_CFG
 
   }
-
-
+  
+  
   /***************************************************************************
    * Statistics subsystems:
    *
@@ -6033,54 +6085,69 @@ BOOL vehicle_twizy_state_ticker1(void)
 
   if ((car_doors3bits.CarAwake) && (sys_can.EnableWrite))
   {
-
     /***************************************************************************
-     * Check for button presses in STOP mode => CFG RESET:
+     * Login to SEVCON:
      */
-
-    if ((twizy_button_cnt >= 3) && (!sys_can.DisableReset))
+    
+    if (!car_doors3bits.CtrlLoggedIn)
     {
-      // reset SEVCON profile:
-      memset(&twizy_cfg_profile, 0, sizeof(twizy_cfg_profile));
-      twizy_cfg.unsaved = (twizy_cfg.profile_user > 0);
-      vehicle_twizy_cfg_applyprofile(twizy_cfg.profile_user);
-      twizy_notify(SEND_ResetResult);
-      
-      // reset button cnt:
-      twizy_button_cnt = 0;
+      if (login(1) == 0)
+        car_doors3bits.CtrlLoggedIn = 1;
+      // else retry on next ticker1 call
     }
-
-    else if (twizy_button_cnt >= 1)
+  
+  
+    if (car_doors3bits.CtrlLoggedIn)
     {
-      // pre-op also sends a CAN error, so for button_cnt >= 1
-      // check if we're stuck in pre-op state:
-      if ((readsdo(0x5110,0x00) == 0) && (twizy_sdo.data == 0x7f)) {
-        // we're in pre-op, try to solve:
-        if (configmode(0) == 0)
-          twizy_button_cnt = 0; // solved
+      /***************************************************************************
+       * Check for button presses in STOP mode => CFG RESET:
+       */
+
+      if ((twizy_button_cnt >= 3) && (!sys_can.DisableReset))
+      {
+        // reset SEVCON profile:
+        memset(&twizy_cfg_profile, 0, sizeof(twizy_cfg_profile));
+        twizy_cfg.unsaved = (twizy_cfg.profile_user > 0);
+        vehicle_twizy_cfg_applyprofile(twizy_cfg.profile_user);
+        twizy_notify(SEND_ResetResult);
+
+        // reset button cnt:
+        twizy_button_cnt = 0;
       }
-    }
+
+      else if (twizy_button_cnt >= 1)
+      {
+        // pre-op also sends a CAN error, so for button_cnt >= 1
+        // check if we're stuck in pre-op state:
+        if ((readsdo(0x5110,0x00) == 0) && (twizy_sdo.data == 0x7f)) {
+          // we're in pre-op, try to solve:
+          if (configmode(0) == 0)
+            twizy_button_cnt = 0; // solved
+        }
+      }
 
 
-    /***************************************************************************
-     * Valet mode: lock speed if valet max odometer reached:
-     */
+      /***************************************************************************
+       * Valet mode: lock speed if valet max odometer reached:
+       */
 
-    if ((car_doors2bits.ValetMode)
-            && (!car_doors2bits.CarLocked) && (twizy_odometer > twizy_valet_odo))
-    {
-      vehicle_twizy_cfg_restrict_cmd(FALSE, CMD_Lock, NULL);
-    }
+      if ((car_doors2bits.ValetMode)
+              && (!car_doors2bits.CarLocked) && (twizy_odometer > twizy_valet_odo))
+      {
+        vehicle_twizy_cfg_restrict_cmd(FALSE, CMD_Lock, NULL);
+      }
 
 #ifdef OVMS_TWIZY_BATTMON
 
-    /***************************************************************************
-     * Auto drive & recuperation adjustment (if enabled):
-     */
+      /***************************************************************************
+       * Auto drive & recuperation adjustment (if enabled):
+       */
 
-    vehicle_twizy_cfg_autopower();
+      vehicle_twizy_cfg_autopower();
 
 #endif //OVMS_TWIZY_BATTMON
+    
+    } // if (car_doors3bits.CtrlLoggedIn)
 
   }
 
@@ -8313,6 +8380,11 @@ BOOL vehicle_twizy_help_sms(BOOL premsg, char *caller, char *command, char *argu
 
 rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] = {
 
+  "2LOCK",
+  "2UNLOCK",
+  "2VALET",
+  "2UNVALET",
+  
 #ifdef OVMS_TWIZY_DEBUG
   "3DEBUG",       // Twizy: output internal state dump for debug
 #endif // OVMS_TWIZY_DEBUG
@@ -8338,6 +8410,12 @@ rom char vehicle_twizy_sms_cmdtable[][NET_SMS_CMDWIDTH] = {
 };
 
 rom far BOOL(*vehicle_twizy_sms_hfntable[])(BOOL premsg, char *caller, char *command, char *arguments) = {
+
+  &vehicle_twizy_sms_lock,
+  &vehicle_twizy_sms_unlock,
+  &vehicle_twizy_sms_valet,
+  &vehicle_twizy_sms_unvalet,
+  
 #ifdef OVMS_TWIZY_DEBUG
   &vehicle_twizy_debug_sms,
 #endif // OVMS_TWIZY_DEBUG

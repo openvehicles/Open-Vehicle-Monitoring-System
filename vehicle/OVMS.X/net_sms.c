@@ -55,10 +55,12 @@ rom char NET_MSG_FEATURE[] = "Feature has been set.";
 #ifndef OVMS_NO_HOMELINK
 rom char NET_MSG_HOMELINK[] = "Homelink activated";
 #endif // OVMS_NO_HOMELINK
+#ifndef OVMS_NO_LOCK
 rom char NET_MSG_LOCK[] = "Vehicle lock requested";
 rom char NET_MSG_UNLOCK[] = "Vehicle unlock requested";
 rom char NET_MSG_VALET[] = "Valet mode requested";
 rom char NET_MSG_UNVALET[] = "Valet mode cancel requested";
+#endif // OVMS_NO_LOCK
 
 #ifndef OVMS_NO_CHARGECONTROL
 rom char NET_MSG_CHARGEMODE[] = "Charge mode change requested";
@@ -793,6 +795,7 @@ BOOL net_sms_handle_homelink(char *caller, char *command, char *arguments)
   }
 #endif // OVMS_NO_HOMELINK
 
+#ifndef OVMS_NO_LOCK
 BOOL net_sms_handle_lock(char *caller, char *command, char *arguments)
   {
   if (vehicle_fn_commandhandler != NULL)
@@ -828,6 +831,7 @@ BOOL net_sms_handle_unvalet(char *caller, char *command, char *arguments)
   net_puts_rom(NET_MSG_UNVALET);
   return TRUE;
   }
+#endif // OVMS_NO_LOCK
 
 #ifndef OVMS_NO_CHARGECONTROL
 
@@ -996,10 +1000,12 @@ rom char sms_cmdtable[][NET_SMS_CMDWIDTH] =
 #ifndef OVMS_NO_HOMELINK
     "2HOMELINK",
 #endif // OVMS_NO_HOMELINK
+#ifndef OVMS_NO_LOCK
     "2LOCK",
     "2UNLOCK",
     "2VALET",
     "2UNVALET",
+#endif // OVMS_NO_LOCK
 #ifndef OVMS_NO_CHARGECONTROL
     "2CHARGEMODE ",
     "2CHARGESTART",
@@ -1045,10 +1051,12 @@ rom BOOL (*sms_hfntable[])(char *caller, char *command, char *arguments) =
 #ifndef OVMS_NO_HOMELINK
   &net_sms_handle_homelink,
 #endif // OVMS_NO_HOMELINK
+#ifndef OVMS_NO_LOCK
   &net_sms_handle_lock,
   &net_sms_handle_unlock,
   &net_sms_handle_valet,
   &net_sms_handle_unvalet,
+#endif // OVMS_NO_LOCK
 #ifndef OVMS_NO_CHARGECONTROL
   &net_sms_handle_chargemode,
   &net_sms_handle_chargestart,
