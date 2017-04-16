@@ -86,6 +86,7 @@ UINT8 nl_abs_active; // non-zero if we recently received data from the ABS syste
 
 RemoteCommand nl_remote_command; // command to send, see ticker10th()
 UINT8 nl_remote_command_ticker; // number of tenths remaining to send remote command frames
+UINT16 nl_cc_off_ticker; // seconds before we send the climate control off command
 
 UINT16 nl_gids; // current gids in the battery
 UINT16 nl_max_gids; // maximum gids, used for SOC calculation
@@ -503,30 +504,6 @@ void vehicle_nissanleaf_load_soc_configuration(void)
   nl_max_gids = max_gids_candidate;
   }
 
-BOOL vehicle_nissanleaf_ticker1(void)
-  {
-  car_time++;
-  if (nl_busactive > 0) nl_busactive--;
-  if (nl_abs_active > 0) nl_abs_active--;
-  if (car_stale_temps > 0) car_stale_temps--;
-  if (car_stale_ambient > 0) car_stale_ambient--;
-
-  // have the messages from the ABS system stopped?
-  if (nl_abs_active == 0)
-    {
-    vehicle_nissanleaf_car_on(FALSE);
-    car_speed = 0;
-    }
-
-  // has the whole CAN bus gone quiet?
-  if (nl_busactive == 0)
-    {
-    vehicle_nissanleaf_car_on(FALSE);
-    car_speed = 0;
-    car_doors5bits.HVAC = FALSE;
-    }
-  }
-
 ////////////////////////////////////////////////////////////////////////
 // vehicle_nissanleaf_remote_command()
 // Wake up the car & send Climate Control or Remote Charge message to VCU,
@@ -572,8 +549,43 @@ CommandResult vehicle_nissanleaf_remote_command(RemoteCommand command)
   // EV SYSTEM ACTIVATION REQUEST will be released in ticker10th() too
   nl_remote_command = command;
   nl_remote_command_ticker = REMOTE_COMMAND_REPEAT_COUNT;
+  if (command == ENABLE_CLIMATE_CONTROL)
+    {
+    nl_cc_off_ticker = 600;
+    }
+
 
   return OK;
+  }
+
+BOOL vehicle_nissanleaf_ticker1(void)
+  {
+  car_time++;
+  if (nl_busactive > 0) nl_busactive--;
+  if (nl_abs_active > 0) nl_abs_active--;
+  if (car_stale_temps > 0) car_stale_temps--;
+  if (car_stale_ambient > 0) car_stale_ambient--;
+  if (nl_cc_off_ticker > 0) nl_cc_off_ticker--;
+
+  // have the messages from the ABS system stopped?
+  if (nl_abs_active == 0)
+    {
+    vehicle_nissanleaf_car_on(FALSE);
+    car_speed = 0;
+    }
+
+  // has the whole CAN bus gone quiet?
+  if (nl_busactive == 0)
+    {
+    vehicle_nissanleaf_car_on(FALSE);
+    car_speed = 0;
+    car_doors5bits.HVAC = FALSE;
+    }
+
+  if (nl_cc_off_ticker == 1)
+    {
+    vehicle_nissanleaf_remote_command(DISABLE_CLIMATE_CONTROL);
+    }
   }
 
 ////////////////////////////////////////////////////////////////////////
