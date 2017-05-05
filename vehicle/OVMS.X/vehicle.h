@@ -40,6 +40,11 @@ extern unsigned char  can_databuffer[8];         // CAN message bytes
 
 // can_databuffer byte + nibble access macros: b=byte# 0..7 / n=nibble# 0..15
 #define CAN_BYTE(b)     can_databuffer[b]
+#define CAN_UINT(b)     (((UINT)CAN_BYTE(b) << 8) | CAN_BYTE(b+1))
+#define CAN_UINT24(b)   (((UINT32)CAN_BYTE(b) << 16) | ((UINT)CAN_BYTE(b+1) << 8) \
+                         | CAN_BYTE(b+2))
+#define CAN_UINT32(b)   (((UINT32)CAN_BYTE(b) << 24) | ((UINT32)CAN_BYTE(b+1) << 16) \
+                         | ((UINT)CAN_BYTE(b+2) << 8) | CAN_BYTE(b+3))
 #define CAN_NIBL(b)     (can_databuffer[b] & 0x0f)
 #define CAN_NIBH(b)     (can_databuffer[b] >> 4)
 #define CAN_NIB(n)      (((n)&1) ? CAN_NIBL((n)>>1) : CAN_NIBH((n)>>1))
@@ -85,6 +90,31 @@ void vehicle_idlepoll(void);
 
 #ifdef OVMS_POLLER
 // Vehicle Poller functions and data
+
+////////////////////////////////////////////////////////////////////////////////
+// OBDII polling table:
+// 
+//    typedef struct
+//    {
+//      unsigned int moduleid; // send request to (0 = end of list)
+//      unsigned int rmoduleid; // expect response from (0 = broadcast)
+//      unsigned char type; // see vehicle.h
+//      unsigned int pid; // the PID to request
+//      unsigned int polltime[VEHICLE_POLL_NSTATES]; // poll frequency
+//    } vehicle_pid_t;
+//
+// polltime[state] = poll period in seconds, i.e. 10 = poll every 10 seconds
+//
+// state: 0..2; set by vehicle_poll_setstate()
+//     0=off, 1=on, 2=charging
+// 
+// Use broadcasts to query all ECUs. The request is sent to ID 0x7df (broadcast
+// listener) and the poller accepts any response ID from 0x7e8..0x7ef.
+// The moduleid is not used for broadcasts, just needs to be != 0.
+//
+// To poll a specific ECU, send to its specific ID (one of 0x7e0..0x7e7).
+// ECUs will respond using their specific ID plus 8 (= range 0x7e8..0x7ef).
+//
 
 #define VEHICLE_POLL_NSTATES 3
 

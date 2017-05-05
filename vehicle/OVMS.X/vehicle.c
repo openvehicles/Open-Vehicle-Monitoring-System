@@ -447,6 +447,13 @@ void vehicle_initialise(void)
     vehicle_twizy_initialise();
     }
 #endif
+#ifdef OVMS_CAR_RENAULTZOE
+  else if (memcmppgm2ram(p, (char const rom far*)"RZ", 2) == 0)
+    {
+    void vehicle_zoe_initialise(void);
+    vehicle_zoe_initialise();
+    }
+#endif
 #ifdef OVMS_CAR_OBDII
   else if (memcmppgm2ram(p, (char const rom far*)"O2", 2) == 0)
     {
