@@ -46,6 +46,8 @@
 #include "net_msg.h"
 
 #define FEATURE_SPEEDO_REPEATS 5 // Number of times to repeat speedo updates
+#define FEATURE_ROADSTERBITS               0x0A
+#define FEATURE_ROADSTERBITS_LOCKWHILEON   0x01
 
 // Capabilities for Tesla Roadster
 rom char teslaroadster_capabilities[] = "C10-12,C15-24";
@@ -616,8 +618,12 @@ void vehicle_teslaroadster_tx_lockunlockcar(unsigned char mode, char *pin)
   long lpin;
   lpin = atol(pin);
 
-  if ((mode == 0x02)&&(car_doors1 & 0x80))
-    return; // Refuse to lock a car that is turned on
+  if ((mode == 0x02)&&((car_doors1 & 0x40)==0))
+    return; // Refuse to lock a car that has handbrake off
+    
+  if ((mode == 0x02)&&(car_doors1 & 0x80)&&
+      ((sys_features[FEATURE_ROADSTERBITS] & FEATURE_ROADSTERBITS_LOCKWHILEON) == 0))
+    return; // Refuse to lock a car that is turned on (unless FEATURE_ROADSTERBITS_LOCKWHILEON bypass is enabled)
 
   while (TXB0CONbits.TXREQ) {} // Loop until TX is done
   TXB0CON = 0;
