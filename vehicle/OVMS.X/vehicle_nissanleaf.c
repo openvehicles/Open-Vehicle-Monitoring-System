@@ -33,7 +33,7 @@
 #include "inputs.h"
 
 // Nissan Leaf module version:
-rom char nissanleaf_version[] = "1.1";
+rom char nissanleaf_version[] = "1.2";
 
 // Nissan Leaf capabilities:
 // - CMD_StartCharge (11)
