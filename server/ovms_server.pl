@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.8-20170205";
+my $VERSION = "2.3.9-20170523";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -318,7 +318,8 @@ sub io_line
     my $towrite = "MP-S 0 $servertoken $serverdigest\r\n";
     $conns{$fn}{'tx'} += length($towrite);
     $hdl->push_write($towrite);
-
+    return if ($hdl->destroyed);
+    
     # Account for it...
     $utilisations{$vehicleid.'-'.$clienttype}{'rx'} += length($line)+2;
     $utilisations{$vehicleid.'-'.$clienttype}{'tx'} += $towrite;
@@ -573,6 +574,8 @@ sub io_terminate
 sub io_tx
   {
   my ($fn, $handle, $code, $data) = @_;
+  
+  return if ($handle->destroyed);
 
   my $vid = $conns{$fn}{'vehicleid'};
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
