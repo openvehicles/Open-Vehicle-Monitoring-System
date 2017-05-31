@@ -1,0 +1,23 @@
+Partlist
+
+Exported from Twizy1a.sch at 31.05.2017 20:07:32 
+
+EAGLE Version 4.03 Copyright (c) 1988-2001 CadSoft
+
+Part     Value          Device     Package  Library  Sheet
+
+C1                      C-EU025-024X044 C025-024X044 rcl      1
+C2                      CPOL-EUE2.5-5 E2,5-5   rcl      1
+R1       470            R-EU_0309/2V 0309V    rcl      1
+R2       470            R-EU_0309/2V 0309V    rcl      1
+R3       470            R-EU_0309/2V 0309V    rcl      1
+R4       470            R-EU_0309/2V 0309V    rcl      1
+R5       100k           R-EU_0309/2V 0309V    rcl      1
+R6       100k           R-EU_0309/2V 0309V    rcl      1
+R7       100k           R-EU_0309/2V 0309V    rcl      1
+R8       100k           R-EU_0309/2V 0309V    rcl      1
+ST1                     ST14-2A    ST14-2-RM2 con-lsta 1
+U$1      TAST0          TAST0      TASTER   Twizy    1
+U$2      TAST0          TAST0      TASTER   Twizy    1
+U$3      TAST0          TAST0      TASTER   Twizy    1
+U$4      TAST0          TAST0      TASTER   Twizy    1
