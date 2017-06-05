@@ -323,6 +323,7 @@
     - New doors3 SEVCON status flags: CtrlLoggedIn & CtrlCfgMode
     - Profile switch applies new speed limit when in GO mode
     - CFG POWER now also adjusts max motor power (0x3813.23)
+    - New compiler flag OVMS_TWIZY_SDOLOG: enable logging of SDOs 0x4600 & 0x4602
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -377,6 +378,7 @@
  *  OVMS_TWIZY_CFG_BRAKELIGHT -- enable CFG BRAKELIGHT
  *  OVMS_TWIZY_STACKDEBUG -- enable stack depth debugging
  *  OVMS_CUSTOM_CAN_ISR -- necessary for charge power limiting
+ *  OVMS_TWIZY_SDOLOG -- enable motor monitoring SDO logging
  * 
  * Recommended compile switches to exclude unused framework features:
  * 
@@ -4340,6 +4342,48 @@ void vehicle_twizy_simulator_run(int chunk)
 #endif // OVMS_CANSIM
 
 
+#ifdef OVMS_TWIZY_SDOLOG
+
+/**
+ * SEVCON SDO Register Dump
+ */
+char vehicle_twizy_sdolog_msgp(char stat, UINT regindex)
+{
+  //static WORD crc; // diff crc for push msgs
+  char *s;
+  UINT8 i, cnt;
+
+  // read subindex count:
+  if (readsdo(regindex,0)!=0)
+    return stat;
+  cnt = twizy_sdo.data;
+  
+  s = stp_x(net_scratchpad, "MP-0 HRT-ENG-SDO,", regindex);
+  s = stp_l2f(s, ",86400,", twizy_speed, 2);
+  s = stp_l(s, ",", ((long) twizy_power * 64L) / 10);
+  
+  // rpm:
+  if (readsdo(0x606c,0)!=0)
+    s = stp_rom(s, ",");
+  else
+    s = stp_l(s, ",", twizy_sdo.data);
+  
+  for (i=1; i<=cnt; i++)
+  {
+    if (readsdo(regindex,i)!=0)
+      s = stp_rom(s, ",");
+    else
+      s = stp_ul(s, ",", twizy_sdo.data);
+  }
+  
+  net_msg_encode_puts();
+  
+  return (stat == 2) ? 1 : stat;
+}
+
+#endif // OVMS_TWIZY_SDOLOG
+
+
 ////////////////////////////////////////////////////////////////////////
 // CAN Interrupt Service Routine (High Priority)
 //
@@ -5378,6 +5422,10 @@ void vehicle_twizy_notify(void)
         stat = net_msgp_gps(stat);
       if (sys_features[FEATURE_STREAM] & 2)
         stat = vehicle_twizy_gpslog_msgp(stat);
+#ifdef OVMS_TWIZY_SDOLOG
+      stat = vehicle_twizy_sdolog_msgp(stat, 0x4600);
+      stat = vehicle_twizy_sdolog_msgp(stat, 0x4602);
+#endif // OVMS_TWIZY_SDOLOG
       if (stat != 2)
         net_msg_send();
       twizy_notify_msg &= ~SEND_StreamUpdate;
