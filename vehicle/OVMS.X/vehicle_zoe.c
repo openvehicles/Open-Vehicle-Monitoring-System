@@ -54,6 +54,8 @@ rom char vehicle_zoe_capabilities[] = "";
 UINT zoe_soc;                   // SOC [2/100%]
 UINT32 zoe_odometer;            // Odometer [km]
 
+#pragma udata
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // OBDII polling table:
@@ -182,7 +184,7 @@ BOOL vehicle_zoe_ticker1(void) {
   // Translate Zoe data to OVMS car model:
   //
   
-  car_SOC = zoe_soc * 2 / 100;
+  car_SOC = (zoe_soc * 2) / 100;
   car_odometer = MiFromKm(zoe_odometer);
   
   
@@ -375,7 +377,7 @@ BOOL vehicle_zoe_initialise(void) {
 
   zoe_busactive = 0;
 
-  zoe_soc = 50 * 100 / 2;
+  zoe_soc = 2500; // = 50%
   zoe_odometer = 0;
 
   
