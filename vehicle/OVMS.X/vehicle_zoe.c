@@ -213,6 +213,22 @@ BOOL vehicle_zoe_ticker1(void) {
   // Force active polling:
   vehicle_poll_busactive = 60;
 
+#if 1
+  // Send vehicle debug status to serial port every 3 seconds:
+  if ((net_buf_mode == NET_BUF_CRLF) && (net_buf_pos == 0)
+          && ((can_granular_tick % 3) == 0)) {
+    char *s;
+    s = net_scratchpad;
+    s = stp_rom(s, "ATE1\r#RZ1:");
+    s = stp_sx(s, " ds3=", car_doors3);
+    s = stp_i(s, " vps=", vehicle_poll_state);
+    s = stp_i(s, " soc=", zoe_soc);
+    s = stp_l(s, " odo=", zoe_odometer);
+    s = stp_rom(s, "\r\n");
+    net_puts_ram(net_scratchpad);
+  }
+#endif
+  
   return TRUE;
 }
 
