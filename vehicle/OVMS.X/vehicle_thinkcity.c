@@ -1116,33 +1116,17 @@ BOOL vehicle_thinkcity_initialise(void)
 
   // Buffer 0 (filters 0, 1) for extended PID responses
   RXB0CON  = 0b00000000;
-  // Mask0 = 0b11111111000 (0x7F8), filterbit 0,1,2 deactivated
-  RXM0SIDL = 0b00000000;
-  RXM0SIDH = 0b11111100;
-
-  // Filter0 0b01100000000 (0x300..0x3E0)
-  RXF0SIDL = 0b00000000;
-  RXF0SIDH = 0b01100000;
-
+  RXM0SIDH = 0b11111100; RXM0SIDL = 0b00000000; // Msk0 111 1110 0000 (0x7F8), filterbit 0,1,2 deactivated
+  RXF0SIDH = 0b01100000; RXF0SIDL = 0b00000000; // Flt0 011 000x xxxx (0x300..0x31F)
+  RXF1SIDH = 0b00000000; RXF1SIDL = 0b00000000; // Flt1 000 000x xxxx (-)
+  
   // Buffer 1 (filters 2,3, etc) for direct can bus messages
-  RXB1CON  = 0b00000000;	    // RX buffer1 uses Mask RXM1 and filters RXF2. Filters RXF3, RXF4 and RXF5 are not used in this version
-
-  // Mask1 = 0b11111110000 (0x7f0), filterbit 0,1,2,3 deactivated for low volume IDs
-  RXM1SIDL = 0b00000000;
-  RXM1SIDH = 0b11111110;
-
-  // Filter2 0b01001100000 (0x260..0x26F) = GROUP 0x26_:
-  RXF2SIDL = 0b00000000;
-  RXF2SIDH = 0b01001100;
-
-  // Filter3 0b10001100000 (0x460..0x46F) = GROUP 0x46_: (SRS-modele)
-  RXF3SIDL = 0b00000000;
-  RXF3SIDH = 0b10001100;
-
-  // Filter4 0b11101010000 (0x750..0x75F) = GROUP 0x75_: (motor_temp, heat sink temp)
-  RXF4SIDL = 0b00000000;
-  RXF4SIDH = 0b11101010;
-
+  RXB1CON  = 0b00000000;
+  RXM1SIDH = 0b11111110; RXM1SIDL = 0b00000000; // Msk1 111 1111 0000 (0x7f0), filterbit 0,1,2,3 deactivated for low volume IDs
+  RXF2SIDH = 0b01001100; RXF2SIDL = 0b00000000; // Flt2 010 0110 xxxx (0x260..0x26F) = GROUP 0x26_
+  RXF3SIDH = 0b10001100; RXF3SIDL = 0b00000000; // Flt3 100 0110 xxxx (0x460..0x46F) = GROUP 0x46_ (SRS-modele)
+  RXF4SIDH = 0b11101010; RXF4SIDL = 0b00000000; // Flt4 111 0101 xxxx (0x750..0x75F) = GROUP 0x75_ (motor_temp, heat sink temp)
+  RXF5SIDH = 0b00000000; RXF5SIDL = 0b00000000; // Flt5 000 0000 xxxx (-)
 
   // CAN bus baud rate
   BRGCON1 = 0x01; // SET BAUDRATE to 500 Kbps

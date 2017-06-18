@@ -301,66 +301,84 @@ void high_isr(void)
     {
     
     // Check RX buffer 0:
-    if ((RXB0CONbits.RXFUL)&&(vehicle_fn_poll0 != NULL))
+    if (RXB0CONbits.RXFUL)
       {
-      can_id = ((unsigned int)RXB0SIDL >>5)
-             + ((unsigned int)RXB0SIDH <<3);
-      can_filter = RXB0CON & 0x01;
-      can_datalength = RXB0DLC & 0x0F; // number of received bytes
-      can_databuffer[0] = RXB0D0;
-      can_databuffer[1] = RXB0D1;
-      can_databuffer[2] = RXB0D2;
-      can_databuffer[3] = RXB0D3;
-      can_databuffer[4] = RXB0D4;
-      can_databuffer[5] = RXB0D5;
-      can_databuffer[6] = RXB0D6;
-      can_databuffer[7] = RXB0D7;
-      RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
-      PIR3bits.RXB0IF = 0;   // reset interrupt flag
-#ifdef OVMS_POLLER
-      if (vehicle_poll_plist != NULL)
+      if (vehicle_fn_poll0 != NULL)
         {
-        if ((can_id >= vehicle_poll_moduleid_low)&&
-            (can_id <= vehicle_poll_moduleid_high))
+        can_id = ((unsigned int)RXB0SIDL >>5)
+               + ((unsigned int)RXB0SIDH <<3);
+        can_filter = RXB0CON & 0x01;
+        can_datalength = RXB0DLC & 0x0F; // number of received bytes
+        can_databuffer[0] = RXB0D0;
+        can_databuffer[1] = RXB0D1;
+        can_databuffer[2] = RXB0D2;
+        can_databuffer[3] = RXB0D3;
+        can_databuffer[4] = RXB0D4;
+        can_databuffer[5] = RXB0D5;
+        can_databuffer[6] = RXB0D6;
+        can_databuffer[7] = RXB0D7;
+        RXB0CONbits.RXFUL = 0; // All bytes read, Clear flag
+        PIR3bits.RXB0IF = 0;   // reset interrupt flag
+#ifdef OVMS_POLLER
+        if (vehicle_poll_plist != NULL)
           {
-          if (vehicle_poll_poll0())
+          if ((can_id >= vehicle_poll_moduleid_low)&&
+              (can_id <= vehicle_poll_moduleid_high))
             {
-            vehicle_fn_poll0();
+            if (vehicle_poll_poll0())
+              {
+              vehicle_fn_poll0();
+              }
             }
           }
+        else
+          {
+          vehicle_fn_poll0();
+          }
+#else // #ifdef OVMS_POLLER
+        vehicle_fn_poll0();
+#endif //#ifdef OVMS_POLLER
         }
       else
         {
-        vehicle_fn_poll0();
+        // vehicle_fn_poll0 not hooked in (yet), avoid getting stuck:
+        RXB0CONbits.RXFUL = 0; // reset buffer flag
+        PIR3bits.RXB0IF = 0;   // reset interrupt flag
         }
-#else // #ifdef OVMS_POLLER
-      vehicle_fn_poll0();
-#endif //#ifdef OVMS_POLLER
       }
     
     // Check RX buffer 1:
-    if ((RXB1CONbits.RXFUL)&&(vehicle_fn_poll1 != NULL))
+    if (RXB1CONbits.RXFUL)
       {
+      if (vehicle_fn_poll1 != NULL)
+        {
 #ifdef OVMS_POLLER
-      vehicle_poll_busactive = 60; // Reset countdown timer for passive bus activity
+        vehicle_poll_busactive = 60; // Reset countdown timer for passive bus activity
 #endif //#ifdef OVMS_POLLER
-      can_id = ((unsigned int)RXB1SIDL >>5)
-             + ((unsigned int)RXB1SIDH <<3);
-      can_filter = RXB1CON & 0x07;
-      can_datalength = RXB1DLC & 0x0F; // number of received bytes
-      can_databuffer[0] = RXB1D0;
-      can_databuffer[1] = RXB1D1;
-      can_databuffer[2] = RXB1D2;
-      can_databuffer[3] = RXB1D3;
-      can_databuffer[4] = RXB1D4;
-      can_databuffer[5] = RXB1D5;
-      can_databuffer[6] = RXB1D6;
-      can_databuffer[7] = RXB1D7;
-      RXB1CONbits.RXFUL = 0;        // All bytes read, Clear flag
-      PIR3bits.RXB1IF = 0;          // reset interrupt flag
-      vehicle_fn_poll1();
+        can_id = ((unsigned int)RXB1SIDL >>5)
+               + ((unsigned int)RXB1SIDH <<3);
+        can_filter = RXB1CON & 0x07;
+        can_datalength = RXB1DLC & 0x0F; // number of received bytes
+        can_databuffer[0] = RXB1D0;
+        can_databuffer[1] = RXB1D1;
+        can_databuffer[2] = RXB1D2;
+        can_databuffer[3] = RXB1D3;
+        can_databuffer[4] = RXB1D4;
+        can_databuffer[5] = RXB1D5;
+        can_databuffer[6] = RXB1D6;
+        can_databuffer[7] = RXB1D7;
+        RXB1CONbits.RXFUL = 0;        // All bytes read, Clear flag
+        PIR3bits.RXB1IF = 0;          // reset interrupt flag
+        vehicle_fn_poll1();
+        }
+      else
+        {
+        // vehicle_fn_poll1 not hooked in (yet), avoid getting stuck:
+        RXB1CONbits.RXFUL = 0; // reset buffer flag
+        PIR3bits.RXB1IF = 0;   // reset interrupt flag
+        }
       }
-
+    
     } while (PIR3bits.RXB0IF || PIR3bits.RXB1IF);
   
   }

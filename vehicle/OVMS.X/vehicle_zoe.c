@@ -396,19 +396,21 @@ BOOL vehicle_zoe_initialise(void) {
 
   // Buffer 0 (filters 0, 1) for extended PID responses
   RXB0CON = 0b00000000;
+  RXM0SIDH = 0b11111111; RXM0SIDL = 0b00000000; // Msk0 111 1111 1000
+  RXF0SIDH = 0b11111101; RXF0SIDL = 0b00000000; // Flt0 111 1110 1xxx (0x7e8 .. 0x7ef)
+  RXF1SIDH = 0b00000000; RXF1SIDL = 0b00000000; // Flt1 000 0000 0xxx (-)
 
-  RXM0SIDL = 0b00000000;        // Mask   11111111000
-  RXM0SIDH = 0b11111111;
-
-  RXF0SIDL = 0b00000000;        // Filter 11111101000 (0x7e8 .. 0x7ef)
-  RXF0SIDH = 0b11111101;
-
-  
   // Buffer 1 (filters 2 - 5) currently unused here.
   // These can be used to listen passively to regular process data frames.
   // See other vehicles for mask & filter configuration examples.
   // Hint: you can use open filters if your ISR code is fast enough
   //    and/or there are few/infrequent process data frames.
+  RXB1CON = 0b00000000;
+  RXM1SIDH = 0b11111111; RXM1SIDL = 0b11100000; // Msk1 111 1111 1111
+  RXF2SIDH = 0b00000000; RXF2SIDL = 0b00000000; // Flt2 000 0000 0000 (-)
+  RXF3SIDH = 0b00000000; RXF3SIDL = 0b00000000; // Flt3 000 0000 0000 (-)
+  RXF4SIDH = 0b00000000; RXF4SIDL = 0b00000000; // Flt4 000 0000 0000 (-)
+  RXF5SIDH = 0b00000000; RXF5SIDL = 0b00000000; // Flt5 000 0000 0000 (-)
   
   
   // CAN bus baud rate

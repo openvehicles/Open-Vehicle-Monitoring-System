@@ -606,18 +606,13 @@ BOOL vehicle_nissanleaf_initialise(void)
 
   // Buffer 0 (filters 0, 1) for extended PID responses
   RXB0CON = 0b00000000;
-
-  RXM0SIDL = 0b00000000; // Mask   11111111000
-  RXM0SIDH = 0b11111111;
-
-  RXF0SIDL = 0b00000000; // Filter 11111101000 (0x798 .. 0x79f)
-  RXF0SIDH = 0b11110011;
-
+  RXM0SIDH = 0b11111111; RXM0SIDL = 0b00000000; // Msk0 111 1111 1000
+  RXF0SIDH = 0b11110011; RXF0SIDL = 0b00000000; // Flt0 111 1001 1xxx (0x798 .. 0x79f)
+  RXF1SIDH = 0b00000000; RXF1SIDL = 0b00000000; // Flt1 000 0000 0xxx (-)
+  
   // Buffer 1 (filters 2, 3, 4 and 5) for direct can bus messages
-  RXB1CON = 0b00000000; // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
-
-  RXM1SIDL = 0b00000000;
-  RXM1SIDH = 0b00000000; // Set Mask1 to accept all frames
+  RXB1CON = 0b00000000;
+  RXM1SIDH = 0b00000000; RXM1SIDL = 0b00000000; // Msk1 000 0000 0000 (accept all frames)
 
   // CAN bus baud rate
 

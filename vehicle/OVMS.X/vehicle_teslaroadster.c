@@ -1278,28 +1278,21 @@ void vehicle_teslaroadster_initialise(void)
   while (!CANSTATbits.OPMODE2); // Wait for Configuration mode
 
   // We are now in Configuration Mode
-  RXB0CON = 0b00000000; // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
+  
+  // RX buffer0 uses Mask RXM0 and filters RXF0, RXF1
+  RXB0CON = 0b00000000;
+  RXM0SIDH = 0b11111111; RXM0SIDL = 0b10100000; // Msk0 111 1111 1101 (0x7fd)
+  RXF0SIDH = 0b00100000; RXF0SIDL = 0b00000000; // Flt0 001 0000 00x0 (0x100 and 0x102 will be accepted)
+  RXF1SIDH = 0b00000000; RXF1SIDL = 0b00000000; // Flt1 000 0000 00x0 (-)
 
-  RXM0SIDL = 0b10100000;
-  RXM0SIDH = 0b11111111;       // Set Mask0 to 0x7fd
-
-  RXF0SIDL = 0b00000000;       // Setup Filter0 and Mask so that only CAN ID 0x100 and 0x102 will be accepted
-  RXF0SIDH = 0b00100000;       // Set Filter0 to 0x100
-
-  RXB1CON = 0b00000000;        // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
-
-  RXM1SIDL = 0b11100000;
-  RXM1SIDH = 0b11111111;       // Set Mask1 to 0x7ff
-
-  RXF2SIDL = 0b10000000;       // Setup Filter2 so that CAN ID 0x344 will be accepted
-  RXF2SIDH = 0b01101000;
-
-  RXF3SIDL = 0b01000000;       // Setup Filter3 so that CAN ID 0x402 will be accepted
-  RXF3SIDH = 0b10000000;
-
-  RXF4SIDL = 0b00000000;        // Setup Filter4 so that CAN ID 0x400 will be accepted
-  RXF4SIDH = 0b10000000;
-
+  // RX buffer1 uses Mask RXM1 and filters RXF2, RXF3, RXF4, RXF5
+  RXB1CON = 0b00000000;
+  RXM1SIDH = 0b11111111; RXM1SIDL = 0b11100000; // Msk1 111 1111 1111 (0x7ff)
+  RXF2SIDH = 0b01101000; RXF2SIDL = 0b10000000; // Flt2 011 0100 0100 (0x344)
+  RXF3SIDH = 0b10000000; RXF3SIDL = 0b01000000; // Flt3 100 0000 0010 (0x402)
+  RXF4SIDH = 0b10000000; RXF4SIDL = 0b00000000; // Flt4 100 0000 0000 (0x400)
+  RXF5SIDH = 0b00000000; RXF5SIDL = 0b00000000; // Flt5 000 0000 0000 (-)
+  
   BRGCON1 = 0; // SET BAUDRATE to 1 Mbps
   BRGCON2 = 0xD2;
   BRGCON3 = 0x02;
