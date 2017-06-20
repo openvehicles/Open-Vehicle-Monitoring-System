@@ -116,7 +116,11 @@ void vehicle_poll_poller(void)
         ((vehicle_poll_ticker % vehicle_poll_plcur->polltime[vehicle_poll_state] ) == 0))
       {
       // We need to poll this one...
-      while (TXB0CONbits.TXREQ) {} // Loop until TX is done
+      
+      while ((TXB0CON & 0b00111000) == 0b00001000) {} // wait for TX done / error
+      TXB0CON = 0; // init new TX / abort TX error
+      while (TXB0CONbits.TXREQ) {} // wait for TX clear
+      
       vehicle_poll_type = vehicle_poll_plcur->type;
       vehicle_poll_pid = vehicle_poll_plcur->pid;
       if (vehicle_poll_plcur->rmoduleid != 0)
@@ -124,7 +128,6 @@ void vehicle_poll_poller(void)
         // send to <moduleid>, listen to response from <rmoduleid>:
         vehicle_poll_moduleid_low = vehicle_poll_plcur->rmoduleid;
         vehicle_poll_moduleid_high = vehicle_poll_plcur->rmoduleid;
-        TXB0CON = 0;
         TXB0SIDL = (vehicle_poll_plcur->moduleid & 0x07)<<5;
         TXB0SIDH = (vehicle_poll_plcur->moduleid >>3);
         }
@@ -133,10 +136,10 @@ void vehicle_poll_poller(void)
         // broadcast: send to 0x7df, listen to all responses:
         vehicle_poll_moduleid_low = 0x7e8;
         vehicle_poll_moduleid_high = 0x7ef;
-        TXB0CON = 0;
         TXB0SIDL = 0b11100000;  // 0x07df
         TXB0SIDH = 0b11111011;
         }
+      
       switch (vehicle_poll_plcur->type)
         {
         case VEHICLE_POLL_TYPE_OBDIICURRENT:
@@ -216,8 +219,11 @@ BOOL vehicle_poll_poll0(void)
           (can_databuffer[3] == vehicle_poll_pid))
         {
         // First frame; send flow control frame:
-        while (TXB0CONbits.TXREQ) {} // Loop until TX is done
-        TXB0CON = 0;
+        
+        while ((TXB0CON & 0b00111000) == 0b00001000) {} // wait for TX done / error
+        TXB0CON = 0; // init new TX / abort TX error
+        while (TXB0CONbits.TXREQ) {} // wait for TX clear
+        
         TXB0SIDL = ((can_id-8) & 0x07)<<5;
         TXB0SIDH = ((can_id-8)>>3);
         TXB0D0 = 0x30; // flow control frame type
