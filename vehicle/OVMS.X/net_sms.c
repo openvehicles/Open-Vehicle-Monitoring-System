@@ -43,7 +43,6 @@
 #endif
 
 #pragma udata
-char *net_sms_argend;
 char *net_msg_bufpos; // buffer write position for net_put*
 
 rom char NET_MSG_DENIED[] = "Permission denied";
@@ -68,9 +67,6 @@ rom char NET_MSG_CHARGESTART[] = "Charge start requested";
 rom char NET_MSG_CHARGESTOP[] = "Charge stop requested";
 rom char NET_MSG_COOLDOWN[] = "Cooldown requested";
 #endif //OVMS_NO_CHARGECONTROL
-
-rom char NET_MSG_GOOGLEMAPS[] = "Car location:\nhttps://maps.google.com/maps?q=";
-rom char NET_MSG_OPENSTREETMAP[] = "\nhttp://osm.org?mlat=";
 
 
 
@@ -230,39 +226,6 @@ unsigned char net_sms_checkpassarg(char *caller, char *arguments)
     }
   }
 
-char* net_sms_initargs(char* arguments)
-  {
-  char *p;
-
-  if (arguments == NULL) return NULL;
-
-  net_sms_argend = arguments + strlen(arguments);
-  if (net_sms_argend == arguments) return NULL;
-
-  // Zero-terminate the first argument
-  for (p=arguments;(*p!=' ')&&(*p!=0);p++) {}
-  if (*p==' ') *p=0;
-
-  return arguments;
-  }
-
-char* net_sms_nextarg(char *lastarg)
-  {
-  char *p;
-
-  if (lastarg == NULL) return NULL;
-
-  for (p=lastarg;(*p!=0);p++) {}
-  if (p == net_sms_argend) return NULL;
-
-  // Zero-terminate the next argument
-  p++;
-  lastarg=p;
-  for (;(*p!=' ')&&(*p!=0);p++) {}
-  if (*p==' ') *p=0;
-
-  return lastarg;
-  }
 
 // Now the SMS command handlers themselves...
 
@@ -330,13 +293,17 @@ BOOL net_sms_handle_gps(char *caller, char *command, char *arguments)
   net_send_sms_start(caller);
   
   // Google Maps:
-  s = stp_latlon(net_scratchpad, NET_MSG_GOOGLEMAPS, car_latitude);
+  s = stp_latlon(net_scratchpad, "Car location:\nhttps://maps.google.com/maps?q=", car_latitude);
   s = stp_latlon(s, "+", car_longitude);
   
   // OpenStreetMap:
-  s = stp_latlon(s, NET_MSG_OPENSTREETMAP, car_latitude);
+  s = stp_latlon(s, "\nhttp://osm.org?mlat=", car_latitude);
   s = stp_latlon(s, "&mlon=", car_longitude);
 
+  // GPS status:
+  s = stp_i(s, "\nFix:", GPS_LOCK());
+  s = stp_i(s, "\nSat:", GPS_SATCNT());
+  
   net_puts_ram(net_scratchpad);
 
   return TRUE;
@@ -531,11 +498,12 @@ BOOL net_sms_handle_gprsq(char *caller, char *command, char *arguments)
   net_send_sms_start(caller);
 
   s = stp_rom(net_scratchpad, "GPRS:");
-  s = stp_s(s, "\r\n APN:", par_get(PARAM_GPRSAPN));
-  s = stp_s(s, "\r\n User:", par_get(PARAM_GPRSUSER));
-  s = stp_s(s, "\r\n Password:", par_get(PARAM_GPRSPASS));
-  s = stp_s(s, "\r\n DNS:", par_get(PARAM_GPRSDNS));
-  s = stp_s(s, "\r\n GSM:", car_gsmcops);
+  s = stp_s(s, "\n APN:", par_get(PARAM_GPRSAPN));
+  s = stp_s(s, "\n User:", par_get(PARAM_GPRSUSER));
+  s = stp_s(s, "\n Password:", par_get(PARAM_GPRSPASS));
+  s = stp_s(s, "\n DNS:", par_get(PARAM_GPRSDNS));
+  s = stp_s(s, "\n GSM:", car_gsmcops);
+  s = stp_i(s, "\n SQ:", net_sq);
 
   if (!inputs_gsmgprs())
     s = stp_rom(s, "\r\n GPRS: DISABLED");

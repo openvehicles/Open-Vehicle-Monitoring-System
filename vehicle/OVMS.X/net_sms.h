@@ -38,8 +38,8 @@
 void net_send_sms_start(char* number);
 void net_send_sms_finish(void);
 void net_send_sms_rom(char* number, const rom char* message);
-char* net_sms_initargs(char* arguments);
-char* net_sms_nextarg(char *lastarg);
+#define net_sms_initargs(arguments) firstarg((arguments), ' ')
+#define net_sms_nextarg(lastarg) nextarg(lastarg)
 void net_sms_params(char* number);
 void net_sms_gps(char* number);
 BOOL net_sms_stat(char* number);

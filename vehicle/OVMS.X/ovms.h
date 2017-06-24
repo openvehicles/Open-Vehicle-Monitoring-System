@@ -43,7 +43,7 @@
 #include "vehicle.h"
 #include "net.h"
 
-#define OVMS_FIRMWARE_VERSION 3,1,3
+#define OVMS_FIRMWARE_VERSION 3,1,4
 
 #define FEATURES_MAX 16
 #define FEATURES_MAP_PARAM 8
@@ -214,7 +214,11 @@ extern unsigned int car_direction; // GPS direction of the car
 extern signed int car_altitude; // GPS altitude of the car
 extern signed char car_timermode; // Timer mode (0=onplugin, 1=timer)
 extern unsigned int car_timerstart; // Timer start
-extern unsigned char car_gpslock; // GPS lock status
+
+extern unsigned char car_gpslock; // GPS lock status & satellite count
+#define GPS_LOCK()   ((car_gpslock & 0b11000000) >> 6)
+#define GPS_SATCNT() (car_gpslock & 0b00111111)
+
 extern signed char car_stale_ambient; // 0 = Ambient temperature is stale
 extern signed char car_stale_temps; // 0 = Powertrain temperatures are stale
 extern signed char car_stale_gps; // 0 = gps is stale

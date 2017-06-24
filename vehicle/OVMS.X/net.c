@@ -657,22 +657,22 @@ void net_phonebook(char *pb)
   // Looking like: +CPBF: 1,"0",129,"O-X-Y"
   char *n,*p, *ep;
 
-  n = strtokpgmram(pb,"\"");
+  n = firstarg(pb,'\"');
   if (n==NULL) return;
-  n = strtokpgmram(NULL,"\"");
+  n = nextarg(n);
   if (n==NULL) return;
-  p = strtokpgmram(NULL,"\"");
+  p = nextarg(n);
   if (p==NULL) return;
-  p = strtokpgmram(NULL,"\"");
+  p = nextarg(p);
   if (p==NULL) return;
 
   // At this point, *n is the second token (the number), and *p is
   // the fourth token (the parameter). Both are defined.
   if ((p[0]=='O')&&(p[1]=='-'))
     {
-    n = strtokpgmram(p+2,"-");
+    n = firstarg(p+2,'-');
     if (n==NULL) return;
-    p = strtokpgmram(NULL,"-");
+    p = nextarg(n);
     ep = par_get(atoi(n));
     if (p==NULL)
       {
@@ -1077,10 +1077,10 @@ void net_state_activity()
       else if (memcmppgm2ram(net_buf, "+COPS:", 6) == 0)
         {
         // COPS network registration
-        b = strtokpgmram(net_buf,"\"");
+        b = firstarg(net_buf, '\"');
         if (b != NULL)
           {
-          b = strtokpgmram(NULL,"\"");
+          b = nextarg(b);
           if (b != NULL)
             {
             strncpy(car_gsmcops,b,8);
@@ -1260,39 +1260,40 @@ void net_state_activity()
 
         long lat, lon;
         char ns, ew;
-        char fix;
+        char fix, satcnt;
         int alt;
 
         // Parse string:
-        if( b = strtokpgmram( net_buf+2, "," ) )
-            ;                                     // Time
-        if( b = strtokpgmram( NULL, "," ) )
-            lat = gps2latlon( b );                // Latitude
-        if( b = strtokpgmram( NULL, "," ) )
-            ns = *b;                              // North / South
-        if( b = strtokpgmram( NULL, "," ) )
-            lon = gps2latlon( b );                // Longitude
-        if( b = strtokpgmram( NULL, "," ) )
-            ew = *b;                              // East / West
-        if( b = strtokpgmram( NULL, "," ) )
-            fix = *b;                             // Fix (0/1)
-        if( b = strtokpgmram( NULL, "," ) )
-            ;                                     // Satellite count
-        if( b = strtokpgmram( NULL, "," ) )
-            ;                                     // HDOP
-        if( b = strtokpgmram( NULL, "," ) )
-            alt = atoi( b );                      // Altitude
+        if (b = firstarg(net_buf+2, ','))
+          ;                                     // Time
+        if (b = nextarg(b))
+          lat = gps2latlon(b);                  // Latitude
+        if (b = nextarg(b))
+          ns = *b;                              // North / South
+        if (b = nextarg(b))
+          lon = gps2latlon(b);                  // Longitude
+        if (b = nextarg(b))
+          ew = *b;                              // East / West
+        if (b = nextarg(b))
+          fix = *b;                             // Fix (0/1)
+        if (b = nextarg(b))
+          satcnt = atoi(b);                     // Satellite count
+        if (b = nextarg(b))
+          ;                                     // HDOP
+        if (b = nextarg(b))
+          alt = atoi(b);                        // Altitude
 
-        if( b )
+        if (b)
           {
           // data set complete, store:
 
-          car_gpslock = fix & 0x01;
+          // upper two bits for fix mode (0-2), 6 bits for satcnt:
+          car_gpslock = ((fix & 0x03) << 6) + satcnt;
 
-          if( car_gpslock )
+          if (GPS_LOCK())
             {
-            if( ns == 'S' ) lat = ~lat;
-            if( ew == 'W' ) lon = ~lon;
+            if (ns == 'S') lat = ~lat;
+            if (ew == 'W') lon = ~lon;
 
             car_latitude = lat;
             car_longitude = lon;
@@ -1317,13 +1318,13 @@ void net_state_activity()
       int dir;
 
       // Parse string:
-      if( b = strtokpgmram( net_buf+3, "," ) )
-        dir = atoi( b );                      // Course
+      if (b = firstarg(net_buf+3, ','))
+        dir = atoi(b);                      // Course
 
-      if( b )
+      if (b)
         {
         // data set complete, store:
-        if( car_gpslock )
+        if (GPS_LOCK())
           {
           car_direction = dir;
           }
@@ -1337,38 +1338,42 @@ void net_state_activity()
         // Incoming GPS coordinates
         // +CGNSINF: <GNSS run status>,<Fix status>, <UTC date & Time>,<Latitude>,<Longitude>,
         // <MSL Altitude>,<Speed Over Ground>, <Course Over Ground>,
-        // <Fix Mode>,<Reserved1>,<HDOP>,<PDOP>, <VDOP>,<Reserved2>,<GNSS Satellites in View>,
-        // <GNSS Satellites Used>,<GLONASS Satellites Used>,<Reserved3>,<C/N0 max>,<HPA>,<VPA>
+        // <Fix Mode>,<Reserved1>,<HDOP>,<PDOP>, <VDOP>,<Reserved2>,<GPS Satellites in View>,
+        // <GNSS Satellites Used>,<GLONASS Satellites in View>,<Reserved3>,<C/N0 max>,<HPA>,<VPA>
         long lat, lon;
-        char fix;
+        char fix, satcnt, i;
         int alt;
         int dir;
       
         // Parse string:
-        if( b = strtokpgmram( net_buf+9, "," ) )
-            ;                                     // GNSS run status
-        if( b = strtokpgmram( NULL, "," ) )
-            fix = *b;                             // GNSS Fix status
-        if( b = strtokpgmram( NULL, "," ) )
-            ;                                     // UTC date & time
-        if( b = strtokpgmram( NULL, "," ) )
-            lat = gps2latlon( b );                // Latitude
-        if( b = strtokpgmram( NULL, "," ) )
-            lon = gps2latlon( b );                // Longitude
-        if( b = strtokpgmram( NULL, "," ) )
-            alt = atoi( b );                      // Altitude
-        if( b = strtokpgmram( NULL, "," ) )
-            ;                                     // Speed over ground
-        if( b = strtokpgmram( NULL, "," ) )
-            dir = atoi( b );                      // Course over ground
+        if (b = firstarg(net_buf+9, ','))
+          ;                                     // GNSS run status
+        if (b = nextarg(b))
+          fix = *b;                             // GNSS Fix status
+        if (b = nextarg(b))
+          ;                                     // UTC date & time
+        if (b = nextarg(b))
+          lat = gps2latlon(b);                  // Latitude
+        if (b = nextarg(b))
+          lon = gps2latlon(b);                  // Longitude
+        if (b = nextarg(b))
+          alt = atoi(b);                        // Altitude
+        if (b = nextarg(b))
+          ;                                     // Speed over ground
+        if (b = nextarg(b))
+          dir = atoi(b);                        // Course over ground
+        for (i=7; i; i--)
+          b = nextarg(b);                       // skip 7 fields
+        if (b = nextarg(b))
+          satcnt = atoi(b);                     // Satellite count
 
-        if( b )
+        if (b)
           {
           // data set complete, store:
 
-          car_gpslock = fix & 0x01;
+          car_gpslock = ((fix & 0x03) << 6) + satcnt;
 
-          if( car_gpslock )
+          if (GPS_LOCK())
             {
             car_latitude = lat;
             car_longitude = lon;

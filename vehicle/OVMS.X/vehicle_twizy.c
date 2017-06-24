@@ -1005,11 +1005,10 @@ UINT vehicle_twizy_resetlogs_msgp(UINT8 which, UINT8 *retcnt);
 void vehicle_twizy_sendsdoreq(void)
 {
   // wait for previous async send (if any) to finish:
-  while (TXB0CONbits.TXREQ) {}
-
-  // init transmit:
-  TXB0CON = 0;
-
+  while ((TXB0CON & 0b00111000) == 0b00001000) {} // wait for TX done / error
+  TXB0CON = 0; // init new TX / abort TX error
+  while (TXB0CONbits.TXREQ) {} // wait for TX clear
+  
   // dest ID 0x601 (SEVCON):
   TXB0SIDH = 0b11000000;
   TXB0SIDL = 0b00100000;
@@ -3911,9 +3910,9 @@ BOOL vehicle_twizy_logs_cmd(BOOL msgmode, int cmd, char *arguments)
 
   // process arguments:
   if (arguments && *arguments) {
-    if (arguments = strtokpgmram(arguments, ","))
+    if (arguments = firstarg(arguments, ','))
       which = atoi(arguments);
-    if (arguments = strtokpgmram(NULL, ","))
+    if (arguments = nextarg(arguments))
       start = atoi(arguments);
   }
 
@@ -7324,23 +7323,23 @@ BOOL vehicle_twizy_ca_cmd(BOOL msgmode, int cmd, char *arguments)
   {
     if (arguments && *arguments)
     {
-      arg = strtokpgmram(arguments, ",");
+      arg = firstarg(arguments, ',');
       if (arg && *arg) {
         sys_features[FEATURE_SUFFRANGE] = atoi(arg);
         par_set(PARAM_FEATURE_BASE + FEATURE_SUFFRANGE, arg);
       }
       
-      arg = strtokpgmram(NULL, ",");
+      arg = nextarg(arg);
       if (arg && *arg) {
         sys_features[FEATURE_SUFFSOC] = atoi(arg);
         par_set(PARAM_FEATURE_BASE + FEATURE_SUFFSOC, arg);
       }
       
-      arg = strtokpgmram(NULL, ",");
+      arg = nextarg(arg);
       if (arg && *arg)
         sys_features[FEATURE_CHARGEPOWER] = atoi(arg);
       
-      arg = strtokpgmram(NULL, ",");
+      arg = nextarg(arg);
       if (arg && *arg)
         sys_features[FEATURE_CHARGEMODE] = atoi(arg);
     }

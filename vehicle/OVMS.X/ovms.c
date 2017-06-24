@@ -122,7 +122,7 @@ unsigned int car_direction; // GPS direction of the car
 signed int car_altitude; // GPS altitude of the car
 signed char car_timermode = 0; // Timer mode (0=onplugin, 1=timer)
 unsigned int car_timerstart = 0; // Timer start
-unsigned char car_gpslock = 0; // GPS lock status
+unsigned char car_gpslock = 0; // GPS lock status & satellite count (see ovms.h)
 signed char car_stale_ambient = -1; // 0 = Ambient temperature is stale
 signed char car_stale_temps = -1; // 0 = Powertrain temperatures are stale
 signed char car_stale_gps = -1; // 0 = gps is stale

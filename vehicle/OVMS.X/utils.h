@@ -77,6 +77,10 @@ unsigned long JdFromYMD(int year, int month, int day);
 // string prefix check (replacement for memcmppgm2ram/strncmppgm2ram)
 BOOL starts_with(char *s, const rom char *pfx);
 
+// argument tokenizer:
+char *firstarg(char *arguments, char delimiter);
+char *nextarg(char *lastarg);
+
 // sprintf replacement utils: stp string print
 char *stp_rom(char *dst, const rom char *val);
 char *stp_ram(char *dst, const char *val);

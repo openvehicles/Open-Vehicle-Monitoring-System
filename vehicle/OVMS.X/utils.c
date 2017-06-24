@@ -406,6 +406,54 @@ BOOL starts_with(char *s, const rom char *pfx)
 }
 
 
+// firstarg -- start new argument tokenizing & retrieve first argument
+
+char *args_end;
+char args_delimiter;
+
+char *firstarg(char *arguments, char delimiter)
+{
+  char *p;
+
+  if (arguments == NULL)
+    return NULL;
+
+  args_end = arguments + strlen(arguments);
+  if (args_end == arguments)
+    return NULL;
+
+  args_delimiter = delimiter;
+  
+  // Zero-terminate the first argument
+  for (p=arguments; (*p != args_delimiter) && (*p != 0); p++) {}
+  *p = 0;
+
+  return arguments;
+}
+
+// nextarg -- retrieve next argument token
+
+char *nextarg(char *lastarg)
+{
+  char *p;
+
+  if (lastarg == NULL)
+    return NULL;
+
+  // skip last argument:
+  for (p=lastarg; *p; p++) {}
+  if (p == args_end)
+    return NULL;
+
+  // Zero-terminate the next argument
+  lastarg = ++p;
+  for ( ; (*p != args_delimiter) && (*p != 0); p++) {}
+  *p = 0;
+
+  return lastarg;
+}
+
+
 // string-print rom string:
 
 char *stp_rom(char *dst, const rom char *val)
