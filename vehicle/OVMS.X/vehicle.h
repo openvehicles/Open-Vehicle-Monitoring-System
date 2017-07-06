@@ -142,8 +142,9 @@ extern unsigned char vehicle_poll_state;        // Current poll state
 extern rom vehicle_pid_t* vehicle_poll_plist;   // Head of poll list
 extern rom vehicle_pid_t* vehicle_poll_plcur;   // Current position in poll list
 extern unsigned int vehicle_poll_ticker;        // Polling ticker
-extern unsigned int vehicle_poll_moduleid_low;  // Expected moduleid low mark
-extern unsigned int vehicle_poll_moduleid_high; // Expected moduleid high mark
+extern unsigned int vehicle_poll_moduleid_send; // Send moduleid
+extern unsigned int vehicle_poll_moduleid_low;  // Expected response moduleid low mark
+extern unsigned int vehicle_poll_moduleid_high; // Expected response moduleid high mark
 extern unsigned char vehicle_poll_type;         // Expected type
 extern unsigned int vehicle_poll_pid;           // Expected pid
 extern unsigned char vehicle_poll_busactive;    // Indicates recent activity on the passive bus

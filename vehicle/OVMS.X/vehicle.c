@@ -71,8 +71,9 @@ unsigned char vehicle_poll_state;        // Current poll state
 rom vehicle_pid_t* vehicle_poll_plist;   // Head of poll list
 rom vehicle_pid_t* vehicle_poll_plcur;   // Current position in poll list
 unsigned int vehicle_poll_ticker;        // Polling ticker
-unsigned int vehicle_poll_moduleid_low;  // Expected moduleid low mark
-unsigned int vehicle_poll_moduleid_high; // Expected moduleid high mark
+unsigned int vehicle_poll_moduleid_send; // Send moduleid
+unsigned int vehicle_poll_moduleid_low;  // Expected response moduleid low mark
+unsigned int vehicle_poll_moduleid_high; // Expected response moduleid high mark
 unsigned char vehicle_poll_type;         // Expected type
 unsigned int vehicle_poll_pid;           // Expected pid
 unsigned char vehicle_poll_busactive;    // Indicates recent activity on the passive bus
@@ -126,19 +127,19 @@ void vehicle_poll_poller(void)
       if (vehicle_poll_plcur->rmoduleid != 0)
         {
         // send to <moduleid>, listen to response from <rmoduleid>:
+        vehicle_poll_moduleid_send = vehicle_poll_plcur->moduleid;
         vehicle_poll_moduleid_low = vehicle_poll_plcur->rmoduleid;
         vehicle_poll_moduleid_high = vehicle_poll_plcur->rmoduleid;
-        TXB0SIDL = (vehicle_poll_plcur->moduleid & 0x07)<<5;
-        TXB0SIDH = (vehicle_poll_plcur->moduleid >>3);
         }
       else
         {
         // broadcast: send to 0x7df, listen to all responses:
+        vehicle_poll_moduleid_send = 0x7df;
         vehicle_poll_moduleid_low = 0x7e8;
         vehicle_poll_moduleid_high = 0x7ef;
-        TXB0SIDL = 0b11100000;  // 0x07df
-        TXB0SIDH = 0b11111011;
         }
+      TXB0SIDL = (vehicle_poll_moduleid_send & 0x07) << 5;
+      TXB0SIDH = (vehicle_poll_moduleid_send >> 3);
       
       switch (vehicle_poll_plcur->type)
         {
@@ -186,6 +187,7 @@ void vehicle_poll_poller(void)
           TXB0CON = 0b00001000; // mark for transmission
           break;
         }
+      
       vehicle_poll_plcur++;
       return;
       }
@@ -224,8 +226,20 @@ BOOL vehicle_poll_poll0(void)
         TXB0CON = 0; // init new TX / abort TX error
         while (TXB0CONbits.TXREQ) {} // wait for TX clear
         
-        TXB0SIDL = ((can_id-8) & 0x07)<<5;
-        TXB0SIDH = ((can_id-8)>>3);
+        if (vehicle_poll_moduleid_send == 0x7df)
+          {
+          // broadcast request: derive module ID from response ID:
+          // (Note: this only works for the SAE standard ID scheme)
+          TXB0SIDL = ((can_id-8) & 0x07) << 5;
+          TXB0SIDH = ((can_id-8) >> 3);
+          }
+        else
+          {
+          // use known module ID:
+          TXB0SIDL = (vehicle_poll_moduleid_send & 0x07) << 5;
+          TXB0SIDH = (vehicle_poll_moduleid_send >> 3);
+          }
+        
         TXB0D0 = 0x30; // flow control frame type
         TXB0D1 = 0x00; // request all frames available
         TXB0D2 = 0x32; // with 50ms send interval
