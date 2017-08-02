@@ -47,6 +47,12 @@ rom char nissanleaf_capabilities[] = "C11,C24,C26";
 
 #define REMOTE_COMMAND_REPEAT_COUNT 24 // number of times to send the remote command after the first time
 #define ACTIVATION_REQUEST_TIME 10 // tenths of a second to hold activation request signal
+#define REMOTE_CC_TIME_GRID 1800 // seconds to run remote climate control on grid power
+#define REMOTE_CC_TIME_BATTERY 900 // seconds to run remote climate control on battery power
+
+#if (REMOTE_CC_TIME_GRID < REMOTE_CC_TIME_BATTERY)
+#error "Climate Control on Grid must be longer than Climate Control on Battery"
+#endif
 
 #define GEN_1_NEW_CAR_GIDS 281
 #define GEN_1_NEW_CAR_GIDS_S "281"
@@ -551,7 +557,7 @@ CommandResult vehicle_nissanleaf_remote_command(RemoteCommand command)
   nl_remote_command_ticker = REMOTE_COMMAND_REPEAT_COUNT;
   if (command == ENABLE_CLIMATE_CONTROL)
     {
-    nl_cc_off_ticker = 600;
+    nl_cc_off_ticker = REMOTE_CC_TIME_GRID;
     }
 
 
@@ -582,6 +588,13 @@ BOOL vehicle_nissanleaf_ticker1(void)
     car_doors5bits.HVAC = FALSE;
     }
 
+  if (nl_cc_off_ticker < (REMOTE_CC_TIME_GRID - REMOTE_CC_TIME_BATTERY)
+    && nl_cc_off_ticker > 1
+    && !car_doors1bits.Charging)
+    {
+    // we're not on grid power so switch off early
+    nl_cc_off_ticker = 1;
+    }
   if (nl_cc_off_ticker == 1)
     {
     vehicle_nissanleaf_remote_command(DISABLE_CLIMATE_CONTROL);
