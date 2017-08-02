@@ -595,6 +595,11 @@ BOOL vehicle_nissanleaf_ticker1(void)
     // we're not on grid power so switch off early
     nl_cc_off_ticker = 1;
     }
+  if (nl_cc_off_ticker > 1 && car_doors1bits.CarON)
+    {
+    // car has turned on during climate control, switch climate control off
+    nl_cc_off_ticker = 1;
+    }
   if (nl_cc_off_ticker == 1)
     {
     vehicle_nissanleaf_remote_command(DISABLE_CLIMATE_CONTROL);
