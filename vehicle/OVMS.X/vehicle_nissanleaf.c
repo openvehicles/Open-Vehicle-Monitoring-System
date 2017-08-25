@@ -48,9 +48,8 @@ rom char nissanleaf_capabilities[] = "C11,C24,C26";
 #define REMOTE_COMMAND_REPEAT_COUNT 24 // number of times to send the remote command after the first time
 #define ACTIVATION_REQUEST_TIME 10 // tenths of a second to hold activation request signal
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
 #define GEN_1_NEW_CAR_GIDS 281
+#define GEN_1_NEW_CAR_GIDS_S "281"
 #define GEN_1_NEW_CAR_RANGE_MILES 84
 
 #define PARAM_SOC_CONFIGURATION 21
@@ -452,7 +451,7 @@ BOOL vehicle_nissanleaf_ticker10th(void)
 void vehicle_nissanleaf_init_default_soc_configuration(void)
   {
   char s[4];
-  stp_rom(s, STR(GEN_1_NEW_CAR_GIDS));
+  stp_rom(s, GEN_1_NEW_CAR_GIDS_S);
   par_set(PARAM_SOC_CONFIGURATION, s);
   }
 
