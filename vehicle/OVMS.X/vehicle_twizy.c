@@ -325,8 +325,9 @@
     - CFG POWER now also adjusts max motor power (0x3813.23)
     - New compiler flag OVMS_TWIZY_SDOLOG: enable logging of SDOs 0x4600 & 0x4602
 
- * 3.8.4  29 Jul 2017 (Michael Balzer)
+ * 3.8.4  26 Aug 2017 (Michael Balzer)
     - Control additional charger fan at port RB1
+    - Control additional charger at port RB4
 
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -5922,10 +5923,10 @@ BOOL vehicle_twizy_state_ticker1(void)
       // ...enter state 1=charging or 2=topping-off depending on the
       // charge power request level we're starting with (7=full power):
       car_chargestate = (twizy_chg_power_request == 7) ? 1 : 2;
-
+        
       // Send charge stat:
       net_req_notification(NET_NOTIFY_ENV);
-      
+
       // Send charge start notification?
       if (sys_features[FEATURE_CARBITS] & FEATURE_CB_SCHGPHASE)
         net_req_notification(NET_NOTIFY_CHARGE);
@@ -5986,6 +5987,14 @@ BOOL vehicle_twizy_state_ticker1(void)
     twizy_last_SOC = car_SOC;
     twizy_last_idealrange = car_idealrange;
     
+    // Switch on additional charger if not in / short before CV phase
+    // and charge power level has not been limited by the user:
+    if ((car_chargestate == 1) && (twizy_soc < 9400)
+            && (sys_features[FEATURE_CHARGEPOWER] == 0))
+      PORTBbits.RB4 = 1;
+    else
+      PORTBbits.RB4 = 0;
+    
     // END OF STATE: CHARGING
   }
 
@@ -5998,6 +6007,8 @@ BOOL vehicle_twizy_state_ticker1(void)
     // clear charge stop request:
     car_chargesubstate = 0;
 
+    // Switch off additional charger:
+    PORTBbits.RB4 = 0;
 
     // Calculate range:
     if (twizy_range > 0)
@@ -8731,9 +8742,11 @@ BOOL vehicle_twizy_initialise(void)
   // read FEATURE_CAPACITY:
   vehicle_twizy_get_capacity();
 
-  // set RB1 (additional charger fan control) to output:
+  // set RB1 & RB4 (additional charger/fan controls) to output:
   TRISBbits.RB1 = 0;
+  TRISBbits.RB4 = 0;
   PORTBbits.RB1 = 0;
+  PORTBbits.RB4 = 0;
   twizy_fan_timer = 0;
   
   
