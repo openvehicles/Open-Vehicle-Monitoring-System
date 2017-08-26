@@ -325,6 +325,9 @@
     - CFG POWER now also adjusts max motor power (0x3813.23)
     - New compiler flag OVMS_TWIZY_SDOLOG: enable logging of SDOs 0x4600 & 0x4602
 
+ * 3.8.4  29 Jul 2017 (Michael Balzer)
+    - Control additional charger fan at port RB1
+
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -457,7 +460,7 @@ typedef struct {
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.8.3";
+rom char vehicle_twizy_version[] = "3.8.4a";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -720,6 +723,12 @@ UINT8 twizy_cc_power_level;         // end of CC phase detection
 UINT twizy_cc_soc;                  // SOC at end of CC phase
 UINT twizy_bat_cap_prc;             // actual capacity in 1/100 percent of...
 #define BATT_NET_CAPACITY_CAH 10800L // usable capacity of fresh battery in cAh
+
+
+UINT8 twizy_fan_timer;              // countdown timer for RB1 charger fan
+#define TWIZY_FAN_THRESHOLD   45    // temperature in °C
+#define TWIZY_FAN_OVERSHOOT   5     // hold time in minutes after switch-off
+
 
 #pragma udata overlay vehicle_overlay_data
 
@@ -5976,7 +5985,7 @@ BOOL vehicle_twizy_state_ticker1(void)
     // update "sufficient" threshold helpers:
     twizy_last_SOC = car_SOC;
     twizy_last_idealrange = car_idealrange;
-
+    
     // END OF STATE: CHARGING
   }
 
@@ -6259,6 +6268,30 @@ BOOL vehicle_twizy_state_ticker10(void)
     }
 #endif // #ifdef #ifdef OVMS_TWIZY_CFG
   }
+  
+  
+  // Control additional charger fan by RB1:
+  // Elips 2000W specified operation range is -20..+50 °C
+  // => switch on additional fan above 45 °C, off below 45 °C
+  // As we don't get temperature updates after switching the
+  // Twizy off, we need the timer to keep the fan ON for a while.
+
+  if (car_doors3bits.CarAwake || car_doors1bits.Charging) {
+    if (car_tcharger > TWIZY_FAN_THRESHOLD) {
+      PORTBbits.RB1 = 1;
+      twizy_fan_timer = TWIZY_FAN_OVERSHOOT * 6;
+    }
+    else if (car_tcharger < TWIZY_FAN_THRESHOLD) {
+      PORTBbits.RB1 = 0;
+      twizy_fan_timer = 0;
+    }
+  }
+  else {
+    if (twizy_fan_timer > 0 && --twizy_fan_timer == 0) {
+      PORTBbits.RB1 = 0;
+    }
+  }
+  
 
   return FALSE;
 }
@@ -8698,6 +8731,11 @@ BOOL vehicle_twizy_initialise(void)
   // read FEATURE_CAPACITY:
   vehicle_twizy_get_capacity();
 
+  // set RB1 (additional charger fan control) to output:
+  TRISBbits.RB1 = 0;
+  PORTBbits.RB1 = 0;
+  twizy_fan_timer = 0;
+  
   
   //
   // CAN interface configuration:
