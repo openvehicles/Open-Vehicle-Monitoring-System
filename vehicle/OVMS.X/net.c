@@ -2202,11 +2202,6 @@ void net_initialise(void)
 
   net_reg = 0;
   net_state_enter(NET_STATE_FIRSTRUN);
-
-#ifdef OVMS_FIXED_DIAGMODE
-  delay100(50); // give modem some init time
-  net_state_enter(NET_STATE_DIAGMODE);
-#endif // OVMS_FIXED_DIAGMODE
   }
 
 

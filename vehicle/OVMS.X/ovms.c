@@ -290,6 +290,10 @@ void main(void)
   acc_initialise();
 #endif
 
+#ifdef OVMS_FIXED_DIAGMODE
+  net_state_enter(NET_STATE_DIAGMODE);
+#endif // OVMS_FIXED_DIAGMODE
+
   // Proceed to main loop
   y = 0; // Last TMR0H
   while (1) // Main Loop
