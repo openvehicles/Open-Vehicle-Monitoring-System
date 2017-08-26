@@ -13,6 +13,7 @@ V2_RT_Production_SIM808.hex        V2 Hardware Module, SIM808 modem, Renault Twi
 V2_RT_Production_SIM908.hex        V2 Hardware Module, SIM908 modem, Renault Twizy full firmware
 V2_TR_Production_SIM808.hex        V2 Hardware Module, SIM808 modem, Tesla Roadster full firmware
 V2_TR_Production_SIM908.hex        V2 Hardware Module, SIM908 modem, Tesla Roadster full firmware
+Mini_RT_Production.hex             Mini-OVMS Module, no modem, Renault Twizy full firmware, fixed DIAG mode
 
 
 Vehicle Coverage
@@ -43,5 +44,8 @@ V2_RT_Production_SIM908
         RENAULTTWIZY
 
 V2_RT_Production_SIM808
+        RENAULTTWIZY
+
+Mini_RT_Production
         RENAULTTWIZY
 
