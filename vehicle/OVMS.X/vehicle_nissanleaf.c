@@ -33,7 +33,7 @@
 #include "inputs.h"
 
 // Nissan Leaf module version:
-rom char nissanleaf_version[] = "1.2";
+rom char nissanleaf_version[] = "1.3";
 
 // Nissan Leaf capabilities:
 // - CMD_StartCharge (11)
@@ -332,6 +332,16 @@ BOOL vehicle_nissanleaf_poll1(void)
         }
     }
       break;
+    case 0x54c:
+      if (can_databuffer[6] == 0xff)
+        {
+        break;
+        }
+      // TODO this temperature isn't quite right
+      car_ambient_temp = ((int) can_databuffer[6]) - 56; // Fahrenheit
+      car_ambient_temp = (car_ambient_temp - 32) / 1.8f; // Celsius
+      car_stale_ambient = 10;
+      break;
     case 0x5bc:
     {
       UINT16 nl_gids_candidate = ((UINT16) can_databuffer[0] << 2) | ((can_databuffer[1] & 0xc0) >> 6);
@@ -381,6 +391,13 @@ BOOL vehicle_nissanleaf_poll1(void)
         case 0x40:
           vehicle_nissanleaf_charger_status(CHARGER_STATUS_FINISHED);
           break;
+        }
+      break;
+    case 0x5c0:
+      if (can_databuffer[0] == 0x40)
+        {
+        car_tbattery = can_databuffer[2] / 2 - 40;
+        car_stale_temps = 10;
         }
       break;
     }
@@ -491,6 +508,8 @@ BOOL vehicle_nissanleaf_ticker1(void)
   car_time++;
   if (nl_busactive > 0) nl_busactive--;
   if (nl_abs_active > 0) nl_abs_active--;
+  if (car_stale_temps > 0) car_stale_temps--;
+  if (car_stale_ambient > 0) car_stale_ambient--;
 
   // have the messages from the ABS system stopped?
   if (nl_abs_active == 0)
@@ -668,17 +687,28 @@ BOOL vehicle_nissanleaf_initialise(void)
 
   // Buffer 0 (filters 0, 1) for extended PID responses
   RXB0CON = 0b00000000;
-  RXM0SIDH = 0b11111111; RXM0SIDL = 0b00000000; // Msk0 111 1111 1000
-  RXF0SIDH = 0b11110011; RXF0SIDL = 0b00000000; // Flt0 111 1001 1xxx (0x798 .. 0x79f)
-  RXF1SIDH = 0b00000000; RXF1SIDL = 0b00000000; // Flt1 000 0000 0xxx (-)
-  
+
+  // Msk0 111 1111 1000
+  RXM0SIDH = 0b11111111;
+  RXM0SIDL = 0b00000000;
+
+  // Flt0 111 1001 1xxx (0x798 .. 0x79f)
+  RXF0SIDH = 0b11110011;
+  RXF0SIDL = 0b00000000;
+
+  // Flt1 000 0000 0xxx (-)
+  RXF1SIDH = 0b00000000;
+  RXF1SIDL = 0b00000000;
+
   // Buffer 1 (filters 2, 3, 4 and 5) for direct can bus messages
   RXB1CON = 0b00000000;
-  RXM1SIDH = 0b00000000; RXM1SIDL = 0b00000000; // Msk1 000 0000 0000 (accept all frames)
 
-  // CAN bus baud rate
+  // Msk1 000 0000 0000 (accept all frames)
+  RXM1SIDH = 0b00000000;
+  RXM1SIDL = 0b00000000;
 
-  BRGCON1 = 0x01; // SET BAUDRATE to 500 Kbps
+  // SET CAN bus BAUDRATE to 500 Kbps
+  BRGCON1 = 0x01;
   BRGCON2 = 0xD2;
   BRGCON3 = 0x02;
 
