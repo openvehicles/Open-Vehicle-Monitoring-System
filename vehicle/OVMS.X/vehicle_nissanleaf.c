@@ -687,17 +687,28 @@ BOOL vehicle_nissanleaf_initialise(void)
 
   // Buffer 0 (filters 0, 1) for extended PID responses
   RXB0CON = 0b00000000;
-  RXM0SIDH = 0b11111111; RXM0SIDL = 0b00000000; // Msk0 111 1111 1000
-  RXF0SIDH = 0b11110011; RXF0SIDL = 0b00000000; // Flt0 111 1001 1xxx (0x798 .. 0x79f)
-  RXF1SIDH = 0b00000000; RXF1SIDL = 0b00000000; // Flt1 000 0000 0xxx (-)
-  
+
+  // Msk0 111 1111 1000
+  RXM0SIDH = 0b11111111;
+  RXM0SIDL = 0b00000000;
+
+  // Flt0 111 1001 1xxx (0x798 .. 0x79f)
+  RXF0SIDH = 0b11110011;
+  RXF0SIDL = 0b00000000;
+
+  // Flt1 000 0000 0xxx (-)
+  RXF1SIDH = 0b00000000;
+  RXF1SIDL = 0b00000000;
+
   // Buffer 1 (filters 2, 3, 4 and 5) for direct can bus messages
   RXB1CON = 0b00000000;
-  RXM1SIDH = 0b00000000; RXM1SIDL = 0b00000000; // Msk1 000 0000 0000 (accept all frames)
 
-  // CAN bus baud rate
+  // Msk1 000 0000 0000 (accept all frames)
+  RXM1SIDH = 0b00000000;
+  RXM1SIDL = 0b00000000;
 
-  BRGCON1 = 0x01; // SET BAUDRATE to 500 Kbps
+  // SET CAN bus BAUDRATE to 500 Kbps
+  BRGCON1 = 0x01;
   BRGCON2 = 0xD2;
   BRGCON3 = 0x02;
 
