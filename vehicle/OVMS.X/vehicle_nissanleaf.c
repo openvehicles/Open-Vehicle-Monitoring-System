@@ -33,7 +33,7 @@
 #include "inputs.h"
 
 // Nissan Leaf module version:
-rom char nissanleaf_version[] = "1.3";
+rom char nissanleaf_version[] = "1.4";
 
 // Nissan Leaf capabilities:
 // - CMD_StartCharge (11)
@@ -47,6 +47,12 @@ rom char nissanleaf_capabilities[] = "C11,C24,C26";
 
 #define REMOTE_COMMAND_REPEAT_COUNT 24 // number of times to send the remote command after the first time
 #define ACTIVATION_REQUEST_TIME 10 // tenths of a second to hold activation request signal
+#define REMOTE_CC_TIME_GRID 1800 // seconds to run remote climate control on grid power
+#define REMOTE_CC_TIME_BATTERY 900 // seconds to run remote climate control on battery power
+
+#if (REMOTE_CC_TIME_GRID < REMOTE_CC_TIME_BATTERY)
+#error "Climate Control on Grid must be longer than Climate Control on Battery"
+#endif
 
 #define GEN_1_NEW_CAR_GIDS 281
 #define GEN_1_NEW_CAR_GIDS_S "281"
@@ -86,6 +92,7 @@ UINT8 nl_abs_active; // non-zero if we recently received data from the ABS syste
 
 RemoteCommand nl_remote_command; // command to send, see ticker10th()
 UINT8 nl_remote_command_ticker; // number of tenths remaining to send remote command frames
+UINT16 nl_cc_off_ticker; // seconds before we send the climate control off command
 
 UINT16 nl_gids; // current gids in the battery
 UINT16 nl_max_gids; // maximum gids, used for SOC calculation
@@ -503,30 +510,6 @@ void vehicle_nissanleaf_load_soc_configuration(void)
   nl_max_gids = max_gids_candidate;
   }
 
-BOOL vehicle_nissanleaf_ticker1(void)
-  {
-  car_time++;
-  if (nl_busactive > 0) nl_busactive--;
-  if (nl_abs_active > 0) nl_abs_active--;
-  if (car_stale_temps > 0) car_stale_temps--;
-  if (car_stale_ambient > 0) car_stale_ambient--;
-
-  // have the messages from the ABS system stopped?
-  if (nl_abs_active == 0)
-    {
-    vehicle_nissanleaf_car_on(FALSE);
-    car_speed = 0;
-    }
-
-  // has the whole CAN bus gone quiet?
-  if (nl_busactive == 0)
-    {
-    vehicle_nissanleaf_car_on(FALSE);
-    car_speed = 0;
-    car_doors5bits.HVAC = FALSE;
-    }
-  }
-
 ////////////////////////////////////////////////////////////////////////
 // vehicle_nissanleaf_remote_command()
 // Wake up the car & send Climate Control or Remote Charge message to VCU,
@@ -572,8 +555,55 @@ CommandResult vehicle_nissanleaf_remote_command(RemoteCommand command)
   // EV SYSTEM ACTIVATION REQUEST will be released in ticker10th() too
   nl_remote_command = command;
   nl_remote_command_ticker = REMOTE_COMMAND_REPEAT_COUNT;
+  if (command == ENABLE_CLIMATE_CONTROL)
+    {
+    nl_cc_off_ticker = REMOTE_CC_TIME_GRID;
+    }
+
 
   return OK;
+  }
+
+BOOL vehicle_nissanleaf_ticker1(void)
+  {
+  car_time++;
+  if (nl_busactive > 0) nl_busactive--;
+  if (nl_abs_active > 0) nl_abs_active--;
+  if (car_stale_temps > 0) car_stale_temps--;
+  if (car_stale_ambient > 0) car_stale_ambient--;
+  if (nl_cc_off_ticker > 0) nl_cc_off_ticker--;
+
+  // have the messages from the ABS system stopped?
+  if (nl_abs_active == 0)
+    {
+    vehicle_nissanleaf_car_on(FALSE);
+    car_speed = 0;
+    }
+
+  // has the whole CAN bus gone quiet?
+  if (nl_busactive == 0)
+    {
+    vehicle_nissanleaf_car_on(FALSE);
+    car_speed = 0;
+    car_doors5bits.HVAC = FALSE;
+    }
+
+  if (nl_cc_off_ticker < (REMOTE_CC_TIME_GRID - REMOTE_CC_TIME_BATTERY)
+    && nl_cc_off_ticker > 1
+    && !car_doors1bits.Charging)
+    {
+    // we're not on grid power so switch off early
+    nl_cc_off_ticker = 1;
+    }
+  if (nl_cc_off_ticker > 1 && car_doors1bits.CarON)
+    {
+    // car has turned on during climate control, switch climate control off
+    nl_cc_off_ticker = 1;
+    }
+  if (nl_cc_off_ticker == 1)
+    {
+    vehicle_nissanleaf_remote_command(DISABLE_CLIMATE_CONTROL);
+    }
   }
 
 ////////////////////////////////////////////////////////////////////////
