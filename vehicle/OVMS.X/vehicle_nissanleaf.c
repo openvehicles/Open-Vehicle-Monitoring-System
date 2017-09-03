@@ -417,6 +417,66 @@ BOOL vehicle_nissanleaf_poll1(void)
       car_speed = car_speed16 / 92;
     }
       break;
+    case 0x390:
+      // Gen 2 Charger
+      //
+      // When the data is valid, can_databuffer[6] is the J1772 maximum
+      // available current if we're plugged in, and 0 when we're not.
+      // can_databuffer[3] seems to govern when it's valid, and is probably a
+      // bit field, but I don't have a full decoding
+      //
+      // specifically the last few frames before shutdown to wait for the charge
+      // timer contain zero in can_databuffer[6] so we ignore them and use the
+      // valid data in the earlier frames
+      //
+      // During plug in with charge timer activated, byte 3 & 6:
+      //
+      // 0x390 messages start
+      // 0x00 0x21
+      // 0x60 0x21
+      // 0x60 0x00
+      // 0xa0 0x00
+      // 0xb0 0x00
+      // 0xb2 0x15 -- byte 6 now contains valid j1772 pilot amps
+      // 0xb3 0x15
+      // 0xb1 0x00
+      // 0x71 0x00
+      // 0x69 0x00
+      // 0x61 0x00
+      // 0x390 messages stop
+      //
+      // byte 3 is 0xb3 during charge, and byte 6 contains the valid pilot amps
+      //
+      // so far, except briefly during startup, when byte 3 is 0x00 or 0x03,
+      // byte 6 is 0x00, correctly indicating we're unplugged, so we use that
+      // for unplugged detection.
+      //
+      if (can_databuffer[3] == 0xb3 ||
+        can_databuffer[3] == 0x00 ||
+        can_databuffer[3] == 0x03)
+        {
+        // can_databuffer[6] is the J1772 pilot current, 0.5A per bit
+        car_chargetype = J1772_TYPE1;
+        car_chargelimit = (can_databuffer[6] + 1) / 2;
+        car_doors1bits.ChargePort = car_chargelimit == 0 ? 0 : 1;
+        car_doors1bits.PilotSignal = car_chargelimit == 0 ? 0 : 1;
+        }
+      switch (can_databuffer[5])
+        {
+        case 0x80:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_IDLE);
+          break;
+        case 0x83:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_QUICK_CHARGING);
+          break;
+        case 0x88:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_CHARGING);
+          break;
+        case 0x98:
+          vehicle_nissanleaf_charger_status(CHARGER_STATUS_PLUGGED_IN_TIMER_WAIT);
+          break;
+        }
+      break;
     case 0x54b:
     {
       BOOL hvac_candidate;
@@ -458,6 +518,7 @@ BOOL vehicle_nissanleaf_poll1(void)
     }
       break;
     case 0x5bf:
+      // Gen 1 Charger
       if (can_databuffer[4] == 0xb0)
         {
         // Quick Charging
