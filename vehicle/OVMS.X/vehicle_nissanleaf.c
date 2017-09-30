@@ -33,7 +33,7 @@
 #include "inputs.h"
 
 // Nissan Leaf module version:
-rom char nissanleaf_version[] = "1.4";
+rom char nissanleaf_version[] = "1.5";
 
 // Nissan Leaf capabilities:
 // - CMD_StartCharge (11)
@@ -87,6 +87,17 @@ typedef enum
   OK
   } CommandResult;
 
+typedef enum
+  {
+  ZERO = 0,
+  ONE = 1,
+  TWO = 2,
+  THREE = 3,
+  FOUR = 4,
+  FIVE = 5,
+  IDLE = 6
+  } PollState;
+
 UINT8 nl_busactive; // non-zero if we recently received data
 UINT8 nl_abs_active; // non-zero if we recently received data from the ABS system
 
@@ -101,6 +112,8 @@ ChargerStatus nl_charger_status; // the current charger status
 
 INT16 nl_battery_current; // battery current from LBC, 0.5A per bit
 UINT16 nl_battery_voltage; // battery voltage from LBC, 0.5V per bit
+
+PollState nl_poll_state = IDLE;
 
 #pragma udata
 
@@ -288,6 +301,88 @@ void vehicle_nissanleaf_charger_status(ChargerStatus status)
   nl_charger_status = status;
   }
 
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_poll_start()
+// Send the initial message to poll for data. Further data is requested
+// in vehicle_nissanleaf_poll_continue() after the recept of each page.
+//
+
+void vehicle_nissanleaf_poll_start(void)
+  {
+  // Request Group 1
+  char data[] = {0x02, 0x21, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00};
+  nl_poll_state = ZERO;
+  vehicle_nissanleaf_send_can_message(0x79b, 8, data);
+  }
+
+////////////////////////////////////////////////////////////////////////
+// vehicle_nissanleaf_poll_continue()
+// Process a 0x7bb polling response and request the next page
+//
+
+void vehicle_nissanleaf_poll_continue(void)
+  {
+  UINT16 hx;
+  UINT32 ah;
+  if (nl_poll_state == IDLE)
+    {
+    // we're not expecting anything, maybe something else is polling?
+    return;
+    }
+  if ((can_databuffer[0] & 0x0f) != nl_poll_state)
+    {
+    // not the page we were expecting, abort
+    nl_poll_state = IDLE;
+    return;
+    }
+
+  switch (nl_poll_state)
+    {
+    case ZERO:
+    case ONE:
+    case TWO:
+    case THREE:
+      nl_poll_state++;
+      break;
+    case FOUR:
+      hx = can_databuffer[2];
+      hx = hx << 8;
+      hx = hx | can_databuffer[3];
+      hx = hx / 100;
+      // LeafSpy calculates SOH by dividing Ah by the nominal capacity.
+      // Since SOH is derived from Ah, we don't bother storing it separately.
+      // We store Ah in CAC (below) and store Hx in SOH.
+      // TODO store full precision of Hx?
+      if (car_soh != hx)
+        {
+        car_soh = hx;
+        net_req_notification(NET_NOTIFY_STAT);
+        }
+      nl_poll_state++;
+      break;
+    case FIVE:
+      ah = can_databuffer[2];
+      ah = ah << 8;
+      ah = ah | can_databuffer[3];
+      ah = ah << 8;
+      ah = ah | can_databuffer[4];
+      ah = ah / 100;
+      if (car_cac100 != ah)
+        {
+        car_cac100 = ah;
+        net_req_notification(NET_NOTIFY_STAT);
+        }
+      nl_poll_state = IDLE;
+      break;
+    }
+  if (nl_poll_state != IDLE)
+    {
+    // request the next page of data
+    char next[] = {0x30, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    vehicle_nissanleaf_send_can_message(0x79b, 8, next);
+    }
+  }
+
 BOOL vehicle_nissanleaf_poll1(void)
   {
   nl_busactive = 10; // Reset the per-second charge timer
@@ -407,6 +502,9 @@ BOOL vehicle_nissanleaf_poll1(void)
         car_stale_temps = 10;
         }
       break;
+    case 0x7bb:
+      vehicle_nissanleaf_poll_continue();
+      break;
     }
   return TRUE;
   }
@@ -508,6 +606,17 @@ void vehicle_nissanleaf_load_soc_configuration(void)
     return;
     }
   nl_max_gids = max_gids_candidate;
+  }
+
+BOOL vehicle_nissanleaf_ticker60(void)
+  {
+  if (car_doors1bits.CarON)
+    {
+    // we only poll while the car is on, as polling at other times causes a
+    // relay to click
+    vehicle_nissanleaf_poll_start();
+    }
+  return TRUE;
   }
 
 ////////////////////////////////////////////////////////////////////////
