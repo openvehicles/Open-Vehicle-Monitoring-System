@@ -1,0 +1,145 @@
+https://teslamotorsclub.com/tmc/threads/diagnostic-port-index.98663/#post-2322023
+
+By: Krash
+
+There is great technical information on the diagnostic port (TDC - Tesla Diagnostic Connector) in the forum but as I found it difficult to find in the different threads, I started an index. Please comment with corrections or additions.
+
+Why access it?
+To access more and more granular car diagnostic information that can be obtained by the apps that use the online Tesla APIs. Motor torque for example. Or battery temperatures.
+
+Where is it?
+Between the front screen and the cubby. Pull the front of the cubby down to access. Don't pull the cubby out (just down) on the older cars or it is hard to reinstall.
+
+Change in Connector
+The connector changed on Sept 2015. What approximate VIN is that?
+
+HARDWARE
+Adapter Cables
+Sellers
+in US
+Chris TX
+Old http://www.panjo.com/buy/tesla-model-s-and-roadster-obd2-can-adapter-cable-pre-sept-2015-265769
+New https://www.panjo.com/buy/tesla-model-s-x-obd2-can-adapter-cable-sept-2015-288366
+Maxwelltech
+New https://www.panjo.com/profile/98528/maxwelltech
+in Norway: https://teslamotorsclub.com/tmc/conversations/add?to=petersv
+Fasttech Roadster https://www.fasttech.com/products/1080/10000001/1000400-ovms-data-cable-for-tesla-roadster-1-x-2-x
+
+Adapter Pinout
+The community is creating the standard, several groups are using a four wire connector, but garygid is also using this more advanced ten wire pinout.
+New style diagrams
+Let the hacking begin... (Model S parts on the bench) https://teslamotorsclub.com/tmc/posts/1390549/
+x437a diag connector pinout for Tesla Model S https://github.com/openvehicles/Open-Vehicle-Monitoring-System/commit/5f6a53aba3e7b56e9276adea7dcd76b160435057#diff-aed873da1c11974528b9f52962377608
+
+Diagnostic Housings and Part Numbers
+Roadster and pre Sept 15 S
+Male Connector
+Mouser: AMP 173851-2 http://www.mouser.com/Search/ProductDetail.aspx?R=173851-2virtualkey57100000virtualkey571-173851-2
+Male Connector Pins
+Mouser: AMP 173630-1 (minimum 4000) http://www.mouser.com/Search/ProductDetail.aspx?R=173630-1virtualkey57100000virtualkey571-173630-1
+Mouser: AMP 173630-6 (minimum 1000, Is this the same as -1?) http://www.mouser.com/ProductDetail/TE-Connectivity/173630-6-Mouser-Reel/?qs=sGAEpiMZZMs7eK6h2EBtKm6kombItVJRuQNK8%2f880Do%3d
+Online Components via Octopart
+  https://www.onlinecomponents.com/te-connectivity-amp-brand-1736306.html?p=10263196
+  https://octopart.com/search?q=173630-6
+
+Model X and post Sept 15 S
+Female Connector
+Sumitomo 6098-5622 - http://prd.sws.co.jp/components/en/detail.php?number_s=60985622
+Sellers
+  The Plug Dealer (White) - Listed as $4.45 in stock http://www.theplugdealer.com/shop/product/8903-sumitomo-0-64ii-1-5-unsealed-20-position-female-housing-natural-14537#
+  The Plug Dealer (Blue) http://www.theplugdealer.com/shop/product/3451-sumitomo-0-64ii-1-5-unsealed-20-position-female-housing-blue-18222
+    Unresponsive to minimum order quantity and spec sheet request
+  http://www.qcomponents.com/search.html?part=6098-5629
+    Quoted 115 minimum order quantity at $1.75 USD on 25 September 2017
+
+Female Connector Pins
+0.64mm minimum two, maximum sixteen per connector
+8240-0182, 8240-0338, 8100-3624, 8100-3628, 8100-3625, 8100-3629
+Seller
+The Plug Dealer part 6874 - $0.34 USD - Tin
+  http://www.theplugdealer.com/shop/product/6874-sumitomo-ts-family-0-64-025-sealed-female-terminal-0-22-0-5-mm2-brass-tin-1982?search=sumitomo&attrib=&attrib=&attrib=6-44&attrib=6-46
+The Plug Dealer part 6875 - $1.58 USD - Gold
+  http://www.theplugdealer.com/shop/product/6875-sumitomo-ts-family-0-64-025-sealed-female-terminal-0-22-0-5-mm2-brass-gold-4009?search=sumitomo&attrib=&attrib=&attrib=6-44&attrib=6-46&page=3
+
+1.5mm minimum two, maximum four per connector
+8240-0279, 8240-0215, 8240-0213, 8240-0214, 8240-0339
+Seller - The Plug Dealer part 5597 - $0.30 - Tin
+  http://www.theplugdealer.com/shop/product/5597-sumitomo-1-5-060-ts-unsealed-female-2-0-mm2-terminal-copper-tin-25551?search=sumitomo&attrib=1-2&attrib=2-22&attrib=&attrib=&attrib=6-46&attrib=&attrib=&attrib=
+
+Vehicle Housing Part Numbers
+Roadster and pre Sept 15 S - Tesla Part X437
+Female Housing
+Mouser: AMP 174933-1 http://www.mouser.com/Search/ProductDetail.aspx?R=174933-1virtualkey57100000virtualkey571-174933-1
+Female Housing Pins
+Mouser: AMP 173645-1 (minimum 3000) http://www.mouser.com/Search/ProductDetail.aspx?R=173645-1virtualkey57100000virtualkey571-173645-1
+
+Model X and post Sept 15 S - Tesla Part X437A
+Male Housing
+Sumitomo 6098-5613 (Sumitomo listed pair for 6098-5622)
+  http://prd.sws.co.jp/components/en/detail.php?number_s=60985613
+Sumitomo 6098-5620 (service.teslamotors.com listed)
+Sumitomo 6098-5629 (appleguru referenced part)
+  https://teslamotorsclub.com/tmc/posts/2333030/
+
+Male Housing Pins
+Sumitomo 8100-3622 (0.64mm (025))
+  http://prd.sws.co.jp/components/en/detail.php?number_s=81003622
+Seller
+The Plug Dealer part 6872 - $0.21 USD - Tin
+  http://www.theplugdealer.com/shop/product/6872-sumitomo-ts-family-0-64-025-unsealed-male-terminal-0-22-0-5mm2-brass-tin-467?search=sumitomo&attrib=&attrib=&attrib=6-44&attrib=6-46
+The Plug Dealer part 5949 - $0.32 USD - Gold
+  http://www.theplugdealer.com/shop/product/5949-sumitomo-ts-family-0-64-025-unsealed-male-terminal-0-22-0-25-mm2-brass-gold-24756?search=sumitomo+ts&attrib=6-44&attrib=6-46&page=3
+Sumitomo 8230-4923 (1.5mm (060))
+  http://prd.sws.co.jp/components/en/detail.php?number_s=82304923
+Seller - The Plug Dealer - no stock
+
+ELM ODB2 Modules
+Bluetooth LE
+LELink Bluetooth Low Energy Car Diagnostic Tool
+  https://www.amazon.com/LELink-Bluetooth-Energy-OBD-II-Diagnostic/dp/B00QJRYMFC/
+Bluetooth
+OBDLinkMX
+  https://www.scantool.net/obdlink-mxbt/
+
+ELM ODB2 Module Alternatives
+apacheguy Raspberry Pi
+  https://teslamotorsclub.com/tmc/threads/using-a-raspberry-pi-3-to-interface-with-powertrain-bus-can3.66882/#post-1446709
+Obrien28 Beaglebone Black
+  https://teslamotorsclub.com/tmc/posts/1325534/
+CANtact
+  http://linklayer.github.io/cantact/
+
+SOFTWARE
+TM-Spy
+  iOS https://teslamotorsclub.com/tmc/threads/using-tm-spy-for-ios.65913/
+  Android https://teslamotorsclub.com/tmc/threads/using-tm-spy-for-android.65988/
+  Data https://teslamotorsclub.com/tmc/threads/using-tm-spy-to-see-model-s-data.63051/
+Scan My Tesla
+  https://sites.google.com/view/scanmytesla/home
+  Android https://play.google.com/store/apps/details?id=com.emon.canbus.tesla&hl=en
+garygid Can-Do
+  http://www.wwwsite.com/puzzles/cando/
+
+Unanswered Questions
+Can multiple diagnostic connectors be used at the same time on a splitter? If so which?
+How long of an extension and\or splitter can be used reliably?
+Will Tesla disable the diagnostic port like they disabled the collocated Ethernet port?
+
+Sources and other Relevant Threads
+Diagnostic port
+  https://teslamotorsclub.com/tmc/posts/1021943/
+How to Access Tesla Diagnostic Port behind Infotainment
+  https://teslamotorsclub.com/tmc/threads/howto-access-tesla-diagnostic-port-behind-infotainment.75945/#post-1690812
+Exploring the Tesla Model S CAN Bus (updated Nov 2015)
+  http://www.instructables.com/id/Exploring-the-Tesla-Model-S-CAN-Bus/
+Chassis CAN Logging To ASCII Text Plus Graphing
+  https://teslamotorsclub.com/tmc/threads/chassis-can-logging-to-ascii-text-plus-graphing.61570/
+Logging Multiple CAN Buses to PC with my CAN-Do Program
+  https://teslamotorsclub.com/tmc/threads/logging-multiple-can-buses-to-pc-with-my-can-do-program.64292/
+Chassis CAN Logging To ASCII Text Plus Graphing
+  https://teslamotorsclub.com/tmc/posts/1411195/
+Undocumented | TeslaTap (see Bus Systems)
+  https://teslatap.com/undocumented/
+http://prd.sws.co.jp/components/series/pdf/en/1705components_je.pdf
+  http://prd.sws.co.jp/components/series/pdf/en/1705components_je.pdf
+
