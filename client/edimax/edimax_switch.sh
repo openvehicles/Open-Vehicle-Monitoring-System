@@ -11,7 +11,7 @@ if [[ "${TOSTATE}" = "" ]] ; then
 fi
 
 # Switch Edimax and read result:
-RESULT=$( ( curl --silent --data @- http://${EDIMAX_USER}:${EDIMAX_PASS}@${EDIMAX_IP}:10000/smartplug.cgi --output - <<-__XML__
+RESULT=$( ( curl --silent --data @- --${EDIMAX_AUTH:-basic} --user ${EDIMAX_USER}:${EDIMAX_PASS} http://${EDIMAX_IP}:10000/smartplug.cgi --output - <<-__XML__
 	<?xml version="1.0" encoding="utf-8"?>
 	<SMARTPLUG id="edimax"><CMD id="setup"><Device.System.Power.State>${TOSTATE}</Device.System.Power.State></CMD></SMARTPLUG>
 __XML__

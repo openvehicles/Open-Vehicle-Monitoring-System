@@ -26,7 +26,7 @@ CONFIGURATION
 
 2. Copy the "edimax_*" files into your OVMS client folder.
 
-3. Fill in the Edimax IP address, user name and password in "edimax_config.txt"...
+3. Fill in the Edimax IP address and auth data in "edimax_config.txt"...
 
 4. ...and set the SOC_ON and SOC_OFF levels as desired.
 

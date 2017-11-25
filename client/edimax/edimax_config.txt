@@ -2,6 +2,8 @@
 EDIMAX_IP=192.168.1.33
 EDIMAX_USER=admin
 EDIMAX_PASS=1234
+# AUTH: set 'basic' for old firmware, 'digest' for new
+EDIMAX_AUTH=basic
 
 # Switch on Edimax at or below SOC level:
 SOC_ON=25
