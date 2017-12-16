@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.9-20170523";
+my $VERSION = "2.3.10-20171216";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -1532,6 +1532,7 @@ sub gcm_tim
     AE::log info => "#$fn - $vehicleid msg gcm '$alertmsg' => $pushkeyvalue";
     my $body = 'registration_id='.uri_escape($pushkeyvalue)
               .'&data.title='.uri_escape($vehicleid)
+              .'&data.type='.uri_escape($alerttype)
               .'&data.message='.uri_escape($alertmsg)
               .'&data.time='.uri_escape($timestamp)
               .'&collapse_key='.time;
