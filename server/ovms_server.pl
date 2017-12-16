@@ -1567,7 +1567,7 @@ sub mail_tim
         header_str => [
           From    => $mail_sender,
           To      => $pushkeyvalue,
-          Subject => "OVMS notification from $vehicleid",
+          Subject => "OVMS notification type $alerttype from $vehicleid",
         ],
         attributes => {
           encoding => 'quoted-printable',
