@@ -462,11 +462,20 @@ messages from the VDS are sent on CAN ID # 0x102.
 
 	Home Link
 		B1=0x09
-		B2=0x00
+		B2=start/stop (0x00=start, 0x02=stop)
 		B3=Homelink device (0x00, 0x01 or 0x02)
 
-		N.B. mstegen is also seeing another message on the CAN bus just before this message, 0x09 0x02 0x00, not sure if it's important.
-		     markwj suspects perhaps some sort of wakeup message.
+                Standard behaviour of the car (when using VDS homelink button) is:
+                  t0      102 09 02 00
+                  t0      102 09 00 00
+                  t0+1sec 102 09 02 00
+
+                If no stop code is sent, the homelink transmission will timeout
+                at the module side (seemingly in 10 to 14 seconds, or so).
+
+                Standard vehicle behaviour is to transmit for 1 second. Holding
+                down the VDS homelink button causes a continuous transmission
+                (up to a maximum of the module timeout 10-to-14 seconds, or so).
 
 	Lock/Unlock result
 		B1=0x0E
