@@ -7735,9 +7735,10 @@ void vehicle_twizy_battstatus_collect(void)
     if (stddev > twizy_batt[0].cmod_temp_stddev_max)
     {
       twizy_batt[0].cmod_temp_stddev_max = stddev;
+      twizy_batt[0].temp_alerts = 0;
+      twizy_batt[0].temp_watches = 0;
 
       // switch to overall stddev alert mode?
-      // (resetting cmod flags to build new alert set)
       if (stddev >= BATT_STDDEV_TEMP_ALERT)
         twizy_batt[0].temp_alerts = BATT_STDDEV_TEMP_FLAG;
       else if (stddev >= BATT_STDDEV_TEMP_WATCH)
@@ -7824,9 +7825,10 @@ void vehicle_twizy_battstatus_collect(void)
     if (stddev > twizy_batt[0].cell_volt_stddev_max)
     {
       twizy_batt[0].cell_volt_stddev_max = stddev;
+      twizy_batt[0].volt_alerts = 0;
+      twizy_batt[0].volt_watches = 0;
 
       // switch to overall stddev alert mode?
-      // (resetting cell flags to build new alert set)
       if (stddev >= BATT_STDDEV_VOLT_ALERT)
         twizy_batt[0].volt_alerts = BATT_STDDEV_VOLT_FLAG;
       else if (stddev >= BATT_STDDEV_VOLT_WATCH)
