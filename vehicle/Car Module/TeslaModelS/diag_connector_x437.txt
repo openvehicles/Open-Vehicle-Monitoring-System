@@ -1,0 +1,31 @@
+
+Chassis
+  CAN6-H 4
+  CAN6-L 11
+
+Body
+  CAN2-H 5
+  CAN2-L 12
+
+Body Fault
+  CAN4-H 2
+  CAN4-L 7
+
+Powertrain
+  CAN3-H 1
+  CAN3-L 6
+
+Diag
+  K-Line 3
+
+
+OBDII
+  CAN1-H 6
+  CAN1-L 14
+  K-Line 7
+  CAN6-H 1
+  CAN6-L 9
+  GND 4
+  GND 5
+  12V 16
+
