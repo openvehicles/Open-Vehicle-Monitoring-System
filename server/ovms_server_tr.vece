@@ -260,6 +260,7 @@
 1174=Fasten Seatbelt
 1416=Low Power System Service Required
 1426=HVAC: High current pump failure
+1447=HVAC: Outlet OverTemp
 1452=HVAC: Low pressure
 1453=HVAC: Refrigerant High Pressure / Coolant System Problem Service Required
 1463=HVAC: Compressor OverTemp
@@ -268,6 +269,7 @@
 1471=HVAC: Compressor DTC comms timeout
 1493=ESS: Extremely Low. Begin Charging ASAP.
 1533=Software Problem Service Required
+1470=HVAC: Temp Sensor Fault
 1471=HVAC: Compressor DTC comms timeout
 1493=ESS: Extremely Low. Begin Charging ASAP.
 1901=Not Available
