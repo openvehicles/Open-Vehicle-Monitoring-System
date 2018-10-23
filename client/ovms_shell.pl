@@ -233,6 +233,33 @@ sub command
       $connected = 0;
       }
     }
+  elsif ($line =~ /^search\s(.+)$/)
+    {
+    if (!defined $db)
+      {
+      $rl->print("No database connection defined\n");
+      }
+    else
+      {
+      my $search = '%'.$1.'%';
+      my $sth = $db->prepare('SELECT * FROM ovms_owners,ovms_cars,ovms_carmessages '
+      . "WHERE ovms_owners.owner=ovms_cars.owner AND ovms_carmessages.vehicleid=ovms_cars.vehicleid "
+      . "AND ovms_carmessages.m_code='F' "
+      . "AND ((ovms_cars.vehicleid LIKE ?) OR (name LIKE ?) OR (mail LIKE ?) OR (vehiclename LIKE ?) OR (m_msg LIKE ?)) "
+      . "AND ovms_owners.deleted=0 AND ovms_cars.deleted=0");
+      $sth->execute($search,$search,$search,$search,$search);
+      my $first = 0;
+      while (my $row = $sth->fetchrow_hashref())
+        {
+        if ($first==0)
+          {
+          $first=1;
+          printf "%-32.32s %-32.32s %-19.19s %s\n",'VehicleID','Owner Name','Last Connected','Owner eMail';
+          }
+        printf "%-32.32s %-32.32s %-19.19s %s\n",$row->{'vehicleid'},$row->{'name'},$row->{'m_msgtime'},$row->{'mail'};
+        }
+      }
+    }
   else
     {
     # Send the line to the car, as a command...
