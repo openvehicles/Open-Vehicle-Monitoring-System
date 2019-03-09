@@ -1537,7 +1537,7 @@ sub gcm_tim
               .'&data.time='.uri_escape($timestamp)
               .'&collapse_key='.time;
     http_request
-      POST=>'https://android.googleapis.com/gcm/send',
+      POST=>'https://fcm.googleapis.com/fcm/send',
       body => $body,
       headers=>{ 'Authorization' => 'key='.$apikey,
                  "Content-Type" => "application/x-www-form-urlencoded" },
