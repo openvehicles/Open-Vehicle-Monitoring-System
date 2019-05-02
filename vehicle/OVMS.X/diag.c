@@ -284,6 +284,13 @@ void diag_handle_csq(char *command, char *arguments)
   net_sq = atoi(arguments);
   }
 
+#ifdef OVMS_CAR_RENAULTTWIZY
+void diag_handle_bl(char *command, char *arguments)
+  {
+  PORTBbits.RB5 = atoi(arguments);
+  }
+#endif //OVMS_CAR_RENAULTTWIZY
+
 #ifdef OVMS_CAR_TESLAROADSTER
 void diag_handle_cantxstart(char *command, char *arguments)
   {
@@ -336,6 +343,9 @@ rom char diag_cmdtable[][27] =
     "RESET",
     "DIAG",
     "+CSQ:",
+#ifdef OVMS_CAR_RENAULTTWIZY
+    "BL",
+#endif
 #ifdef OVMS_CAR_TESLAROADSTER
     "CANTXSTART",
     "CANTXSTOP",
@@ -352,6 +362,9 @@ rom void (*diag_hfntable[])(char *command, char *arguments) =
   &diag_handle_reset,
   &diag_handle_diag,
   &diag_handle_csq
+#ifdef OVMS_CAR_RENAULTTWIZY
+  ,&diag_handle_bl
+#endif
 #ifdef OVMS_CAR_TESLAROADSTER
   ,&diag_handle_cantxstart,
   &diag_handle_cantxstop,

@@ -329,6 +329,8 @@
     - Control additional charger fan at port RB1
     - Control additional charger at port RB4
 
+ * 3.9.1  2 May 2019 (Michael Balzer)
+    - Generate regenerative braking signal at port RB5
 
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -461,7 +463,7 @@ typedef struct {
 #define CMD_QueryLogs               210 // (which, start)
 
 // Twizy module version & capabilities:
-rom char vehicle_twizy_version[] = "3.8.4a";
+rom char vehicle_twizy_version[] = "3.9.1";
 
 #ifdef OVMS_TWIZY_BATTMON
 rom char vehicle_twizy_capabilities[] = "C6,C20-24,C200-210";
@@ -805,6 +807,21 @@ volatile unsigned long twizy_level_rec; // level section rec collector
 // + 1 static CRC WORDS = 2 bytes
 // = TOTAL: 83 bytes
 // -----------------------------------------------
+
+
+#pragma udata overlay vehicle_overlay_data2
+
+// regenerative brakelight control:
+UINT8 twizy_brakelight_timer;   // countdown timer
+#define SetBrakelight(n)        (PORTBbits.RB5 = (n))
+#define m_brakelight_on         ((int)((twizy_cfg_profile.brakelight_on != 0) \
+                                  ? (1-(int)twizy_cfg_profile.brakelight_on) \
+                                  : -43))  // ceil  (-1.2 m/s² x 36)
+#define m_brakelight_off        ((int)((twizy_cfg_profile.brakelight_off != 0) \
+                                  ? (1-(int)twizy_cfg_profile.brakelight_off) \
+                                  : -26))  // floor (-0.7 m/s² x 36)
+
+#pragma udata overlay vehicle_overlay_data
 
 
 /***************************************************************
@@ -2911,6 +2928,30 @@ BOOL vehicle_twizy_cfg_sms(BOOL premsg, char *caller, char *cmd, char *arguments
   }
   
   
+  #ifndef OVMS_TWIZY_CFG_BRAKELIGHT
+    // non-SEVCON brakelight configuration
+    else if (starts_with(cmd, "BRAKELIGHT")) {
+      // BRAKELIGHT [on_lev] [off_lev]
+
+      if (arguments = net_sms_nextarg(arguments))
+        arg[0] = atoi(arguments);
+
+      if (arguments = net_sms_nextarg(arguments))
+        arg[1] = atoi(arguments);
+      else
+        arg[1] = arg[0];
+
+      // update profile:
+      twizy_cfg_profile.brakelight_on = cfgvalue(arg[0]);
+      twizy_cfg_profile.brakelight_off = cfgvalue(arg[1]);
+      twizy_cfg.unsaved = 1;
+
+      // success message:
+      s = stp_rom(s, "OK");
+    }
+  #endif // !OVMS_TWIZY_CFG_BRAKELIGHT
+
+
   else {
     
     //
@@ -5496,13 +5537,32 @@ BOOL vehicle_twizy_idlepoll(void)
 
 BOOL vehicle_twizy_state_ticker10th(void)
 {
-
 #ifdef OVMS_TWIZY_CFG
-
   BYTE bits, key, kickdown_led=0;
   char buf[2];
   UINT err;
+#endif
 
+  //
+  // Check for regenerative braking, control brakelight accordingly
+  //
+
+  // activate brake light?
+  if ((twizy_accel_avg < m_brakelight_on) && (twizy_speed >= 360) &&
+          (twizy_power <= 0) && ((twizy_status&0x09) == 0x08))
+  {
+    SetBrakelight(1);
+    twizy_brakelight_timer = 5; // 500 ms
+  }
+  // deactivate brake light?
+  else if ((twizy_accel_avg >= m_brakelight_off) || (twizy_speed < 360) ||
+          (twizy_power > 0) || ((twizy_status&0x09) != 0x08))
+  {
+    if (twizy_brakelight_timer > 0 && --twizy_brakelight_timer == 0)
+      SetBrakelight(0);
+  }
+
+#ifdef OVMS_TWIZY_CFG
   //
   // Kickdown release handling:
   //
@@ -5826,6 +5886,10 @@ BOOL vehicle_twizy_state_ticker1(void)
       twizy_button_cnt = 0;
     #endif // OVMS_TWIZY_CFG
 
+      // turn off brakelight:
+      twizy_accel_avg = 0;
+      twizy_brakelight_timer = 0;
+      SetBrakelight(0);
   }
   
   
@@ -8724,7 +8788,7 @@ BOOL vehicle_twizy_initialise(void)
     twizy_accel_pedal = 0;
     twizy_kickdown_hold = 0;
     twizy_kickdown_level = 0;
-
+    
     // Init temporary feature slot defaults:
     sys_features[FEATURE_KICKDOWN_THRESHOLD] = CAN_KICKDOWN_THRESHOLD;
     sys_features[FEATURE_KICKDOWN_COMPZERO] = CAN_KICKDOWN_COMPZERO;
@@ -8750,8 +8814,13 @@ BOOL vehicle_twizy_initialise(void)
   PORTBbits.RB1 = 0;
   PORTBbits.RB4 = 0;
   twizy_fan_timer = 0;
-  
-  
+
+  // brakelight init:
+  twizy_accel_avg = 0;
+  twizy_brakelight_timer = 0;
+  TRISBbits.RB5 = 0;
+  SetBrakelight(0);
+
   //
   // CAN interface configuration:
   //
