@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.11-20190820";
+my $VERSION = "2.4.1-20190821";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -64,10 +64,12 @@ my @mail_queue;
 # Auto-flush
 select STDERR; $|=1;
 select STDOUT; $|=1;
-$AnyEvent::Log::FILTER->level ("info");
 
 # Configuration
 $config = Config::IniFiles->new(-file => 'ovms_server.conf');
+
+# Logging
+$AnyEvent::Log::FILTER->level ($config->val('log','level','info'));
 
 # Vehicle Error Code Expansion configurations...
 my $vecem = Config::IniFiles->new();
@@ -237,7 +239,7 @@ sub io_line
   $utilisations{$vid.'-'.$clienttype}{'rx'} += length($line)+2;
   $utilisations{$vid.'-'.$clienttype}{'vid'} = $vid;
   $utilisations{$vid.'-'.$clienttype}{'clienttype'} = $clienttype;
-  AE::log info => "#$fn $clienttype $vid rx $line";
+  AE::log debug => "#$fn $clienttype $vid rx enc $line";
   $hdl->push_read(line => \&io_line);
   $conns{$fn}{'lastrx'} = time;
 
@@ -304,7 +306,7 @@ sub io_line
     my $sessionkey = $servertoken . $clienttoken;
     $serverhmac->add($sessionkey);
     my $serverkey = $serverhmac->digest;
-    AE::log info => "#$fn $clienttype $vehicleid crypt session key $sessionkey (".unpack("H*",$serverkey).")";
+    AE::log debug => "#$fn $clienttype $vehicleid crypt session key $sessionkey (".unpack("H*",$serverkey).")";
     my $txcipher = Crypt::RC4::XS->new($serverkey);
     $txcipher->RC4(chr(0) x 1024);  # Prime with 1KB of zeros
     my $rxcipher = Crypt::RC4::XS->new($serverkey);
@@ -323,7 +325,7 @@ sub io_line
     $conns{$fn}{'lastping'} = time;
 
     # Send out server welcome message
-    AE::log info => "#$fn $clienttype $vehicleid tx MP-S 0 $servertoken $serverdigest";
+    AE::log debug => "#$fn $clienttype $vehicleid tx MP-S 0 $servertoken $serverdigest";
     my $towrite = "MP-S 0 $servertoken $serverdigest\r\n";
     $conns{$fn}{'tx'} += length($towrite);
     $hdl->push_write($towrite);
@@ -360,7 +362,7 @@ sub io_line
       }
     if (defined $conns{$fn}{'ap_already'})
       {
-      AE::log info => "#$fn $vehicleid error - Already auto-provisioned on this connection";
+      AE::log note => "#$fn $vehicleid error - Already auto-provisioned on this connection";
       AE::log info => "#$fn C $vehicleid tx AP-X";
       my $towrite = "AP-X\r\n";
       $conns{$fn}{'tx'} += length($towrite);
@@ -373,7 +375,7 @@ sub io_line
     my $row = $sth->fetchrow_hashref();
     if (!defined $row)
       {
-      AE::log info => "#$fn $vehicleid info - No auto-provision profile found for $apkey";
+      AE::log note => "#$fn $vehicleid info - No auto-provision profile found for $apkey";
       AE::log info => "#$fn C $vehicleid tx AP-X";
       my $towrite = "AP-X\r\n";
       $conns{$fn}{'tx'} += length($towrite);
@@ -408,7 +410,7 @@ sub io_line
   
   else
     {
-    &log($fn, $clienttype, $vid, "error - unrecognised message from vehicle");
+    &log($fn, $clienttype, $vid, "error - unrecognised message from vehicle", "error");
     }
 
   }
@@ -589,7 +591,8 @@ sub io_tx
   my $vid = $conns{$fn}{'vehicleid'};
   my $clienttype = $conns{$fn}{'clienttype'}; $clienttype='-' if (!defined $clienttype);
   my $encoded = encode_base64($conns{$fn}{'txcipher'}->RC4("MP-0 $code$data"),'');
-  AE::log info => "#$fn $clienttype $vid tx $encoded ($code $data)";
+  AE::log debug => "#$fn $clienttype $vid tx enc $encoded";
+  AE::log info => "#$fn $clienttype $vid tx msg $code $data";
   $utilisations{$vid.'-'.$clienttype}{'tx'} += length($encoded)+2 if ($vid ne '-');
   $utilisations{$vid.'-'.$clienttype}{'vid'} = $vid;
   $utilisations{$vid.'-'.$clienttype}{'clienttype'} = $clienttype;
@@ -718,6 +721,15 @@ EV::loop();
 #
 # Utilisation statistics timer (executed every 60 seconds)
 #
+
+sub subkeycnt
+  {
+  my (%hash) = @_;
+  my $cnt = 0;
+  foreach my $vid (keys %hash) { $cnt += keys %{$hash{$vid}}; }
+  return $cnt;
+  }
+
 sub util_tim
   {
   # Add collected utilisations to database
@@ -768,8 +780,8 @@ sub util_tim
   # Log current server connection counts
   my $concount = keys %conns;
   my $carcount = keys %car_conns;
-  my $appcount = keys %app_conns;
-  my $btccount = keys %btc_conns;
+  my $appcount = subkeycnt %app_conns;
+  my $btccount = subkeycnt %btc_conns;
   my $svrcount = keys %svr_conns;
   my $apicount = keys %api_conns;
   AE::log info => "- - - connection statistics: tcp_api=$concount, cars=$carcount, apps=$appcount, batchclients=$btccount, servers=$svrcount, http_api=$apicount";
@@ -907,7 +919,7 @@ sub io_message
     {
     if (($clienttype ne 'A')&&($clienttype ne 'B'))
       {
-      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'C' message from non-App/Batchclient";
+      AE::log error => "#$fn $clienttype $vehicleid msg invalid 'C' message from non-App/Batchclient";
       return;
       }
     if (($m_code eq $code)&&($data =~ /^(\d+)(,(.+))?$/)&&($1 == 30))
@@ -986,7 +998,7 @@ sub io_message
     {
     if ($clienttype ne 'C')
       {
-      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'c' message from non-Car";
+      AE::log error => "#$fn $clienttype $vehicleid msg invalid 'c' message from non-Car";
       return;
       }
     # Forward to apps and batch clients
@@ -1038,7 +1050,7 @@ sub io_message
     {
     if ($clienttype ne 'C')
       {
-      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'H' message from non-Car";
+      AE::log error => "#$fn $clienttype $vehicleid msg invalid 'H' message from non-Car";
       return;
       }
     my ($h_recordtype,$h_recordnumber,$h_lifetime,$h_data) = split /,/,$data,4;
@@ -1052,7 +1064,7 @@ sub io_message
     {
     if ($clienttype ne 'C')
       {
-      AE::log info => "#$fn $clienttype $vehicleid msg invalid 'h' message from non-Car";
+      AE::log error => "#$fn $clienttype $vehicleid msg invalid 'h' message from non-Car";
       return;
       }
     my ($h_ackcode,$h_timediff,$h_recordtype,$h_recordnumber,$h_lifetime,$h_data) = split /,/,$data,6;
@@ -1089,7 +1101,7 @@ sub io_message
       }
     $db->do("UPDATE ovms_cars SET v_lastupdate=UTC_TIMESTAMP() WHERE vehicleid=?",undef,$vehicleid);
     # And send it on to the apps...
-    AE::log info => "#$fn $clienttype $vehicleid msg handle $m_code $m_data";
+    AE::log debug => "#$fn $clienttype $vehicleid msg handle $m_code $m_data";
     &io_tx_apps($vehicleid, $code, $data);
     &io_tx_btcs($vehicleid, $code, $data);
     if ($m_code eq "F")
@@ -1256,7 +1268,7 @@ sub svr_line
   $svr_handle->push_read (line => \&svr_line);
 
   my $dline = $svr_rxcipher->RC4(decode_base64($line));
-  AE::log info => "#$fn - - svr got $dline";
+  AE::log debug => "#$fn - - svr got $dline";
 
   if ($dline =~ /^MP-0 A/)
     {
@@ -1292,7 +1304,7 @@ sub svr_error
   my ($hdl, $fatal, $msg) = @_;
   my $fn = $hdl->fh->fileno();
 
-  AE::log info => "#$fn - - svr got disconnect from remote";
+  AE::log note => "#$fn - - svr got disconnect from remote";
 
   undef $svr_handle;  
   }
@@ -1302,7 +1314,7 @@ sub svr_timeout
   my ($hdl) = @_;
   my $fn = $hdl->fh->fileno();
 
-  AE::log info => "#$fn - - svr got timeout from remote";
+  AE::log note => "#$fn - - svr got timeout from remote";
 
   undef $svr_handle;
   }
@@ -2258,14 +2270,14 @@ sub http_request_in_api
       }
     else
       {
-      AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'authfail',$req->method,join('/',$req->url->path_segments));
+      AE::log error => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'authfail',$req->method,join('/',$req->url->path_segments));
       $req->respond ( [404, 'Authentication failed', { 'Content-Type' => 'text/plain', 'Access-Control-Allow-Origin' => '*' }, "Authentication failed\n"] );
       $httpd->stop_request;
       return;
       }
     }
 
-  AE::log info => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'noapi',$req->method,join('/',$req->url->path_segments));
+  AE::log error => join(' ','http','-',$session,$req->client_host.':'.$req->client_port,'noapi',$req->method,join('/',$req->url->path_segments));
   $req->respond ( [404, 'Unrecongised API call', { 'Content-Type' => 'text/plain', 'Access-Control-Allow-Origin' => '*' }, "Unrecognised API call\n"] );
   $httpd->stop_request;
   }
