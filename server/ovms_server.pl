@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.3.10-20171216";
+my $VERSION = "2.3.11-20190820";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -188,6 +188,15 @@ sub io_timeout
       {
       # The APP has been unresponsive for timeout_app seconds - time to disconnect it
       &io_terminate($fn,$hdl,$vid, "timeout due app due to inactivity");
+      return;
+      }
+    }
+  elsif ($clienttype eq 'B')
+    {
+    if (($lastrx+$timeout_api)<$now)
+      {
+      # The BATCHCLIENT has been unresponsive for timeout_api seconds - time to disconnect it
+      &io_terminate($fn,$hdl,$vid, "timeout btc due to inactivity");
       return;
       }
     }
