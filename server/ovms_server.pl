@@ -33,7 +33,7 @@ use constant TCP_KEEPCNT => 6;
 
 # Global Variables
 
-my $VERSION = "2.4.1-20190821";
+my $VERSION = "2.4.2-20190906";
 my $b64tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 my $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 my %conns;
@@ -183,6 +183,7 @@ sub io_timeout
   # At this point, it is either a car or an app - let's handle the timeout
   my $now = AnyEvent->now;
   my $lastrx = $conns{$fn}{'lastrx'};
+  my $lasttx = $conns{$fn}{'lasttx'};
   my $lastping = $conns{$fn}{'lastping'};
   if ($clienttype eq 'A')
     {
@@ -219,9 +220,9 @@ sub io_timeout
       &io_terminate($fn,$hdl,$vid, "timeout car due to inactivity");
       return;
       }
-    if ( (($lastrx+$timeout_car-60)<$now) && (($lastping+300)<$now) )
+    if ( (($lasttx+$timeout_car-60)<$now) && (($lastping+300)<$now) )
       {
-      # The CAR has been unresponsive for timeout_car-60 seconds - time to ping it
+      # We haven't sent anything to the CAR for timeout_car-60 seconds - time to ping it
       AE::log info => "#$fn $clienttype $vid ping car due to inactivity";
       &io_tx($fn, $conns{$fn}{'handle'}, 'A', 'FA');
       $conns{$fn}{'lastping'} = $now;
@@ -597,6 +598,7 @@ sub io_tx
   $utilisations{$vid.'-'.$clienttype}{'vid'} = $vid;
   $utilisations{$vid.'-'.$clienttype}{'clienttype'} = $clienttype;
   $handle->push_write($encoded."\r\n");
+  $conns{$fn}{'lasttx'} = time;
   }
 
 # Send message to a CAR
