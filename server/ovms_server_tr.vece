@@ -246,7 +246,7 @@
 1103=ABS & Traction Control Problems. Service Required.
 1124=Unsafe Gear Shift Transition Denied
 1138=Voltage on Charge Port Line2 during drive with charge door open
-1144=Powertrain Problem Service Required
+1144=DMC: Powertrain Problem Service Required
 1146=DMC: Motor Fan Problem
 1152=DMC: WARNING Charge Thermal Limit
 1153=DMC: Wear Factor Warning

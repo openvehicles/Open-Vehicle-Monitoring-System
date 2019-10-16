@@ -1331,6 +1331,7 @@ sub push_queuenotify
     # VECE expansion...
     my ($vehicletype,$errorcode,$errordata) = split(/,/,$alertmsg);
     $alertmsg = &vece_expansion($vehicletype,$errorcode,$errordata);
+    return if ($alertmsg =~ /\:\sDMC\:/); # Ignore DMC (debug) alerts
     }
 
   my $sth = $db->prepare('SELECT * FROM ovms_notifies WHERE vehicleid=? and active=1');
