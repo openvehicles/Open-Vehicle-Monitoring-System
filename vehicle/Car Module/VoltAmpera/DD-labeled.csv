@@ -94,7 +94,7 @@
 "*M AC High Side Preassure","M15 64 B1","221564","A",0,255,"kPa", 7E0
 "*M Short Term Fuel Trip Bank1","M15 70 B1","221570","100*A/255",0,100,"%", 7E0
 "*M Short Term Fuel Trip Bank2","M15 71 B1","221571","100*A/255",0,100,"%", 7E0
-"*M Long Term Fuel Trip Bank1,"M15 72 B1","221572","100*A/255",0,100,"%", 7E0
+"*M Long Term Fuel Trip Bank1","M15 72 B1","221572","100*A/255",0,100,"%", 7E0
 "*M Long Term Fuel Trip Bank 2","M15 73 B1","221573","100*A/255",0,100,"%", 7E0
 "*M Torqe Delivered","M1A 2D B1","221A2D","256*A+b",0,960,"V", 7E0
 "*M ECM 20 3F B1","M20 3F B1","22203F","256*A+b",0,256000,"B1", 7E0
